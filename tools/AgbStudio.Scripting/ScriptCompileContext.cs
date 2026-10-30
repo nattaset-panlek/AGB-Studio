@@ -1,3 +1,5 @@
+using AgbStudio.Core.Project;
+
 namespace AgbStudio.Scripting;
 
 /// <summary>
@@ -52,11 +54,17 @@ public sealed class ScriptCompileContext
     /// <summary>Movement paths for Move(actor, path); the id is the index in this list.</summary>
     public List<ScriptPathDef> Paths { get; set; } = new();
 
-    /// <summary>Project Settings · Save data fields: the <c>Game</c> class (Game.score).</summary>
-    public List<SaveFieldDef> SaveFields { get; set; } = new();
+    /// <summary>
+    /// Project Settings · Save data fields: the <c>Game</c> class (C# Game.score is C++ agb_state.score, declared in
+    /// agb_game.hpp by the build).
+    /// </summary>
+    public List<SaveField> SaveFields { get; set; } = new();
 
-    /// <summary>Database tables (data/*.db): typed accessors such as Items.Get(ItemId.Potion).</summary>
-    public List<DatabaseTableDef> Tables { get; set; } = new();
+    /// <summary>Database tables (data/*.db): C# Items.Get(ItemId.Potion) is C++ agb_db::Items::Get (agb_db.hpp).</summary>
+    public List<TableFile> Tables { get; set; } = new();
+
+    /// <summary>Scene events (Scene Settings OnLoad / OnEnter / OnExit statements) and link "Only if" conditions.</summary>
+    public List<SceneEventsDef> SceneEvents { get; set; } = new();
 
     /// <summary>Enums for typed script variables (Story.Forest = ForestState.Rescued).</summary>
     public List<ScriptEnumDef> Enums { get; set; } = new();
@@ -78,6 +86,13 @@ public sealed class ScriptCompileContext
     /// (runtime/include). Null = built-in copies.
     /// </summary>
     public string? RuntimeIncludeDir { get; set; }
+
+    /// <summary>
+    /// Also write the project headers the build normally generates (agb_game.hpp with GameState, agb_state and the
+    /// scene / tag / text ids, soundbank.hpp ids, agb_db.hpp and the table sources). For tests and tools that
+    /// compile scripts without the game build.
+    /// </summary>
+    public bool EmitProjectHeaders { get; set; }
 
     /// <summary>Makes a name table from a list: the first name gets <paramref name="first"/>.</summary>
     public static Dictionary<string, int> Indexed(IEnumerable<string> names, int first = 0)
@@ -119,44 +134,6 @@ public sealed class ScriptPathDef
     public double Speed { get; set; } = 1;
 }
 
-/// <summary>
-/// A save field: Type is <c>int</c>, <c>byte</c>, <c>short</c>, <c>fixed</c>, <c>bool</c>, <c>fixed2</c>,
-/// <c>bitset N</c> or <c>Table[N]</c> (N item ids of a database table).
-/// </summary>
-public sealed class SaveFieldDef
-{
-    public string Name { get; set; } = "";
-    public string Type { get; set; } = "int";
-    /// <summary>Starting value as C# literal text ("3", "1.5", "true"); null = zero.</summary>
-    public string? Default { get; set; }
-}
-
-/// <summary>A database table. Column types: int, fixed, bool, string, or another table's name (its id).</summary>
-public sealed class DatabaseTableDef
-{
-    public string Name { get; set; } = "";
-    /// <summary>Id enum name; null = singular of the table name + "Id" (Items -> ItemId).</summary>
-    public string? IdEnum { get; set; }
-    /// <summary>Row struct name; null = singular of the table name (Items -> Item).</summary>
-    public string? RowType { get; set; }
-    public List<DatabaseColumnDef> Columns { get; set; } = new();
-    public List<DatabaseRowDef> Rows { get; set; } = new();
-}
-
-public sealed class DatabaseColumnDef
-{
-    public string Name { get; set; } = "";
-    public string Type { get; set; } = "int";
-}
-
-public sealed class DatabaseRowDef
-{
-    /// <summary>Row id (enum member name, for example "Potion").</summary>
-    public string Id { get; set; } = "";
-    /// <summary>Column name to value (number, bool, string or row id of the referenced table).</summary>
-    public Dictionary<string, object?> Values { get; set; } = new();
-}
-
 public sealed class ScriptEnumDef
 {
     public string Name { get; set; } = "";
@@ -174,4 +151,17 @@ public sealed class ScriptVarDef
     public string Name { get; set; } = "";
     public string Type { get; set; } = "int";
     public int Id { get; set; }
+}
+
+/// <summary>Statements typed in Scene Settings (for example <c>FadeIn(0.5s)</c>) and link conditions of one scene.</summary>
+public sealed class SceneEventsDef
+{
+    public string Scene { get; set; } = "";
+    /// <summary>Scene file (diagnostics point at it).</summary>
+    public string File { get; set; } = "";
+    public string OnLoad { get; set; } = "";
+    public string OnEnter { get; set; } = "";
+    public string OnExit { get; set; } = "";
+    /// <summary>Link index in the scene to its "Only if" C# condition.</summary>
+    public Dictionary<int, string> LinkConditions { get; set; } = new();
 }

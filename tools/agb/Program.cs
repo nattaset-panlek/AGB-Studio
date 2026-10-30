@@ -118,6 +118,7 @@ public static class Program
         var p = kind switch
         {
             "mini" => AgbStudio.Build.Content.SampleProjects.CreatePlatformerMini(dir),
+            "skyhopper" => AgbStudio.Build.Content.SkyHopper.Create(dir),
             _ => throw new ArgumentException($"Unknown sample '{kind}'."),
         };
         Console.WriteLine($"created {p.ProjectPath}");

@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AgbStudio.Api\AgbStudio.Api.csproj" />
+    <ProjectReference Include="..\AgbStudio.Build\AgbStudio.Build.csproj" />
     <ProjectReference Include="..\AgbStudio.Analyzers\AgbStudio.Analyzers.csproj" />
     <ProjectReference Include="..\AgbStudio.Analyzers\CodeFixes\AgbStudio.Analyzers.CodeFixes.csproj" />
   </ItemGroup>
