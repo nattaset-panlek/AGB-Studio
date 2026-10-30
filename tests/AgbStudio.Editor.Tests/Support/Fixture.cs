@@ -31,10 +31,12 @@ public sealed class Fixture : IDisposable
     public string OpenSkyHopper()
     {
         var root = Path.Combine(Folder, "SkyHopper");
-        Services.Project.Create(root, "Sky Hopper");
+        // the Sky Hopper content (AgbStudio.Build.Content.SkyHopper: scenes, maps, sprites, scripts ...) the Scene Editor frames show
+        AgbStudio.Build.Content.SkyHopper.Create(root);
+        Services.Project.Open(root);
         // the files of the Figma Command Palette, in the folders AgbStudio.Core creates
         foreach (var file in new[] { @"assets\sprites\player.png", @"scripts\PlayerController.cs", @"assets\tilesets\Platform_tiles.png" })
-            File.WriteAllText(Path.Combine(root, file), "");
+            if (!File.Exists(Path.Combine(root, file))) File.WriteAllText(Path.Combine(root, file), "");
         // files opened most recently first, as the Figma Command Palette lists them
         var history = new PaletteHistory();
         foreach (var f in new[] { "Platform_tiles.png", "PlayerController.cs", "player.png" })
