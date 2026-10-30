@@ -191,4 +191,43 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.False(s.Log.Any(l => l.Contains("took longer than one frame", StringComparison.Ordinal)), string.Join(" | ", s.Log.Concat(Overruns)));
         s.Stop();
     }
+
+    [Fact]
+    public void VisualNovelTellsTheStoryAndRemembersTheChoice()
+    {
+        var (p, r) = Build("visualnovel");
+        Assert.Equal("Mode 0 · 1 BG layers · 3 actors · 2 scripts", TemplateInfo.Stats(p));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 70; i++) s.Step();
+        uint State(int offset) => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + (uint)offset);
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        var story = SceneIndex();
+        Assert.Equal(1u, State(8));  // chapter 1 started
+        var box = Pixel(s, 120, 140);
+        Assert.True(box.R > 230 && box.G > 230 && box.B > 230, $"dialogue box paper {box}");
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "story.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
+        Assert.False(s.Actors().Single(a => a.Name == "Owl").Visible);
+        // Three lines, then the choice: Down picks "Wait for morning".
+        for (var line = 0; line < 3; line++)
+        {
+            Press(s, GbaKeys.A);
+            for (var i = 0; i < 40; i++) s.Step();
+        }
+        Assert.True(s.Actors().Single(a => a.Name == "Owl").Visible);  // the owl has spoken
+        Press(s, GbaKeys.Down);
+        Press(s, GbaKeys.A);
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.Equal(0u, State(12) & 0xFF);  // braveHopper stays false
+        for (var i = 0; i < 8 && SceneIndex() == story; i++)
+        {
+            Press(s, GbaKeys.A);
+            for (var k = 0; k < 40; k++) s.Step();
+        }
+        Assert.NotEqual(story, SceneIndex());  // back on the title screen
+        Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
+        s.Stop();
+    }
 }

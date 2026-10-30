@@ -165,6 +165,11 @@ public sealed class Actor
     /// <param name="digits">Pads with zeros to this many digits (0 = no padding).</param>
     [Cpp("agb::text::setLabelValue({this.}textLabel, {this.}label, {0}, {1})")]
     public void SetLabelNumber(int value, int digits) { }
+
+    /// <summary>For a Text Label actor: shows another string (speaker name tags, signs, status lines).</summary>
+    /// <param name="key">String key from Localization.</param>
+    [Cpp("agb::text::setLabelRun({this.}textLabel, ::agb::text::run({0}))")]
+    public void SetLabelText([Asset(AssetKind.Text)] string key) { }
 }
 
 /// <summary>Limits an Inspector field to a range (a slider in the Inspector).</summary>

@@ -599,12 +599,14 @@ public sealed class GameBuilder
             }
             map = GameProject.Load<MapFile>(mapPath);
             var tsId = Cpp.Ident(map.Tileset);
-            if (!_tilesets.ContainsKey(map.Tileset))
+            // Maps made only of image layers (a visual novel backdrop) need no tileset.
+            var needsTileset = map.Layers.Any(l => l.Type != LayerType.Image);
+            if (needsTileset && !_tilesets.ContainsKey(map.Tileset))
             {
                 Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets."));
                 return;
             }
-            externs.Append($"extern const agb::data::Tileset agbasset_tileset_{tsId};\n");
+            if (needsTileset) externs.Append($"extern const agb::data::Tileset agbasset_tileset_{tsId};\n");
             var layers = new StringBuilder();
             for (var i = 0; i < map.Layers.Count; i++)
             {

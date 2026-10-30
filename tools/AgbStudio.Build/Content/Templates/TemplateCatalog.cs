@@ -44,6 +44,10 @@ public static class TemplateCatalog
             "A top-down adventure: the player explores a village, talks to its people, pushes crates out of the way and unlocks doors.",
             ["Player movement in 8 directions", "Talk to NPCs with dialogue", "Push blocks", "Doors and keys", "Title screen and pause menu"],
             TopDownTemplate.Create),
+        new("visualnovel", "Visual Novel", "Story", "Portraits, choices, flags and Thai text.",
+            "A story told in pictures and words: portraits that change expression, choices that set flags and lead to different endings, in Thai and English.",
+            ["Portraits with expressions", "Speaker name tag", "Choices that set saved flags", "Two endings", "Thai and English text"],
+            VisualNovelTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);

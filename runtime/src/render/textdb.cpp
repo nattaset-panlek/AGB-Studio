@@ -161,6 +161,14 @@ void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits)
     b.update();
 }
 
+void setLabelRun(int label, const data::TextRun* r) {
+    if (label < 0 || label >= g_labelCount) return;
+    render::TextBox& b = g_labels[label];
+    b.clear();
+    if (r) b.drawRun(*r, 0, 0);
+    b.update();
+}
+
 void clearLabels() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].release();
     g_labelCount = 0;

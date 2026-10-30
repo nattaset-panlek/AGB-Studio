@@ -55,6 +55,8 @@ void setLabelText(int label, const data::Font& font, const char* ascii);  // run
 // HUD value: the label's own text (localized, e.g. "SCORE" / "คะแนน"), a space, then the number padded to
 // `digits` with zeros (C# Actor.SetLabelNumber).
 void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits);
+// Replaces a label's text (C# Actor.SetLabelText): speaker name tags, signs, status lines.
+void setLabelRun(int label, const data::TextRun* run);
 void clearLabels();
 
 }  // namespace agb::text
