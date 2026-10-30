@@ -1,0 +1,33 @@
+<!-- Generated from docs/evidence/figma/tokens.json by AgbStudio.Editor.Tests (AGB_REGEN=1). Do not edit. -->
+<!-- Figma variable collection: AGB Studio · Light (T-K01) -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <SolidColorBrush x:Key="accent/default" Color="#FF3B6FE0" />
+  <SolidColorBrush x:Key="accent/hover" Color="#FF5585EA" />
+  <SolidColorBrush x:Key="accent/pressed" Color="#FF2D5BC2" />
+  <SolidColorBrush x:Key="accent/selected" Color="#FFDBE6FF" />
+  <SolidColorBrush x:Key="accent/subtle" Color="#1F3B6FE0" />
+  <SolidColorBrush x:Key="axis/x" Color="#FFE0404F" />
+  <SolidColorBrush x:Key="axis/y" Color="#FF1F9E6B" />
+  <SolidColorBrush x:Key="bg/base" Color="#FFF5F6F8" />
+  <SolidColorBrush x:Key="bg/canvas" Color="#FFE9EBF0" />
+  <SolidColorBrush x:Key="bg/hover" Color="#FFE6E8EE" />
+  <SolidColorBrush x:Key="bg/panel" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="bg/raised" Color="#FFF0F1F4" />
+  <SolidColorBrush x:Key="bg/sunken" Color="#FFF7F8FA" />
+  <SolidColorBrush x:Key="border/default" Color="#FFDFE2E8" />
+  <SolidColorBrush x:Key="border/strong" Color="#FFC7CCD6" />
+  <SolidColorBrush x:Key="kind/audio" Color="#FF0FA3A3" />
+  <SolidColorBrush x:Key="kind/data" Color="#FFC98A00" />
+  <SolidColorBrush x:Key="kind/script" Color="#FF7C5CD6" />
+  <SolidColorBrush x:Key="status/danger" Color="#FFE0404F" />
+  <SolidColorBrush x:Key="status/danger-hover" Color="#FFE85A67" />
+  <SolidColorBrush x:Key="status/danger-pressed" Color="#FFC22F3D" />
+  <SolidColorBrush x:Key="status/danger-subtle" Color="#1FE0404F" />
+  <SolidColorBrush x:Key="status/success" Color="#FF1F9E6B" />
+  <SolidColorBrush x:Key="status/warning" Color="#FFC98500" />
+  <SolidColorBrush x:Key="text/muted" Color="#FF8C92A3" />
+  <SolidColorBrush x:Key="text/on-accent" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="text/on-selected" Color="#FF1D3F8A" />
+  <SolidColorBrush x:Key="text/primary" Color="#FF1D2130" />
+  <SolidColorBrush x:Key="text/secondary" Color="#FF5B6172" />
+</ResourceDictionary>

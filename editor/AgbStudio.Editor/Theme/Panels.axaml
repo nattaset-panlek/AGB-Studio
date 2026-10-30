@@ -1,0 +1,448 @@
+<!-- 4.16 inspector, feedback, cards, tables and forms, logic graph, brand -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="using:AgbStudio.Editor.Controls"
+                    xmlns:g="using:AgbStudio.Editor.Graphics"
+                    xmlns:t="using:AgbStudio.Editor.Theme">
+
+  <!-- Inspector box (Field Text / Dropdown / XY) -->
+  <ControlTheme x:Key="FieldBox" TargetType="TextBox">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Background" Value="{DynamicResource bg/base}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource accent/default}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource accent/selected}" />
+    <Setter Property="t:Fig.Style" Value="Mono/11" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="6">
+            <ContentPresenter DockPanel.Dock="Left" Content="{TemplateBinding InnerLeftContent}" VerticalAlignment="Center" />
+            <TextPresenter Name="PART_TextPresenter" VerticalAlignment="Center" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                           SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="NoWrap"
+                           LineHeight="{TemplateBinding LineHeight}" LetterSpacing="{TemplateBinding LetterSpacing}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}" SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}" CaretBrush="{TemplateBinding CaretBrush}" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:InspectorField}" TargetType="c:InspectorField">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel HorizontalSpacing="8">
+          <TextBlock DockPanel.Dock="Left" Width="86" Text="{TemplateBinding Label}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          <Panel>
+            <TextBox Name="PART_Text" Theme="{StaticResource FieldBox}" Text="{TemplateBinding Value, Mode=TwoWay}" IsVisible="False" />
+            <Button Name="PART_Dropdown" Theme="{StaticResource BareButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsVisible="False">
+              <Border Height="24" Padding="8,0" CornerRadius="5" Background="{DynamicResource bg/base}" BorderBrush="{DynamicResource border/default}" BorderThickness="1">
+                <DockPanel HorizontalSpacing="6">
+                  <g:Icon DockPanel.Dock="Right" Glyph="down" Size="12" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+                  <TextBlock Text="{TemplateBinding Value}" t:Fig.Style="Mono/11" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+                </DockPanel>
+              </Border>
+            </Button>
+            <Grid Name="PART_XY" ColumnDefinitions="*,8,*" IsVisible="False">
+              <TextBox Theme="{StaticResource FieldBox}" Text="{TemplateBinding Value, Mode=TwoWay}">
+                <TextBox.InnerLeftContent><TextBlock Text="X" t:Fig.Style="Mono/11 Bold" Foreground="{DynamicResource axis/x}" /></TextBox.InnerLeftContent>
+              </TextBox>
+              <TextBox Grid.Column="2" Theme="{StaticResource FieldBox}" Text="{TemplateBinding Value2, Mode=TwoWay}">
+                <TextBox.InnerLeftContent><TextBlock Text="Y" t:Fig.Style="Mono/11 Bold" Foreground="{DynamicResource axis/y}" /></TextBox.InnerLeftContent>
+              </TextBox>
+            </Grid>
+            <DockPanel Name="PART_Slider" HorizontalSpacing="8" IsVisible="False">
+              <TextBlock DockPanel.Dock="Right" Width="46" Text="{TemplateBinding Value}" t:Fig.Style="Mono/11" Foreground="{DynamicResource text/primary}" TextAlignment="Right" VerticalAlignment="Center" />
+              <c:AgbSlider Value="{TemplateBinding SliderValue, Mode=TwoWay}" VerticalAlignment="Center" />
+            </DockPanel>
+            <c:AgbSwitch Name="PART_Toggle" IsChecked="{TemplateBinding IsOn, Mode=TwoWay}" HorizontalAlignment="Left" VerticalAlignment="Center" IsVisible="False" />
+          </Panel>
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Kind=Text] /template/ TextBox#PART_Text"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^[Kind=Dropdown] /template/ Button#PART_Dropdown"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^[Kind=XY] /template/ Grid#PART_XY"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^[Kind=Slider] /template/ DockPanel#PART_Slider"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^[Kind=Toggle] /template/ c|AgbSwitch#PART_Toggle"><Setter Property="IsVisible" Value="True" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:Meter}" TargetType="c:Meter">
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel HorizontalSpacing="8">
+          <TextBlock DockPanel.Dock="Left" Width="74" Text="{TemplateBinding Label}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" />
+          <TextBlock DockPanel.Dock="Right" Width="78" Text="{TemplateBinding ValueText}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/secondary}" TextAlignment="Right" VerticalAlignment="Center" />
+          <c:AgbProgress Value="{TemplateBinding Percent}" Status="{TemplateBinding Status}" VerticalAlignment="Center" />
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:Swatch}" TargetType="c:Swatch">
+    <Setter Property="Width" Value="30" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel ClipToBounds="True">
+          <Rectangle Name="PART_Fill" RadiusX="5" RadiusY="5" Fill="{TemplateBinding ColorBrush}" />
+          <Canvas Name="PART_Checker" IsVisible="False">
+            <Rectangle Width="15" Height="15" Fill="{DynamicResource bg/raised}" />
+            <Rectangle Canvas.Left="15" Canvas.Top="15" Width="15" Height="15" Fill="{DynamicResource bg/raised}" />
+          </Canvas>
+          <TextBlock Name="PART_Index" Text="{TemplateBinding Index}" t:Fig.Style="Caption/10" Foreground="{DynamicResource lit/white}" Opacity="0.8" Margin="3,17,0,0"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" />
+          <Rectangle Name="PART_Ring" RadiusX="5" RadiusY="5" Stroke="{DynamicResource lit/black}" StrokeThickness="1" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[State=Selected] /template/ Rectangle#PART_Ring"><Setter Property="Stroke" Value="{DynamicResource lit/white}" /><Setter Property="StrokeThickness" Value="2" /></Style>
+    <Style Selector="^[State=Empty]">
+      <Style Selector="^ /template/ Rectangle#PART_Fill"><Setter Property="Fill" Value="{DynamicResource bg/raised}" /></Style>
+      <Style Selector="^ /template/ Rectangle#PART_Ring"><Setter Property="Stroke" Value="{DynamicResource border/strong}" /><Setter Property="StrokeDashArray" Value="3,2" /></Style>
+      <Style Selector="^ /template/ TextBlock#PART_Index"><Setter Property="Foreground" Value="{DynamicResource text/muted}" /></Style>
+    </Style>
+    <Style Selector="^[State=Transparent]">
+      <Style Selector="^ /template/ Rectangle#PART_Fill"><Setter Property="Fill" Value="{DynamicResource bg/hover}" /></Style>
+      <Style Selector="^ /template/ Canvas#PART_Checker"><Setter Property="IsVisible" Value="True" /></Style>
+      <Style Selector="^ /template/ TextBlock#PART_Index"><Setter Property="Foreground" Value="{DynamicResource text/muted}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <!-- Status Item (status bar entry, clickable) -->
+  <ControlTheme x:Key="{x:Type c:StatusItem}" TargetType="c:StatusItem">
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Orientation="Horizontal" Spacing="6" Background="{TemplateBinding Background}">
+          <Ellipse Name="PART_Dot" Width="7" Height="7" Fill="{DynamicResource status/success}" VerticalAlignment="Center" IsVisible="{TemplateBinding IsDot}" />
+          <g:Icon Glyph="{TemplateBinding Glyph}" Size="12" VerticalAlignment="Center" IsVisible="{TemplateBinding IsDot, Converter={x:Static BoolConverters.Not}}" />
+          <TextBlock Text="{TemplateBinding Content, Converter={x:Static t:Conv.Text}}" t:Fig.Style="Label/11" VerticalAlignment="Center" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^.warn /template/ Ellipse#PART_Dot"><Setter Property="Fill" Value="{DynamicResource status/warning}" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:ConsoleLine}" TargetType="c:ConsoleLine">
+    <Setter Property="Height" Value="20" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel HorizontalSpacing="10">
+          <TextBlock DockPanel.Dock="Left" Text="{TemplateBinding Time}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+          <g:Icon Name="PART_Level" DockPanel.Dock="Left" Glyph="dots" Size="12" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" />
+          <SelectableTextBlock Text="{TemplateBinding Text}" t:Fig.Style="Mono/11" VerticalAlignment="Center" SelectionBrush="{DynamicResource accent/selected}" />
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Level=Success]"><Setter Property="Foreground" Value="{DynamicResource status/success}" />
+      <Style Selector="^ /template/ g|Icon#PART_Level"><Setter Property="Glyph" Value="check" /><Setter Property="Foreground" Value="{DynamicResource status/success}" /></Style></Style>
+    <Style Selector="^[Level=Warning]"><Setter Property="Foreground" Value="{DynamicResource status/warning}" />
+      <Style Selector="^ /template/ g|Icon#PART_Level"><Setter Property="Glyph" Value="warn" /><Setter Property="Foreground" Value="{DynamicResource status/warning}" /></Style></Style>
+    <Style Selector="^[Level=Error]"><Setter Property="Foreground" Value="{DynamicResource status/danger}" />
+      <Style Selector="^ /template/ g|Icon#PART_Level"><Setter Property="Glyph" Value="x" /><Setter Property="Foreground" Value="{DynamicResource status/danger}" /></Style></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:Toast}" TargetType="c:Toast">
+    <Setter Property="Width" Value="340" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource bg/raised}" BorderBrush="{DynamicResource border/strong}" BorderThickness="1" CornerRadius="8" Padding="12,10,14,10"
+                BoxShadow="{x:Static t:Shadows.Toast}">
+          <DockPanel HorizontalSpacing="10">
+            <g:Icon Name="PART_Icon" DockPanel.Dock="Left" Glyph="check" Size="16" Foreground="{DynamicResource status/success}" VerticalAlignment="Center" />
+            <Button Name="PART_Close" DockPanel.Dock="Right" Theme="{StaticResource BareButton}" VerticalAlignment="Center">
+              <g:Icon Glyph="x" Size="13" Foreground="{DynamicResource text/muted}" />
+            </Button>
+            <TextBlock Text="{TemplateBinding Text}" t:Fig.Style="Body/12 Medium" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" TextWrapping="Wrap" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Status=Error] /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="warn" /><Setter Property="Foreground" Value="{DynamicResource status/danger}" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:TooltipView}" TargetType="c:TooltipView">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="{TemplateBinding Text}" t:Fig.Style="Label/11 Medium" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+          <TextBlock Text="{TemplateBinding Shortcut}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
+                     IsVisible="{TemplateBinding Shortcut, Converter={x:Static t:Conv.NotEmpty}}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Cards -->
+  <ControlTheme x:Key="{x:Type c:AssetCard}" TargetType="c:AssetCard">
+    <Setter Property="Width" Value="102" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="5">
+          <Border Name="PART_Thumb" Height="62" CornerRadius="7" Background="{DynamicResource bg/base}" BorderBrush="{DynamicResource border/default}" BorderThickness="1">
+            <g:ArtImage Source="{TemplateBinding Preview}" Width="64" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Text="{TemplateBinding NameText}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/primary}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{TemplateBinding Meta}" t:Fig.Style="Caption/10" Foreground="{DynamicResource text/muted}" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected /template/ Border#PART_Thumb"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="2" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:FrameThumb}" TargetType="c:FrameThumb">
+    <Setter Property="Width" Value="66" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="5">
+          <Border Name="PART_Thumb" Height="66" CornerRadius="7" Background="{DynamicResource bg/base}" BorderBrush="{DynamicResource border/default}" BorderThickness="1">
+            <g:ArtImage Source="{TemplateBinding Preview}" Width="64" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Name="PART_Label" Text="{TemplateBinding Label}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" HorizontalAlignment="Center" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected">
+      <Style Selector="^ /template/ Border#PART_Thumb"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="2" /></Style>
+      <Style Selector="^ /template/ TextBlock#PART_Label"><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:SceneCard}" TargetType="c:SceneCard">
+    <Setter Property="Width" Value="166" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="8">
+          <StackPanel>
+            <Border Width="150" Height="100" CornerRadius="8" ClipToBounds="True">
+              <g:ArtImage Source="{TemplateBinding Preview}" Width="150" Height="100" />
+            </Border>
+            <DockPanel Height="30" HorizontalSpacing="8">
+              <TextBlock DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+              <TextBlock Text="{TemplateBinding NameText}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="2" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:TemplateCard}" TargetType="c:TemplateCard">
+    <Setter Property="Width" Value="252" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="6">
+          <StackPanel>
+            <Border Width="240" Height="160" CornerRadius="8" ClipToBounds="True">
+              <g:ArtImage Source="{TemplateBinding Preview}" Width="240" Height="160" />
+            </Border>
+            <StackPanel Spacing="4" Margin="6,10,6,6">
+              <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" />
+              <TextBlock Text="{TemplateBinding Description}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/secondary}" TextWrapping="Wrap" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="2" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:GlyphCell}" TargetType="c:GlyphCell">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Rectangle Name="PART_Box" RadiusX="6" RadiusY="6" Fill="{DynamicResource bg/base}" Stroke="{DynamicResource border/default}" StrokeThickness="1" />
+          <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock Name="PART_Char" Text="{TemplateBinding Char}" FontFamily="{x:Static t:Fonts.Thai}" FontWeight="Medium" FontSize="18" LineHeight="20"
+                       Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Code}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[State=Selected] /template/ Rectangle#PART_Box"><Setter Property="Stroke" Value="{DynamicResource accent/default}" /><Setter Property="StrokeThickness" Value="2" /></Style>
+    <Style Selector="^[State=Missing]">
+      <Style Selector="^ /template/ Rectangle#PART_Box"><Setter Property="Fill" Value="Transparent" /><Setter Property="Stroke" Value="{DynamicResource border/strong}" /><Setter Property="StrokeDashArray" Value="3,2" /></Style>
+      <Style Selector="^ /template/ TextBlock#PART_Char"><Setter Property="Foreground" Value="{DynamicResource text/muted}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:TableCell}" TargetType="c:TableCell">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="{TemplateBinding Padding}">
+          <TextBlock Name="PART_Text" Text="{TemplateBinding Text}" t:Fig.Style="Body/12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Kind=Header]">
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Background" Value="{DynamicResource bg/raised}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+      <Style Selector="^ /template/ TextBlock#PART_Text"><Setter Property="t:Fig.Style" Value="Overline/11" /></Style>
+    </Style>
+    <Style Selector="^[Kind=Mono] /template/ TextBlock#PART_Text"><Setter Property="t:Fig.Style" Value="Mono/11" /></Style>
+    <Style Selector="^[Kind=Selected]"><Setter Property="Background" Value="{DynamicResource accent/selected}" /></Style>
+  </ControlTheme>
+
+  <!-- Text Input and Select -->
+  <ControlTheme x:Key="InputBox" TargetType="TextBox">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{DynamicResource bg/base}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource accent/default}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource accent/selected}" />
+    <Setter Property="t:Fig.Style" Value="Body/12" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <Panel VerticalAlignment="Center">
+            <TextBlock Text="{TemplateBinding Watermark}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/muted}" IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+            <TextPresenter Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                           SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="NoWrap"
+                           LineHeight="{TemplateBinding LineHeight}" LetterSpacing="{TemplateBinding LetterSpacing}" PasswordChar="{TemplateBinding PasswordChar}"
+                           SelectionBrush="{TemplateBinding SelectionBrush}" SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}" CaretBrush="{TemplateBinding CaretBrush}" />
+          </Panel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:focus"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="1.5" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox" BasedOn="{StaticResource InputBox}" />
+
+  <ControlTheme x:Key="{x:Type c:TextField}" TargetType="c:TextField">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="6">
+          <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Label/11 Medium" Foreground="{DynamicResource text/secondary}" />
+          <TextBox Name="PART_Box" Theme="{StaticResource InputBox}" Text="{TemplateBinding Text, Mode=TwoWay}" />
+          <TextBlock Text="{TemplateBinding Help}" t:Fig.Style="Caption/10" Foreground="{DynamicResource text/muted}" IsVisible="{TemplateBinding Help, Converter={x:Static t:Conv.NotEmpty}}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:SelectField}" TargetType="c:SelectField">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Spacing="6">
+          <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Label/11 Medium" Foreground="{DynamicResource text/secondary}" />
+          <Button Name="PART_Box" Theme="{StaticResource BareButton}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Border Name="PART_Frame" Height="32" Padding="10,0" CornerRadius="6" Background="{DynamicResource bg/base}" BorderBrush="{DynamicResource border/default}" BorderThickness="1">
+              <DockPanel HorizontalSpacing="8">
+                <g:Icon DockPanel.Dock="Right" Glyph="down" Size="13" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+                <TextBlock Text="{TemplateBinding Selected}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+              </DockPanel>
+            </Border>
+          </Button>
+          <TextBlock Text="{TemplateBinding Help}" t:Fig.Style="Caption/10" Foreground="{DynamicResource text/muted}" IsVisible="{TemplateBinding Help, Converter={x:Static t:Conv.NotEmpty}}" />
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:focus-within /template/ Border#PART_Frame"><Setter Property="BorderBrush" Value="{DynamicResource accent/default}" /><Setter Property="BorderThickness" Value="1.5" /></Style>
+  </ControlTheme>
+
+  <!-- Logic graph -->
+  <ControlTheme x:Key="{x:Type c:NodeHeader}" TargetType="c:NodeHeader">
+    <Setter Property="Width" Value="200" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="PART_Root" CornerRadius="8,8,0,0" Padding="10,0">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <g:Icon Name="PART_Icon" Size="14" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Category=Event]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-event}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="refresh" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-event}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Input]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-input}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="pad" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-input}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Physics]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-physics}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="rocket" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-physics}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Flow]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-flow}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="nodes" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-flow}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Data]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-data}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="db" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-data}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Sound]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-sound}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="sound" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-sound}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Actor]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-actor}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="cube" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-actor}" /></Setter></Style></Style>
+    <Style Selector="^[Category=Math]"><Style Selector="^ /template/ Border#PART_Root"><Setter Property="Background"><SolidColorBrush Color="{StaticResource lit/node-math}" Opacity="0.18" /></Setter></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Glyph" Value="plus" /><Setter Property="Foreground"><SolidColorBrush Color="{StaticResource lit/node-math}" /></Setter></Style></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:NodePin}" TargetType="c:NodePin">
+    <Setter Property="Width" Value="10" />
+    <Setter Property="Height" Value="10" />
+    <Setter Property="Foreground" Value="{DynamicResource lit/pin-bool}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Ellipse Name="PART_Dot" Fill="{DynamicResource lit/pin-hollow}" Stroke="{TemplateBinding Foreground}" StrokeThickness="2" />
+          <g:Icon Name="PART_Exec" Glyph="play" Size="12" IsVisible="False" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Type=Fixed]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-fixed}" /></Style>
+    <Style Selector="^[Type=Actor]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-actor}" /></Style>
+    <Style Selector="^[Type=Text]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-text}" /></Style>
+    <Style Selector="^[Dir=Out] /template/ Ellipse#PART_Dot"><Setter Property="Fill" Value="{Binding $parent[c:NodePin].Foreground}" /></Style>
+    <Style Selector="^[Type=Exec]">
+      <Setter Property="Width" Value="12" />
+      <Setter Property="Height" Value="12" />
+      <Setter Property="Foreground" Value="{DynamicResource lit/pin-exec}" />
+      <Style Selector="^ /template/ Ellipse#PART_Dot"><Setter Property="IsVisible" Value="False" /></Style>
+      <Style Selector="^ /template/ g|Icon#PART_Exec"><Setter Property="IsVisible" Value="True" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <!-- Brand -->
+  <ControlTheme x:Key="{x:Type c:AppIcon}" TargetType="c:AppIcon">
+    <Setter Property="Width" Value="128" />
+    <Setter Property="Height" Value="128" />
+    <Setter Property="Template">
+      <ControlTemplate><g:ArtImage Name="PART_Art" Source="brand/app-icon/Light" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" /></ControlTemplate>
+    </Setter>
+    <Style Selector="^[Variant=Dark] /template/ g|ArtImage#PART_Art"><Setter Property="Source" Value="brand/app-icon/Dark" /></Style>
+    <Style Selector="^[Variant=Indigo] /template/ g|ArtImage#PART_Art"><Setter Property="Source" Value="brand/app-icon/Indigo" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:BrandMark}" TargetType="c:BrandMark">
+    <Setter Property="Width" Value="96" />
+    <Setter Property="Height" Value="96" />
+    <Setter Property="Template">
+      <ControlTemplate><g:ArtImage Source="brand/mark" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" /></ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

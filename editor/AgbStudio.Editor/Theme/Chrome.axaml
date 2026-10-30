@@ -1,0 +1,292 @@
+<!-- 4.16 chrome: Title Bar, Menu Bar Item, Menu Item, Menu Separator, menu surface, Dialog Header / Footer, Popover Header, Tooltip -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="using:AgbStudio.Editor.Controls"
+                    xmlns:g="using:AgbStudio.Editor.Graphics"
+                    xmlns:t="using:AgbStudio.Editor.Theme">
+
+  <!-- A button with no chrome of its own (breadcrumb, close glyphs, field boxes) -->
+  <ControlTheme x:Key="BareButton" TargetType="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" Content="{TemplateBinding Content}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Menu frame from the Editor Map: bg/raised, border/strong, radius 8, padding 4, Shadow/Popover, 264 wide -->
+  <ControlTheme x:Key="MenuSurfaceBorder" TargetType="Border">
+    <Setter Property="Width" Value="264" />
+    <Setter Property="Background" Value="{DynamicResource bg/raised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/strong}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="4" />
+    <Setter Property="BoxShadow" Value="{x:Static t:Shadows.Popover}" />
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:MenuSurface}" TargetType="c:MenuSurface">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Theme="{StaticResource MenuSurfaceBorder}">
+          <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Grid.IsSharedSizeScope="True" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Menu Separator -->
+  <ControlTheme x:Key="{x:Type Separator}" TargetType="Separator">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="8,4" />
+    <Setter Property="Background" Value="{DynamicResource border/default}" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate><Border Background="{TemplateBinding Background}" /></ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Menu Item: Kind Default / Submenu / Checked / Danger (class "danger"), State Default / Hover / Disabled -->
+  <ControlTheme x:Key="{x:Type MenuItem}" TargetType="MenuItem">
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Name="PART_LayoutRoot" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+            <DockPanel HorizontalSpacing="8">
+              <g:Icon Name="PART_Check" DockPanel.Dock="Left" Glyph="check" Size="14" Foreground="{DynamicResource accent/default}" VerticalAlignment="Center" IsVisible="False" />
+              <ContentPresenter Name="PART_IconPresenter" DockPanel.Dock="Left" Content="{TemplateBinding Icon}" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center"
+                                IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <g:Icon Name="PART_Chevron" DockPanel.Dock="Right" Glyph="right" Size="12" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" IsVisible="False" />
+              <TextBlock Name="PART_Shortcut" DockPanel.Dock="Right" Text="{TemplateBinding InputGesture, Converter={x:Static t:Conv.Gesture}}" t:Fig.Style="Mono/10"
+                         Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" IsVisible="{TemplateBinding InputGesture, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <TextBlock Name="PART_Label" Text="{TemplateBinding Header, Converter={x:Static t:Conv.Text}}" t:Fig.Style="Body/12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+          </Border>
+          <Popup Name="PART_Popup" Placement="RightEdgeAlignedTop" HorizontalOffset="4" VerticalOffset="-5" WindowManagerAddShadowHint="False"
+                 IsLightDismissEnabled="False" ShouldUseOverlayLayer="True" IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}">
+            <Border Theme="{StaticResource MenuSurfaceBorder}">
+              <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Grid.IsSharedSizeScope="True" />
+            </Border>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ g|Icon#PART_Check"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^:not(:empty) /template/ g|Icon#PART_Chevron"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^.danger"><Setter Property="Foreground" Value="{DynamicResource status/danger}" /></Style>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource accent/selected}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/on-selected}" />
+      <Style Selector="^ /template/ TextBlock#PART_Shortcut"><Setter Property="Foreground" Value="{DynamicResource text/on-selected}" /></Style>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource text/muted}" />
+      <Style Selector="^ /template/ ContentPresenter#PART_IconPresenter"><Setter Property="Foreground" Value="{DynamicResource text/muted}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <!-- Menu Item outside a menu (Command Palette rows); :selected = Hover -->
+  <ControlTheme x:Key="{x:Type c:MenuRow}" TargetType="c:MenuRow">
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="8">
+            <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="14" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center"
+                    IsVisible="{TemplateBinding Glyph, Converter={x:Static t:Conv.NotEmpty}}" />
+            <TextBlock Name="PART_Right" DockPanel.Dock="Right" Text="{TemplateBinding RightText}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
+                       IsVisible="{TemplateBinding RightText, Converter={x:Static t:Conv.NotEmpty}}" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource accent/selected}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/on-selected}" />
+      <Style Selector="^ /template/ TextBlock#PART_Right"><Setter Property="Foreground" Value="{DynamicResource text/on-selected}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <!-- Bare text input (Command Palette query) -->
+  <ControlTheme x:Key="BareTextBox" TargetType="TextBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource accent/default}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource accent/selected}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel Background="{TemplateBinding Background}" VerticalAlignment="Center">
+          <TextBlock Text="{TemplateBinding Watermark}" FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}" FontWeight="{TemplateBinding FontWeight}"
+                     Foreground="{DynamicResource text/muted}" IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+          <TextPresenter Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                         SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="NoWrap"
+                         LineHeight="{TemplateBinding LineHeight}" LetterSpacing="{TemplateBinding LetterSpacing}"
+                         SelectionBrush="{TemplateBinding SelectionBrush}" SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}" CaretBrush="{TemplateBinding CaretBrush}" />
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Window chrome of Figma dialogs and popovers -->
+  <ControlTheme x:Key="DialogSurface" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource bg/panel}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/strong}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="BoxShadow" Value="{x:Static t:Shadows.Dialog}" />
+  </ControlTheme>
+  <ControlTheme x:Key="PopoverSurface" TargetType="Border" BasedOn="{StaticResource DialogSurface}">
+    <Setter Property="BoxShadow" Value="{x:Static t:Shadows.Popover}" />
+  </ControlTheme>
+
+  <!-- Menu Bar Item: Default / Open -->
+  <ControlTheme x:Key="MenuBarItem" TargetType="MenuItem">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Panel>
+          <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+            <TextBlock Text="{TemplateBinding Header, Converter={x:Static t:Conv.Text}}" t:Fig.Style="Body/12" VerticalAlignment="Center" />
+          </Border>
+          <Popup Name="PART_Popup" Placement="BottomEdgeAlignedLeft" VerticalOffset="4" WindowManagerAddShadowHint="False" IsLightDismissEnabled="True"
+                 ShouldUseOverlayLayer="True" OverlayInputPassThroughElement="{Binding $parent[Menu]}" IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}">
+            <Border Theme="{StaticResource MenuSurfaceBorder}">
+              <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Grid.IsSharedSizeScope="True" />
+            </Border>
+          </Popup>
+        </Panel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:open"><Setter Property="Background" Value="{DynamicResource bg/hover}" /><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type Menu}" TargetType="Menu">
+    <Setter Property="ItemContainerTheme" Value="{StaticResource MenuBarItem}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" KeyboardNavigation.TabNavigation="Continue" />
+      </ControlTemplate>
+    </Setter>
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type ContextMenu}" TargetType="ContextMenu">
+    <Setter Property="WindowManagerAddShadowHint" Value="False" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Theme="{StaticResource MenuSurfaceBorder}">
+          <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Grid.IsSharedSizeScope="True" KeyboardNavigation.TabNavigation="Continue" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Tooltip: black, radius 6, padding 6 / 9 -->
+  <ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip">
+    <Setter Property="Background" Value="{DynamicResource lit/black}" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="Padding" Value="9,6" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="t:Fig.Style" Value="Label/11 Medium" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:TitleBar}" TargetType="c:TitleBar">
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{DynamicResource bg/panel}" BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="12,0">
+          <Grid ColumnDefinitions="Auto,18,*,18,Auto">
+            <ContentPresenter Name="PART_Menus" Content="{TemplateBinding Menus}" VerticalAlignment="Center" />
+            <Button Name="PART_Breadcrumb" Grid.Column="2" Theme="{StaticResource BareButton}" Command="{TemplateBinding BreadcrumbCommand}" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{TemplateBinding Project}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/secondary}" />
+                <TextBlock Text="/" t:Fig.Style="Body/12" Foreground="{DynamicResource text/muted}" />
+                <TextBlock Text="{TemplateBinding Document}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" />
+              </StackPanel>
+            </Button>
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+              <c:AgbButton Name="PART_Debug" Kind="Secondary" Glyph="bug" Content="Debug" Command="{TemplateBinding DebugCommand}" />
+              <c:AgbButton Name="PART_Build" Kind="Primary" Content="Build" Command="{TemplateBinding BuildCommand}" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:DialogHeader}" TargetType="c:DialogHeader">
+    <Setter Property="Height" Value="52" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="20,0,16,0">
+          <DockPanel HorizontalSpacing="10">
+            <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="16" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center"
+                    IsVisible="{TemplateBinding Glyph, Converter={x:Static t:Conv.NotEmpty}}" />
+            <c:IconButton Name="PART_Close" DockPanel.Dock="Right" Glyph="x" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Title/14" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:DialogFooter}" TargetType="c:DialogFooter">
+    <Setter Property="Height" Value="60" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border BorderBrush="{DynamicResource border/default}" BorderThickness="0,1,0,0" Padding="20,0">
+          <DockPanel HorizontalSpacing="8">
+            <TextBlock DockPanel.Dock="Left" Text="{TemplateBinding Hint}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
+                       IsVisible="{TemplateBinding Hint, Converter={x:Static t:Conv.NotEmpty}}" />
+            <c:AgbButton Name="PART_Confirm" DockPanel.Dock="Right" Kind="{TemplateBinding ConfirmKind}" Size="LG" Content="{TemplateBinding ConfirmText}" IsDefault="True" />
+            <c:AgbButton Name="PART_Cancel" DockPanel.Dock="Right" Kind="Secondary" Size="LG" Content="{TemplateBinding CancelText}"
+                         IsVisible="{TemplateBinding CancelText, Converter={x:Static t:Conv.NotEmpty}}" />
+            <Panel />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:PopoverHeader}" TargetType="c:PopoverHeader">
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="12,0,10,0">
+          <DockPanel HorizontalSpacing="8">
+            <c:IconButton Name="PART_Close" DockPanel.Dock="Right" Glyph="x" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>

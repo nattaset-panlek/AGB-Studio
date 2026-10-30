@@ -1,0 +1,1275 @@
+[
+ {
+  "title": "title",
+  "items": [
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   },
+   {
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "File menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "New Project…",
+    "shortcut": "Ctrl+N",
+    "icon": "folderplus"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Open Project…",
+    "shortcut": "Ctrl+O",
+    "icon": "folder"
+   },
+   {
+    "kind": "Submenu",
+    "state": "Default",
+    "label": "Open Recent",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Save",
+    "shortcut": "Ctrl+S",
+    "icon": "save"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Save All",
+    "shortcut": "Ctrl+Shift+S"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Import Asset…",
+    "shortcut": "Ctrl+I",
+    "icon": "upload"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Export ROM (.gba)…",
+    "shortcut": "Ctrl+E",
+    "icon": "chip"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Project Settings…",
+    "shortcut": null,
+    "icon": "sliders"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Preferences…",
+    "shortcut": "Ctrl+,"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Exit",
+    "shortcut": "Alt+F4"
+   }
+  ]
+ },
+ {
+  "title": "Edit menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Undo",
+    "shortcut": "Ctrl+Z",
+    "icon": "undo"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Redo",
+    "shortcut": "Ctrl+Y",
+    "icon": "redo"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Cut",
+    "shortcut": "Ctrl+X"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Copy",
+    "shortcut": "Ctrl+C"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Paste",
+    "shortcut": "Ctrl+V"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": "Ctrl+D"
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete",
+    "shortcut": "Del"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Select All",
+    "shortcut": "Ctrl+A"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Find in Project…",
+    "shortcut": "Ctrl+Shift+F",
+    "icon": "search"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Command Palette…",
+    "shortcut": "Ctrl+K"
+   }
+  ]
+ },
+ {
+  "title": "Assets menu",
+  "items": [
+   {
+    "kind": "Submenu",
+    "state": "Default",
+    "label": "Create",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Import…",
+    "shortcut": "Ctrl+I",
+    "icon": "upload"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Reimport",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Show in Explorer",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Find Unused Assets",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Optimize Palettes…",
+    "shortcut": null,
+    "icon": "sliders"
+   }
+  ]
+ },
+ {
+  "title": "Scene menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "New Scene…",
+    "shortcut": "Ctrl+Shift+N",
+    "icon": "map"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Scene Settings…",
+    "shortcut": null
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "Set as Start Scene",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Submenu",
+    "state": "Default",
+    "label": "Add Actor",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Background Layers…",
+    "shortcut": null,
+    "icon": "layers"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "World Map",
+    "shortcut": "Ctrl+M",
+    "icon": "nodes"
+   }
+  ]
+ },
+ {
+  "title": "Build menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Play",
+    "shortcut": "F5",
+    "icon": "play"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Play from Here",
+    "shortcut": "Shift+F5"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Build ROM",
+    "shortcut": "Ctrl+B",
+    "icon": "zap"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Build & Run in Emulator",
+    "shortcut": "Ctrl+R"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Flash to Cartridge…",
+    "shortcut": null,
+    "icon": "chip"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Build Report",
+    "shortcut": null,
+    "icon": "chip"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Clean Build",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Tools menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Palette Manager",
+    "shortcut": null,
+    "icon": "sliders"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Font Manager",
+    "shortcut": null,
+    "icon": "type"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Database",
+    "shortcut": null,
+    "icon": "db"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Localization",
+    "shortcut": null,
+    "icon": "globe"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Audio",
+    "shortcut": null,
+    "icon": "music"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Dialogue Editor",
+    "shortcut": null,
+    "icon": "book"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Logic Graph",
+    "shortcut": null,
+    "icon": "nodes"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Debugger",
+    "shortcut": "Ctrl+Shift+D",
+    "icon": "bug"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Screenshot / GIF",
+    "shortcut": "F12",
+    "icon": "camera"
+   }
+  ]
+ },
+ {
+  "title": "Help menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Getting Started",
+    "shortcut": null,
+    "icon": "star"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Scripting API",
+    "shortcut": "F1",
+    "icon": "book"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Keyboard Shortcuts",
+    "shortcut": "Ctrl+/"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Report a Bug…",
+    "shortcut": null,
+    "icon": "bug"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Check for Updates",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "About AGB Studio",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Open Recent",
+  "items": [
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "Sky Hopper",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Cave Quest RPG",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Block Puzzle",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Clear Recent",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Create",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Sprite",
+    "shortcut": null,
+    "icon": "image"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Tileset / Tilemap",
+    "shortcut": null,
+    "icon": "tiles"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Font",
+    "shortcut": null,
+    "icon": "type"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Palette",
+    "shortcut": null,
+    "icon": "sliders"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Sound Effect",
+    "shortcut": null,
+    "icon": "sound"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Music",
+    "shortcut": null,
+    "icon": "music"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Data Table",
+    "shortcut": null,
+    "icon": "table"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "C# Script",
+    "shortcut": null,
+    "icon": "code"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Logic Graph",
+    "shortcut": null,
+    "icon": "nodes"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Dialogue",
+    "shortcut": null,
+    "icon": "book"
+   }
+  ]
+ },
+ {
+  "title": "Add Actor",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Empty Actor",
+    "shortcut": null,
+    "icon": "cube"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Player",
+    "shortcut": null,
+    "icon": "user"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Enemy",
+    "shortcut": null,
+    "icon": "bug"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Pickup",
+    "shortcut": null,
+    "icon": "coin"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Trigger Zone",
+    "shortcut": null,
+    "icon": "link"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Camera Zone",
+    "shortcut": null,
+    "icon": "camera"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Text Label",
+    "shortcut": null,
+    "icon": "type"
+   }
+  ]
+ },
+ {
+  "title": "Add to Scene",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Empty Actor",
+    "shortcut": null,
+    "icon": "cube"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Player",
+    "shortcut": null,
+    "icon": "user"
+   },
+   {
+    "kind": "Submenu",
+    "state": "Default",
+    "label": "Enemy",
+    "shortcut": null,
+    "icon": "bug"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Pickup",
+    "shortcut": null,
+    "icon": "coin"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Trigger Zone",
+    "shortcut": null,
+    "icon": "link"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Camera Zone",
+    "shortcut": null,
+    "icon": "camera"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Text Label",
+    "shortcut": null,
+    "icon": "type"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Tilemap Layer",
+    "shortcut": null,
+    "icon": "tiles"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Prefab…",
+    "shortcut": null,
+    "icon": "folder"
+   }
+  ]
+ },
+ {
+  "title": "Actor Context Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Rename",
+    "shortcut": "F2"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": "Ctrl+D"
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete",
+    "shortcut": "Del"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Add Behaviour…",
+    "shortcut": null,
+    "icon": "plus"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Edit Script",
+    "shortcut": null,
+    "icon": "code"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Make Prefab",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Focus in View",
+    "shortcut": "F"
+   }
+  ]
+ },
+ {
+  "title": "Asset Context Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Open",
+    "shortcut": "Enter"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Rename",
+    "shortcut": "F2"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": null
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete",
+    "shortcut": "Del"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Find Usages",
+    "shortcut": null,
+    "icon": "search"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Reimport",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Show in Explorer",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Create Animation",
+    "shortcut": null,
+    "icon": "film"
+   }
+  ]
+ },
+ {
+  "title": "Component Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Copy Component",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Paste Values",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Reset",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Edit Script",
+    "shortcut": null,
+    "icon": "code"
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Remove Component",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Zoom",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "100%",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "200%",
+    "shortcut": null
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "300%",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "400%",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Fit to Screen",
+    "shortcut": "Ctrl+0"
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "Pixel-perfect",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Animation List",
+  "items": [
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "idle",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "run",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "jump",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "hurt",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Edit Animations…",
+    "shortcut": null,
+    "icon": "film"
+   }
+  ]
+ },
+ {
+  "title": "Project Context Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Open",
+    "shortcut": "Enter",
+    "icon": "folder"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Show in Explorer",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Rename",
+    "shortcut": "F2"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Remove from list",
+    "shortcut": null
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete project…",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Play Speed",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "¼×",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "½×",
+    "shortcut": null
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "1×",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "2×",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "4×",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Frame step",
+    "shortcut": "F10",
+    "icon": "step"
+   }
+  ]
+ },
+ {
+  "title": "OAM Size",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Square 8×8",
+    "shortcut": null
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "Square 16×16",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Square 32×32",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Square 64×64",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Wide 16×8 · 32×8 · 32×16 · 64×32",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Tall 8×16 · 8×32 · 16×32 · 32×64",
+    "shortcut": null
+   }
+  ]
+ },
+ {
+  "title": "Add Layer",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Tile layer",
+    "shortcut": null,
+    "icon": "tiles"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Image layer",
+    "shortcut": null,
+    "icon": "image"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Rotate / scale layer (Mode 1–2)",
+    "shortcut": null,
+    "icon": "refresh"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Collision-only layer",
+    "shortcut": null,
+    "icon": "square"
+   }
+  ]
+ },
+ {
+  "title": "Node Context Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": "Ctrl+D"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Disable",
+    "shortcut": null
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Group into comment",
+    "shortcut": "Ctrl+G"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Collapse",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Show generated C#",
+    "shortcut": null,
+    "icon": "code"
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete",
+    "shortcut": "Del"
+   }
+  ]
+ },
+ {
+  "title": "Scene Context Menu",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Open",
+    "shortcut": "Enter",
+    "icon": "map"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Rename",
+    "shortcut": "F2"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Duplicate",
+    "shortcut": "Ctrl+D"
+   },
+   {
+    "kind": "Checked",
+    "state": "Default",
+    "label": "Set as start scene",
+    "shortcut": null
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Danger",
+    "state": "Default",
+    "label": "Delete",
+    "shortcut": "Del"
+   }
+  ]
+ },
+ {
+  "title": "Add to Dialogue",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Line",
+    "shortcut": null,
+    "icon": "type"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Choice",
+    "shortcut": null,
+    "icon": "nodes"
+   },
+   {
+    "kind": "Submenu",
+    "state": "Default",
+    "label": "Command",
+    "shortcut": null,
+    "icon": "code"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Condition",
+    "shortcut": null,
+    "icon": "link"
+   },
+   {
+    "separator": true
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Paste",
+    "shortcut": "Ctrl+V"
+   }
+  ]
+ },
+ {
+  "title": "Command",
+  "items": [
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Go to scene…",
+    "shortcut": null,
+    "icon": "map"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Set flag…",
+    "shortcut": null,
+    "icon": "flag"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Give item…",
+    "shortcut": null,
+    "icon": "gift"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Play sound…",
+    "shortcut": null,
+    "icon": "sound"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Wait…",
+    "shortcut": null,
+    "icon": "clock"
+   },
+   {
+    "kind": "Default",
+    "state": "Default",
+    "label": "Shake camera…",
+    "shortcut": null,
+    "icon": "camera"
+   }
+  ]
+ }
+]

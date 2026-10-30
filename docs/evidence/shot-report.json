@@ -1,0 +1,3500 @@
+{
+  "generated": "2026-10-30 22:07:08Z",
+  "threshold": 48,
+  "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
+  "items": [
+    {
+      "Id": "C-menu-item-default-default",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.62,
+      "BestShiftDiffPercent": 2.62,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.81,
+      "ColourDiffPercent": 5.61
+    },
+    {
+      "Id": "C-menu-item-default-hover",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.28,
+      "BestShiftDiffPercent": 2.28,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.45,
+      "ColourDiffPercent": 6.13
+    },
+    {
+      "Id": "C-menu-item-default-disabled",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 0.29,
+      "BestShiftDiffPercent": 0.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.16,
+      "ColourDiffPercent": 4.98
+    },
+    {
+      "Id": "C-menu-item-submenu-default",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.62,
+      "BestShiftDiffPercent": 2.62,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.83,
+      "ColourDiffPercent": 5.61
+    },
+    {
+      "Id": "C-menu-item-submenu-hover",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.28,
+      "BestShiftDiffPercent": 2.28,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.46,
+      "ColourDiffPercent": 6.13
+    },
+    {
+      "Id": "C-menu-item-checked-default",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.62,
+      "BestShiftDiffPercent": 2.62,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.83,
+      "ColourDiffPercent": 5.91
+    },
+    {
+      "Id": "C-menu-item-danger-default",
+      "set": "Menu Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.92,
+      "BestShiftDiffPercent": 1.92,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.47,
+      "ColourDiffPercent": 5.57
+    },
+    {
+      "Id": "C-menu-separator",
+      "set": "Menu Separator",
+      "figma": "248x9",
+      "app": "248x9",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0,
+      "ColourDiffPercent": 0
+    },
+    {
+      "Id": "C-menu-bar-item-default",
+      "set": "Menu Bar Item",
+      "figma": "36x24",
+      "app": "36x24",
+      "DiffPercent": 1.04,
+      "BestShiftDiffPercent": 1.04,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.01,
+      "ColourDiffPercent": 9.38
+    },
+    {
+      "Id": "C-menu-bar-item-open",
+      "set": "Menu Bar Item",
+      "figma": "36x24",
+      "app": "36x24",
+      "DiffPercent": 3.01,
+      "BestShiftDiffPercent": 3.01,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.45,
+      "ColourDiffPercent": 9.95
+    },
+    {
+      "Id": "C-button-primary-sm-default",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 8.78,
+      "BestShiftDiffPercent": 8.78,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.27,
+      "ColourDiffPercent": 16.12
+    },
+    {
+      "Id": "C-button-secondary-sm-default",
+      "set": "Button",
+      "figma": "80x26",
+      "app": "80x26",
+      "DiffPercent": 8.51,
+      "BestShiftDiffPercent": 8.51,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 10.82,
+      "ColourDiffPercent": 16.35
+    },
+    {
+      "Id": "C-button-ghost-sm-default",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 6.46,
+      "BestShiftDiffPercent": 6.46,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.2,
+      "ColourDiffPercent": 13.46
+    },
+    {
+      "Id": "C-button-danger-sm-default",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 7.89,
+      "BestShiftDiffPercent": 7.89,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.43,
+      "ColourDiffPercent": 16.12
+    },
+    {
+      "Id": "C-button-primary-lg-default",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.68,
+      "BestShiftDiffPercent": 5.68,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.53,
+      "ColourDiffPercent": 11.9
+    },
+    {
+      "Id": "C-button-secondary-lg-default",
+      "set": "Button",
+      "figma": "90x32",
+      "app": "90x32",
+      "DiffPercent": 6.88,
+      "BestShiftDiffPercent": 6.88,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.22,
+      "ColourDiffPercent": 11.25
+    },
+    {
+      "Id": "C-button-ghost-lg-default",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.5,
+      "BestShiftDiffPercent": 5.5,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.52,
+      "ColourDiffPercent": 10.05
+    },
+    {
+      "Id": "C-button-danger-lg-default",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.15,
+      "BestShiftDiffPercent": 5.15,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.7,
+      "ColourDiffPercent": 11.86
+    },
+    {
+      "Id": "C-button-primary-sm-hover",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 7.25,
+      "BestShiftDiffPercent": 7.25,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.79,
+      "ColourDiffPercent": 16.12
+    },
+    {
+      "Id": "C-button-secondary-sm-hover",
+      "set": "Button",
+      "figma": "80x26",
+      "app": "80x26",
+      "DiffPercent": 6.39,
+      "BestShiftDiffPercent": 6.39,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.82,
+      "ColourDiffPercent": 14.47
+    },
+    {
+      "Id": "C-button-ghost-sm-hover",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 6.56,
+      "BestShiftDiffPercent": 6.56,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.83,
+      "ColourDiffPercent": 14.35
+    },
+    {
+      "Id": "C-button-danger-sm-hover",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 7.05,
+      "BestShiftDiffPercent": 7.05,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.88,
+      "ColourDiffPercent": 14.99
+    },
+    {
+      "Id": "C-button-primary-lg-hover",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 4.83,
+      "BestShiftDiffPercent": 4.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3,
+      "ColourDiffPercent": 11.9
+    },
+    {
+      "Id": "C-button-secondary-lg-hover",
+      "set": "Button",
+      "figma": "90x32",
+      "app": "90x32",
+      "DiffPercent": 4.79,
+      "BestShiftDiffPercent": 4.79,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.7,
+      "ColourDiffPercent": 10.62
+    },
+    {
+      "Id": "C-button-ghost-lg-hover",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 4.9,
+      "BestShiftDiffPercent": 4.9,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.71,
+      "ColourDiffPercent": 10.05
+    },
+    {
+      "Id": "C-button-danger-lg-hover",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 4.55,
+      "BestShiftDiffPercent": 4.55,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.1,
+      "ColourDiffPercent": 11.04
+    },
+    {
+      "Id": "C-button-primary-sm-pressed",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 9.42,
+      "BestShiftDiffPercent": 9.42,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 30.29,
+      "ColourDiffPercent": 97.09
+    },
+    {
+      "Id": "C-button-secondary-sm-pressed",
+      "set": "Button",
+      "figma": "80x26",
+      "app": "80x26",
+      "DiffPercent": 7.69,
+      "BestShiftDiffPercent": 7.69,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 22.66,
+      "ColourDiffPercent": 88.65
+    },
+    {
+      "Id": "C-button-ghost-sm-pressed",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 4.64,
+      "BestShiftDiffPercent": 4.64,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 20.62,
+      "ColourDiffPercent": 95.27
+    },
+    {
+      "Id": "C-button-danger-sm-pressed",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 8.43,
+      "BestShiftDiffPercent": 8.43,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 28.97,
+      "ColourDiffPercent": 97.09
+    },
+    {
+      "Id": "C-button-primary-lg-pressed",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 6.46,
+      "BestShiftDiffPercent": 6.46,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 28.88,
+      "ColourDiffPercent": 96.66
+    },
+    {
+      "Id": "C-button-secondary-lg-pressed",
+      "set": "Button",
+      "figma": "90x32",
+      "app": "90x32",
+      "DiffPercent": 5.83,
+      "BestShiftDiffPercent": 5.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 21.01,
+      "ColourDiffPercent": 89.1
+    },
+    {
+      "Id": "C-button-ghost-lg-pressed",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 3.73,
+      "BestShiftDiffPercent": 3.73,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 19.87,
+      "ColourDiffPercent": 95.67
+    },
+    {
+      "Id": "C-button-danger-lg-pressed",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.89,
+      "BestShiftDiffPercent": 5.89,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 27.5,
+      "ColourDiffPercent": 96.95
+    },
+    {
+      "Id": "C-button-primary-sm-disabled",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 7.5,
+      "BestShiftDiffPercent": 7.5,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.41,
+      "ColourDiffPercent": 17.65
+    },
+    {
+      "Id": "C-button-secondary-sm-disabled",
+      "set": "Button",
+      "figma": "80x26",
+      "app": "80x26",
+      "DiffPercent": 1.49,
+      "BestShiftDiffPercent": 1.49,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.73,
+      "ColourDiffPercent": 12.5
+    },
+    {
+      "Id": "C-button-ghost-sm-disabled",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 0.84,
+      "BestShiftDiffPercent": 0.84,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.35,
+      "ColourDiffPercent": 9.52
+    },
+    {
+      "Id": "C-button-danger-sm-disabled",
+      "set": "Button",
+      "figma": "78x26",
+      "app": "78x26",
+      "DiffPercent": 7.74,
+      "BestShiftDiffPercent": 7.74,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.33,
+      "ColourDiffPercent": 17.31
+    },
+    {
+      "Id": "C-button-primary-lg-disabled",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.22,
+      "BestShiftDiffPercent": 5.22,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.79,
+      "ColourDiffPercent": 12.75
+    },
+    {
+      "Id": "C-button-secondary-lg-disabled",
+      "set": "Button",
+      "figma": "90x32",
+      "app": "90x32",
+      "DiffPercent": 1.11,
+      "BestShiftDiffPercent": 1.11,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.73,
+      "ColourDiffPercent": 8.51
+    },
+    {
+      "Id": "C-button-ghost-lg-disabled",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 0.18,
+      "BestShiftDiffPercent": 0.18,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.78,
+      "ColourDiffPercent": 7.03
+    },
+    {
+      "Id": "C-button-danger-lg-disabled",
+      "set": "Button",
+      "figma": "88x32",
+      "app": "88x32",
+      "DiffPercent": 5.86,
+      "BestShiftDiffPercent": 5.86,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.77,
+      "ColourDiffPercent": 12.36
+    },
+    {
+      "Id": "C-icon-button-default",
+      "set": "Icon Button",
+      "figma": "28x26",
+      "app": "28x26",
+      "DiffPercent": 6.04,
+      "BestShiftDiffPercent": 5.77,
+      "shift": [
+        3,
+        -3
+      ],
+      "LayoutOffset": 3,
+      "MeanChannelError": 7.83,
+      "ColourDiffPercent": 8.65
+    },
+    {
+      "Id": "C-icon-button-active",
+      "set": "Icon Button",
+      "figma": "28x26",
+      "app": "28x26",
+      "DiffPercent": 5.91,
+      "BestShiftDiffPercent": 3.02,
+      "shift": [
+        1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 5.89,
+      "ColourDiffPercent": 8.52
+    },
+    {
+      "Id": "C-icon-button-disabled",
+      "set": "Icon Button",
+      "figma": "28x26",
+      "app": "28x26",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.49,
+      "ColourDiffPercent": 7.01
+    },
+    {
+      "Id": "C-icon-button-hover",
+      "set": "Icon Button",
+      "figma": "28x26",
+      "app": "28x26",
+      "DiffPercent": 5.91,
+      "BestShiftDiffPercent": 3.02,
+      "shift": [
+        1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 5.89,
+      "ColourDiffPercent": 8.52
+    },
+    {
+      "Id": "C-icon-button-pressed",
+      "set": "Icon Button",
+      "figma": "28x26",
+      "app": "28x26",
+      "DiffPercent": 5.49,
+      "BestShiftDiffPercent": 4.53,
+      "shift": [
+        0,
+        -1
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 6.51,
+      "ColourDiffPercent": 8.79
+    },
+    {
+      "Id": "C-play-control-play",
+      "set": "Play Control",
+      "figma": "44x30",
+      "app": "44x30",
+      "DiffPercent": 1.36,
+      "BestShiftDiffPercent": 1.36,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.35,
+      "ColourDiffPercent": 5.91
+    },
+    {
+      "Id": "C-play-control-pause",
+      "set": "Play Control",
+      "figma": "34x30",
+      "app": "34x30",
+      "DiffPercent": 4.71,
+      "BestShiftDiffPercent": 4.71,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.51,
+      "ColourDiffPercent": 7.45
+    },
+    {
+      "Id": "C-play-control-step",
+      "set": "Play Control",
+      "figma": "34x30",
+      "app": "34x30",
+      "DiffPercent": 6.67,
+      "BestShiftDiffPercent": 6.18,
+      "shift": [
+        3,
+        0
+      ],
+      "LayoutOffset": 3,
+      "MeanChannelError": 9.16,
+      "ColourDiffPercent": 10.2
+    },
+    {
+      "Id": "C-play-control-stop",
+      "set": "Play Control",
+      "figma": "44x30",
+      "app": "44x30",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.44,
+      "ColourDiffPercent": 3.64
+    },
+    {
+      "Id": "C-layer-toggle-on",
+      "set": "Layer Toggle",
+      "figma": "53x26",
+      "app": "53x26",
+      "DiffPercent": 6.39,
+      "BestShiftDiffPercent": 6.39,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.12,
+      "ColourDiffPercent": 12.55
+    },
+    {
+      "Id": "C-layer-toggle-off",
+      "set": "Layer Toggle",
+      "figma": "53x26",
+      "app": "53x26",
+      "DiffPercent": 0.07,
+      "BestShiftDiffPercent": 0.07,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.87,
+      "ColourDiffPercent": 3.56
+    },
+    {
+      "Id": "C-layer-toggle-active",
+      "set": "Layer Toggle",
+      "figma": "53x26",
+      "app": "53x26",
+      "DiffPercent": 2.98,
+      "BestShiftDiffPercent": 2.98,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.81,
+      "ColourDiffPercent": 10.3
+    },
+    {
+      "Id": "C-chip-default",
+      "set": "Chip",
+      "figma": "62x24",
+      "app": "62x24",
+      "DiffPercent": 4.23,
+      "BestShiftDiffPercent": 4.23,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.6,
+      "ColourDiffPercent": 13.37
+    },
+    {
+      "Id": "C-chip-accent",
+      "set": "Chip",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 0.76,
+      "BestShiftDiffPercent": 0.76,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.58,
+      "ColourDiffPercent": 11.18
+    },
+    {
+      "Id": "C-chip-success",
+      "set": "Chip",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 0.28,
+      "BestShiftDiffPercent": 0.28,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.61,
+      "ColourDiffPercent": 11.39
+    },
+    {
+      "Id": "C-chip-warning",
+      "set": "Chip",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 1.46,
+      "BestShiftDiffPercent": 1.46,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.87,
+      "ColourDiffPercent": 11.81
+    },
+    {
+      "Id": "C-chip-danger",
+      "set": "Chip",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 0.62,
+      "BestShiftDiffPercent": 0.62,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.35,
+      "ColourDiffPercent": 10.14
+    },
+    {
+      "Id": "C-chip-script",
+      "set": "Chip",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 1.32,
+      "BestShiftDiffPercent": 1.32,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.43,
+      "ColourDiffPercent": 11.67
+    },
+    {
+      "Id": "C-badge",
+      "set": "Badge",
+      "figma": "17x16",
+      "app": "17x16",
+      "DiffPercent": 1.84,
+      "BestShiftDiffPercent": 1.84,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.32,
+      "ColourDiffPercent": 9.19
+    },
+    {
+      "Id": "C-switch-on",
+      "set": "Switch",
+      "figma": "32x18",
+      "app": "32x18",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.54,
+      "ColourDiffPercent": 14.58
+    },
+    {
+      "Id": "C-switch-off",
+      "set": "Switch",
+      "figma": "32x18",
+      "app": "32x18",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.28,
+      "ColourDiffPercent": 5.56
+    },
+    {
+      "Id": "C-checkbox-on",
+      "set": "Checkbox",
+      "figma": "60x16",
+      "app": "60x16",
+      "DiffPercent": 5.52,
+      "BestShiftDiffPercent": 5.52,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.1,
+      "ColourDiffPercent": 22.29
+    },
+    {
+      "Id": "C-checkbox-off",
+      "set": "Checkbox",
+      "figma": "60x16",
+      "app": "60x16",
+      "DiffPercent": 5.73,
+      "BestShiftDiffPercent": 5.73,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.58,
+      "ColourDiffPercent": 25.94
+    },
+    {
+      "Id": "C-segment-default",
+      "set": "Segment",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 1.6,
+      "BestShiftDiffPercent": 1.6,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.18,
+      "ColourDiffPercent": 11.53
+    },
+    {
+      "Id": "C-segment-active",
+      "set": "Segment",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 4.38,
+      "BestShiftDiffPercent": 4.38,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.1,
+      "ColourDiffPercent": 12.64
+    },
+    {
+      "Id": "C-segment-hover",
+      "set": "Segment",
+      "figma": "60x24",
+      "app": "60x24",
+      "DiffPercent": 4.93,
+      "BestShiftDiffPercent": 4.93,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.4,
+      "ColourDiffPercent": 12.71
+    },
+    {
+      "Id": "C-progress-ok-0",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.04,
+      "ColourDiffPercent": 0
+    },
+    {
+      "Id": "C-progress-ok-10",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.12,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-ok-20",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.12,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-ok-30",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-40",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-50",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-60",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-70",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-80",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-90",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.04
+    },
+    {
+      "Id": "C-progress-ok-100",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.12,
+      "ColourDiffPercent": 0.83
+    },
+    {
+      "Id": "C-progress-warn-0",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.04,
+      "ColourDiffPercent": 0
+    },
+    {
+      "Id": "C-progress-warn-10",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-20",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-30",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-40",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-50",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-60",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-70",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-80",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-90",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-warn-100",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.19,
+      "ColourDiffPercent": 1.67
+    },
+    {
+      "Id": "C-progress-danger-0",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.04,
+      "ColourDiffPercent": 0
+    },
+    {
+      "Id": "C-progress-danger-10",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-20",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-30",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-40",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-50",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-60",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-70",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-80",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-90",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-danger-100",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-progress-accent-0",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.04,
+      "ColourDiffPercent": 0
+    },
+    {
+      "Id": "C-progress-accent-10",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-20",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-30",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-40",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-50",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-60",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-70",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-80",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-90",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.17,
+      "ColourDiffPercent": 1.35
+    },
+    {
+      "Id": "C-progress-accent-100",
+      "set": "Progress",
+      "figma": "160x6",
+      "app": "160x6",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.14,
+      "ColourDiffPercent": 1.46
+    },
+    {
+      "Id": "C-slider-0",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.19,
+      "shift": [
+        1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 2.4,
+      "ColourDiffPercent": 3.54
+    },
+    {
+      "Id": "C-slider-10",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.42,
+      "ColourDiffPercent": 3.7
+    },
+    {
+      "Id": "C-slider-20",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.42,
+      "ColourDiffPercent": 3.7
+    },
+    {
+      "Id": "C-slider-30",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-40",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-50",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-60",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-70",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-80",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-90",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.41,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-slider-100",
+      "set": "Slider",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.39,
+      "ColourDiffPercent": 3.65
+    },
+    {
+      "Id": "C-keycap",
+      "set": "Keycap",
+      "figma": "43x22",
+      "app": "43x22",
+      "DiffPercent": 3.07,
+      "BestShiftDiffPercent": 3.07,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.8,
+      "ColourDiffPercent": 10.47
+    },
+    {
+      "Id": "C-panel-header",
+      "set": "Panel Header",
+      "figma": "260x34",
+      "app": "260x34",
+      "DiffPercent": 1.83,
+      "BestShiftDiffPercent": 1.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.31,
+      "ColourDiffPercent": 4.98
+    },
+    {
+      "Id": "C-search-field",
+      "set": "Search Field",
+      "figma": "240x28",
+      "app": "240x28",
+      "DiffPercent": 0.4,
+      "BestShiftDiffPercent": 0.4,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.97,
+      "ColourDiffPercent": 3.71
+    },
+    {
+      "Id": "C-tree-item-default-none",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.26,
+      "BestShiftDiffPercent": 1.26,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.33,
+      "ColourDiffPercent": 2.56
+    },
+    {
+      "Id": "C-tree-item-default-open",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.26,
+      "BestShiftDiffPercent": 1.26,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.35,
+      "ColourDiffPercent": 2.56
+    },
+    {
+      "Id": "C-tree-item-default-closed",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.26,
+      "BestShiftDiffPercent": 1.26,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.35,
+      "ColourDiffPercent": 2.56
+    },
+    {
+      "Id": "C-tree-item-selected-none",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.13,
+      "BestShiftDiffPercent": 1.13,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.04,
+      "ColourDiffPercent": 3.07
+    },
+    {
+      "Id": "C-tree-item-selected-open",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.13,
+      "BestShiftDiffPercent": 1.13,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.07,
+      "ColourDiffPercent": 3.41
+    },
+    {
+      "Id": "C-tree-item-selected-closed",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 1.13,
+      "BestShiftDiffPercent": 1.13,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.07,
+      "ColourDiffPercent": 3.41
+    },
+    {
+      "Id": "C-tree-item-hover-none",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.09,
+      "BestShiftDiffPercent": 2.09,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.43,
+      "ColourDiffPercent": 2.26
+    },
+    {
+      "Id": "C-tree-item-hover-open",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.09,
+      "BestShiftDiffPercent": 2.09,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.44,
+      "ColourDiffPercent": 2.26
+    },
+    {
+      "Id": "C-tree-item-hover-closed",
+      "set": "Tree Item",
+      "figma": "248x26",
+      "app": "248x26",
+      "DiffPercent": 2.09,
+      "BestShiftDiffPercent": 2.09,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.44,
+      "ColourDiffPercent": 2.26
+    },
+    {
+      "Id": "C-doc-tab-default",
+      "set": "Doc Tab",
+      "figma": "85x34",
+      "app": "85x34",
+      "DiffPercent": 4.01,
+      "BestShiftDiffPercent": 4.01,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.35,
+      "ColourDiffPercent": 8.82
+    },
+    {
+      "Id": "C-doc-tab-active",
+      "set": "Doc Tab",
+      "figma": "84x34",
+      "app": "84x34",
+      "DiffPercent": 4.27,
+      "BestShiftDiffPercent": 4.27,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.57,
+      "ColourDiffPercent": 7.91
+    },
+    {
+      "Id": "C-doc-tab-hover",
+      "set": "Doc Tab",
+      "figma": "85x34",
+      "app": "85x34",
+      "DiffPercent": 3.88,
+      "BestShiftDiffPercent": 3.88,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.11,
+      "ColourDiffPercent": 7.82
+    },
+    {
+      "Id": "C-panel-tab-default",
+      "set": "Panel Tab",
+      "figma": "82x32",
+      "app": "82x32",
+      "DiffPercent": 3.85,
+      "BestShiftDiffPercent": 3.85,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.08,
+      "ColourDiffPercent": 9.49
+    },
+    {
+      "Id": "C-panel-tab-active",
+      "set": "Panel Tab",
+      "figma": "82x32",
+      "app": "82x32",
+      "DiffPercent": 5.64,
+      "BestShiftDiffPercent": 5.64,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.87,
+      "ColourDiffPercent": 8.96
+    },
+    {
+      "Id": "C-panel-tab-hover",
+      "set": "Panel Tab",
+      "figma": "82x32",
+      "app": "82x32",
+      "DiffPercent": 5.64,
+      "BestShiftDiffPercent": 5.64,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.87,
+      "ColourDiffPercent": 8.96
+    },
+    {
+      "Id": "C-list-item-default",
+      "set": "List Item",
+      "figma": "158x24",
+      "app": "158x24",
+      "DiffPercent": 3.38,
+      "BestShiftDiffPercent": 3.38,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.92,
+      "ColourDiffPercent": 9.12
+    },
+    {
+      "Id": "C-list-item-selected",
+      "set": "List Item",
+      "figma": "158x24",
+      "app": "158x24",
+      "DiffPercent": 3.35,
+      "BestShiftDiffPercent": 3.35,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.12,
+      "ColourDiffPercent": 8.78
+    },
+    {
+      "Id": "C-list-item-hover",
+      "set": "List Item",
+      "figma": "158x24",
+      "app": "158x24",
+      "DiffPercent": 4.72,
+      "BestShiftDiffPercent": 4.72,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.1,
+      "ColourDiffPercent": 9.36
+    },
+    {
+      "Id": "C-nav-item-default",
+      "set": "Nav Item",
+      "figma": "200x32",
+      "app": "200x32",
+      "DiffPercent": 1.7,
+      "BestShiftDiffPercent": 1.7,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.68,
+      "ColourDiffPercent": 4.98
+    },
+    {
+      "Id": "C-nav-item-active",
+      "set": "Nav Item",
+      "figma": "200x32",
+      "app": "200x32",
+      "DiffPercent": 2.5,
+      "BestShiftDiffPercent": 2.5,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.14,
+      "ColourDiffPercent": 5.3
+    },
+    {
+      "Id": "C-nav-item-hover",
+      "set": "Nav Item",
+      "figma": "200x32",
+      "app": "200x32",
+      "DiffPercent": 2.7,
+      "BestShiftDiffPercent": 2.7,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.73,
+      "ColourDiffPercent": 4.95
+    },
+    {
+      "Id": "C-section-header-open",
+      "set": "Section Header",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 2.83,
+      "BestShiftDiffPercent": 2.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.12,
+      "ColourDiffPercent": 4.45
+    },
+    {
+      "Id": "C-section-header-closed",
+      "set": "Section Header",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 2.83,
+      "BestShiftDiffPercent": 2.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.12,
+      "ColourDiffPercent": 4.45
+    },
+    {
+      "Id": "C-field-text",
+      "set": "Field",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 2.48,
+      "BestShiftDiffPercent": 2.48,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.63,
+      "ColourDiffPercent": 4.8
+    },
+    {
+      "Id": "C-field-dropdown",
+      "set": "Field",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 1.06,
+      "BestShiftDiffPercent": 1.06,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.47,
+      "ColourDiffPercent": 3.83
+    },
+    {
+      "Id": "C-field-xy",
+      "set": "Field",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 1.42,
+      "BestShiftDiffPercent": 1.42,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.97,
+      "ColourDiffPercent": 5.62
+    },
+    {
+      "Id": "C-field-slider",
+      "set": "Field",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 1.7,
+      "BestShiftDiffPercent": 1.7,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.08,
+      "ColourDiffPercent": 4.5
+    },
+    {
+      "Id": "C-field-toggle",
+      "set": "Field",
+      "figma": "296x24",
+      "app": "296x24",
+      "DiffPercent": 0.23,
+      "BestShiftDiffPercent": 0.23,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.67,
+      "ColourDiffPercent": 2.84
+    },
+    {
+      "Id": "C-meter",
+      "set": "Meter",
+      "figma": "296x18",
+      "app": "296x18",
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.94,
+      "ColourDiffPercent": 8.01
+    },
+    {
+      "Id": "C-swatch-default",
+      "set": "Swatch",
+      "figma": "30x30",
+      "app": "30x30",
+      "DiffPercent": 4.78,
+      "BestShiftDiffPercent": 4.78,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.07,
+      "ColourDiffPercent": 9.44
+    },
+    {
+      "Id": "C-swatch-selected",
+      "set": "Swatch",
+      "figma": "30x30",
+      "app": "30x30",
+      "DiffPercent": 3.44,
+      "BestShiftDiffPercent": 3.44,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.89,
+      "ColourDiffPercent": 10
+    },
+    {
+      "Id": "C-swatch-empty",
+      "set": "Swatch",
+      "figma": "30x30",
+      "app": "30x30",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.77,
+      "ColourDiffPercent": 11.33
+    },
+    {
+      "Id": "C-swatch-transparent",
+      "set": "Swatch",
+      "figma": "30x30",
+      "app": "30x30",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.36,
+      "ColourDiffPercent": 6.67
+    },
+    {
+      "Id": "C-status-item-default",
+      "set": "Status Item",
+      "figma": "51x26",
+      "app": "51x26",
+      "DiffPercent": 1.73,
+      "BestShiftDiffPercent": 1.73,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 4.12,
+      "ColourDiffPercent": 12.14
+    },
+    {
+      "Id": "C-status-item-dot",
+      "set": "Status Item",
+      "figma": "46x26",
+      "app": "46x26",
+      "DiffPercent": 1.42,
+      "BestShiftDiffPercent": 1.42,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.16,
+      "ColourDiffPercent": 13.13
+    },
+    {
+      "Id": "C-console-line-info",
+      "set": "Console Line",
+      "figma": "560x20",
+      "app": "560x20",
+      "DiffPercent": 1.75,
+      "BestShiftDiffPercent": 1.75,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.02,
+      "ColourDiffPercent": 4.55
+    },
+    {
+      "Id": "C-console-line-success",
+      "set": "Console Line",
+      "figma": "560x20",
+      "app": "560x20",
+      "DiffPercent": 0.53,
+      "BestShiftDiffPercent": 0.53,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.91,
+      "ColourDiffPercent": 4.29
+    },
+    {
+      "Id": "C-console-line-warning",
+      "set": "Console Line",
+      "figma": "560x20",
+      "app": "560x20",
+      "DiffPercent": 1,
+      "BestShiftDiffPercent": 1,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.02,
+      "ColourDiffPercent": 4.62
+    },
+    {
+      "Id": "C-console-line-error",
+      "set": "Console Line",
+      "figma": "560x20",
+      "app": "560x20",
+      "DiffPercent": 0.58,
+      "BestShiftDiffPercent": 0.58,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.89,
+      "ColourDiffPercent": 4.25
+    },
+    {
+      "Id": "C-toast-success",
+      "set": "Toast",
+      "figma": "340x38",
+      "app": "340x38",
+      "DiffPercent": 4.41,
+      "BestShiftDiffPercent": 4.13,
+      "shift": [
+        -1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 5.56,
+      "ColourDiffPercent": 8.15
+    },
+    {
+      "Id": "C-toast-error",
+      "set": "Toast",
+      "figma": "340x38",
+      "app": "340x38",
+      "DiffPercent": 4.41,
+      "BestShiftDiffPercent": 4.41,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.6,
+      "ColourDiffPercent": 8.43
+    },
+    {
+      "Id": "C-tooltip",
+      "set": "Tooltip",
+      "figma": "61x26",
+      "app": "61x26",
+      "DiffPercent": 3.53,
+      "BestShiftDiffPercent": 3.53,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.99,
+      "ColourDiffPercent": 8.26
+    },
+    {
+      "Id": "C-title-bar",
+      "set": "Title Bar",
+      "figma": "1440x36",
+      "app": "1440x36",
+      "DiffPercent": 2.58,
+      "BestShiftDiffPercent": 2.58,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.65,
+      "ColourDiffPercent": 5.23
+    },
+    {
+      "Id": "C-asset-card-default",
+      "set": "Asset Card",
+      "figma": "102x98",
+      "app": "102x98",
+      "DiffPercent": 3.1,
+      "BestShiftDiffPercent": 3.1,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.98,
+      "ColourDiffPercent": 6.66
+    },
+    {
+      "Id": "C-asset-card-selected",
+      "set": "Asset Card",
+      "figma": "102x98",
+      "app": "102x98",
+      "DiffPercent": 3.86,
+      "BestShiftDiffPercent": 3.86,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.3,
+      "ColourDiffPercent": 7.32
+    },
+    {
+      "Id": "C-frame-thumb-default",
+      "set": "Frame Thumb",
+      "figma": "66x83",
+      "app": "66x83",
+      "DiffPercent": 1.13,
+      "BestShiftDiffPercent": 1.13,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.87,
+      "ColourDiffPercent": 2.99
+    },
+    {
+      "Id": "C-frame-thumb-active",
+      "set": "Frame Thumb",
+      "figma": "66x83",
+      "app": "66x83",
+      "DiffPercent": 3.16,
+      "BestShiftDiffPercent": 3.16,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.04,
+      "ColourDiffPercent": 4.58
+    },
+    {
+      "Id": "C-scene-card-default",
+      "set": "Scene Card",
+      "figma": "166x148",
+      "app": "166x148",
+      "DiffPercent": 4.24,
+      "BestShiftDiffPercent": 2.08,
+      "shift": [
+        1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 4.25,
+      "ColourDiffPercent": 11.66
+    },
+    {
+      "Id": "C-scene-card-selected",
+      "set": "Scene Card",
+      "figma": "166x150",
+      "app": "166x150",
+      "DiffPercent": 6.41,
+      "BestShiftDiffPercent": 6.3,
+      "shift": [
+        2,
+        0
+      ],
+      "LayoutOffset": 2,
+      "MeanChannelError": 6.21,
+      "ColourDiffPercent": 13.81
+    },
+    {
+      "Id": "C-template-card-default",
+      "set": "Template Card",
+      "figma": "252x238",
+      "app": "252x238",
+      "DiffPercent": 3.45,
+      "BestShiftDiffPercent": 2.2,
+      "shift": [
+        1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 3.85,
+      "ColourDiffPercent": 6.37
+    },
+    {
+      "Id": "C-template-card-selected",
+      "set": "Template Card",
+      "figma": "252x240",
+      "app": "252x240",
+      "DiffPercent": 5.14,
+      "BestShiftDiffPercent": 4.65,
+      "shift": [
+        2,
+        0
+      ],
+      "LayoutOffset": 2,
+      "MeanChannelError": 5.46,
+      "ColourDiffPercent": 8.36
+    },
+    {
+      "Id": "C-glyph-cell-default",
+      "set": "Glyph Cell",
+      "figma": "44x48",
+      "app": "44x48",
+      "DiffPercent": 4.36,
+      "BestShiftDiffPercent": 4.36,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.75,
+      "ColourDiffPercent": 10.09
+    },
+    {
+      "Id": "C-glyph-cell-selected",
+      "set": "Glyph Cell",
+      "figma": "44x48",
+      "app": "44x48",
+      "DiffPercent": 6.63,
+      "BestShiftDiffPercent": 6.63,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.98,
+      "ColourDiffPercent": 12.93
+    },
+    {
+      "Id": "C-glyph-cell-missing",
+      "set": "Glyph Cell",
+      "figma": "44x48",
+      "app": "44x48",
+      "DiffPercent": 6.34,
+      "BestShiftDiffPercent": 6.34,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.35,
+      "ColourDiffPercent": 15.06
+    },
+    {
+      "Id": "C-table-cell-header",
+      "set": "Table Cell",
+      "figma": "120x28",
+      "app": "120x28",
+      "DiffPercent": 1.64,
+      "BestShiftDiffPercent": 1.64,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.07,
+      "ColourDiffPercent": 5.74
+    },
+    {
+      "Id": "C-table-cell-default",
+      "set": "Table Cell",
+      "figma": "120x32",
+      "app": "120x32",
+      "DiffPercent": 2.4,
+      "BestShiftDiffPercent": 2.4,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.85,
+      "ColourDiffPercent": 4.71
+    },
+    {
+      "Id": "C-table-cell-mono",
+      "set": "Table Cell",
+      "figma": "120x32",
+      "app": "120x32",
+      "DiffPercent": 2.81,
+      "BestShiftDiffPercent": 2.81,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.6,
+      "ColourDiffPercent": 3.88
+    },
+    {
+      "Id": "C-table-cell-selected",
+      "set": "Table Cell",
+      "figma": "120x32",
+      "app": "120x32",
+      "DiffPercent": 2.21,
+      "BestShiftDiffPercent": 2.21,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.03,
+      "ColourDiffPercent": 4.71
+    },
+    {
+      "Id": "C-text-input-default",
+      "set": "Text Input",
+      "figma": "280x52",
+      "app": "280x52",
+      "DiffPercent": 1.37,
+      "BestShiftDiffPercent": 1.37,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.74,
+      "ColourDiffPercent": 4.05
+    },
+    {
+      "Id": "C-text-input-focus",
+      "set": "Text Input",
+      "figma": "280x52",
+      "app": "280x52",
+      "DiffPercent": 6.57,
+      "BestShiftDiffPercent": 6.57,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 5.79,
+      "ColourDiffPercent": 9.11
+    },
+    {
+      "Id": "C-select-default",
+      "set": "Select",
+      "figma": "280x52",
+      "app": "280x52",
+      "DiffPercent": 1.69,
+      "BestShiftDiffPercent": 1.69,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.26,
+      "ColourDiffPercent": 4.44
+    },
+    {
+      "Id": "C-select-focus",
+      "set": "Select",
+      "figma": "280x52",
+      "app": "280x52",
+      "DiffPercent": 6.93,
+      "BestShiftDiffPercent": 6.93,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.42,
+      "ColourDiffPercent": 9.53
+    },
+    {
+      "Id": "C-tab-default",
+      "set": "Tab",
+      "figma": "49x34",
+      "app": "49x34",
+      "DiffPercent": 1.74,
+      "BestShiftDiffPercent": 1.74,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.72,
+      "ColourDiffPercent": 12.61
+    },
+    {
+      "Id": "C-tab-active",
+      "set": "Tab",
+      "figma": "49x34",
+      "app": "49x34",
+      "DiffPercent": 7.5,
+      "BestShiftDiffPercent": 7.5,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 7.24,
+      "ColourDiffPercent": 12.97
+    },
+    {
+      "Id": "C-dialog-header",
+      "set": "Dialog Header",
+      "figma": "640x52",
+      "app": "640x52",
+      "DiffPercent": 1.21,
+      "BestShiftDiffPercent": 0.97,
+      "shift": [
+        0,
+        1
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 1.53,
+      "ColourDiffPercent": 2
+    },
+    {
+      "Id": "C-dialog-footer",
+      "set": "Dialog Footer",
+      "figma": "640x60",
+      "app": "640x60",
+      "DiffPercent": 2.74,
+      "BestShiftDiffPercent": 2.65,
+      "shift": [
+        -1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 2.74,
+      "ColourDiffPercent": 6.18
+    },
+    {
+      "Id": "C-popover-header",
+      "set": "Popover Header",
+      "figma": "320x40",
+      "app": "320x40",
+      "DiffPercent": 1.61,
+      "BestShiftDiffPercent": 1.61,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.65,
+      "ColourDiffPercent": 2.97
+    },
+    {
+      "Id": "C-node-header-event",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.88,
+      "BestShiftDiffPercent": 1.88,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.35,
+      "ColourDiffPercent": 4.87
+    },
+    {
+      "Id": "C-node-header-input",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.9,
+      "BestShiftDiffPercent": 1.9,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3,
+      "ColourDiffPercent": 5.23
+    },
+    {
+      "Id": "C-node-header-physics",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.88,
+      "BestShiftDiffPercent": 1.88,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.32,
+      "ColourDiffPercent": 4.83
+    },
+    {
+      "Id": "C-node-header-flow",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.57,
+      "BestShiftDiffPercent": 1.57,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.33,
+      "ColourDiffPercent": 4.73
+    },
+    {
+      "Id": "C-node-header-data",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.92,
+      "BestShiftDiffPercent": 1.92,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.96,
+      "ColourDiffPercent": 5.17
+    },
+    {
+      "Id": "C-node-header-sound",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.63,
+      "BestShiftDiffPercent": 1.63,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.29,
+      "ColourDiffPercent": 4.78
+    },
+    {
+      "Id": "C-node-header-actor",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.9,
+      "BestShiftDiffPercent": 1.9,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.37,
+      "ColourDiffPercent": 5.17
+    },
+    {
+      "Id": "C-node-header-math",
+      "set": "Node Header",
+      "figma": "200x30",
+      "app": "200x30",
+      "DiffPercent": 1.85,
+      "BestShiftDiffPercent": 1.85,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.94,
+      "ColourDiffPercent": 4.78
+    },
+    {
+      "Id": "C-node-pin-exec-in",
+      "set": "Node Pin",
+      "figma": "12x12",
+      "app": "12x12",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.45,
+      "ColourDiffPercent": 2.78
+    },
+    {
+      "Id": "C-node-pin-exec-out",
+      "set": "Node Pin",
+      "figma": "12x12",
+      "app": "12x12",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.45,
+      "ColourDiffPercent": 2.78
+    },
+    {
+      "Id": "C-node-pin-bool-in",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.86,
+      "ColourDiffPercent": 26
+    },
+    {
+      "Id": "C-node-pin-bool-out",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.08,
+      "ColourDiffPercent": 8
+    },
+    {
+      "Id": "C-node-pin-fixed-in",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.41,
+      "ColourDiffPercent": 26
+    },
+    {
+      "Id": "C-node-pin-fixed-out",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.27,
+      "ColourDiffPercent": 8
+    },
+    {
+      "Id": "C-node-pin-actor-in",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.36,
+      "ColourDiffPercent": 26
+    },
+    {
+      "Id": "C-node-pin-actor-out",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.23,
+      "ColourDiffPercent": 8
+    },
+    {
+      "Id": "C-node-pin-text-in",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.64,
+      "ColourDiffPercent": 26
+    },
+    {
+      "Id": "C-node-pin-text-out",
+      "set": "Node Pin",
+      "figma": "10x10",
+      "app": "10x10",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.36,
+      "ColourDiffPercent": 8
+    },
+    {
+      "Id": "C-brand-mark",
+      "set": "brand/mark",
+      "figma": "96x96",
+      "app": "96x96",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.02,
+      "ColourDiffPercent": 0.14
+    },
+    {
+      "Id": "C-brand-app-icon-light",
+      "set": "brand/app-icon",
+      "figma": "128x128",
+      "app": "128x128",
+      "DiffPercent": 0.24,
+      "BestShiftDiffPercent": 0.24,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.6,
+      "ColourDiffPercent": 2.39
+    },
+    {
+      "Id": "C-brand-app-icon-dark",
+      "set": "brand/app-icon",
+      "figma": "128x128",
+      "app": "128x128",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.2,
+      "ColourDiffPercent": 0.91
+    },
+    {
+      "Id": "C-brand-app-icon-indigo",
+      "set": "brand/app-icon",
+      "figma": "128x128",
+      "app": "128x128",
+      "DiffPercent": 0,
+      "BestShiftDiffPercent": 0,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.21,
+      "ColourDiffPercent": 1.74
+    },
+    {
+      "Id": "T-P01",
+      "set": "frame Scene Editor",
+      "figma": "1440x900",
+      "app": "1440x900",
+      "DiffPercent": 29.11,
+      "BestShiftDiffPercent": 29.11,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 42.6,
+      "ColourDiffPercent": 37.13
+    },
+    {
+      "Id": "T-L01",
+      "set": "frame Scene Editor \u00B7 Light",
+      "figma": "1440x900",
+      "app": "1440x900",
+      "DiffPercent": 28.46,
+      "BestShiftDiffPercent": 28.46,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 24.42,
+      "ColourDiffPercent": 36.6
+    },
+    {
+      "Id": "T-O07",
+      "set": "frame Command Palette",
+      "figma": "640x325",
+      "app": "640x325",
+      "DiffPercent": 0.87,
+      "BestShiftDiffPercent": 0.87,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.08,
+      "ColourDiffPercent": 2.26
+    },
+    {
+      "Id": "T-D10",
+      "set": "frame Keyboard Shortcuts",
+      "figma": "760x390",
+      "app": "760x390",
+      "DiffPercent": 0.88,
+      "BestShiftDiffPercent": 0.88,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.99,
+      "ColourDiffPercent": 1.95
+    },
+    {
+      "Id": "T-D12",
+      "set": "frame Unsaved Changes",
+      "figma": "460x262",
+      "app": "460x262",
+      "DiffPercent": 2.22,
+      "BestShiftDiffPercent": 2.22,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.42,
+      "ColourDiffPercent": 4.55
+    },
+    {
+      "Id": "T-M01",
+      "set": "menu File menu",
+      "figma": "264x306",
+      "app": "264x306",
+      "DiffPercent": 2.23,
+      "BestShiftDiffPercent": 2.23,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.68,
+      "ColourDiffPercent": 5.44
+    },
+    {
+      "Id": "T-M02",
+      "set": "menu Edit menu",
+      "figma": "264x297",
+      "app": "264x297",
+      "DiffPercent": 1.4,
+      "BestShiftDiffPercent": 1.4,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 1.74,
+      "ColourDiffPercent": 4.16
+    },
+    {
+      "Id": "T-M03",
+      "set": "menu Assets menu",
+      "figma": "264x175",
+      "app": "264x175",
+      "DiffPercent": 2.26,
+      "BestShiftDiffPercent": 2.26,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.58,
+      "ColourDiffPercent": 4.92
+    },
+    {
+      "Id": "T-M04",
+      "set": "menu Scene menu",
+      "figma": "264x184",
+      "app": "264x184",
+      "DiffPercent": 3.11,
+      "BestShiftDiffPercent": 3.11,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.62,
+      "ColourDiffPercent": 6.17
+    },
+    {
+      "Id": "T-M05",
+      "set": "menu Build menu",
+      "figma": "264x210",
+      "app": "264x210",
+      "DiffPercent": 2.69,
+      "BestShiftDiffPercent": 2.69,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.27,
+      "ColourDiffPercent": 5.8
+    },
+    {
+      "Id": "T-M06",
+      "set": "menu Tools menu",
+      "figma": "264x253",
+      "app": "264x253",
+      "DiffPercent": 2.63,
+      "BestShiftDiffPercent": 2.63,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.07,
+      "ColourDiffPercent": 5.77
+    },
+    {
+      "Id": "T-M07",
+      "set": "menu Help menu",
+      "figma": "264x184",
+      "app": "264x184",
+      "DiffPercent": 3.22,
+      "BestShiftDiffPercent": 3.22,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.77,
+      "ColourDiffPercent": 6.36
+    },
+    {
+      "Id": "T-M08",
+      "set": "menu Open Recent",
+      "figma": "264x123",
+      "app": "264x123",
+      "DiffPercent": 2.16,
+      "BestShiftDiffPercent": 2.16,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 2.47,
+      "ColourDiffPercent": 4.66
+    }
+  ],
+  "chromeRegions": [
+    {
+      "Id": "T-P01",
+      "Region": "Title Bar",
+      "diffPercent": 2.58
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Toolbar",
+      "diffPercent": 1.85
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Hierarchy header \u002B search",
+      "diffPercent": 0.94
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Doc tabs",
+      "diffPercent": 2.49
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Inspector header",
+      "diffPercent": 1.26
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Bottom panel tabs",
+      "diffPercent": 2.53
+    },
+    {
+      "Id": "T-P01",
+      "Region": "Status bar",
+      "diffPercent": 3.58
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Title Bar",
+      "diffPercent": 2.65
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Toolbar",
+      "diffPercent": 1.98
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Hierarchy header \u002B search",
+      "diffPercent": 1.05
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Doc tabs",
+      "diffPercent": 2.63
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Inspector header",
+      "diffPercent": 1.3
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Bottom panel tabs",
+      "diffPercent": 2.36
+    },
+    {
+      "Id": "T-L01",
+      "Region": "Status bar",
+      "diffPercent": 3.8
+    }
+  ],
+  "notRendered": []
+}

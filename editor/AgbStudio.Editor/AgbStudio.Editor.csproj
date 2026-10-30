@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>AGBStudio</AssemblyName>
+    <RootNamespace>AgbStudio.Editor</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Win32" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.8" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.8" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\AgbStudio.Build\AgbStudio.Build.csproj" />
+    <ProjectReference Include="..\..\tools\AgbStudio.Emu\AgbStudio.Emu.csproj" />
+    <ProjectReference Include="..\..\tools\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AgbStudio.Editor.Tests" />
+  </ItemGroup>
+</Project>

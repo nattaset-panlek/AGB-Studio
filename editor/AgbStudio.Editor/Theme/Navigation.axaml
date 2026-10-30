@@ -1,0 +1,214 @@
+<!-- 4.16 navigation: Tree Item, Doc Tab, Panel Tab, List Item, Nav Item, Section Header, Panel Header, Search Field -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="using:AgbStudio.Editor.Controls"
+                    xmlns:g="using:AgbStudio.Editor.Graphics"
+                    xmlns:t="using:AgbStudio.Editor.Theme">
+
+  <ControlTheme x:Key="{x:Type c:TreeItem}" TargetType="c:TreeItem">
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="6,0,8,0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/muted}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="6" VerticalAlignment="Center">
+            <g:Icon Name="PART_Toggle" DockPanel.Dock="Left" Glyph="down" Size="12" VerticalAlignment="Center" IsVisible="False" />
+            <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="14" VerticalAlignment="Center" />
+            <TextBlock Name="PART_Meta" DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Mono/10" VerticalAlignment="Center"
+                       IsVisible="{TemplateBinding Meta, Converter={x:Static t:Conv.NotEmpty}}" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[Toggle=Open] /template/ g|Icon#PART_Toggle"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="^[Toggle=Closed] /template/ g|Icon#PART_Toggle"><Setter Property="IsVisible" Value="True" /><Setter Property="Glyph" Value="right" /></Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Background" Value="{DynamicResource bg/hover}" />
+      <Style Selector="^ /template/ TextBlock#PART_Meta"><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    </Style>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource accent/selected}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/on-selected}" />
+      <Style Selector="^ /template/ TextBlock#PART_Meta"><Setter Property="Foreground" Value="{DynamicResource text/on-selected}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:DocTab}" TargetType="c:DocTab">
+    <Setter Property="Height" Value="34" />
+    <Setter Property="Padding" Value="14,0" />
+    <Setter Property="Background" Value="{DynamicResource bg/panel}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+          <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+            <g:Icon Glyph="{TemplateBinding Glyph}" Size="13" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" VerticalAlignment="Center" />
+            <Ellipse Name="PART_Dirty" Width="6" Height="6" Fill="{DynamicResource text/secondary}" VerticalAlignment="Center" IsVisible="{TemplateBinding IsDirty}" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover"><Setter Property="Background" Value="{DynamicResource bg/raised}" /><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource bg/base}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource accent/default}" />
+      <Setter Property="BorderThickness" Value="0,2,0,0" />
+      <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:PanelTab}" TargetType="c:PanelTab">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource accent/default}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <g:Icon Glyph="{TemplateBinding Glyph}" Size="13" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" VerticalAlignment="Center" />
+            <c:Badge Label="{TemplateBinding Count, Converter={x:Static t:Conv.CountText}}" VerticalAlignment="Center"
+                     IsVisible="{TemplateBinding Count, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover"><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    <Style Selector="^:selected"><Setter Property="BorderThickness" Value="0,0,0,2" /><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:ListRow}" TargetType="c:ListRow">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="7" VerticalAlignment="Center">
+            <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="13" VerticalAlignment="Center" />
+            <TextBlock Name="PART_Meta" DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Caption/10" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover">
+      <Setter Property="Background" Value="{DynamicResource bg/raised}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+      <Style Selector="^ /template/ TextBlock#PART_Meta"><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    </Style>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource bg/hover}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+      <Style Selector="^ /template/ TextBlock#PART_Meta"><Setter Property="Foreground" Value="{DynamicResource text/muted}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:NavItem}" TargetType="c:NavItem">
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource text/secondary}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+            <g:Icon Name="PART_Icon" Glyph="{TemplateBinding Glyph}" Size="15" VerticalAlignment="Center" />
+            <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12 Medium" VerticalAlignment="Center" />
+          </StackPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover"><Setter Property="Background" Value="{DynamicResource bg/raised}" /><Setter Property="Foreground" Value="{DynamicResource text/primary}" /></Style>
+    <Style Selector="^:selected">
+      <Setter Property="Background" Value="{DynamicResource accent/selected}" />
+      <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+      <Style Selector="^ /template/ g|Icon#PART_Icon"><Setter Property="Foreground" Value="{DynamicResource text/on-selected}" /></Style>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:SectionHeader}" TargetType="c:SectionHeader">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <DockPanel HorizontalSpacing="7" Background="{TemplateBinding Background}" VerticalAlignment="Stretch">
+          <g:Icon Name="PART_Chevron" DockPanel.Dock="Left" Glyph="right" Size="12" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+          <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="13" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" />
+          <TextBlock DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
+                     IsVisible="{TemplateBinding Meta, Converter={x:Static t:Conv.NotEmpty}}" />
+          <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Body/12 Semibold" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" />
+        </DockPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^[IsOpen=True] /template/ g|Icon#PART_Chevron"><Setter Property="Glyph" Value="down" /></Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="{x:Type c:PanelHeader}" TargetType="c:PanelHeader">
+    <Setter Property="Height" Value="34" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Background" Value="{DynamicResource bg/panel}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="8" VerticalAlignment="Center">
+            <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="13" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" />
+            <Button Name="PART_Action" DockPanel.Dock="Right" Command="{TemplateBinding ActionCommand}" Theme="{StaticResource BareButton}" VerticalAlignment="Center"
+                    IsVisible="{TemplateBinding ActionGlyph, Converter={x:Static t:Conv.NotEmpty}}">
+              <g:Icon Glyph="{TemplateBinding ActionGlyph}" Size="14" Foreground="{DynamicResource text/muted}" />
+            </Button>
+            <TextBlock Text="{TemplateBinding Title}" t:Fig.Style="Overline/11" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center" />
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+  <!-- Search Field (a TextBox) -->
+  <ControlTheme x:Key="{x:Type c:SearchField}" TargetType="c:SearchField">
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Background" Value="{DynamicResource bg/base}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource border/default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
+    <Setter Property="CaretBrush" Value="{DynamicResource accent/default}" />
+    <Setter Property="SelectionBrush" Value="{DynamicResource accent/selected}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="t:Fig.Style" Value="Body/12" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <DockPanel HorizontalSpacing="6">
+            <g:Icon DockPanel.Dock="Left" Glyph="search" Size="13" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />
+            <Panel VerticalAlignment="Center">
+              <TextBlock Name="PART_Watermark" Text="{TemplateBinding Watermark}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/muted}"
+                         IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+              <TextPresenter Name="PART_TextPresenter" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
+                             SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}"
+                             TextAlignment="{TemplateBinding TextAlignment}" TextWrapping="NoWrap" LineHeight="{TemplateBinding LineHeight}"
+                             LetterSpacing="{TemplateBinding LetterSpacing}" PasswordChar="{TemplateBinding PasswordChar}"
+                             SelectionBrush="{TemplateBinding SelectionBrush}" SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                             CaretBrush="{TemplateBinding CaretBrush}" />
+            </Panel>
+          </DockPanel>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+</ResourceDictionary>
