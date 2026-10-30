@@ -65,6 +65,23 @@ u8 TextBox::pixel(int x, int y) const {
     return static_cast<u8>((tiles_[tile * 8 + (y & 7)] >> ((x & 7) * 4)) & 15);
 }
 
+void TextBox::fillRect(int x, int y, int w, int h, u8 index) {
+    for (int yy = y; yy < y + h; ++yy)
+        for (int xx = x; xx < x + w; ++xx) setPixel(xx, yy, index);
+    dirty_ = true;
+}
+
+int TextBox::drawAscii(const data::Font& font, const char* text, int x, int y) {
+    if (!font.ascii) return x;
+    for (const char* p = text; *p; ++p) {
+        const u8 c = static_cast<u8>(*p);
+        if (c >= 128 || font.ascii[c] == 0xFFFF) continue;
+        drawGlyph(font, font.ascii[c], x, y);
+        x += font.glyphs[font.ascii[c]].advance;
+    }
+    return x;
+}
+
 void TextBox::drawGlyph(const data::Font& font, u16 index, int px, int py) {
     if (index >= font.glyphCount) return;
     const data::Glyph& g = font.glyphs[index];

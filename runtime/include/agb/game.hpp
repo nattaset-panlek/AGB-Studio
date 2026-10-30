@@ -80,6 +80,9 @@ struct GameDef {
     u8 audioChannels;
     void (*init)();         // generated per-game setup (script natives, fonts, strings)
     bool skipSplash;
+    const void* const* textTables;  // agb::text::Table per language
+    u8 textLanguages;
+    u8 textFallback;
 };
 
 namespace game {

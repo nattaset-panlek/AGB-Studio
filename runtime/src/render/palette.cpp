@@ -112,7 +112,8 @@ void release(const data::Palette* palette, bool obj) {
 
 void setBank(bool obj, int bank, const u16* colors16) {
     u16* dst = g_base + (obj ? 256 : 0) + bank * 16;
-    for (int i = 0; i < 16; ++i) dst[i] = colors16[i];
+    // Index 0 is transparent in every bank; BG bank 0 index 0 is the backdrop, set by setBackdrop().
+    for (int i = (!obj && bank == 0) ? 1 : 0; i < 16; ++i) dst[i] = colors16[i];
     g_dirty = true;
 }
 

@@ -184,7 +184,8 @@ public sealed class GameBuilder
             ConvertTileset(f);
         }
         ConvertAudio();
-        return $"{spriteFiles.Count} sprites · {tilesetFiles.Count} tilesets · {_p.SoundFiles().Count()} sounds";
+        ConvertText();
+        return $"{spriteFiles.Count} sprites · {tilesetFiles.Count} tilesets · {_fonts.Count} fonts · {_p.SoundFiles().Count()} sounds";
     }
 
     void ConvertSprite(string file, SpriteMeta meta)
@@ -316,6 +317,66 @@ public sealed class GameBuilder
         {
             var n = GameProject.AssetName(f);
             Assets.Audio[n] = new AssetInfo(n, f.EndsWith(".wav") ? "Sound" : "Music", f, (int)new FileInfo(f).Length, 0, "");
+        }
+    }
+
+    // ---- fonts and strings ----------------------------------------------------------------------------
+
+    readonly Dictionary<string, Fonts.TextCodegen.FontOut> _fonts = new(StringComparer.Ordinal);
+    readonly List<string> _stringKeys = new();
+    readonly List<string> _languages = new();
+    public IReadOnlyList<string> StringKeys => _stringKeys;
+    public int StringKey(string key) => _stringKeys.IndexOf(key);
+
+    void ConvertText()
+    {
+        var tables = _p.StringTables().Select(f => (File: f, Table: GameProject.Load<StringTable>(f))).ToList();
+        var allText = string.Concat(tables.SelectMany(t => t.Table.Strings.Values));
+        var used = Fonts.ThaiText.CodePoints(allText).Where(c => c >= 0x20).Distinct().ToList();
+        foreach (var f in _p.FontFiles())
+        {
+            var ff = GameProject.Load<FontFile>(f);
+            if (ff.Name.Length == 0) ff.Name = GameProject.AssetName(f);
+            var font = Fonts.FontBuilder.Build(ff, _p.FontsDir, used);
+            var fo = new Fonts.TextCodegen.FontOut { Font = font, Symbol = $"agbfont_{Cpp.Ident(ff.Name)}" };
+            var cpp = Fonts.TextCodegen.FontCpp(fo);  // also fills the glyph index the strings use
+            _fonts[ff.Name] = fo;
+            Assets.Fonts[ff.Name] = new AssetInfo(ff.Name, "Font", f, font.RomBytes, font.Glyphs.Count, $"{font.Glyphs.Count} glyphs, {font.Missing.Count} missing");
+            Write(Path.Combine(GenDir, "text", $"font_{Cpp.Ident(ff.Name)}.cpp"), cpp);
+        }
+        if (tables.Count == 0) return;
+        var loc = _p.Settings.Localization;
+        var metaPath = Path.Combine(_p.TextDir, "strings.meta.json");
+        var meta = File.Exists(metaPath) ? GameProject.Load<StringMeta>(metaPath) : new StringMeta();
+        _stringKeys.AddRange(tables.SelectMany(t => t.Table.Strings.Keys).Distinct().OrderBy(k => k, StringComparer.Ordinal));
+        var order = tables.OrderBy(t => t.Table.Language == loc.Source ? 0 : 1).ThenBy(t => t.Table.Language, StringComparer.Ordinal).ToList();
+        foreach (var (file, table) in order)
+        {
+            var lang = table.Language;
+            var info = loc.Languages.FirstOrDefault(l => l.Code == lang);
+            var fontName = info?.Font is { Length: > 0 } fn ? fn : _p.Settings.General.DefaultFont;
+            if (!_fonts.TryGetValue(fontName, out var font))
+            {
+                font = _fonts.Values.FirstOrDefault();
+                if (font == null)
+                {
+                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Strings for '{lang}' need a font: add one in Font Manager."));
+                    return;
+                }
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Language '{lang}' has no font set; using {font.Font.Name}."));
+            }
+            var missing = _stringKeys.Count(k => !table.Strings.ContainsKey(k));
+            if (missing > 0 && lang != loc.Source)
+                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing} strings missing in {info?.Name ?? lang}."));
+            var diags = new List<Diagnostic>();
+            var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, table.Strings, font, k =>
+            {
+                var m = meta.Keys.GetValueOrDefault(k);
+                return (m?.BoxWidth ?? 224, m?.MaxLines ?? 3);
+            }, loc.ThaiWrap, diags, file);
+            foreach (var d in diags) Add(d);
+            Write(Path.Combine(GenDir, "text", $"strings_{Cpp.Ident(lang)}.cpp"), cpp);
+            _languages.Add(lang);
         }
     }
 
@@ -483,7 +544,9 @@ public sealed class GameBuilder
             var behaviours = a.Components.Count > 0 && scene.Actors[ai].Components.Count > 0 ? $"agbasset_scene_{id}_a{ai}_b" : "nullptr";
             actors.Append($"    {{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, ");
             actors.Append(a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr");
-            actors.Append($", {box}, {behaviours}, {a.Components.Count}, nullptr, {(a.Hidden ? "true" : "false")}}},\n");
+            var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
+            if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables."));
+            actors.Append($", {box}, {behaviours}, {a.Components.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}},\n");
         }
         if (scene.Actors.Count > 0) sb.Append($"const agb::ActorDef agbasset_scene_{id}_actors[] = {{\n{actors}}};\n");
 
@@ -531,6 +594,8 @@ public sealed class GameBuilder
         var hasAudio = _musicIds.Count + _soundIds.Count > 0;
         if (hasAudio) sb.Append("extern const unsigned char agb_soundbank[];\n");
         foreach (var f in _p.SceneFiles()) sb.Append($"extern const agb::SceneDef agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))};\n");
+        if (_languages.Count > 0) sb.Append("#include \"agb/text.hpp\"\n");
+        foreach (var lang in _languages) sb.Append($"extern const agb::text::Table agbtext_{Cpp.Ident(lang)};\n");
         sb.Append("namespace {\n");
         // Save type ID string: emulators and flash carts detect the save chip from it.
         var saveId = s.Save.Type switch
@@ -548,7 +613,9 @@ public sealed class GameBuilder
         sb.Append("};\n");
         var actions = s.Input.Where(a => a.Button != "D-pad").ToList();
         Cpp.U16(sb, "const unsigned short kActionKeys", actions.Select(a => KeyMask(a.Button)));
-        sb.Append("}  // namespace\n");
+        sb.Append("const void* const kText[] = {");
+        sb.Append(_languages.Count == 0 ? "nullptr" : string.Join(", ", _languages.Select(l => $"&agbtext_{Cpp.Ident(l)}")));
+        sb.Append("};\n}  // namespace\n");
         sb.Append("GameState agb_state;\n");
         var start = Math.Max(0, sceneNames.IndexOf(s.General.StartScene));
         var layout = string.Join(";", s.Save.Fields.Select(f => f.Name + ":" + f.Type));
@@ -557,7 +624,7 @@ public sealed class GameBuilder
         sb.Append($"    {Cpp.Str(s.General.GameTitle)}, kScenes, {sceneNames.Count}, {start},\n");
         sb.Append($"    {{agb::save::Type::{s.Save.Type}, {Math.Max(1, s.Save.Slots)}, sizeof(GameState), {version}, {(s.Save.Checksum ? "true" : "false")}}},\n");
         sb.Append($"    &agb_state, sizeof(GameState), kActionKeys, {actions.Count},\n");
-        sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, nullptr, true}};\n");
+        sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, nullptr, true, {(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");
@@ -574,7 +641,10 @@ public sealed class GameBuilder
         for (var i = 0; i < actions.Count; i++) h.Append($"constexpr int {Cpp.Ident(actions[i].Action)} = {i};\n");
         h.Append("}\nnamespace agb_tag {\n");
         for (var i = 0; i < s.Tags.Count; i++) h.Append($"constexpr unsigned short {Cpp.Ident(s.Tags[i])} = {i + 1};\n");
+        h.Append("}\nnamespace agb_text {\n");
+        for (var i = 0; i < _stringKeys.Count; i++) h.Append($"constexpr unsigned short {Cpp.Ident(_stringKeys[i])} = {i};\n");
         h.Append("}\n");
+        foreach (var f in _fonts.Values) h.Append($"extern const agb::data::Font {f.Symbol};\n");
         SoundbankBuilder.WriteIfChanged(Path.Combine(GenDir, "agb_game.hpp"), h.ToString());
     }
 

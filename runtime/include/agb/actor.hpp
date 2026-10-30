@@ -96,8 +96,9 @@ struct ActorDef {
     Box collider;          // w == 0: use the sheet's collider
     const BehaviourCreate* behaviours;
     u8 behaviourCount;
-    const data::TextRun* label;  // Text Label actors
+    const data::TextRun* label;  // Text Label actors (fixed run), or
     bool hidden;
+    s16 labelKey;                // string key looked up in the current language (-1 = none)
 };
 
 // Live actor table read by the editor through the debug channel (Play Mode Inspector "live").

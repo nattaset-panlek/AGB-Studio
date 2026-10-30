@@ -113,6 +113,7 @@ struct Font {
     u8 lineHeight;
     u8 baseline;
     bool shadow;
+    const u16* ascii;  // 128 entries: glyph index for runtime ASCII text (scores), 0xFFFF = none
 };
 
 // Text is laid out by the build (Thai stacking and dictionary line breaks happen there), so the runtime

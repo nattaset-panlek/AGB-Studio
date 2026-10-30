@@ -18,10 +18,10 @@ const u8 kBitmaps[] = {
     0b01010100,  // row 2: 1,1,1
 };
 const data::Glyph kGlyphs2[] = {{0, 3, 3, 0, 0, 4}};
-const data::Font kFont2{"t2", kGlyphs2, kBitmaps, 1, 2, 10, 8, false};
+const data::Font kFont2{"t2", kGlyphs2, kBitmaps, 1, 2, 10, 8, false, nullptr};
 const u8 kBitmaps1[] = {0b11000000, 0b11000000};
 const data::Glyph kGlyphs1[] = {{0, 2, 2, 0, 0, 3}};
-const data::Font kFont1{"t1", kGlyphs1, kBitmaps1, 1, 1, 10, 8, true};
+const data::Font kFont1{"t1", kGlyphs1, kBitmaps1, 1, 1, 10, 8, true, nullptr};
 const data::PlacedGlyph kPlaced[] = {
     {0, 0, 0, 0, 0}, {0, 4, 0, 0, 1}, {0, 8, 0, 0, 2}, {0, 0, 0, 1, 3}, {0, 4, -1, 1, 3},  // last one stacks on step 3
 };

@@ -148,3 +148,37 @@ public static class SampleProjects
         };
     }
 }
+
+public static class SampleText
+{
+    /// <summary>Adds the Noto Sans Thai font and English / Thai strings, with a Text Label in Forest_01.</summary>
+    public static void AddTo(GameProject p, string sourceLanguage = "th")
+    {
+        var noto = Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", "NotoSansThai-Regular.ttf");
+        File.Copy(noto, Path.Combine(p.FontsDir, "NotoSansThai-Regular.ttf"), true);
+        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), new FontFile
+        {
+            Name = "thai_vwf", Source = "NotoSansThai-Regular.ttf", Size = 12, CharacterSets = { "Basic Latin", "Thai" },
+            LineHeight = 14, Baseline = 10, Bpp = 2, DropShadow = true,
+        });
+        p.Settings.General.DefaultFont = "thai_vwf";
+        p.Settings.Localization.Source = sourceLanguage;
+        p.Settings.Localization.Languages = [new LanguageInfo { Code = "th", Name = "ไทย", Font = "thai_vwf" }, new LanguageInfo { Code = "en", Name = "English", Font = "thai_vwf" }];
+        p.SaveSettings();
+        GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), new StringTable
+        {
+            Language = "en",
+            Strings = { ["dlg.forest.hopper_01"] = "Where did all the coins go?", ["hud.score"] = "SCORE", ["ui.menu.start"] = "Start" },
+        });
+        GameProject.Save(Path.Combine(p.TextDir, "strings.th.json"), new StringTable
+        {
+            Language = "th",
+            Strings = { ["dlg.forest.hopper_01"] = "เหรียญหายไปไหนหมดนะ?", ["hud.score"] = "คะแนน", ["ui.menu.start"] = "เริ่มเกม" },
+        });
+        var scenePath = Path.Combine(p.ScenesDir, "Forest_01.scene");
+        var scene = GameProject.Load<SceneFile>(scenePath);
+        scene.Actors.Add(new ActorData { Name = "HUD · Title", Kind = ActorKind.TextLabel, X = 16, Y = 16, Text = "dlg.forest.hopper_01", Group = "HUD" });
+        scene.Backdrop = "#78BEFA";
+        GameProject.Save(scenePath, scene);
+    }
+}

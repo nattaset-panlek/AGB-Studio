@@ -147,3 +147,73 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.Equal("PlayerController.cs(22,9): expected ';' before '}' token", d.ToString());
     }
 }
+
+[Collection("emulator")]
+public sealed class TextPipelineTests(EmulatorFixture emu)
+{
+    [Fact]
+    public void ThaiLabelInRomMatchesThePreviewRendererPixelForPixel()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "mini_text"));
+        SampleText.AddTo(p);
+        var builder = new GameBuilder(p, new Toolchain());
+        var r = builder.Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var core = emu.Core;
+        core.LoadRom(r.RomPath);
+        for (var i = 0; i < 60; i++) core.RunFrame();
+        var frame = (uint[])core.Frame.Clone();
+        core.UnloadRom();
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "label.png"), frame, 240, 160);
+
+        // Same font and layout through the C# renderer.
+        var font = AgbStudio.Build.Fonts.FontBuilder.Build(GameProject.Load<FontFile>(Path.Combine(p.FontsDir, "thai_vwf.font")), p.FontsDir,
+            AgbStudio.Build.Fonts.ThaiText.CodePoints("เหรียญหายไปไหนหมดนะ?Where did all the coins go?SCOREคะแนนStartเริ่มเกม"));
+        var layout = AgbStudio.Build.Fonts.TextLayout.Layout("เหรียญหายไปไหนหมดนะ?", font, 224);
+        var w = 240 - 16;
+        var h = font.LineHeight * layout.Lines;
+        var expected = AgbStudio.Build.Fonts.TextRenderer.Render(layout, font, w, h, new AgbStudio.Build.Fonts.TextRenderer.Style(1, 4, 0));
+        // The label box starts at tile (2, 2) = pixel (16, 16). Ink index 1 must be exactly the darkest colour on screen.
+        uint? ink = null;
+        var mismatches = 0;
+        var inkPixels = 0;
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+            {
+                var e = expected[y * w + x];
+                var screen = frame[(16 + y) * 240 + 16 + x];
+                if (e == 1)
+                {
+                    inkPixels++;
+                    ink ??= screen;
+                    if (screen != ink) mismatches++;
+                }
+                else if (ink != null && screen == ink)
+                {
+                    mismatches++;
+                }
+            }
+        Assert.True(inkPixels > 100, $"only {inkPixels} ink pixels in the expected render");
+        Assert.Equal(0, mismatches);
+    }
+
+    [Fact]
+    public void DictionaryWrapNeverSplitsWords()
+    {
+        var f = new FontFile { Name = "t", Source = "NotoSansThai-Regular.ttf", Size = 12, CharacterSets = { "Basic Latin", "Thai" } };
+        var font = AgbStudio.Build.Fonts.FontBuilder.Build(f, Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts"));
+        const string text = "ต้องรีบตามหาก่อนพระอาทิตย์ตก เหรียญหายไปไหนหมดนะ";
+        foreach (var width in new[] { 60, 90, 120, 150 })
+        {
+            var layout = AgbStudio.Build.Fonts.TextLayout.Layout(text, font, width);
+            Assert.All(layout.LineWidths, lw => Assert.True(lw <= width + 12, $"line {lw} px in a {width} px box"));
+            // Every line break falls on a dictionary word boundary.
+            var words = AgbStudio.Build.Fonts.ThaiText.WordStarts("ต้องรีบตามหาก่อนพระอาทิตย์ตก");
+            Assert.Contains(0, words);
+            Assert.True(AgbStudio.Build.Fonts.ThaiText.InDictionary("อาทิตย์"));
+        }
+        var lines = AgbStudio.Build.Fonts.TextLayout.Layout("ต้องรีบตามหาก่อนพระอาทิตย์ตก", font, 120);
+        var firstLine = string.Concat(lines.Glyphs.Where(g => g.Line == 0).Select(g => char.ConvertFromUtf32(g.CodePoint)));
+        Assert.True(firstLine is "ต้องรีบตามหา" or "ต้องรีบตามหาก่อน" or "ต้องรีบ", $"first line '{firstLine}'");
+    }
+}

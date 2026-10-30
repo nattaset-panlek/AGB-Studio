@@ -130,11 +130,11 @@ void setupData() {
     g_sheet.colliderW = 12;
     g_sheet.colliderH = 14;
     // Player, Slime (between the gap and the wall), Coin, Goal Flag trigger.
-    g_actors[0] = {"Player", ActorKind::Player, &g_sheet, 40, 100, 1, 1, "idle", {}, kPlayerB, 3, nullptr, false};
-    g_actors[1] = {"Slime", ActorKind::Enemy, &g_sheet, 260, 144, 2, 2, nullptr, {}, kSlimeB, 3, nullptr, false};
-    g_actors[2] = {"Coin", ActorKind::Pickup, &g_sheet, 90, 144, 3, 2, nullptr, {}, kCoinB, 1, nullptr, false};
-    g_actors[3] = {"Goal Flag", ActorKind::TriggerZone, nullptr, 440, 144, 4, 2, nullptr, {-8, -32, 16, 32}, nullptr, 0, nullptr, false};
-    g_actors2[0] = {"Player", ActorKind::Player, &g_sheet, 30, 30, 1, 1, "idle", {}, kPlayerB, 3, nullptr, false};
+    g_actors[0] = {"Player", ActorKind::Player, &g_sheet, 40, 100, 1, 1, "idle", {}, kPlayerB, 3, nullptr, false, -1};
+    g_actors[1] = {"Slime", ActorKind::Enemy, &g_sheet, 260, 144, 2, 2, nullptr, {}, kSlimeB, 3, nullptr, false, -1};
+    g_actors[2] = {"Coin", ActorKind::Pickup, &g_sheet, 90, 144, 3, 2, nullptr, {}, kCoinB, 1, nullptr, false, -1};
+    g_actors[3] = {"Goal Flag", ActorKind::TriggerZone, nullptr, 440, 144, 4, 2, nullptr, {-8, -32, 16, 32}, nullptr, 0, nullptr, false, -1};
+    g_actors2[0] = {"Player", ActorKind::Player, &g_sheet, 30, 30, 1, 1, "idle", {}, kPlayerB, 3, nullptr, false, -1};
     g_scene0 = {"Forest_01", kW, kH, 0, g_layers, 1, 0, g_actors, 4, {0, 32, 24, true, 0, 0}, -1, false, kLinks, 1,
                 nullptr, nullptr, nullptr, 0x7E10, false, false};
     g_scene1 = {"Forest_02", 16, 10, 0, g_layers2, 1, 0, g_actors2, 1, {0, 32, 24, true, 0, 0}, -1, false, nullptr, 0,

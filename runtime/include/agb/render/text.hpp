@@ -29,6 +29,9 @@ public:
     // Draws one glyph immediately (tests and editor previews).
     void drawGlyph(const data::Font& font, u16 glyph, int x, int y);
     u8 pixel(int x, int y) const;  // palette index in the tile buffer (tests)
+    void fillRect(int x, int y, int w, int h, u8 index);
+    // Runtime ASCII text (HUD numbers); returns the pen x after the text.
+    int drawAscii(const data::Font& font, const char* text, int x, int y);
     int widthPx() const { return w_ * 8; }
     int heightPx() const { return h_ * 8; }
 

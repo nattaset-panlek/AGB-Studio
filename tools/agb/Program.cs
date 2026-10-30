@@ -23,6 +23,7 @@ public static class Program
                 "make-test-audio" => MakeTestAudio(args[1]),
                 "build" => Build(args[1..]),
                 "sample" => Sample(args[1..]),
+                "text-preview" => TextPreview(args[1..]),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -120,6 +121,29 @@ public static class Program
             _ => throw new ArgumentException($"Unknown sample '{kind}'."),
         };
         Console.WriteLine($"created {p.ProjectPath}");
+        return 0;
+    }
+
+    // agb text-preview <font.ttf> <sizePx> <boxWidth> <out.png> <text...>
+    static int TextPreview(string[] args)
+    {
+        var ttf = Path.GetFullPath(args[0]);
+        var f = new AgbStudio.Core.Project.FontFile
+        {
+            Name = "preview", Source = Path.GetFileName(ttf), Size = int.Parse(args[1]), CharacterSets = ["Basic Latin", "Thai", "Symbols"],
+            LineHeight = int.Parse(args[1]) + 2, Baseline = int.Parse(args[1]) - 2, DropShadow = true,
+        };
+        var fallback = Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", "fallback-latin.ttf");
+        var font = AgbStudio.Build.Fonts.FontBuilder.Build(f, Path.GetDirectoryName(ttf)!, null, fallback);
+        var width = int.Parse(args[2]);
+        var text = string.Join(' ', args[4..]).Replace("|", "\n");  // '|' marks a forced line break
+        var layout = AgbStudio.Build.Fonts.TextLayout.Layout(text, font, width);
+        var h = Math.Max(1, layout.Lines) * f.LineHeight + 4;
+        var px = AgbStudio.Build.Fonts.TextRenderer.Render(layout, font, width, h, new AgbStudio.Build.Fonts.TextRenderer.Style(1, 4, 0));
+        var argb = AgbStudio.Build.Fonts.TextRenderer.ToArgb(px);
+        Png.WriteArgb(args[3], AgbStudio.Build.Fonts.TextRenderer.Scale(argb, width, h, 4), width * 4, h * 4);
+        Console.WriteLine($"{layout.Lines} lines, widest {layout.MaxWidth} px, {font.Glyphs.Count} glyphs, missing: {string.Join(' ', font.Missing.Take(20).Select(c => $"U+{c:X4}"))}");
+        Console.WriteLine($"baseline {font.Baseline}, line height {font.LineHeight}, upper vowel top {font.UpperVowelTop}, tone top {font.ToneTop}");
         return 0;
     }
 

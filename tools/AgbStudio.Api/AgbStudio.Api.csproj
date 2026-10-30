@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Reference assembly for user scripts (namespace GBA). Roslyn binds scripts against it, external IDEs
+       read it (and its XML docs) for IntelliSense. Bodies are placeholders: the code never runs on a PC. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>GBA</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS8981</NoWarn>
+  </PropertyGroup>
+</Project>

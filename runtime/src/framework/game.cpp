@@ -11,6 +11,7 @@
 #include "agb/script.hpp"
 #include "agb/system.hpp"
 #include "agb/task.hpp"
+#include "agb/text.hpp"
 
 namespace agb {
 
@@ -82,6 +83,7 @@ public:
                 render::bg::reset();
                 render::palettes::reset();
                 render::effects::reset();
+                text::clearLabels();
                 task::destroyAll();
                 script::resetContexts();
                 screenArena().reset();
@@ -96,7 +98,12 @@ public:
                 return false;
             }
             case 4: {  // 5 spawn actors near the camera
-                for (int i = 0; i < d->actorCount; ++i) actors::spawn(d->actors[i], screenArena());
+                for (int i = 0; i < d->actorCount; ++i) {
+                    Actor* a = actors::spawn(d->actors[i], screenArena());
+                    const ActorDef& ad = d->actors[i];
+                    const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
+                    if (a && ad.kind == ActorKind::TextLabel && label) text::addLabel(ad.x, ad.y, 240 - ad.x, label);
+                }
                 g_scene.follow = d->camera.followActor >= 0 ? actors::at(d->camera.followActor) : nullptr;
                 if (g_scene.follow && g_scene.spawnX >= 0) g_scene.follow->pos = {fixed(g_scene.spawnX), fixed(g_scene.spawnY)};
                 g_scene.camX = d->camera.startX;
@@ -144,6 +151,7 @@ public:
             script::run();
             task::runAll();
             actors::lateUpdate();  // bodies move here (physics and tile collision)
+            text::update();
             actors::touches();
             checkLinks();
             actors::removeDead();
@@ -211,6 +219,7 @@ void boot(const GameDef& def) {
     if (def.actionKeys) input::setActionMap(def.actionKeys, def.actionCount);
     audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8)});
     rng::seed(0xA6B5);
+    if (def.textTables) text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
     if (def.init) def.init();
     g_depth = 0;
     g_paused = false;
