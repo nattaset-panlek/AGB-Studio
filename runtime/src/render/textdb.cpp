@@ -82,6 +82,16 @@ namespace {
 bool g_layerReady = false;
 constexpr int kMaxLabels = 6;
 render::TextBox g_labels[kMaxLabels];
+// What each HUD label shows (setLabelValue): the same value is not redrawn, and a new value with the same text
+// before it only redraws the digits.
+struct LabelValue {
+    const data::TextRun* prefix;
+    s32 value;
+    s16 digitsX;
+    u8 digits;
+    bool shown;
+};
+LabelValue g_labelValues[kMaxLabels];
 int g_labelCount = 0;
 
 u16 g_blank = 0;
@@ -124,11 +134,13 @@ int addLabel(int x, int y, int widthPx, const data::TextRun* r) {
     if (!b.init(g_style.bg, x / 8, y / 8, (widthPx + 7) / 8, (lh * (r ? r->lines : 1) + 7) / 8, g_style.paletteBank, render::TextBox::Style{1, 4, 0}))
         return -1;
     if (r) b.show(r, 0);
+    g_labelValues[g_labelCount] = {};
     return g_labelCount++;
 }
 
 void setLabelText(int label, const data::Font& font, const char* ascii) {
     if (label < 0 || label >= g_labelCount) return;
+    g_labelValues[label].shown = false;
     render::TextBox& b = g_labels[label];
     b.clear();
     b.drawAscii(font, ascii, 0, 0);
@@ -138,13 +150,21 @@ void setLabelText(int label, const data::Font& font, const char* ascii) {
 void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits) {
     if (label < 0 || label >= g_labelCount || !prefix) return;
     render::TextBox& b = g_labels[label];
-    b.clear();
-    b.drawRun(*prefix, 0, 0);
+    LabelValue& lv = g_labelValues[label];
+    if (lv.shown && lv.prefix == prefix && lv.value == value && lv.digits == digits) return;
     int x = 0;
-    for (u16 i = 0; i < prefix->count; ++i) {
-        const int e = prefix->glyphs[i].x + prefix->font->glyphs[prefix->glyphs[i].glyph].advance;
-        if (e > x) x = e;
+    if (lv.shown && lv.prefix == prefix) {
+        x = lv.digitsX - 4;
+        b.fillRect(lv.digitsX, 0, b.widthPx() - lv.digitsX, b.heightPx(), 0);
+    } else {
+        b.clear();
+        b.drawRun(*prefix, 0, 0);
+        for (u16 i = 0; i < prefix->count; ++i) {
+            const int e = prefix->glyphs[i].x + prefix->font->glyphs[prefix->glyphs[i].glyph].advance;
+            if (e > x) x = e;
+        }
     }
+    lv = {prefix, value, static_cast<s16>(x + 4), digits, true};
     char buf[12];
     int n = 0;
     u32 v = value < 0 ? static_cast<u32>(-value) : static_cast<u32>(value);
@@ -163,6 +183,7 @@ void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits)
 
 void setLabelRun(int label, const data::TextRun* r) {
     if (label < 0 || label >= g_labelCount) return;
+    g_labelValues[label].shown = false;
     render::TextBox& b = g_labels[label];
     b.clear();
     if (r) b.drawRun(*r, 0, 0);

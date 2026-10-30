@@ -48,6 +48,10 @@ public static class TemplateCatalog
             "A story told in pictures and words: portraits that change expression, choices that set flags and lead to different endings, in Thai and English.",
             ["Portraits with expressions", "Speaker name tag", "Choices that set saved flags", "Two endings", "Thai and English text"],
             VisualNovelTemplate.Create),
+        new("puzzle", "Puzzle", "Puzzle", "Falling blocks or grids with match rules.",
+            "A falling-gem puzzle: pairs of gems drop into a well, lines of three or more of one colour clear, and chains score more.",
+            ["Falling pairs you move and turn", "Match three or more to clear", "Chains and score", "Best score saved", "Title screen and pause menu"],
+            PuzzleTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);

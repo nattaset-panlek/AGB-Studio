@@ -6,10 +6,12 @@ namespace agb::render::detail {
 
 // Draws a glyph bitmap (rows MSB first, 1 or 2 bpp) into a 4bpp tile buffer `wTiles` x `hTiles` tiles.
 // 1bpp pixels use `ink`; 2bpp value v uses ink + 3 - v. A non-zero `shadow` first draws the shape at +1,+1.
+// Pixels of one glyph row are gathered per tile and written with one read-modify-write of the tile row word
+// (the buffer is in EWRAM, where every access waits).
 void blitGlyph(u32* tiles, int wTiles, int hTiles, const u8* bits, int gw, int gh, int bpp, int x0, int y0, u8 ink, u8 shadow) {
     const int rowBytes = (gw * bpp + 7) >> 3;
     const int wPx = wTiles * 8, hPx = hTiles * 8;
-    const u32 mask = (1u << bpp) - 1;
+    const u32 valueMask = (1u << bpp) - 1;
     for (int pass = shadow ? 0 : 1; pass < 2; ++pass) {
         const int ox = x0 + (pass == 0 ? 1 : 0), oy = y0 + (pass == 0 ? 1 : 0);
         for (int y = 0; y < gh; ++y) {
@@ -17,17 +19,26 @@ void blitGlyph(u32* tiles, int wTiles, int hTiles, const u8* bits, int gw, int g
             if (py < 0 || py >= hPx) continue;
             const u8* row = bits + y * rowBytes;
             u32* line = tiles + (py >> 3) * wTiles * 8 + (py & 7);
+            int tile = -1;
+            u32 mask = 0, value = 0;
             for (int x = 0; x < gw; ++x) {
                 const int bit = x * bpp;
-                const u32 v = (row[bit >> 3] >> (8 - bpp - (bit & 7))) & mask;
+                const u32 v = (row[bit >> 3] >> (8 - bpp - (bit & 7))) & valueMask;
                 if (!v) continue;
                 const int px = ox + x;
                 if (px < 0 || px >= wPx) continue;
+                const int tx = px >> 3;
+                if (tx != tile) {
+                    if (tile >= 0) line[tile * 8] = (line[tile * 8] & ~mask) | value;
+                    tile = tx;
+                    mask = value = 0;
+                }
                 const u32 c = pass == 0 ? shadow : bpp == 1 ? ink : ink + 3 - v;
-                u32& word = line[(px >> 3) * 8];
                 const int sh = (px & 7) * 4;
-                word = (word & ~(0xFu << sh)) | ((c & 15) << sh);
+                mask |= 0xFu << sh;
+                value |= (c & 15) << sh;
             }
+            if (tile >= 0) line[tile * 8] = (line[tile * 8] & ~mask) | value;
         }
     }
 }

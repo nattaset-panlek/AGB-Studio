@@ -20,6 +20,9 @@ public:
     bool commit();
 
     const data::MapLayer* layer() const { return layer_; }
+    // Runtime map edits: switch to a RAM copy of the layer (same layout) and redraw one 16 px cell.
+    void retarget(const data::MapLayer* layer) { layer_ = layer; }
+    void redrawMetatile(int mx, int my);
     int bgIndex() const { return layer_ ? layer_->bg : -1; }
     int screenBlock() const { return screenBlock_; }
     const bg::TilesetPlacement& placement() const { return placement_; }

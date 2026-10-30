@@ -123,6 +123,21 @@ public static class Scene
     [Cpp("agb::scene::solidAt({0}, {1})")]
     public static bool SolidAt(int x, int y) => false;
 
+    /// <summary>Changes one 16 px tile of a map layer while the game runs (puzzle boards, opened gates).</summary>
+    /// <param name="layer">Layer index in the Tilemap Editor (0 = first).</param>
+    /// <param name="x">Tile column.</param>
+    /// <param name="y">Tile row.</param>
+    /// <param name="tile">Tile index in the layer's tileset.</param>
+    [Cpp("agb::scene::setTile({0}, {1}, {2}, static_cast<agb::u16>({3}))")]
+    public static void SetTile(int layer, int x, int y, int tile) { }
+
+    /// <summary>The tile index at a cell of a map layer (after any SetTile).</summary>
+    /// <param name="layer">Layer index in the Tilemap Editor (0 = first).</param>
+    /// <param name="x">Tile column.</param>
+    /// <param name="y">Tile row.</param>
+    [Cpp("agb::scene::tile({0}, {1}, {2})")]
+    public static int GetTile(int layer, int x, int y) => 0;
+
     /// <summary>The actor with this Hierarchy name, or null.</summary>
     /// <param name="name">Actor name.</param>
     [Cpp("agb::api::Scene::Find({0})")]

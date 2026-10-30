@@ -47,6 +47,15 @@ void MapLayerView::release() {
     shadow_ = nullptr;
 }
 
+void MapLayerView::redrawMetatile(int mx, int my) {
+    if (!layer_ || !shadow_) return;
+    const bool image = layer_->type == data::LayerType::Image;
+    const int x0 = image ? mx : mx * 2, y0 = image ? my : my * 2, n = image ? 1 : 2;
+    for (int y = y0; y < y0 + n; ++y)
+        for (int x = x0; x < x0 + n; ++x)
+            if (x >= drawnX0_ && x <= drawnX1_ && y >= drawnY0_ && y <= drawnY1_) drawTile(x, y);
+}
+
 u16 MapLayerView::cell(int tileX, int tileY) const { return shadow_ ? shadow_[shadowIndex(tileX, tileY)] : 0; }
 
 

@@ -230,4 +230,41 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
         s.Stop();
     }
+
+    [Fact]
+    public void PuzzleDropsPairsClearsLinesAndEnds()
+    {
+        var (p, r) = Build("puzzle");
+        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 1 scripts", TemplateInfo.Stats(p));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 60; i++) s.Step();
+        uint Score() => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8);
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        var board = SceneIndex();
+        // A bot: each pair goes to the next column (the pair spawns in column 2) and drops with Down.
+        for (var piece = 0; piece < 80 && SceneIndex() == board; piece++)
+        {
+            var column = piece % 6;
+            for (var k = 0; k < Math.Abs(column - 2); k++) Press(s, column < 2 ? GbaKeys.Left : GbaKeys.Right);
+            s.Keys = GbaKeys.Down;
+            for (var i = 0; i < 60; i++)
+            {
+                var before = s.Profiler()?.Overruns ?? 0;
+                s.Step();
+                var pr = s.Profiler();
+                if (pr != null && pr.Overruns != before && Overruns.Count < 5) Overruns.Add($"piece {piece} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
+            }
+            s.Keys = 0;
+            s.Step();
+            if (piece % 10 == 9) Press(s, GbaKeys.A);  // after game over, A returns to the title
+        }
+        Assert.True(Score() > 0, "no line was cleared");
+        for (var i = 0; i < 10 && SceneIndex() == board; i++) { Press(s, GbaKeys.A); for (var k = 0; k < 30; k++) s.Step(); }
+        Assert.NotEqual(board, SceneIndex());  // the well filled up and A went back to the title
+        Assert.False(s.Log.Any(l => l.Contains("took longer than one frame", StringComparison.Ordinal)), string.Join(" | ", Overruns));
+        s.Stop();
+    }
 }

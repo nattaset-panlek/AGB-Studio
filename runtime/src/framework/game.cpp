@@ -44,6 +44,8 @@ struct SceneState {
     u32 loadStartFrame = 0, lastLoadFrames = 0;
     bool loaded = false;
     s8 drawnLayers = -1;  // layers drawn by the spawn step so far (-1 = actors not spawned yet)
+    data::MapLayer ramLayers[kMaxLayers];  // layers edited at run time (cells in the screen arena)
+    bool edited[kMaxLayers] = {};
 };
 SceneState g_scene;
 void publishGameInfo();
@@ -92,6 +94,7 @@ public:
                 return false;
             case 1:  // 2 free + reset the previous scene's arena and hardware state
                 g_scene.drawnLayers = -1;
+                for (bool& e : g_scene.edited) e = false;
                 actors::reset();
                 render::sprites::reset();
                 render::bg::reset();
@@ -505,10 +508,16 @@ void shake(u8 amplitude, u16 frames) {
     g_scene.shakeFrames = frames;
 }
 
+// The collision layer as it is now (edited cells included).
+const data::MapLayer& collisionLayer(const SceneDef* d) {
+    const int i = d->collisionLayer;
+    return i < kMaxLayers && g_scene.edited[i] ? g_scene.ramLayers[i] : d->layers[i];
+}
+
 data::Collision collisionAt(int x, int y) {
     const SceneDef* d = g_scene.def;
     if (!d || d->collisionLayer < 0) return data::Collision::None;
-    const data::MapLayer& l = d->layers[d->collisionLayer];
+    const data::MapLayer& l = collisionLayer(d);
     if (x < 0 || y < 0) return data::Collision::Solid;  // map edges are walls
     const int tx = x >> 4, ty = y >> 4;
     if (tx >= l.width) return data::Collision::Solid;
@@ -521,7 +530,7 @@ data::Collision collisionAt(int x, int y) {
 u8 tagAt(int x, int y) {
     const SceneDef* d = g_scene.def;
     if (!d || d->collisionLayer < 0 || x < 0 || y < 0) return 0;
-    const data::MapLayer& l = d->layers[d->collisionLayer];
+    const data::MapLayer& l = collisionLayer(d);
     const int tx = x >> 4, ty = y >> 4;
     if (tx >= l.width || ty >= l.height || !l.tileset || !l.tileset->tags) return 0;
     const u16 mt = l.cells[ty * l.width + tx];
@@ -529,6 +538,33 @@ u8 tagAt(int x, int y) {
 }
 
 bool solidAt(int x, int y) { return collisionAt(x, y) == data::Collision::Solid; }
+
+void setTile(int layer, int tx, int ty, u16 metatile) {
+    const SceneDef* d = g_scene.def;
+    if (!d || layer < 0 || layer >= d->layerCount || layer >= kMaxLayers) return;
+    const data::MapLayer& src = d->layers[layer];
+    if (tx < 0 || ty < 0 || tx >= src.width || ty >= src.height) return;
+    if (!g_scene.edited[layer]) {
+        const u32 cells = static_cast<u32>(src.width) * src.height;
+        auto* ram = static_cast<u16*>(screenArena().alloc(cells * 2));
+        if (!ram) return;
+        for (u32 i = 0; i < cells; ++i) ram[i] = src.cells[i];
+        g_scene.ramLayers[layer] = src;
+        g_scene.ramLayers[layer].cells = ram;
+        g_scene.edited[layer] = true;
+        g_scene.views[layer].retarget(&g_scene.ramLayers[layer]);
+    }
+    const_cast<u16*>(g_scene.ramLayers[layer].cells)[ty * src.width + tx] = metatile;
+    g_scene.views[layer].redrawMetatile(tx, ty);
+}
+
+int tile(int layer, int tx, int ty) {
+    const SceneDef* d = g_scene.def;
+    if (!d || layer < 0 || layer >= d->layerCount || layer >= kMaxLayers) return 0;
+    const data::MapLayer& l = g_scene.edited[layer] ? g_scene.ramLayers[layer] : d->layers[layer];
+    if (tx < 0 || ty < 0 || tx >= l.width || ty >= l.height) return 0;
+    return l.cells[ty * l.width + tx];
+}
 
 render::MapLayerView* layerView(int index) { return index >= 0 && index < kMaxLayers ? &g_scene.views[index] : nullptr; }
 int widthPx() { return g_scene.def ? g_scene.def->widthTiles * 16 : 0; }

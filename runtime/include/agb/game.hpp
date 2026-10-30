@@ -139,6 +139,10 @@ void shake(u8 amplitude, u16 frames);
 data::Collision collisionAt(int x, int y);
 u8 tagAt(int x, int y);
 bool solidAt(int x, int y);
+// Runtime map edits (C# Scene.SetTile / GetTile): one 16 px tile of a layer, by tile coordinates. The layer's
+// cells are copied to RAM on the first edit; collision follows the edited cells.
+void setTile(int layer, int tileX, int tileY, u16 metatile);
+int tile(int layer, int tileX, int tileY);
 render::MapLayerView* layerView(int index);
 int widthPx();
 int heightPx();

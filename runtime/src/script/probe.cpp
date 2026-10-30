@@ -7,10 +7,16 @@
 
 namespace agb::dbg {
 
-namespace {
+namespace detail {
 AGB_EWRAM_BSS State g_state;
-bool g_published = false;
 bool g_stepping = false;
+}  // namespace detail
+
+using detail::g_state;
+using detail::g_stepping;
+
+namespace {
+bool g_published = false;
 
 void publish() {
     if (g_published) return;
@@ -40,8 +46,8 @@ void leave() {
     if (g_state.depth) --g_state.depth;
 }
 
-void probe(u16 file, u16 line) {
-    if (g_state.depth && g_state.depth <= kStackDepth) g_state.stack[g_state.depth - 1].line = line;
+void detail::probeSlow(u16 file, u16 line) {
+    publish();
     const u32 at = (static_cast<u32>(file) << 16) | line;
     bool hit = g_stepping;
     for (int i = 0; i < g_state.breakpointCount && !hit; ++i) hit = g_state.breakpoints[i] == at;

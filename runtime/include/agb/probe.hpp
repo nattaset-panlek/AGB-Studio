@@ -32,9 +32,22 @@ struct State {
 
 State& state();
 void setNames(const char* const* files, const char* const* names);
-void probe(u16 file, u16 line);
 void enter(u16 file, u16 name);
 void leave();
+
+namespace detail {
+extern State g_state;
+extern bool g_stepping;
+void probeSlow(u16 file, u16 line);
+}  // namespace detail
+
+// Before every statement of a Debug build: records the line of the innermost method and only calls out when the
+// editor set breakpoints or is stepping, so script loops stay fast.
+inline void probe(u16 file, u16 line) {
+    State& s = detail::g_state;
+    if (s.depth && s.depth <= kStackDepth) s.stack[s.depth - 1].line = line;
+    if (s.breakpointCount || detail::g_stepping) detail::probeSlow(file, line);
+}
 
 struct Scope {
     Scope(u16 file, u16 name) { enter(file, name); }

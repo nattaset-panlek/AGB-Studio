@@ -510,7 +510,12 @@ internal sealed partial class CppTranslator
             return new CppExpr($"static_cast<{et}>(static_cast<{bt}>({left.Text}) {OperatorSymbol(kind, true)} static_cast<{bt}>({right.Text}))", Primary);
         }
         var p = OperatorPrec(kind);
-        return new CppExpr($"{left.At(p)} {OperatorSymbol(kind, false)} {right.At(p + 1)}", p);
+        // g++ -Wparentheses (an error with -Werror): binary operands of bitwise and shift operators, and && inside
+        // ||, keep the parentheses the C# source had or its precedence implies.
+        var need = kind is BinaryOperatorKind.And or BinaryOperatorKind.Or or BinaryOperatorKind.ExclusiveOr or
+            BinaryOperatorKind.LeftShift or BinaryOperatorKind.RightShift ? Unary
+            : kind == BinaryOperatorKind.ConditionalOr ? CppExpr.And + 1 : p;
+        return new CppExpr($"{left.At(Math.Max(p, need))} {OperatorSymbol(kind, false)} {right.At(Math.Max(p + 1, need))}", p);
     }
 
     /// <summary>tag == "Coin" and other asset-name comparisons resolve the string at build time.</summary>
