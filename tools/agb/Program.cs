@@ -24,6 +24,7 @@ public static class Program
                 "build" => Build(args[1..]),
                 "sample" => Sample(args[1..]),
                 "text-preview" => TextPreview(args[1..]),
+                "lint" => RunLint(args.Length > 1 ? args[1] : NativeBuild.RepoRoot),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -123,6 +124,14 @@ public static class Program
         };
         Console.WriteLine($"created {p.ProjectPath}");
         return 0;
+    }
+
+    static int RunLint(string root)
+    {
+        var issues = Lint.Run(root);
+        foreach (var i in issues) Console.WriteLine($"{i.File}({i.Line}): {i.Rule}: {i.Text}");
+        Console.WriteLine(issues.Count == 0 ? "lint: no issues" : $"lint: {issues.Count} issues");
+        return issues.Count == 0 ? 0 : 1;
     }
 
     // agb text-preview <font.ttf> <sizePx> <boxWidth> <out.png> <text...>
