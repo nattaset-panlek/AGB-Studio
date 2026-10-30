@@ -81,7 +81,23 @@ public sealed class BuildReport
                 perAsset[asset] = (type, perAsset.GetValueOrDefault(asset).Bytes + size);
             }
             else if (name.StartsWith("agb_soundbank", StringComparison.Ordinal)) audio += size;
-            else if (name.StartsWith("agbasset_", StringComparison.Ordinal) || name.StartsWith("agbdata_", StringComparison.Ordinal)) data += size;
+            else if (name.StartsWith("agbdata_", StringComparison.Ordinal))
+            {
+                data += size;
+                var table = name["agbdata_".Length..];
+                perAsset[table] = ("Data", perAsset.GetValueOrDefault(table).Bytes + size);
+            }
+            else if (name.StartsWith("agbasset_", StringComparison.Ordinal) || name.StartsWith("agbfont_", StringComparison.Ordinal))
+            {
+                data += size;
+                if (name.StartsWith("agbfont_", StringComparison.Ordinal))
+                {
+                    var font = name["agbfont_".Length..];
+                    foreach (var suffix in new[] { "_bits", "_glyphs", "_ascii" })
+                        if (font.EndsWith(suffix, StringComparison.Ordinal)) font = font[..^suffix.Length];
+                    perAsset[font] = ("Font", perAsset.GetValueOrDefault(font).Bytes + size);
+                }
+            }
             else if (kind is 'T' or 't') code += size;
             else data += size;
         }

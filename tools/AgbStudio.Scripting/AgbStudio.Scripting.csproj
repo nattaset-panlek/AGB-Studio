@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- C# scripting compiler: Roslyn binding + GAE analyzers, C# -> C++20 translator, [Cutscene] async -> Event
+       Script bytecode, Dialogue and Logic Graph compilers, external IDE project generator. -->
+  <PropertyGroup>
+    <RootNamespace>AgbStudio.Scripting</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgbStudio.Api\AgbStudio.Api.csproj" />
+    <ProjectReference Include="..\AgbStudio.Analyzers\AgbStudio.Analyzers.csproj" />
+    <ProjectReference Include="..\AgbStudio.Analyzers\CodeFixes\AgbStudio.Analyzers.CodeFixes.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Single sources of the VM opcodes and built-in natives (read again from RuntimeIncludeDir when set). -->
+    <EmbeddedResource Include="$(AgbRoot)runtime\include\agb\script_ops.def" LogicalName="script_ops.def" />
+    <EmbeddedResource Include="$(AgbRoot)runtime\include\agb\natives.hpp" LogicalName="natives.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AgbStudio.Scripting.Tests" />
+  </ItemGroup>
+</Project>

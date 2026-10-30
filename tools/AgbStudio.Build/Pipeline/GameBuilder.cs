@@ -185,6 +185,7 @@ public sealed class GameBuilder
         }
         ConvertAudio();
         ConvertText();
+        ConvertData();
         return $"{spriteFiles.Count} sprites · {tilesetFiles.Count} tilesets · {_fonts.Count} fonts · {_p.SoundFiles().Count()} sounds";
     }
 
@@ -378,6 +379,25 @@ public sealed class GameBuilder
             Write(Path.Combine(GenDir, "text", $"strings_{Cpp.Ident(lang)}.cpp"), cpp);
             _languages.Add(lang);
         }
+    }
+
+    // ---- database ------------------------------------------------------------------------------------
+
+    public IReadOnlyList<TableFile> Tables { get; private set; } = [];
+
+    void ConvertData()
+    {
+        var tables = _p.TableFiles().Select(GameProject.Load<TableFile>).ToList();
+        Tables = tables;
+        if (tables.Count == 0) return;
+        var diags = new List<Diagnostic>();
+        var o = Data.DatabaseCodegen.Generate(tables, StringKey, n => SoundId(n), n => _sprites.ContainsKey(n), diags, _p.DataDir);
+        foreach (var d in diags) Add(d);
+        SoundbankBuilder.WriteIfChanged(Path.Combine(GenDir, "agb_db.hpp"), o.Header);
+        foreach (var (file, text) in o.Sources) Write(Path.Combine(GenDir, "data", file), text);
+        foreach (var t in tables)
+            Assets.Data[t.Name] = new AssetInfo(t.Name, "Data", Path.Combine(_p.DataDir, t.Name + ".db"),
+                t.Rows.Count * t.Fields.Where(f => f.Name != t.KeyField).Sum(Data.DatabaseCodegen.FieldBytes), t.Rows.Count, $"{t.Rows.Count} rows, {t.Fields.Count} fields");
     }
 
     public int SoundId(string name) => _soundIds.TryGetValue(SoundKey(name), out var id) ? id : -1;
