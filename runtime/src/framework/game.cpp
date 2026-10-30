@@ -43,9 +43,13 @@ struct SceneState {
     u16 transitionFrames = 15;
     u32 loadStartFrame = 0, lastLoadFrames = 0;
     bool loaded = false;
+    s8 drawnLayers = -1;  // layers drawn by the spawn step so far (-1 = actors not spawned yet)
 };
 SceneState g_scene;
 void publishGameInfo();
+// The current load step runs again next frame (a step split over several frames).
+bool g_holdStep = false;
+void holdLoadStep() { g_holdStep = true; }
 [[maybe_unused]] bool g_handoverChecked = false;
 
 // Hot reload (D-15): the editor writes the hand-over block shortly after the reloaded ROM starts. During its
@@ -87,6 +91,7 @@ public:
                 g_scene.loadStartFrame = system::frame();
                 return false;
             case 1:  // 2 free + reset the previous scene's arena and hardware state
+                g_scene.drawnLayers = -1;
                 actors::reset();
                 render::sprites::reset();
                 render::bg::reset();
@@ -107,12 +112,22 @@ public:
                     if (!g_scene.views[i].init(d->layers[i])) debug::logf("warning: layer %d of %s could not be loaded", i, d->name);
                 return false;
             }
-            case 4: {  // 5 spawn actors near the camera
+            case 4: {  // 5 spawn actors near the camera, then draw one layer per frame
+                if (g_scene.drawnLayers >= 0) {
+                    const int i = g_scene.drawnLayers++;
+                    g_scene.views[i].setCamera(g_scene.camX, g_scene.camY);
+                    g_scene.views[i].drawAll();
+                    if (g_scene.drawnLayers < d->layerCount && g_scene.drawnLayers < kMaxLayers) holdLoadStep();
+                    return false;
+                }
                 for (int i = 0; i < d->actorCount; ++i) {
                     Actor* a = actors::spawn(d->actors[i], screenArena());
                     const ActorDef& ad = d->actors[i];
                     const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
-                    if (a && ad.kind == ActorKind::TextLabel && label) text::addLabel(ad.x, ad.y, 240 - ad.x, label);
+                    if (a && ad.kind == ActorKind::TextLabel && label) {
+                        a->label = label;
+                        a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+                    }
                 }
                 g_scene.follow = d->camera.followActor >= 0 ? actors::at(d->camera.followActor) : nullptr;
                 if (g_scene.follow && g_scene.spawnX >= 0) g_scene.follow->pos = {fixed(g_scene.spawnX), fixed(g_scene.spawnY)};
@@ -123,9 +138,10 @@ public:
                     g_scene.camY = g_scene.follow->pos.y.floor() - 80;
                 }
                 clampCamera();
-                for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
-                    g_scene.views[i].setCamera(g_scene.camX, g_scene.camY);
-                    g_scene.views[i].drawAll();
+                // Each layer draws its whole window (about 70k cycles): one layer per frame keeps the frame rate.
+                if (d->layerCount > 0) {
+                    g_scene.drawnLayers = 0;
+                    holdLoadStep();
                 }
                 return false;
             }
@@ -377,6 +393,8 @@ void frame() {
         if (done) {
             g_loadStep = -1;
             s->enter();
+        } else if (g_holdStep) {
+            g_holdStep = false;
         } else {
             ++g_loadStep;
         }
@@ -387,7 +405,8 @@ void frame() {
         s->update();
     }
     system::waitVBlank();
-    if (profile::stats().overruns != overruns)
+    // The first frame also holds system start-up (not a game frame).
+    if (profile::stats().overruns != overruns && system::frame() > 1)
         debug::logf("warning: frame %lu took longer than one frame (%s: %s)", system::frame(), s->name(),
                     stepBefore >= 0 ? scene::loadStepName(stepBefore) : "update");
 }

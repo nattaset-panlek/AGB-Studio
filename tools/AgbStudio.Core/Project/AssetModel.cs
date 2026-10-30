@@ -35,7 +35,7 @@ public sealed class AnimationData
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum CollisionType { None, Solid, OneWay, Ladder, Hazard, Water }
+public enum CollisionType { None, Solid, OneWay, Ladder, Hazard, Water, SlopeUp, SlopeDown }
 
 // <tileset>.png.meta.json: each 16x16 block of the image is one editor tile (metatile).
 public sealed class TilesetMeta

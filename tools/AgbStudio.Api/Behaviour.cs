@@ -155,6 +155,12 @@ public sealed class Actor
     /// <param name="name">Animation name from the Sprite Editor.</param>
     [Cpp("{this.}playAnimation({0})")]
     public void PlayAnimation(string name) { }
+
+    /// <summary>For a Text Label actor (HUD): shows its text followed by a number, e.g. "SCORE 0120".</summary>
+    /// <param name="value">The number.</param>
+    /// <param name="digits">Pads with zeros to this many digits (0 = no padding).</param>
+    [Cpp("agb::text::setLabelValue({this.}textLabel, {this.}label, {0}, {1})")]
+    public void SetLabelNumber(int value, int digits) { }
 }
 
 /// <summary>Limits an Inspector field to a range (a slider in the Inspector).</summary>

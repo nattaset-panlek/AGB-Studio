@@ -24,15 +24,31 @@ bool boxTouches(const Box& b, data::Collision type) {
     return scene::collisionAt(b.x + b.w - 1, b.y + b.h - 1) == type;
 }
 
-bool moveX(Actor& a, fixed dx) {
+bool slopeSurface(int x, int y, int& surface) {
+    const data::Collision c = scene::collisionAt(x, y);
+    if (c != data::Collision::SlopeUp && c != data::Collision::SlopeDown) return false;
+    const int top = y & ~15, along = x & 15;
+    surface = c == data::Collision::SlopeUp ? top + 15 - along : top + along;
+    return true;
+}
+
+bool moveX(Actor& a, fixed dx, int stepUp) {
     if (dx.raw == 0) return false;
     const fixed old = a.pos.x;
     a.pos.x += dx;
     const Box b = a.worldBox();
     const int edge = dx.raw > 0 ? b.x + b.w - 1 : b.x;
-    for (int y = b.y; y < b.y + b.h; y += 8) {
-        const int yy = y;
-        if (blocksSide(scene::collisionAt(edge, yy)) || blocksSide(scene::collisionAt(edge, b.y + b.h - 1))) {
+    const int bottom = b.y + b.h - 1;
+    for (int y = b.y; y < b.y + b.h + 7; y += 8) {
+        const int yy = y < b.y + b.h ? y : bottom;
+        if (blocksSide(scene::collisionAt(edge, yy))) {
+            // A low ledge (the top of a slope meeting flat ground): step up onto it instead of stopping.
+            const int tileTop = yy & ~15;
+            if (stepUp > 0 && bottom - tileTop < stepUp && !blocksSide(scene::collisionAt(edge, tileTop - 1)) &&
+                !blocksSide(scene::collisionAt(edge, b.y - (bottom - tileTop + 1)))) {
+                a.pos.y -= fixed(bottom - tileTop + 1);
+                return false;
+            }
             // Snap to the tile edge.
             const int tile = edge >> 4;
             const int target = dx.raw > 0 ? tile * 16 - b.w - a.collider.x : (tile + 1) * 16 - a.collider.x;
@@ -108,7 +124,7 @@ void PlatformerBody::lateUpdate() {
         const fixed fall = inWater ? maxFall / 2 : maxFall;
         if (vy > fall) vy = fall;
     }
-    hitWall = physics::moveX(a, vx);
+    hitWall = physics::moveX(a, vx, onGround ? 6 : 0);
     if (hitWall) vx = fixed();
     const bool wasGround = onGround;
     onGround = false;
@@ -126,8 +142,21 @@ void PlatformerBody::lateUpdate() {
             onGround = c == data::Collision::Solid || ((c == data::Collision::OneWay || c == data::Collision::Ladder) && ((b.y + b.h) & 15) == 0);
         }
     }
+    // 45-degree slopes: the foot (bottom centre) rides on the surface; walking downhill keeps the body on it
+    // instead of falling in small steps.
+    if (!climbing && vy.raw >= 0) {
+        const Box b = a.worldBox();
+        const int fx = b.x + b.w / 2, foot = b.y + b.h - 1;
+        int s = 0;
+        bool snap = physics::slopeSurface(fx, foot, s) && (foot >= s || (wasGround && s - foot <= 6));
+        if (!snap && wasGround && physics::slopeSurface(fx, foot + 8, s) && s > foot && s - foot <= 8) snap = true;
+        if (snap) {
+            a.pos.y += fixed(s - foot);
+            vy = fixed();
+            onGround = true;
+        }
+    }
     framesSinceGround = onGround ? 0 : static_cast<u16>(framesSinceGround + (framesSinceGround < 0xFFFF ? 1 : 0));
-    AGB_UNUSED(wasGround);
     if (touchingHazard)
         if (Health* h = a.get<Health>()) h->damage(1);
     a.vel = {vx, vy};

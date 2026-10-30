@@ -78,6 +78,7 @@ public:
     render::sprites::Id sprite = render::sprites::kNone;
     const data::SpriteSheet* sheet = nullptr;
     const data::TextRun* label = nullptr;
+    s8 textLabel = -1;   // Text Label actors: index of their label on the text layer
     Behaviour* behaviours[kMaxBehaviours] = {};
     u8 behaviourCount = 0;
 };

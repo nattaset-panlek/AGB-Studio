@@ -8,6 +8,7 @@
 #include "agb/input.hpp"
 #include "agb/rng.hpp"
 #include "agb/script.hpp"
+#include "agb/text.hpp"
 
 namespace agb {
 

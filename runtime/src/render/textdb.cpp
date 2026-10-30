@@ -131,6 +131,32 @@ void setLabelText(int label, const data::Font& font, const char* ascii) {
     b.update();
 }
 
+void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits) {
+    if (label < 0 || label >= g_labelCount || !prefix) return;
+    render::TextBox& b = g_labels[label];
+    b.clear();
+    b.drawRun(*prefix, 0, 0);
+    int x = 0;
+    for (u16 i = 0; i < prefix->count; ++i) {
+        const int e = prefix->glyphs[i].x + prefix->font->glyphs[prefix->glyphs[i].glyph].advance;
+        if (e > x) x = e;
+    }
+    char buf[12];
+    int n = 0;
+    u32 v = value < 0 ? static_cast<u32>(-value) : static_cast<u32>(value);
+    do {
+        buf[n++] = static_cast<char>('0' + v % 10);
+        v /= 10;
+    } while (v && n < 10);
+    while (n < digits && n < 10) buf[n++] = '0';
+    if (value < 0 && n < 11) buf[n++] = '-';
+    char text[12];
+    for (int i = 0; i < n; ++i) text[i] = buf[n - 1 - i];
+    text[n] = 0;
+    b.drawAscii(*prefix->font, text, x + 4, 0);
+    b.update();
+}
+
 void clearLabels() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].release();
     g_labelCount = 0;

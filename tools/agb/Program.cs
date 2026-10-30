@@ -23,6 +23,7 @@ public static class Program
                 "make-test-audio" => MakeTestAudio(args[1]),
                 "build" => Build(args[1..]),
                 "sample" => Sample(args[1..]),
+                "template" => Template(args[1..]),
                 "text-preview" => TextPreview(args[1..]),
                 "lint" => RunLint(args.Length > 1 ? args[1] : NativeBuild.RepoRoot),
                 _ => Usage($"Unknown command '{args[0]}'."),
@@ -126,6 +127,15 @@ public static class Program
             _ => throw new ArgumentException($"Unknown sample '{kind}'."),
         };
         Console.WriteLine($"created {p.ProjectPath}");
+        return 0;
+    }
+
+    // agb template <id> <dir> [name]: creates a project from a New Project template (TemplateCatalog).
+    static int Template(string[] args)
+    {
+        var t = AgbStudio.Build.Content.Templates.TemplateCatalog.Find(args[0]) ?? throw new ArgumentException($"Unknown template '{args[0]}'.");
+        var p = t.Create(args[1], args.Length > 2 ? args[2] : t.Name);
+        Console.WriteLine($"created {p.ProjectPath} ({AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p)})");
         return 0;
     }
 

@@ -52,6 +52,9 @@ u16 blankEntry();  // map entry of the text layer's blank tile (closed panels po
 // Text Label actors and HUD text: small text boxes on the text layer at screen pixel positions.
 int addLabel(int x, int y, int widthPx, const data::TextRun* run);
 void setLabelText(int label, const data::Font& font, const char* ascii);  // runtime numbers ("SCORE 0120")
+// HUD value: the label's own text (localized, e.g. "SCORE" / "คะแนน"), a space, then the number padded to
+// `digits` with zeros (C# Actor.SetLabelNumber).
+void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits);
 void clearLabels();
 
 }  // namespace agb::text

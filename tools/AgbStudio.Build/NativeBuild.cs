@@ -104,7 +104,9 @@ public sealed class NativeBuild
         if (!File.Exists(file) || File.ReadAllText(file) != text) File.WriteAllText(file, text);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var r = Proc.Run(_tc.Ninja, "-f build.ninja", _buildDir, TimeSpan.FromMinutes(10), onLine, cancel);
+        // AGB_BUILD_JOBS limits parallel compiles (machines with little memory, many builds at once).
+        var jobs = int.TryParse(Environment.GetEnvironmentVariable("AGB_BUILD_JOBS"), out var j) && j > 0 ? $"-j {j} " : "";
+        var r = Proc.Run(_tc.Ninja, jobs + "-f build.ninja", _buildDir, TimeSpan.FromMinutes(10), onLine, cancel);
         var first = targets[0];
         return new NativeBuildResult(r.ExitCode == 0, Path.Combine(_buildDir, first.Name + ".gba"),
             Path.Combine(_buildDir, first.Name + ".elf.map"), r.Output, sw.Elapsed);

@@ -27,7 +27,8 @@ constexpr u16 seTile(u16 se) { return se & 0x3FF; }
 constexpr u16 sePal(u16 se) { return se >> 12; }
 
 // Collision type painted on tiles in the Tilemap Editor (T-P03).
-enum class Collision : u8 { None, Solid, OneWay, Ladder, Hazard, Water };
+// SlopeUp rises to the right (45 degrees across the 16 px tile), SlopeDown rises to the left.
+enum class Collision : u8 { None, Solid, OneWay, Ladder, Hazard, Water, SlopeUp, SlopeDown };
 
 // A 16x16 "tile" of the editor = 2x2 hardware tiles. Screen entries are relative to the tileset:
 // tile index from the tileset's first tile, palette bank from the tileset's first bank.

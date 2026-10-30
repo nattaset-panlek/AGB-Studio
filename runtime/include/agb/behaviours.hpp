@@ -152,7 +152,10 @@ private:
 
 namespace physics {
 // Moves a box through the tile map on one axis; returns true when it was blocked.
-bool moveX(Actor& a, fixed dx);
+// Moves horizontally; walls stop the actor. `stepUp` > 0 lets a grounded body climb a ledge that low.
+bool moveX(Actor& a, fixed dx, int stepUp = 0);
+// Surface y of a slope tile at world x (true when the tile at (x, y) is a slope).
+bool slopeSurface(int x, int y, int& surface);
 bool moveY(Actor& a, fixed dy, bool dropThroughOneWay = false);
 bool boxTouches(const Box& box, data::Collision type);
 }  // namespace physics

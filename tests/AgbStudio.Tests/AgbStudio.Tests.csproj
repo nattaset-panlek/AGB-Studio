@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\tools\AgbStudio.Core\AgbStudio.Core.csproj" />
     <ProjectReference Include="..\..\tools\AgbStudio.Build\AgbStudio.Build.csproj" />
     <ProjectReference Include="..\..\tools\AgbStudio.Emu\AgbStudio.Emu.csproj" />
+    <ProjectReference Include="..\..\tools\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
