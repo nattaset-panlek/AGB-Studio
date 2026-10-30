@@ -132,8 +132,10 @@ public class ShellE2ETests : IDisposable
         Assert.Contains(_fx.Services.Windows.Requests, r => r.Window == "T-P05");
         Click(ws.PanelTabs[3]);
         Assert.Contains(_fx.Services.Windows.Requests, r => r.Window == "T-P07");
-        Assert.IsType<NotBuiltNotice>(_win.Overlays.Open.Single());
-        Key(Avalonia.Input.Key.Escape);
+        // the Database tab opens the Database page (T-P07); back to the Scene Editor
+        Assert.Equal("T-P07", _win.CurrentPageId);
+        _ = _fx.Services.Windows.Open("T-P01");
+        Capture.Pump();
         var scene = _fx.Services.Documents.Open[0];
         Assert.False(Find<DocTab>("Doc_Scene").IsDirty);
         scene.IsDirty = true;

@@ -10,8 +10,8 @@ public sealed record SeparatorEntry : MenuEntry
     public static readonly SeparatorEntry Instance = new();
 }
 
-/// <summary>A submenu; its entries may be produced when it opens (Open Recent).</summary>
-public sealed record SubmenuEntry(string Id, string Title, Func<IReadOnlyList<MenuEntry>> Entries) : MenuEntry;
+/// <summary>A submenu; its entries may be produced when it opens (Open Recent). Glyph: the icon Figma shows on the item (T-M23 Command).</summary>
+public sealed record SubmenuEntry(string Id, string Title, Func<IReadOnlyList<MenuEntry>> Entries, string? Glyph = null) : MenuEntry;
 
 /// <summary>One menu of the title bar with its Figma id (T-M01..T-M07).</summary>
 public sealed record MenuDef(string Id, string Title, IReadOnlyList<MenuEntry> Entries);
