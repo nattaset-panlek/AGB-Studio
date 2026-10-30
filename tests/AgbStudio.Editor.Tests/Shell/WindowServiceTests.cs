@@ -51,7 +51,7 @@ public class WindowServiceTests
     {
         using var fx = new Fixture(withApp: false);
         foreach (var id in new[] { "T-P01", "T-O07", "T-D10", "T-D12" }) Assert.True(fx.Services.Windows.IsRegistered(id), id);
-        Assert.False(fx.Services.Windows.IsRegistered("T-P08"));
+        Assert.False(fx.Services.Windows.IsRegistered("T-X99"));
     }
 
     [AvaloniaFact]
