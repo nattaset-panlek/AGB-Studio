@@ -91,9 +91,14 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(checkpointReached, "checkpoint not reached");
         Assert.True(maxX > 900, $"got as far as x {maxX}");
         Assert.DoesNotContain(s.Actors(), a => a.Name == "Player");  // the goal flag leads back to the title
-        Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
         s.Stop();
     }
+
+    // A gameplay frame that took too long ("... (Scene: update)"). Load steps run while the screen is faded out and
+    // are reported separately ("load step ... took N cycles").
+    static bool GameplayOverrun(string line) =>
+        line.Contains("took longer than one frame", StringComparison.Ordinal) && line.Contains(": update)", StringComparison.Ordinal);
 
     static LiveActor Me(PlaySession s) => s.Actors().Single(a => a.Name == "Player");
 
@@ -102,8 +107,10 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
 
     static void Walk(PlaySession s, GbaKeys dir, Func<LiveActor, bool> until, int max = 400)
     {
-        for (var i = 0; i < max && !until(Me(s)); i++)
+        for (var i = 0; i < max; i++)
         {
+            var me = s.Actors().FirstOrDefault(a => a.Name == "Player");
+            if (me == null || until(me)) break;  // no player: the scene changed (a battle started)
             s.Keys = dir;
             var before = s.Profiler()?.Overruns ?? 0;
             s.Step();
@@ -188,7 +195,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         s.Keys = 0;
         for (var i = 0; i < 40; i++) s.Step();
         Assert.Equal(0, SceneIndex());  // House
-        Assert.False(s.Log.Any(l => l.Contains("took longer than one frame", StringComparison.Ordinal)), string.Join(" | ", s.Log.Concat(Overruns)));
+        Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", s.Log.Concat(Overruns)));
         s.Stop();
     }
 
@@ -227,7 +234,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
             for (var k = 0; k < 40; k++) s.Step();
         }
         Assert.NotEqual(story, SceneIndex());  // back on the title screen
-        Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
         s.Stop();
     }
 
@@ -264,7 +271,93 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(Score() > 0, "no line was cleared");
         for (var i = 0; i < 10 && SceneIndex() == board; i++) { Press(s, GbaKeys.A); for (var k = 0; k < 30; k++) s.Step(); }
         Assert.NotEqual(board, SceneIndex());  // the well filled up and A went back to the title
-        Assert.False(s.Log.Any(l => l.Contains("took longer than one frame", StringComparison.Ordinal)), string.Join(" | ", Overruns));
+        Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        s.Stop();
+    }
+
+    [Fact]
+    public void ShootEmUpScrollsFiresAndClearsTheStage()
+    {
+        var (p, r) = Build("shmup");
+        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 3 scripts", TemplateInfo.Stats(p));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 40; i++) s.Step();
+        uint Score() => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8);
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        var stage = SceneIndex();
+        // Hold fire and sweep up and down.
+        var mostActors = 0;
+        for (var f = 0; f < 2200 && SceneIndex() == stage; f++)
+        {
+            s.Keys = GbaKeys.A | ((f / 60) % 2 == 0 ? GbaKeys.Up : GbaKeys.Down);
+            var before = s.Profiler()?.Overruns ?? 0;
+            s.Step();
+            var pr = s.Profiler();
+            if (pr != null && pr.Overruns != before) Overruns.Add($"frame {f} actors {s.Actors().Count} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
+            if (f % 30 == 0) mostActors = Math.Max(mostActors, s.Actors().Count);
+            if (f == 400) AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "stage.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
+        }
+        s.Keys = 0;
+        Assert.True(Score() >= 100, $"score {Score()}");
+        Assert.NotEqual(stage, SceneIndex());  // stage clear (or out of lives) returns to the title
+        Assert.True(mostActors > 10, $"at most {mostActors} actors at once");  // shots and enemies were spawned
+        Assert.DoesNotContain(s.Log, l => l.Contains("actor slots are in use", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Log, l => l.Contains("is full", StringComparison.Ordinal));
+        Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        s.Stop();
+    }
+
+    [Fact]
+    public void RpgShopsAndWinsABattle()
+    {
+        var (p, r) = Build("rpg");
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 60; i++) s.Step();
+        uint Field(int index) => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8 + (uint)index * 4);  // gold, exp, heroHp, mageHp, mageMp, potions, level, battles
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        var meadow = SceneIndex();
+        Assert.Equal(40u, Field(0));
+        Assert.Equal(1u, Field(5));
+
+        // Buy a potion: walk up to the shopkeeper (72, 56) and talk.
+        Walk(s, GbaKeys.Up, a => a.Y <= 66);  // stops against the shopkeeper
+        Press(s, GbaKeys.A);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);   // past "Potions, 30 gold each. Buy one?"
+        for (var i = 0; i < 20; i++) s.Step();
+        Press(s, GbaKeys.A);   // Buy
+        for (var i = 0; i < 40; i++) s.Step();
+        CloseDialogue(s);
+        Assert.Equal(10u, Field(0));
+        Assert.Equal(2u, Field(5));
+
+        // Into the tall grass until a battle starts.
+        Walk(s, GbaKeys.Down, a => a.Y >= 136);
+        Walk(s, GbaKeys.Right, a => a.X >= 216);
+        for (var i = 0; i < 40 && SceneIndex() == meadow; i++)
+        {
+            Walk(s, GbaKeys.Down, a => a.Y >= 184, 60);
+            Walk(s, GbaKeys.Up, a => a.Y <= 136, 60);
+        }
+        Assert.NotEqual(meadow, SceneIndex());
+        // FIGHT every turn: A picks the first command and A moves the text on.
+        for (var i = 0; i < 60 && SceneIndex() != meadow; i++)
+        {
+            Press(s, GbaKeys.A);
+            for (var k = 0; k < 25; k++) s.Step();
+        }
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.Equal(meadow, SceneIndex());
+        Assert.Equal(1u, Field(7));            // one battle
+        Assert.True(Field(0) > 10, $"gold {Field(0)}");  // the slime's gold
+        Assert.True(Field(1) > 0, $"exp {Field(1)}");
+        Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
         s.Stop();
     }
 }

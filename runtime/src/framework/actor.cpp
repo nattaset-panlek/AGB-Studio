@@ -1,5 +1,6 @@
 #include "agb/actor.hpp"
 
+#include "agb/behaviours.hpp"
 #include "agb/debug.hpp"
 
 namespace agb {
@@ -15,6 +16,9 @@ struct AllActors {
 };
 constexpr AllActors kAll{};
 AGB_EWRAM_BSS ActorDebug g_debug[actors::kMaxActors];
+// Behaviour memory of each actor slot (reused with the slot). Behaviours that do not fit go to the scene arena.
+constexpr u32 kSlotBytes = 128;
+alignas(8) AGB_EWRAM_BSS u8 g_slotMemory[actors::kMaxActors][kSlotBytes];
 
 bool streq(const char* a, const char* b) {
     if (!a || !b) return false;
@@ -88,8 +92,10 @@ Actor* spawnAt(const ActorDef& def, Arena& arena, int x, int y) {
             if (def.anim) render::sprites::playByName(a.sprite, def.anim);
         }
         if (def.hidden) a.setVisible(false);
+        Arena slot(g_slotMemory[i], kSlotBytes, nullptr);  // quiet: a full slot falls back to the arena
         for (int b = 0; b < def.behaviourCount && b < kMaxBehaviours; ++b) {
-            Behaviour* beh = def.behaviours[b](arena);
+            Behaviour* beh = def.behaviours[b](slot);
+            if (!beh) beh = def.behaviours[b](arena);
             if (!beh) continue;
             beh->actor = &a;
             a.behaviours[a.behaviourCount++] = beh;
@@ -150,18 +156,39 @@ void lateUpdate() {
     }
 }
 
+// Sort and sweep: the boxes of all colliding actors are taken once, sorted by left edge, and each actor is only
+// compared with the ones that start before its right edge (a stage full of bullets stays cheap). Two projectiles
+// never touch each other: bullets fired together start on top of one another.
 void touches() {
+    struct Entry {
+        s16 x0, x1, y0, y1;
+        u8 index;
+        bool projectile;
+    };
+    Entry list[kMaxActors];
+    int n = 0;
     for (int i = 0; i < kMaxActors; ++i) {
         Actor& a = g_actors[i];
-        if (!a.alive || a.dying || !a.collider.w) continue;
-        for (int j = i + 1; j < kMaxActors; ++j) {
-            Actor& b = g_actors[j];
-            if (!b.alive || b.dying || !b.collider.w || !a.overlaps(b)) continue;
+        if (!a.alive || a.dying || !a.collider.w || !a.collider.h) continue;
+        const Box b = a.worldBox();
+        Entry e{b.x, static_cast<s16>(b.x + b.w), b.y, static_cast<s16>(b.y + b.h), static_cast<u8>(i), a.is<Projectile>()};
+        int k = n++;
+        while (k > 0 && list[k - 1].x0 > e.x0) {
+            list[k] = list[k - 1];
+            --k;
+        }
+        list[k] = e;
+    }
+    for (int i = 0; i < n; ++i) {
+        Actor& a = g_actors[list[i].index];
+        for (int j = i + 1; j < n && list[j].x0 < list[i].x1 && !a.dying; ++j) {
+            if (list[j].y0 >= list[i].y1 || list[i].y0 >= list[j].y1 || (list[i].projectile && list[j].projectile)) continue;
+            Actor& b = g_actors[list[j].index];
+            if (b.dying) continue;
             for (int k = 0; k < a.behaviourCount && !a.dying; ++k)
                 if (a.behaviours[k]->enabled) a.behaviours[k]->onTouch(b);
             for (int k = 0; k < b.behaviourCount && !b.dying; ++k)
                 if (b.behaviours[k]->enabled) b.behaviours[k]->onTouch(a);
-            if (a.dying) break;
         }
     }
 }

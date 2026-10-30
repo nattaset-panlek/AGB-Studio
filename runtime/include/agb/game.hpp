@@ -143,6 +143,9 @@ bool solidAt(int x, int y);
 // cells are copied to RAM on the first edit; collision follows the edited cells.
 void setTile(int layer, int tileX, int tileY, u16 metatile);
 int tile(int layer, int tileX, int tileY);
+// A copy of an actor of this scene, by Hierarchy name, at a position (C# Scene.Spawn): bullets, enemies and items
+// are hidden template actors in the scene. The copy is visible.
+Actor* spawn(const char* name, int x, int y);
 render::MapLayerView* layerView(int index);
 int widthPx();
 int heightPx();

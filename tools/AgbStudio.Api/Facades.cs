@@ -138,6 +138,14 @@ public static class Scene
     [Cpp("agb::scene::tile({0}, {1}, {2})")]
     public static int GetTile(int layer, int x, int y) => 0;
 
+    /// <summary>Makes a copy of an actor of this scene at a position and returns it (null when all actor slots are in
+    /// use). Bullets, enemies and items are usually hidden "template" actors that only exist to be copied.</summary>
+    /// <param name="name">Hierarchy name of the actor to copy.</param>
+    /// <param name="x">World x in pixels.</param>
+    /// <param name="y">World y in pixels.</param>
+    [Cpp("agb::scene::spawn({0}, {1}, {2})")]
+    public static Actor Spawn([Asset(AssetKind.ActorName)] string name, int x, int y) => null;
+
     /// <summary>The actor with this Hierarchy name, or null.</summary>
     /// <param name="name">Actor name.</param>
     [Cpp("agb::api::Scene::Find({0})")]

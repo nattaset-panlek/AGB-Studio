@@ -55,7 +55,7 @@ public sealed class AnalyzerTests
     public void Gae003NewArrayInUpdate()
     {
         var d = Assert.Single(Gae(Run(Head + "    void Update() { int[] hits = new int[4]; hits[0] = 1; }\n}\n"), "GAE003"));
-        Assert.Equal(ScriptSeverity.Warning, d.Severity);
+        Assert.Equal(ScriptSeverity.Error, d.Severity);  // Project Settings · Scripting (T-S04) shows Error
         Assert.Contains("allocate it in Start", d.Message);
     }
 

@@ -67,8 +67,8 @@ public sealed class InputAction
     {
         new() { Button = "A", Action = "Jump", Keyboard = "Z", Gamepad = "South" },
         new() { Button = "B", Action = "Run", Keyboard = "X", Gamepad = "West" },
-        new() { Button = "L", Action = "PrevItem", Keyboard = "S", Gamepad = "LB" },
-        new() { Button = "R", Action = "NextItem", Keyboard = "D", Gamepad = "RB" },
+        new() { Button = "L", Action = "PrevItem", Keyboard = "A", Gamepad = "LB" },
+        new() { Button = "R", Action = "NextItem", Keyboard = "S", Gamepad = "RB" },
         new() { Button = "Start", Action = "Pause", Keyboard = "Enter", Gamepad = "Menu" },
         new() { Button = "Select", Action = "Map", Keyboard = "Backspace", Gamepad = "View" },
         new() { Button = "D-pad", Action = "Move", Keyboard = "Arrows", Gamepad = "Stick / D-pad" },
@@ -135,9 +135,10 @@ public sealed class ScriptingSettings
     public string Generated { get; set; } = "build/gen";
     public bool InlineHints { get; set; } = true;
     public string Namespace { get; set; } = "MyGame";
+    public string ShopCurrency { get; set; } = "coins";   // save field Shop.Buy spends (Database tables with a price)
     public Dictionary<string, string> AnalyzerRules { get; set; } = new()
     {
-        ["GAE001"] = "Error", ["GAE002"] = "Warning", ["GAE003"] = "Warning",
+        ["GAE001"] = "Error", ["GAE002"] = "Warning", ["GAE003"] = "Error",
         ["GAE004"] = "Error", ["GAE005"] = "Warning", ["GAE006"] = "Warning",
     };
 }

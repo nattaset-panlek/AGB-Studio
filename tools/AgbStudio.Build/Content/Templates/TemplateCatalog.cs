@@ -52,6 +52,14 @@ public static class TemplateCatalog
             "A falling-gem puzzle: pairs of gems drop into a well, lines of three or more of one colour clear, and chains score more.",
             ["Falling pairs you move and turn", "Match three or more to clear", "Chains and score", "Best score saved", "Title screen and pause menu"],
             PuzzleTemplate.Create),
+        new("shmup", "Shoot 'em up", "Action", "Scrolling stages, bullet patterns, power-ups.",
+            "A side-scrolling shooter: the stage scrolls by itself, waves of enemies fire bullet patterns, and power-ups make the ship stronger.",
+            ["Auto-scrolling stage with parallax stars", "Ship movement and rapid fire", "Enemy waves with bullet patterns", "Triple-shot power-up", "Title screen and pause menu"],
+            ShmupTemplate.Create),
+        new("rpg", "Turn-based RPG", "RPG", "Party, stats, battles, items and shops.",
+            "A turn-based role-playing game: the party explores, meets enemies in battles, and buys items from a shop; stats come from the Database.",
+            ["Party of two with stats from the Database", "Turn-based battles: fight, magic, item, run", "Gold and experience", "Shop that sells potions", "Title screen and pause menu"],
+            RpgTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);

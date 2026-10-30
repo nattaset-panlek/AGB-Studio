@@ -61,6 +61,7 @@ public sealed class ScriptBackend : IScriptBackend
             ProjectName = s.Name,
             ProjectRoot = project.Root,
             Namespace = s.Scripting.Namespace,
+            ShopCurrencyField = s.Scripting.ShopCurrency,
             DebugBuild = input.Debug,
             Analyzer = AnalyzerSettings.From(s.Scripting.AnalyzerRules, s.Scripting.TreatWarningsAsErrors),
             Scenes = new Dictionary<string, int>(input.Scenes),

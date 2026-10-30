@@ -123,15 +123,7 @@ public:
                     if (g_scene.drawnLayers < d->layerCount && g_scene.drawnLayers < kMaxLayers) holdLoadStep();
                     return false;
                 }
-                for (int i = 0; i < d->actorCount; ++i) {
-                    Actor* a = actors::spawn(d->actors[i], screenArena());
-                    const ActorDef& ad = d->actors[i];
-                    const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
-                    if (a && ad.kind == ActorKind::TextLabel && label) {
-                        a->label = label;
-                        a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
-                    }
-                }
+                for (int i = 0; i < d->actorCount; ++i) actors::spawn(d->actors[i], screenArena());
                 g_scene.follow = d->camera.followActor >= 0 ? actors::at(d->camera.followActor) : nullptr;
                 if (g_scene.follow && g_scene.spawnX >= 0) g_scene.follow->pos = {fixed(g_scene.spawnX), fixed(g_scene.spawnY)};
                 g_scene.camX = d->camera.startX;
@@ -148,7 +140,17 @@ public:
                 }
                 return false;
             }
-            case 5:  // 6 OnLoad script (runs to completion)
+            case 5:  // 6 Text Label actors (drawn here, a frame after the actors), then the OnLoad script
+                for (int i = 0; i < d->actorCount; ++i) {
+                    const ActorDef& ad = d->actors[i];
+                    if (ad.kind != ActorKind::TextLabel) continue;
+                    Actor* a = actors::at(i);
+                    const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
+                    if (a && label) {
+                        a->label = label;
+                        a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+                    }
+                }
                 if (d->onLoad) d->onLoad();
                 actors::startNew();
                 return false;
@@ -556,6 +558,23 @@ void setTile(int layer, int tx, int ty, u16 metatile) {
     }
     const_cast<u16*>(g_scene.ramLayers[layer].cells)[ty * src.width + tx] = metatile;
     g_scene.views[layer].redrawMetatile(tx, ty);
+}
+
+Actor* spawn(const char* name, int x, int y) {
+    const SceneDef* d = g_scene.def;
+    if (!d || !name) return nullptr;
+    for (int i = 0; i < d->actorCount; ++i) {
+        const char* a = d->actors[i].name;
+        const char* b = name;
+        while (*a && *a == *b) ++a, ++b;
+        if (*a != *b) continue;
+        Actor* actor = actors::spawnAt(d->actors[i], screenArena(), x, y);
+        if (actor) actor->setVisible(true);
+        else debug::logf("warning: Spawn %s: all %d actor slots are in use", name, actors::kMaxActors);
+        return actor;
+    }
+    debug::logf("warning: Spawn: no actor named %s in %s", name, d->name);
+    return nullptr;
 }
 
 int tile(int layer, int tx, int ty) {

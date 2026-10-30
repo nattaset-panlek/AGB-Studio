@@ -16,7 +16,7 @@ public:
     void* alloc(u32 bytes, u32 align = 4) {
         const u32 start = (used_ + align - 1) & ~(align - 1);
         if (start + bytes > size_) {
-            debug::logf("warning: arena '%s' is full (%lu of %lu bytes); allocation of %lu failed", name_, used_, size_, bytes);
+            if (name_) debug::logf("warning: arena '%s' is full (%lu of %lu bytes); allocation of %lu failed", name_, used_, size_, bytes);
             return nullptr;
         }
         used_ = start + bytes;

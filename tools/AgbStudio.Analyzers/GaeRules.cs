@@ -30,7 +30,7 @@ public static class GaeRules
         "GAE003",
         "new inside Update — allocate in Start or use a pool",
         "'new {0}' inside {1} allocates every frame; allocate it in Start or use a pool",
-        Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
+        Category, DiagnosticSeverity.Error, isEnabledByDefault: true,
         description: "Arrays and other allocations made every frame fill the scene's memory arena. Allocate once in Start and reuse the array.",
         helpLinkUri: HelpBase + "GAE003");
 

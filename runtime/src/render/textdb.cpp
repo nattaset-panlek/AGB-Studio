@@ -80,6 +80,7 @@ render::TextBox& box() { return g_box; }
 
 namespace {
 bool g_layerReady = false;
+int g_bg = 0;  // the BG the text layer took for this scene
 constexpr int kMaxLabels = 6;
 render::TextBox g_labels[kMaxLabels];
 // What each HUD label shows (setLabelValue): the same value is not redrawn, and a new value with the same text
@@ -102,6 +103,18 @@ bool g_boxReady = false;
 // Text layer: highest priority, 32x32 map in its own screen block, shared by the box, labels and menus.
 // Its first tile is a blank tile of its own: every map entry without text points at it (tile 0 of the char
 // block may belong to a tileset).
+// BoxStyle::bg when the scene leaves it free, else the highest regular BG the scene does not show: a scene layer
+// on the same BG would be hidden and the text would scroll with that layer's parallax.
+int pickBg() {
+    const int mode = render::bg::videoMode();
+    const int last = mode == 0 ? 3 : mode == 1 ? 1 : -1;  // regular (non-affine) BGs of the mode
+    if (g_style.bg <= last && !render::bg::visible(g_style.bg)) return g_style.bg;
+    for (int bg = last; bg >= 0; --bg)
+        if (!render::bg::visible(bg)) return bg;
+    debug::logf("warning: no free background layer for text; it shares BG%d with the scene", g_style.bg);
+    return g_style.bg;
+}
+
 bool ensureLayer() {
     if (g_layerReady) return true;
     const int sb = render::bg::allocScreenBlocks(render::bg::Size::S32x32);
@@ -113,28 +126,38 @@ bool ensureLayer() {
     c.charBlock = static_cast<u8>(blank.charBlock);
     c.screenBlock = static_cast<u8>(sb);
     c.priority = 0;
-    render::bg::configure(g_style.bg, c);
+    g_bg = pickBg();
+    render::bg::configure(g_bg, c);
     g_blank = blank.firstTile;
     commit::fillNow(commit::bgMap(sb), g_blank * 0x00010001u, 2048);
     loadPalette();
-    render::bg::setScroll(g_style.bg, 0, 0);
-    render::bg::setVisible(g_style.bg, true);
+    render::bg::setScroll(g_bg, 0, 0);
+    render::bg::setVisible(g_bg, true);
     g_layerReady = true;
     return true;
 }
 }  // namespace
 
-int layer() { return ensureLayer() ? g_style.bg : -1; }
+int layer() { return ensureLayer() ? g_bg : -1; }
 u16 blankEntry() { return g_blank; }
 
 int addLabel(int x, int y, int widthPx, const data::TextRun* r) {
     if (g_labelCount >= kMaxLabels || !ensureLayer()) return -1;
     const int lh = r ? r->font->lineHeight : 16;
     render::TextBox& b = g_labels[g_labelCount];
-    if (!b.init(g_style.bg, x / 8, y / 8, (widthPx + 7) / 8, (lh * (r ? r->lines : 1) + 7) / 8, g_style.paletteBank, render::TextBox::Style{1, 4, 0}))
+    if (!b.init(g_bg, x / 8, y / 8, (widthPx + 7) / 8, (lh * (r ? r->lines : 1) + 7) / 8, g_style.paletteBank, render::TextBox::Style{1, 4, 0}))
         return -1;
     if (r) b.show(r, 0);
+    // The label already shows its text: the first HUD value only draws digits after it.
     g_labelValues[g_labelCount] = {};
+    if (r) {
+        int w = 0;
+        for (u16 i = 0; i < r->count; ++i) {
+            const int e = r->glyphs[i].x + r->font->glyphs[r->glyphs[i].glyph].advance;
+            if (e > w) w = e;
+        }
+        g_labelValues[g_labelCount] = {r, 0, static_cast<s16>(w + 4), 0xFF, true};
+    }
     return g_labelCount++;
 }
 
@@ -207,7 +230,7 @@ static bool ensureOpen() {
         g_open = true;
         return true;
     }
-    if (!g_box.init(g_style.bg, g_style.tileX, g_style.tileY, g_style.widthTiles, g_style.heightTiles, g_style.paletteBank,
+    if (!g_box.init(g_bg, g_style.tileX, g_style.tileY, g_style.widthTiles, g_style.heightTiles, g_style.paletteBank,
                     render::TextBox::Style{1, 4, 5}))
         return false;
     g_open = true;

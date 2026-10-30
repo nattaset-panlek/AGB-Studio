@@ -27,7 +27,7 @@ public sealed class SpriteMeta
 public sealed class AnimationData
 {
     public string Name { get; set; } = "idle";
-    public List<int> Frames { get; set; } = new() { 0 };
+    public List<int> Frames { get; set; } = new();  // empty, so collection initializers ({ 0, 1 }) give exactly their frames; the build uses frame 0 when empty
     public int Ticks { get; set; } = 6;             // per frame; Animation panel "6 ticks ≈ 10 fps"
     public List<int>? FrameTicks { get; set; }      // per-frame override
     public bool Loop { get; set; } = true;

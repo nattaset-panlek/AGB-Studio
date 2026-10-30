@@ -11,7 +11,9 @@ namespace agb::render::detail {
 void blitGlyph(u32* tiles, int wTiles, int hTiles, const u8* bits, int gw, int gh, int bpp, int x0, int y0, u8 ink, u8 shadow) {
     const int rowBytes = (gw * bpp + 7) >> 3;
     const int wPx = wTiles * 8, hPx = hTiles * 8;
-    const u32 valueMask = (1u << bpp) - 1;
+    const int perByte = bpp == 1 ? 8 : 4;
+    const u32 top = bpp == 1 ? 0x80u : 0xC0u;  // the next pixel sits in the top bits of the shifted byte
+    const int down = 8 - bpp;
     for (int pass = shadow ? 0 : 1; pass < 2; ++pass) {
         const int ox = x0 + (pass == 0 ? 1 : 0), oy = y0 + (pass == 0 ? 1 : 0);
         for (int y = 0; y < gh; ++y) {
@@ -21,22 +23,26 @@ void blitGlyph(u32* tiles, int wTiles, int hTiles, const u8* bits, int gw, int g
             u32* line = tiles + (py >> 3) * wTiles * 8 + (py & 7);
             int tile = -1;
             u32 mask = 0, value = 0;
-            for (int x = 0; x < gw; ++x) {
-                const int bit = x * bpp;
-                const u32 v = (row[bit >> 3] >> (8 - bpp - (bit & 7))) & valueMask;
-                if (!v) continue;
-                const int px = ox + x;
-                if (px < 0 || px >= wPx) continue;
-                const int tx = px >> 3;
-                if (tx != tile) {
-                    if (tile >= 0) line[tile * 8] = (line[tile * 8] & ~mask) | value;
-                    tile = tx;
-                    mask = value = 0;
+            int x = 0;
+            for (int b = 0; b < rowBytes; ++b, x += perByte) {
+                u32 byte = row[b];
+                if (!byte) continue;  // most of a glyph box is empty
+                for (int k = 0; k < perByte; ++k, byte <<= bpp) {
+                    const u32 v = (byte & top) >> down;
+                    if (!v) continue;
+                    const int px = ox + x + k;
+                    if (x + k >= gw || px < 0 || px >= wPx) continue;
+                    const int tx = px >> 3;
+                    if (tx != tile) {
+                        if (tile >= 0) line[tile * 8] = (line[tile * 8] & ~mask) | value;
+                        tile = tx;
+                        mask = value = 0;
+                    }
+                    const u32 c = pass == 0 ? shadow : bpp == 1 ? ink : ink + 3 - v;
+                    const int sh = (px & 7) * 4;
+                    mask |= 0xFu << sh;
+                    value |= (c & 15) << sh;
                 }
-                const u32 c = pass == 0 ? shadow : bpp == 1 ? ink : ink + 3 - v;
-                const int sh = (px & 7) * 4;
-                mask |= 0xFu << sh;
-                value |= (c & 15) << sh;
             }
             if (tile >= 0) line[tile * 8] = (line[tile * 8] & ~mask) | value;
         }

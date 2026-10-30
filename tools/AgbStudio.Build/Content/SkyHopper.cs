@@ -34,11 +34,11 @@ public static class SkyHopper
         {
             Source = "en", ThaiWrap = true, ShowMissingKeys = true, FailOnMissing = false,
             Languages =
-            {
+            [
                 new LanguageInfo { Code = "en", Name = "English", Font = "thai_vwf" },
                 new LanguageInfo { Code = "th", Name = "ไทย", Font = "thai_vwf", Fallback = "en" },
                 new LanguageInfo { Code = "ja", Name = "日本語", Font = "jp_kana", Fallback = "en" },
-            },
+            ],
         };
         s.Tags = ["Player", "Enemy", "Coin", "Goal", "Block", "NPC"];
         s.LastScene = "Forest_01";

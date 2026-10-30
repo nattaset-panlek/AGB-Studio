@@ -9,10 +9,12 @@ namespace AgbStudio.Build.Data;
 /// <c>agb_db::Items::Get(agb_db::ItemId::Potion)</c> returning <c>const agb_db::Item&amp;</c>.</summary>
 public static class DatabaseCodegen
 {
+    // Items -> Item, Enemies -> Enemy, Heroes -> Hero, Bosses -> Boss, Boxes -> Box, Glass stays.
     public static string Singular(string table) =>
-        table.EndsWith("ies", StringComparison.Ordinal) ? table[..^3] + "y"
-        : table.EndsWith("ses", StringComparison.Ordinal) || table.EndsWith("xes", StringComparison.Ordinal) ? table[..^2]
-        : table.EndsWith('s') && table.Length > 1 ? table[..^1] : table;
+        table.EndsWith("ies", StringComparison.Ordinal) && table.Length > 3 ? table[..^3] + "y"
+        : table.EndsWith("ses", StringComparison.Ordinal) || table.EndsWith("xes", StringComparison.Ordinal) || table.EndsWith("oes", StringComparison.Ordinal) ||
+          table.EndsWith("ches", StringComparison.Ordinal) || table.EndsWith("shes", StringComparison.Ordinal) ? table[..^2]
+        : table.EndsWith('s') && !table.EndsWith("ss", StringComparison.Ordinal) && table.Length > 1 ? table[..^1] : table;
 
     public static string IdEnum(string table) => Cpp.Ident(Singular(table)) + "Id";
 

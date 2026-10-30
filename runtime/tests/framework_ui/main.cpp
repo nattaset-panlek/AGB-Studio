@@ -281,6 +281,19 @@ AGB_TEST(key_names) {
     CHECK(ui::keyName(0)[0] == '-');
 }
 
+AGB_TEST(text_layer_avoids_the_scene_bgs) {
+    setupData(false);
+    g_title.menu = nullptr;
+    g_layers[0].bg = 0;  // the scene uses BoxStyle::bg itself (Sky Hopper Forest "Sky")
+    g_game.startScene = 1;
+    game::boot(g_game);
+    waitLoaded();
+    const int bg = text::layer();
+    CHECK_EQ(bg, 3);  // the highest BG the scene leaves free
+    CHECK(render::bg::visible(0));
+    CHECK(render::bg::visible(3));
+}
+
 int main() {
     system::init();
     test::runAll();
