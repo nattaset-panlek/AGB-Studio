@@ -1,0 +1,683 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using AgbStudio.Build.Audio;
+using AgbStudio.Build.Graphics;
+using AgbStudio.Core.Project;
+
+namespace AgbStudio.Build.Pipeline;
+
+public sealed class BuildOptions
+{
+    public BuildConfiguration? Configuration { get; init; }
+    public bool Clean { get; init; }
+    public CancellationToken Cancel { get; init; }
+}
+
+public sealed class BuildResult
+{
+    public bool Success { get; set; }
+    public string RomPath { get; set; } = "";
+    public string ElfPath { get; set; } = "";
+    public List<Diagnostic> Diagnostics { get; } = new();
+    public Dictionary<string, TimeSpan> StepTimes { get; } = new();
+    public int AssetsConverted { get; set; }
+    public int AssetsCached { get; set; }
+    public BuildReport? Report { get; set; }
+    public TimeSpan Elapsed { get; set; }
+    public string FailedStep { get; set; } = "";
+    public IEnumerable<Diagnostic> Errors => Diagnostics.Where(d => d.Severity == Severity.Error);
+}
+
+/// <summary>Generated C++ for user scripts. The scripting compiler (tools/AgbStudio.Scripting) plugs in here.</summary>
+public interface IScriptBackend
+{
+    // Returns the generated .cpp files and the C++ factory for each script behaviour class, or diagnostics.
+    ScriptOutput Compile(GameProject project, ScriptInput input, IBuildObserver observer);
+}
+
+public sealed class ScriptInput
+{
+    public required string OutputDir { get; init; }
+    public bool Debug { get; init; }
+    public Dictionary<string, int> Sounds { get; init; } = new();
+    public Dictionary<string, int> Music { get; init; } = new();
+    public Dictionary<string, int> Tags { get; init; } = new();
+    public Dictionary<string, int> Scenes { get; init; } = new();
+    public List<SaveField> GameState { get; init; } = new();
+}
+
+public sealed class ScriptOutput
+{
+    public List<string> Sources { get; } = new();
+    public List<string> IncludeDirs { get; } = new();
+    public List<Diagnostic> Diagnostics { get; } = new();
+    public int ScriptCount { get; set; }
+    // Script class name -> C++ expression creating it with field overrides: (arena, fields) => code
+    public Func<string, IReadOnlyDictionary<string, string>, string?> FactoryCall { get; set; } = (_, _) => null;
+    public string RegistryHeader { get; set; } = "";
+}
+
+/// <summary>Builds a project into a .gba: scripts, assets, C++ codegen, devkitARM, gbafix, report.</summary>
+public sealed class GameBuilder
+{
+    public const string StepScripts = "C# → C++";
+    public const string StepAssets = "Convert assets";
+    public const string StepCompile = "Compile (devkitARM g++ -O2)";
+    public const string StepLink = "Link + gbafix";
+    public const int ConverterVersion = 1;
+
+    readonly GameProject _p;
+    readonly Toolchain _tc;
+    readonly IBuildObserver _obs;
+    public IScriptBackend? Scripts { get; set; }
+
+    public GameBuilder(GameProject project, Toolchain toolchain, IBuildObserver? observer = null)
+    {
+        _p = project;
+        _tc = toolchain;
+        _obs = observer ?? NullObserver.Instance;
+    }
+
+    public string GenDir => Path.Combine(_p.BuildDir, "gen");
+    public string RomPath => Path.Combine(_p.BuildDir, Cpp.Ident(GameProject.FileName(_p.Settings.Name)).ToLowerInvariant() + ".gba");
+
+    // ---- state shared by the steps ----------------------------------------------------------------
+    readonly Dictionary<string, ConvertedSprite> _sprites = new(StringComparer.Ordinal);
+    readonly Dictionary<string, int> _soundIds = new(StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<string, int> _musicIds = new(StringComparer.OrdinalIgnoreCase);
+    readonly List<string> _sources = new();
+    readonly List<string> _includeDirs = new();
+    BuildResult _result = new();
+    AssetCache _cache = null!;
+    ScriptOutput _scriptOut = new();
+    public BuildAssetInfo Assets { get; } = new();
+
+    public BuildResult Build(BuildOptions? options = null)
+    {
+        options ??= new BuildOptions();
+        _result = new BuildResult();
+        var sw = Stopwatch.StartNew();
+        if (options.Clean && Directory.Exists(_p.BuildDir)) Directory.Delete(_p.BuildDir, true);
+        Directory.CreateDirectory(GenDir);
+        _cache = new AssetCache(_p.BuildDir);
+        var config = options.Configuration ?? _p.Settings.Build.Configuration;
+        try
+        {
+            if (!Step(StepAssets, () => ConvertAssets())) return Finish(sw);
+            if (!Step(StepScripts, () => CompileScripts(config))) return Finish(sw);
+            Step("Generate game", () => GenerateGame());
+            if (_result.Errors.Any()) return Finish(sw);
+            if (!Step(StepCompile, () => CompileAndLink(config, options.Cancel))) return Finish(sw);
+            _cache.Save();
+            _result.Report = BuildReport.Create(_p, _tc, _result, Assets, config);
+            _result.Report.Save(_p.BuildDir);
+            foreach (var w in _result.Report.Warnings) Add(new Diagnostic(Severity.Warning, "", 0, 0, "", w));
+            _result.Success = true;
+        }
+        catch (OperationCanceledException)
+        {
+            Add(new Diagnostic(Severity.Error, "", 0, 0, "", "Build cancelled."));
+        }
+        return Finish(sw);
+    }
+
+    BuildResult Finish(Stopwatch sw)
+    {
+        _result.Elapsed = sw.Elapsed;
+        _result.AssetsCached = _cache.Hits;
+        _result.AssetsConverted = _cache.Misses;
+        return _result;
+    }
+
+    bool Step(string name, Func<string> body)
+    {
+        var sw = Stopwatch.StartNew();
+        _obs.StepStarted(name, "");
+        string detail;
+        try
+        {
+            detail = body();
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            Add(new Diagnostic(Severity.Error, "", 0, 0, "", e.Message));
+            detail = e.Message;
+        }
+        var ok = !_result.Errors.Any();
+        _result.StepTimes[name] = sw.Elapsed;
+        _obs.StepFinished(name, sw.Elapsed, ok, detail);
+        if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = name;
+        return ok;
+    }
+
+    void Add(Diagnostic d)
+    {
+        _result.Diagnostics.Add(d);
+        _obs.Message(d);
+    }
+
+    void Write(string path, string text)
+    {
+        SoundbankBuilder.WriteIfChanged(path, text);
+        if (path.EndsWith(".cpp", StringComparison.Ordinal) && !_sources.Contains(path)) _sources.Add(path);
+    }
+
+    // ---- assets -------------------------------------------------------------------------------------
+
+    string ConvertAssets()
+    {
+        var spriteFiles = _p.SpriteFiles().ToList();
+        var tilesetFiles = _p.TilesetFiles().ToList();
+        var total = spriteFiles.Count + tilesetFiles.Count;
+        var done = 0;
+        // Sprites sharing a palette are converted after their palette owner.
+        var metas = spriteFiles.ToDictionary(f => f, f => _p.LoadMeta<SpriteMeta>(f));
+        foreach (var f in spriteFiles.OrderBy(f => metas[f].Palette.Length > 0 ? 1 : 0))
+        {
+            _obs.FileProgress(StepAssets, ++done, total, Path.GetFileName(f));
+            ConvertSprite(f, metas[f]);
+        }
+        foreach (var f in tilesetFiles)
+        {
+            _obs.FileProgress(StepAssets, ++done, total, Path.GetFileName(f));
+            ConvertTileset(f);
+        }
+        ConvertAudio();
+        return $"{spriteFiles.Count} sprites · {tilesetFiles.Count} tilesets · {_p.SoundFiles().Count()} sounds";
+    }
+
+    void ConvertSprite(string file, SpriteMeta meta)
+    {
+        var name = GameProject.AssetName(file);
+        var id = Cpp.Ident(name);
+        ushort[]? shared = null;
+        if (meta.Palette.Length > 0 && _sprites.TryGetValue(meta.Palette, out var owner)) shared = owner.Palette;
+        var img = ColorImage.Load(file);
+        var s = SpriteConverter.Convert(name, img, meta, shared, file);
+        foreach (var pr in s.Problems) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", pr.Message));
+        _sprites[name] = s;
+        var outFile = Path.Combine(GenDir, "assets", $"sprite_{id}.cpp");
+        var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, shared == null ? "" : string.Join(',', shared));
+        Assets.Sprites[name] = new AssetInfo(name, "Sprite", file, s.Tiles.Length + 32, s.FrameCount, $"{s.SourceWidth}×{s.SourceHeight}");
+        if (_cache.IsCurrent("sprite:" + name, hash, [outFile]))
+        {
+            _sources.Add(outFile);
+            return;
+        }
+        var sb = new StringBuilder();
+        sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(file)).Append(". Do not edit.\n#include \"agb/data.hpp\"\n");
+        sb.Append($"namespace {{\nalignas(4) ");
+        Cpp.Bytes(sb, $"const unsigned int agbasset_sprite_{id}_tiles", s.Tiles);
+        Cpp.U16(sb, $"const unsigned short agbasset_sprite_{id}_colors", s.Palette.Select(c => (int)c));
+        sb.Append($"const agb::data::Palette agbasset_sprite_{id}_pal{{agbasset_sprite_{id}_colors, 1}};\n");
+        var anims = meta.Animations.Count > 0 ? meta.Animations : [new AnimationData { Name = "idle", Frames = Enumerable.Range(0, s.FrameCount).ToList() }];
+        for (var i = 0; i < anims.Count; i++)
+        {
+            var a = anims[i];
+            var frames = a.Frames.Where(f => f < s.FrameCount).ToList();
+            if (frames.Count == 0) frames.Add(0);
+            Cpp.U16(sb, $"const unsigned char agbasset_sprite_{id}_a{i}f", frames);
+            Cpp.U16(sb, $"const unsigned char agbasset_sprite_{id}_a{i}t", frames.Select((_, k) => a.FrameTicks != null && k < a.FrameTicks.Count ? a.FrameTicks[k] : a.Ticks));
+        }
+        sb.Append($"const agb::data::AnimDef agbasset_sprite_{id}_anims[] = {{\n");
+        for (var i = 0; i < anims.Count; i++)
+        {
+            var a = anims[i];
+            var n = Math.Max(1, a.Frames.Count(f => f < s.FrameCount));
+            sb.Append($"    {{{Cpp.Str(a.Name)}, agbasset_sprite_{id}_a{i}f, agbasset_sprite_{id}_a{i}t, {n}, {(a.Loop ? "true" : "false")}, {(a.PingPong ? "true" : "false")}}},\n");
+        }
+        sb.Append("};\n}  // namespace\n");
+        var c = meta.Collider;
+        sb.Append($"extern const agb::data::SpriteSheet agbasset_sprite_{id} = {{\n");
+        sb.Append($"    {{agbasset_sprite_{id}_tiles, {s.Tiles.Length}, {s.FrameCount * s.TilesPerFrame}, 4, false}},\n");
+        sb.Append($"    &agbasset_sprite_{id}_pal, {s.FrameWidth}, {s.FrameHeight}, static_cast<agb::data::ObjShape>({s.Shape}), {s.SizeCode},\n");
+        sb.Append($"    {s.TilesPerFrame}, {s.FrameCount}, agbasset_sprite_{id}_anims, {anims.Count}, {meta.OriginX}, {meta.OriginY},\n");
+        sb.Append($"    {c.X}, {c.Y}, {c.W}, {c.H}}};\n");
+        Write(outFile, sb.ToString());
+        _cache.Store("sprite:" + name, hash);
+    }
+
+    readonly Dictionary<string, ConvertedTileset> _tilesets = new(StringComparer.Ordinal);
+
+    void ConvertTileset(string file)
+    {
+        var name = GameProject.AssetName(file);
+        var id = Cpp.Ident(name);
+        var meta = _p.LoadMeta<TilesetMeta>(file);
+        var outFile = Path.Combine(GenDir, "assets", $"tileset_{id}.cpp");
+        var img = ColorImage.Load(file);
+        var t = TilesetConverter.Convert(name, img, meta, _p.Settings.Tags, 13, file);
+        _tilesets[name] = t;
+        foreach (var pr in t.Problems) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", pr.Message));
+        var tiles = t.Tiles.ToBytes();
+        var compress = meta.Compress && _p.Settings.Build.CompressGraphics;
+        var stored = compress ? Lz77.Compress(tiles) : tiles;
+        Assets.Tilesets[name] = new AssetInfo(name, "Tileset", file, stored.Length + t.Palette.Banks.Count * 32 + t.Metatiles.Count * 10, t.Tiles.Count,
+            $"{t.Tiles.Count} tiles · 4bpp");
+        var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, compress, string.Join(',', _p.Settings.Tags));
+        if (_cache.IsCurrent("tileset:" + name, hash, [outFile]))
+        {
+            _sources.Add(outFile);
+            return;
+        }
+        var sb = new StringBuilder();
+        sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(file)).Append(". Do not edit.\n#include \"agb/data.hpp\"\n");
+        sb.Append("namespace {\nalignas(4) ");
+        Cpp.Bytes(sb, $"const unsigned int agbasset_tileset_{id}_tiles", stored);
+        Cpp.U16(sb, $"const unsigned short agbasset_tileset_{id}_colors", t.Palette.Flatten().Select(c => (int)c));
+        sb.Append($"const agb::data::Palette agbasset_tileset_{id}_pal{{agbasset_tileset_{id}_colors, {t.Palette.Banks.Count}}};\n");
+        sb.Append($"const agb::data::Metatile agbasset_tileset_{id}_meta[] = {{\n");
+        foreach (var m in t.Metatiles) sb.Append($"    {{{{{m[0]}, {m[1]}, {m[2]}, {m[3]}}}}},\n");
+        sb.Append("};\n");
+        sb.Append($"const agb::data::Collision agbasset_tileset_{id}_col[] = {{");
+        sb.Append(string.Join(", ", t.Collision.Select(c => "agb::data::Collision::" + c)));
+        sb.Append("};\n");
+        Cpp.U16(sb, $"const unsigned char agbasset_tileset_{id}_tags", t.Tags.Select(x => (int)x));
+        sb.Append("}  // namespace\n");
+        sb.Append($"extern const agb::data::Tileset agbasset_tileset_{id} = {{\n");
+        sb.Append($"    {{agbasset_tileset_{id}_tiles, {stored.Length}, {t.Tiles.Count}, 4, {(compress ? "true" : "false")}}},\n");
+        sb.Append($"    &agbasset_tileset_{id}_pal, agbasset_tileset_{id}_meta, agbasset_tileset_{id}_col, agbasset_tileset_{id}_tags,\n");
+        sb.Append($"    {t.Metatiles.Count}, nullptr, 0}};\n");
+        Write(outFile, sb.ToString());
+        _cache.Store("tileset:" + name, hash);
+    }
+
+    void ConvertAudio()
+    {
+        var inputs = _p.MusicFiles().Concat(_p.SoundFiles()).ToList();
+        if (inputs.Count == 0) return;
+        var outDir = Path.Combine(GenDir, "audio");
+        var hash = AssetCache.HashFiles(inputs, ConverterVersion);
+        var cpp = Path.Combine(outDir, "soundbank.cpp");
+        var hpp = Path.Combine(outDir, "soundbank.hpp");
+        if (!_cache.IsCurrent("soundbank", hash, [cpp, hpp]))
+        {
+            var r = SoundbankBuilder.Build(_tc, inputs, outDir);
+            if (!r.Success)
+            {
+                Add(new Diagnostic(Severity.Error, "", 0, 0, "", "Audio conversion failed: " + r.Log.Trim()));
+                return;
+            }
+            _cache.Store("soundbank", hash);
+        }
+        _sources.Add(cpp);
+        _includeDirs.Add(outDir);
+        foreach (var line in File.ReadAllLines(hpp))
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(line, @"constexpr unsigned short (\w+) = (\d+);");
+            if (!m.Success) continue;
+            var sym = m.Groups[1].Value;
+            var val = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+            if (sym.StartsWith("MOD_", StringComparison.Ordinal)) _musicIds[sym[4..]] = val;
+            else if (sym.StartsWith("SFX_", StringComparison.Ordinal)) _soundIds[sym[4..]] = val;
+        }
+        foreach (var f in inputs)
+        {
+            var n = GameProject.AssetName(f);
+            Assets.Audio[n] = new AssetInfo(n, f.EndsWith(".wav") ? "Sound" : "Music", f, (int)new FileInfo(f).Length, 0, "");
+        }
+    }
+
+    public int SoundId(string name) => _soundIds.TryGetValue(SoundKey(name), out var id) ? id : -1;
+    public int MusicId(string name) => _musicIds.TryGetValue(SoundKey(name), out var id) ? id : -1;
+    static string SoundKey(string name) => Cpp.Ident(Path.GetFileNameWithoutExtension(name)).ToUpperInvariant();
+
+    // ---- scripts ------------------------------------------------------------------------------------
+
+    string CompileScripts(BuildConfiguration config)
+    {
+        var scriptFiles = _p.ScriptFiles().ToList();
+        if (Scripts == null)
+        {
+            if (scriptFiles.Count > 0)
+                Add(new Diagnostic(Severity.Warning, "", 0, 0, "", $"{scriptFiles.Count} C# scripts were not compiled: the scripting compiler is not available in this build."));
+            return "0 scripts";
+        }
+        var input = new ScriptInput
+        {
+            OutputDir = Path.Combine(GenDir, "scripts"),
+            Debug = config == BuildConfiguration.Debug,
+            Sounds = new(_soundIds, StringComparer.OrdinalIgnoreCase),
+            Music = new(_musicIds, StringComparer.OrdinalIgnoreCase),
+            Tags = _p.Settings.Tags.Select((t, i) => (t, i + 1)).ToDictionary(x => x.t, x => x.Item2),
+            Scenes = SceneNames().Select((s, i) => (s, i)).ToDictionary(x => x.s, x => x.i),
+            GameState = _p.Settings.Save.Fields,
+        };
+        _scriptOut = Scripts.Compile(_p, input, _obs);
+        foreach (var d in _scriptOut.Diagnostics) Add(d);
+        _sources.AddRange(_scriptOut.Sources);
+        _includeDirs.AddRange(_scriptOut.IncludeDirs);
+        return $"{_scriptOut.ScriptCount} scripts";
+    }
+
+    List<string> SceneNames() => _p.SceneFiles().Select(GameProject.AssetName).ToList();
+
+    // ---- game codegen -------------------------------------------------------------------------------
+
+    string GenerateGame()
+    {
+        var scenes = _p.SceneFiles().Select(f => (File: f, Scene: GameProject.Load<SceneFile>(f))).ToList();
+        var names = scenes.Select(s => s.Scene.Name.Length > 0 ? s.Scene.Name : GameProject.AssetName(s.File)).ToList();
+        foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
+        GenerateGameDef(names);
+        return $"{scenes.Count} scenes";
+    }
+
+    void GenerateScene(string file, SceneFile scene, List<string> sceneNames)
+    {
+        var id = Cpp.Ident(GameProject.AssetName(file));
+        var sb = new StringBuilder();
+        var externs = new StringBuilder();
+        sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(file)).Append(". Do not edit.\n");
+        sb.Append("#include \"agb/api.hpp\"\n#include \"agb/behaviours.hpp\"\n#include \"agb/game.hpp\"\n");
+        if (_scriptOut.RegistryHeader.Length > 0) sb.Append($"#include \"{_scriptOut.RegistryHeader}\"\n");
+        sb.Append("namespace {\n");
+
+        // Map layers
+        MapFile? map = null;
+        var layerCount = 0;
+        var collisionLayer = -1;
+        if (scene.Map.Length > 0)
+        {
+            var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
+            if (!File.Exists(mapPath))
+            {
+                Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} uses map '{scene.Map}', which does not exist."));
+                return;
+            }
+            map = GameProject.Load<MapFile>(mapPath);
+            var tsId = Cpp.Ident(map.Tileset);
+            if (!_tilesets.ContainsKey(map.Tileset))
+            {
+                Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets."));
+                return;
+            }
+            externs.Append($"extern const agb::data::Tileset agbasset_tileset_{tsId};\n");
+            var layers = new StringBuilder();
+            for (var i = 0; i < map.Layers.Count; i++)
+            {
+                var l = map.Layers[i];
+                if (l.Cells.Count != map.Width * map.Height)
+                {
+                    Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} has {l.Cells.Count} cells; the map is {map.Width}×{map.Height}."));
+                    return;
+                }
+                Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", l.Cells);
+                var type = l.Type switch { LayerType.Image => "Image", LayerType.Affine => "Affine", LayerType.CollisionOnly => "CollisionOnly", _ => "Tile" };
+                layers.Append($"    {{{l.Bg}, agb::data::LayerType::{type}, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+                layers.Append($"{map.Width}, {map.Height}, agbasset_map_{id}_l{i}, &agbasset_tileset_{tsId}}},\n");
+            }
+            sb.Append($"const agb::data::MapLayer agbasset_scene_{id}_layers[] = {{\n{layers}}};\n");
+            layerCount = map.Layers.Count;
+            collisionLayer = map.CollisionLayer >= 0 ? map.CollisionLayer : map.Layers.FindIndex(l => l.Type == LayerType.Tile);
+        }
+
+        // Actors and their behaviours
+        var actorNames = scene.Actors.Select(a => a.Name).ToList();
+        for (var ai = 0; ai < scene.Actors.Count; ai++)
+        {
+            var a = scene.Actors[ai];
+            var creators = new List<string>();
+            for (var ci = 0; ci < a.Components.Count; ci++)
+            {
+                var comp = a.Components[ci];
+                var fn = $"agbmake_{id}_{ai}_{ci}";
+                var builtin = BuiltinBehaviours.Find(comp.Type);
+                if (builtin != null)
+                {
+                    sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{\n    auto* b = arena.make<{builtin.CppClass}>();\n    if (!b) return nullptr;\n");
+                    foreach (var (k, v) in comp.Fields)
+                    {
+                        var f = builtin.Fields.FirstOrDefault(x => x.Name == k);
+                        if (f == null)
+                        {
+                            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: {comp.Type} has no field '{k}'."));
+                            continue;
+                        }
+                        try
+                        {
+                            sb.Append($"    b->{f.CppMember} = {BuiltinBehaviours.Value(f, v, n => Math.Max(0, SoundId(n)))};\n");
+                        }
+                        catch (FormatException)
+                        {
+                            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: {comp.Type}.{k} = '{v}' is not a valid value."));
+                        }
+                    }
+                    sb.Append("    return b;\n}\n");
+                }
+                else
+                {
+                    var call = _scriptOut.FactoryCall(comp.Type, comp.Fields);
+                    if (call == null)
+                    {
+                        Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: behaviour '{comp.Type}' was not found (not a built-in and no C# script defines it)."));
+                        continue;
+                    }
+                    sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{ return {call}; }}\n");
+                }
+                creators.Add(fn);
+            }
+            if (creators.Count > 0) sb.Append($"const agb::BehaviourCreate agbasset_scene_{id}_a{ai}_b[] = {{{string.Join(", ", creators)}}};\n");
+        }
+        var actors = new StringBuilder();
+        for (var ai = 0; ai < scene.Actors.Count; ai++)
+        {
+            var a = scene.Actors[ai];
+            var sheet = "nullptr";
+            if (a.Sprite.Length > 0)
+            {
+                if (!_sprites.ContainsKey(a.Sprite))
+                {
+                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name} uses sprite '{a.Sprite}', which is not in assets/sprites."));
+                }
+                else
+                {
+                    externs.Append($"extern const agb::data::SpriteSheet agbasset_sprite_{Cpp.Ident(a.Sprite)};\n");
+                    sheet = $"&agbasset_sprite_{Cpp.Ident(a.Sprite)}";
+                }
+            }
+            var box = a.Collider != null ? $"{{{a.Collider.X}, {a.Collider.Y}, {a.Collider.W}, {a.Collider.H}}}"
+                : a.Kind is ActorKind.TriggerZone or ActorKind.CameraZone ? $"{{0, {-a.ZoneH}, {a.ZoneW}, {a.ZoneH}}}" : "{0, 0, 0, 0}";
+            var tag = a.Tag.Length == 0 ? 0 : _p.Settings.Tags.IndexOf(a.Tag) + 1;
+            var behaviours = a.Components.Count > 0 && scene.Actors[ai].Components.Count > 0 ? $"agbasset_scene_{id}_a{ai}_b" : "nullptr";
+            actors.Append($"    {{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, ");
+            actors.Append(a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr");
+            actors.Append($", {box}, {behaviours}, {a.Components.Count}, nullptr, {(a.Hidden ? "true" : "false")}}},\n");
+        }
+        if (scene.Actors.Count > 0) sb.Append($"const agb::ActorDef agbasset_scene_{id}_actors[] = {{\n{actors}}};\n");
+
+        // Links
+        var links = new StringBuilder();
+        foreach (var l in scene.Links)
+        {
+            var from = actorNames.IndexOf(l.From);
+            var to = sceneNames.IndexOf(l.To);
+            if (from < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link from '{l.From}': no actor with that name in {scene.Name}.")); continue; }
+            if (to < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link to '{l.To}': no scene with that name.")); continue; }
+            if (l.OnlyIf.Length > 0)
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Link {l.From} → {l.To}: the 'Only if' condition needs the scripting compiler; the link is always allowed."));
+            var frames = (int)Math.Round(l.Duration * 60);
+            links.Append($"    {{{from}, agb::LinkKind::{l.Kind}, {to}, {l.SpawnX}, {l.SpawnY}, agb::render::effects::Transition::{l.Transition}, {frames}, nullptr}},\n");
+        }
+        if (scene.Links.Count > 0) sb.Append($"const agb::LinkDef agbasset_scene_{id}_links[] = {{\n{links}}};\n");
+        sb.Append("}  // namespace\n");
+
+        var follow = actorNames.IndexOf(scene.Camera.Follow);
+        var music = scene.Music.Track.Length > 0 ? MusicId(scene.Music.Track) : -1;
+        if (scene.Music.Track.Length > 0 && music < 0)
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name}: music '{scene.Music.Track}' is not in assets/audio/music."));
+        var backdrop = Gba.ToBgr555(0xFF000000u | uint.Parse(scene.Backdrop.TrimStart('#'), NumberStyles.HexNumber));
+        sb.Append($"extern const agb::SceneDef agbasset_scene_{id} = {{\n");
+        sb.Append($"    {Cpp.Str(scene.Name)}, {(map?.Width ?? scene.Width)}, {(map?.Height ?? scene.Height)}, {scene.VideoMode},\n");
+        sb.Append($"    {(layerCount > 0 ? $"agbasset_scene_{id}_layers" : "nullptr")}, {layerCount}, {collisionLayer},\n");
+        sb.Append($"    {(scene.Actors.Count > 0 ? $"agbasset_scene_{id}_actors" : "nullptr")}, {scene.Actors.Count},\n");
+        sb.Append($"    {{{follow}, {scene.Camera.DeadZoneW}, {scene.Camera.DeadZoneH}, {(scene.Camera.ClampToMap ? "true" : "false")}, 0, 0}},\n");
+        sb.Append($"    {music}, {(scene.Music.FadeOnSceneChange ? "true" : "false")},\n");
+        sb.Append($"    {(scene.Links.Count > 0 ? $"agbasset_scene_{id}_links" : "nullptr")}, {scene.Links.Count},\n");
+        sb.Append($"    nullptr, nullptr, nullptr, {backdrop}, {(scene.AlphaBlending ? "true" : "false")}, {(scene.Mosaic ? "true" : "false")}}};\n");
+        // Asset declarations go after the includes (first line block of sb).
+        var text = sb.ToString();
+        var cut = text.IndexOf("namespace {", StringComparison.Ordinal);
+        Write(Path.Combine(GenDir, "scenes", $"scene_{id}.cpp"), text[..cut] + externs + text[cut..]);
+    }
+
+    void GenerateGameDef(List<string> sceneNames)
+    {
+        var s = _p.Settings;
+        var sb = new StringBuilder();
+        sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(_p.ProjectPath)).Append(". Do not edit.\n");
+        sb.Append("#include \"agb/api.hpp\"\n#include \"agb/game.hpp\"\n#include \"agb_game.hpp\"\n");
+        var hasAudio = _musicIds.Count + _soundIds.Count > 0;
+        if (hasAudio) sb.Append("extern const unsigned char agb_soundbank[];\n");
+        foreach (var f in _p.SceneFiles()) sb.Append($"extern const agb::SceneDef agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))};\n");
+        sb.Append("namespace {\n");
+        // Save type ID string: emulators and flash carts detect the save chip from it.
+        var saveId = s.Save.Type switch
+        {
+            SaveType.Sram32K => "SRAM_V113",
+            SaveType.Flash64K => "FLASH_V126",
+            SaveType.Flash128K => "FLASH1M_V103",
+            SaveType.Eeprom8K => "EEPROM_V124",
+            _ => "",
+        };
+        if (saveId.Length > 0) sb.Append($"__attribute__((used, aligned(4))) const char kSaveTypeId[] = {Cpp.Str(saveId)};\n");
+        sb.Append("const agb::SceneDef* const kScenes[] = {");
+        sb.Append(string.Join(", ", _p.SceneFiles().Select(f => $"&agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))}")));
+        if (sceneNames.Count == 0) sb.Append("nullptr");
+        sb.Append("};\n");
+        var actions = s.Input.Where(a => a.Button != "D-pad").ToList();
+        Cpp.U16(sb, "const unsigned short kActionKeys", actions.Select(a => KeyMask(a.Button)));
+        sb.Append("}  // namespace\n");
+        sb.Append("GameState agb_state;\n");
+        var start = Math.Max(0, sceneNames.IndexOf(s.General.StartScene));
+        var layout = string.Join(";", s.Save.Fields.Select(f => f.Name + ":" + f.Type));
+        var version = 1 + (int)(Fnv(layout) % 30000);
+        sb.Append("extern const agb::GameDef agb_game = {\n");
+        sb.Append($"    {Cpp.Str(s.General.GameTitle)}, kScenes, {sceneNames.Count}, {start},\n");
+        sb.Append($"    {{agb::save::Type::{s.Save.Type}, {Math.Max(1, s.Save.Slots)}, sizeof(GameState), {version}, {(s.Save.Checksum ? "true" : "false")}}},\n");
+        sb.Append($"    &agb_state, sizeof(GameState), kActionKeys, {actions.Count},\n");
+        sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, nullptr, true}};\n");
+        sb.Append("int main() {\n");
+        if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
+        sb.Append("    agb::game::run(agb_game);\n}\n");
+        Write(Path.Combine(GenDir, "game.cpp"), sb.ToString());
+
+        // Header with ids for scripts and tests.
+        var h = new StringBuilder();
+        h.Append("// Generated by AGB Studio. Do not edit.\n#pragma once\n#include \"agb/api.hpp\"\n\n");
+        h.Append("// Project Settings · Save data (largest fields first to avoid padding).\nstruct GameState {\n    agb::SaveHeader header;\n");
+        foreach (var f in s.Save.Fields.OrderByDescending(f => Align(f.Type))) h.Append($"    {FieldDecl(f)};\n");
+        h.Append("};\nextern GameState agb_state;\nextern const agb::GameDef agb_game;\n\nnamespace agb_scene {\n");
+        for (var i = 0; i < sceneNames.Count; i++) h.Append($"constexpr unsigned short {Cpp.Ident(sceneNames[i])} = {i};\n");
+        h.Append("}\nnamespace agb_action {\n");
+        for (var i = 0; i < actions.Count; i++) h.Append($"constexpr int {Cpp.Ident(actions[i].Action)} = {i};\n");
+        h.Append("}\nnamespace agb_tag {\n");
+        for (var i = 0; i < s.Tags.Count; i++) h.Append($"constexpr unsigned short {Cpp.Ident(s.Tags[i])} = {i + 1};\n");
+        h.Append("}\n");
+        SoundbankBuilder.WriteIfChanged(Path.Combine(GenDir, "agb_game.hpp"), h.ToString());
+    }
+
+    static uint Fnv(string s)
+    {
+        var h = 2166136261u;
+        foreach (var c in s) h = (h ^ c) * 16777619u;
+        return h;
+    }
+
+    static int Align(string type)
+    {
+        var t = type.Trim();
+        return t is "int" or "fixed" or "fixed2" ? 4 : t == "short" || t.Contains('[') ? 2 : 1;
+    }
+
+    static string FieldDecl(SaveField f)
+    {
+        var t = f.Type.Trim();
+        var name = Cpp.Ident(f.Name);
+        if (t.StartsWith("bitset", StringComparison.Ordinal)) return $"unsigned char {name}[{(int.Parse(t[6..].Trim()) + 7) / 8}]";
+        var open = t.IndexOf('[');
+        if (open > 0) return $"unsigned short {name}[{t[(open + 1)..t.IndexOf(']')]}]";
+        return t switch
+        {
+            "bool" => $"bool {name}",
+            "byte" => $"unsigned char {name}",
+            "short" => $"short {name}",
+            "fixed" => $"agb::fixed {name}",
+            "fixed2" => $"agb::fixed2 {name}",
+            _ => $"int {name}",
+        };
+    }
+
+    static int KeyMask(string button) => button switch
+    {
+        "A" => 1, "B" => 2, "Select" => 4, "Start" => 8, "Right" => 16, "Left" => 32, "Up" => 64, "Down" => 128, "R" => 256, "L" => 512,
+        _ => 0,
+    };
+
+    // ---- compile -------------------------------------------------------------------------------------
+
+    string CompileAndLink(BuildConfiguration config, CancellationToken cancel)
+    {
+        var g = _p.Settings.General;
+        var version = 0;
+        var parts = g.Version.Split('.');
+        if (parts.Length > 0) int.TryParse(parts[^1], out version);
+        var target = new RomTarget
+        {
+            Name = Path.GetFileNameWithoutExtension(RomPath),
+            Config = config == BuildConfiguration.Release ? BuildConfig.Release : BuildConfig.Debug,
+            Optimise = _p.Settings.Build.Optimise,
+            Header = new RomHeader(g.RomTitle, g.GameCode, g.Maker, Math.Clamp(version, 0, 255)),
+        };
+        target.Sources.AddRange(NativeBuild.RuntimeSources());
+        target.Sources.AddRange(_sources.Distinct());
+        target.IncludeDirs.Add(Path.Combine(NativeBuild.RuntimeDir, "include"));
+        target.IncludeDirs.Add(GenDir);
+        target.IncludeDirs.AddRange(_includeDirs.Distinct());
+        if (_p.Settings.Build.KeepAsserts) target.Defines.Add("AGB_KEEP_ASSERTS=1");
+        if (config == BuildConfiguration.Release && !_p.Settings.Build.StripDebugLog) target.Defines.Add("AGB_KEEP_LOGS=1");
+        var compiled = 0;
+        var total = target.Sources.Count;
+        var r = new NativeBuild(_tc, Path.Combine(_p.BuildDir, "obj")).Build([target], line =>
+        {
+            _obs.Line(line);
+            if (line.StartsWith('[') && line.Contains("CXX "))
+                _obs.FileProgress(StepCompile, ++compiled, total, Path.GetFileName(line[(line.IndexOf("CXX ", StringComparison.Ordinal) + 4)..]));
+            var d = ParseGccLine(line);
+            if (d != null) Add(d);
+        }, cancel);
+        cancel.ThrowIfCancellationRequested();
+        if (!r.Success)
+        {
+            if (!_result.Errors.Any()) Add(new Diagnostic(Severity.Error, "", 0, 0, "", "devkitARM build failed:\n" + r.Log));
+            return "failed";
+        }
+        Directory.CreateDirectory(Path.GetDirectoryName(RomPath)!);
+        File.Copy(r.RomPath, RomPath, true);
+        _result.RomPath = RomPath;
+        _result.ElfPath = Path.ChangeExtension(r.RomPath, ".elf");
+        return $"{compiled} files";
+    }
+
+    /// <summary>Turns "file:line:col: error: message" into a diagnostic (and maps generated C++ back via #line).</summary>
+    public static Diagnostic? ParseGccLine(string line)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(line, @"^(.*?):(\d+):(\d+): (error|warning|fatal error): (.*)$");
+        if (!m.Success) return null;
+        var sev = m.Groups[4].Value == "warning" ? Severity.Warning : Severity.Error;
+        return new Diagnostic(sev, m.Groups[1].Value, int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture),
+            int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), "", m.Groups[5].Value);
+    }
+}
+
+public sealed record AssetInfo(string Name, string Type, string File, int RomBytes, int Count, string Detail);
+
+public sealed class BuildAssetInfo
+{
+    public Dictionary<string, AssetInfo> Sprites { get; } = new();
+    public Dictionary<string, AssetInfo> Tilesets { get; } = new();
+    public Dictionary<string, AssetInfo> Audio { get; } = new();
+    public Dictionary<string, AssetInfo> Fonts { get; } = new();
+    public Dictionary<string, AssetInfo> Data { get; } = new();
+}

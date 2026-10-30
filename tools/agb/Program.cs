@@ -8,6 +8,7 @@ public static class Program
 {
     public static int Main(string[] args)
     {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
         if (args.Length == 0)
         {
             Console.Error.WriteLine("usage: agb romtest <rom.gba> [--frames N] [--shot out.png] [--memmap]");
@@ -20,6 +21,8 @@ public static class Program
                 "romtest" => RomTest(args[1..]),
                 "runtime-test" => RuntimeTest(args[1..]),
                 "make-test-audio" => MakeTestAudio(args[1]),
+                "build" => Build(args[1..]),
+                "sample" => Sample(args[1..]),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -88,6 +91,45 @@ public static class Program
         }
         Console.WriteLine(failed == 0 ? $"all {names.Count} runtime tests passed" : $"{failed} of {names.Count} runtime tests failed");
         return failed == 0 ? 0 : 1;
+    }
+
+    static int Build(string[] args)
+    {
+        var path = args.FirstOrDefault(a => !a.StartsWith("--")) ?? ".";
+        var project = AgbStudio.Core.Project.GameProject.Open(path);
+        var builder = new AgbStudio.Build.Pipeline.GameBuilder(project, new Toolchain(), new ConsoleObserver(args.Contains("--verbose")));
+        var result = builder.Build(new AgbStudio.Build.Pipeline.BuildOptions
+        {
+            Clean = args.Contains("--clean"),
+            Configuration = args.Contains("--release") ? AgbStudio.Core.Project.BuildConfiguration.Release : null,
+        });
+        foreach (var d in result.Diagnostics) Console.WriteLine($"{d.Severity.ToString().ToLowerInvariant()}: {d}");
+        Console.WriteLine(result.Success
+            ? $"Build OK in {result.Elapsed.TotalSeconds:0.00} s: {result.RomPath} ({new FileInfo(result.RomPath).Length / 1024} KB; {result.AssetsConverted} assets converted, {result.AssetsCached} cached)"
+            : $"Build failed at {result.FailedStep}");
+        return result.Success ? 0 : 1;
+    }
+
+    static int Sample(string[] args)
+    {
+        var kind = args[0];
+        var dir = args[1];
+        var p = kind switch
+        {
+            "mini" => AgbStudio.Build.Content.SampleProjects.CreatePlatformerMini(dir),
+            _ => throw new ArgumentException($"Unknown sample '{kind}'."),
+        };
+        Console.WriteLine($"created {p.ProjectPath}");
+        return 0;
+    }
+
+    sealed class ConsoleObserver(bool verbose) : AgbStudio.Build.Pipeline.IBuildObserver
+    {
+        public void StepStarted(string step, string detail) => Console.WriteLine($"> {step}");
+        public void StepFinished(string step, TimeSpan elapsed, bool ok, string detail) => Console.WriteLine($"  {(ok ? "done" : "FAILED")} {step}: {detail} ({elapsed.TotalSeconds:0.00} s)");
+        public void FileProgress(string step, int done, int total, string file) { if (verbose) Console.WriteLine($"  {done}/{total} {file}"); }
+        public void Line(string text) { if (verbose) Console.WriteLine("  " + text); }
+        public void Message(AgbStudio.Build.Pipeline.Diagnostic d) { }
     }
 
     // Writes the small original audio files used by the runtime audio test.
