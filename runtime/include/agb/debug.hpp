@@ -26,7 +26,7 @@ struct Channel {
     u32 actorStride;           // 44
     const void* profiler;      // 48 agb::profile::Stats
     void* debugger;            // 52 agb::dbg::State (breakpoints, pause)
-    const void* symbols;       // 56 generated watch symbols
+    const void* symbols;       // 56 agb::dbg::State (C# breakpoints and call stack)
     const void* game;          // 60 agb::debug::GameInfo (hot reload reads the running game's state)
     char log[kLogSize];        // 64
 };

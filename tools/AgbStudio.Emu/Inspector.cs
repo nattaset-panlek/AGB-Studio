@@ -187,3 +187,41 @@ public sealed class ScriptDebugger(LibretroCore core, DebugChannel channel)
     public void Resume() => core.Memory(State + 66, 1)[0] = 1;
     public void Step() => core.Memory(State + 66, 1)[0] = 2;
 }
+
+/// <summary>C# breakpoints and call stack (runtime agb::dbg::State, D-21).</summary>
+public sealed class CSharpDebugger(LibretroCore core, DebugChannel channel)
+{
+    uint State => channel.Symbols;
+    public bool Available => State != 0;
+
+    public void SetBreakpoints(IReadOnlyList<(int File, int Line)> points)
+    {
+        var n = Math.Min(16, points.Count);
+        for (var i = 0; i < n; i++) core.WriteU32(State + (uint)(i * 4), (uint)((points[i].File << 16) | (points[i].Line & 0xFFFF)));
+        core.Memory(State + 64, 1)[0] = (byte)n;
+    }
+
+    public bool Paused => core.Memory(State + 65, 1)[0] != 0;
+    public (int File, int Line) PausedAt => ((int)(core.ReadU32(State + 68) >> 16), (int)(core.ReadU32(State + 68) & 0xFFFF));
+    public uint PausedFrame => core.ReadU32(State + 72);
+
+    /// <summary>Call stack, innermost first, as "Method() :line" using the generated name tables.</summary>
+    public List<(string File, string Method, int Line)> Stack()
+    {
+        var depth = Math.Min(16, (int)core.Memory(State + 67, 1)[0]);
+        var files = core.ReadU32(State + 76 + 16 * 8);
+        var names = core.ReadU32(State + 76 + 16 * 8 + 4);
+        var list = new List<(string, string, int)>();
+        for (var i = depth - 1; i >= 0; i--)
+        {
+            var f = State + 76 + (uint)(i * 8);
+            int file = core.ReadU16(f), name = core.ReadU16(f + 2), line = core.ReadU16(f + 4);
+            list.Add((files == 0 ? file.ToString() : Inspector.ReadString(core, core.ReadU32(files + (uint)file * 4)),
+                names == 0 ? name.ToString() : Inspector.ReadString(core, core.ReadU32(names + (uint)name * 4)), line));
+        }
+        return list;
+    }
+
+    public void Resume() => core.Memory(State + 66, 1)[0] = 1;
+    public void Step() => core.Memory(State + 66, 1)[0] = 2;
+}

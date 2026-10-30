@@ -7,11 +7,15 @@ public static class RuntimeTests
 
     public static IReadOnlyList<string> Discover() =>
         Directory.EnumerateDirectories(Path.Combine(NativeBuild.RuntimeDir, "tests"))
-            .Where(d => File.Exists(Path.Combine(d, "main.cpp")))
+            .Where(d => File.Exists(Path.Combine(d, "main.cpp")) && !Path.GetFileName(d).StartsWith("host_", StringComparison.Ordinal))
             .Select(Path.GetFileName)
             .OfType<string>()
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToList();
+
+    // Folders named host_* are ROMs driven by a C# test (they never finish on their own).
+    public static IReadOnlyList<string> DiscoverHostDriven() =>
+        Directory.EnumerateDirectories(Path.Combine(NativeBuild.RuntimeDir, "tests"), "host_*").Select(Path.GetFileName).OfType<string>().ToList();
 
     public static RomTarget Target(string name, BuildConfig config = BuildConfig.Debug)
     {
