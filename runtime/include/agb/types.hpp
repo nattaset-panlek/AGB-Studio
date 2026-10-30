@@ -16,8 +16,9 @@ using s64 = int64_t;
 
 }  // namespace agb
 
-// Hot code compiled as ARM and copied to IWRAM by the boot code.
-#define AGB_IWRAM_CODE __attribute__((section(".iwram"), long_call, target("arm"), noinline))
+// Hot code copied to IWRAM by the boot code. Whole files named *.iwram.cpp are compiled as ARM and
+// placed in IWRAM by the linker script; this attribute moves single (Thumb) functions there.
+#define AGB_IWRAM_CODE __attribute__((section(".iwram"), long_call, noinline))
 // Data placed in IWRAM / EWRAM instead of the default.
 #define AGB_IWRAM_DATA __attribute__((section(".iwram")))
 #define AGB_EWRAM_DATA __attribute__((section(".ewram")))

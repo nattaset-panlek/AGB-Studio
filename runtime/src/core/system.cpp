@@ -61,12 +61,13 @@ namespace {
 volatile u32 g_vblankCount = 0;
 u32 g_frame = 0;
 u32 g_lastVBlank = 0;
-void (*g_vblankHook)() = nullptr;
+void (*g_vblankHooks[4])() = {};
 void (*g_frameHook)() = nullptr;
 
 void onVBlank() {
     ++g_vblankCount;
-    if (g_vblankHook) g_vblankHook();
+    for (auto hook : g_vblankHooks)
+        if (hook) hook();
 }
 }  // namespace
 
@@ -78,7 +79,21 @@ void init() {
     commit::init();
 }
 
-void setVBlankHook(void (*hook)()) { g_vblankHook = hook; }
+void addVBlankHook(void (*hook)()) {
+    for (auto& h : g_vblankHooks)
+        if (h == hook) return;
+    for (auto& h : g_vblankHooks)
+        if (!h) {
+            h = hook;
+            return;
+        }
+    debug::log("warning: no free VBlank hook slot");
+}
+
+void removeVBlankHook(void (*hook)()) {
+    for (auto& h : g_vblankHooks)
+        if (h == hook) h = nullptr;
+}
 void setFrameHook(void (*hook)()) { g_frameHook = hook; }
 
 void waitVBlank() {

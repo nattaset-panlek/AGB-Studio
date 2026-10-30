@@ -26,7 +26,17 @@ public static class RuntimeTests
         t.Sources.Add(Path.Combine(testsDir, "test.cpp"));
         t.Sources.AddRange(Directory.EnumerateFiles(Path.Combine(testsDir, name), "*.cpp").OrderBy(p => p, StringComparer.Ordinal));
         t.IncludeDirs.Add(Path.Combine(NativeBuild.RuntimeDir, "include"));
-        t.IncludeDirs.Add(Path.Combine(testsDir, name));
+        // Tests with an audio/ folder get a soundbank (soundbank.hpp lists the ids).
+        var audioDir = Path.Combine(testsDir, name, "audio");
+        if (Directory.Exists(audioDir))
+        {
+            var gen = Path.Combine(BuildDir, "gen", name);
+            var inputs = Directory.EnumerateFiles(audioDir).Where(f => f.EndsWith(".mod") || f.EndsWith(".xm") || f.EndsWith(".wav")).Order().ToList();
+            var sb = Audio.SoundbankBuilder.Build(new Toolchain(), inputs, gen);
+            if (!sb.Success) throw new InvalidOperationException("mmutil failed: " + sb.Log);
+            t.Sources.Add(sb.CppPath);
+            t.IncludeDirs.Add(gen);
+        }
         return t;
     }
 

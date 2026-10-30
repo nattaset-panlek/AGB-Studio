@@ -18,6 +18,7 @@ public static class Program
             {
                 "romtest" => RomTest(args[1..]),
                 "runtime-test" => RuntimeTest(args[1..]),
+                "make-test-audio" => MakeTestAudio(args[1]),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -86,6 +87,28 @@ public static class Program
         }
         Console.WriteLine(failed == 0 ? $"all {names.Count} runtime tests passed" : $"{failed} of {names.Count} runtime tests failed");
         return failed == 0 ? 0 : 1;
+    }
+
+    // Writes the small original audio files used by the runtime audio test.
+    static int MakeTestAudio(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        File.WriteAllBytes(Path.Combine(dir, "beep.wav"), AgbStudio.Build.Audio.WavWriter.Encode(AgbStudio.Build.Audio.WavWriter.Tone(880, 0.15, 11025, square: true), 11025));
+        var mod = new AgbStudio.Build.Audio.ModWriter { Title = "agb test tune" };
+        mod.Samples.Add(new("square", AgbStudio.Build.Audio.ModWriter.Waveform("square"), 48, 0, 32));
+        mod.Samples.Add(new("tri", AgbStudio.Build.Audio.ModWriter.Waveform("triangle"), 64, 0, 32));
+        var p = mod.NewPattern();
+        string[] melody = ["C-2", "E-2", "G-2", "C-3", "G-2", "E-2", "D-2", "B-1"];
+        for (var i = 0; i < 64; i += 8)
+        {
+            p[i, 0] = new(melody[i / 8], 1);
+            p[i, 1] = new(i % 16 == 0 ? "C-1" : "G-1", 2);
+        }
+        mod.Patterns.Add(p);
+        mod.Order.AddRange([0, 0]);
+        File.WriteAllBytes(Path.Combine(dir, "tune.mod"), mod.Encode());
+        Console.WriteLine($"wrote beep.wav and tune.mod to {dir}");
+        return 0;
     }
 
     static string? Option(string[] args, string name)

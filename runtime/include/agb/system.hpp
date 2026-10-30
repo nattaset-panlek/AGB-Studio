@@ -10,8 +10,9 @@ void init();
 // Sleeps in the BIOS until VBlank (no busy wait), then flushes the commit queues.
 void waitVBlank();
 u32 frame();
-// Called from the VBlank interrupt; audio installs its mixer hook here.
-void setVBlankHook(void (*hook)());
+// Functions called from the VBlank interrupt (audio mixer, scanline DMA restart). Up to 4.
+void addVBlankHook(void (*hook)());
+void removeVBlankHook(void (*hook)());
 // Called once per frame from waitVBlank() after the commit (audio frame work).
 void setFrameHook(void (*hook)());
 
