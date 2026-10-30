@@ -184,6 +184,8 @@ public:
             task::runAll();
             actors::lateUpdate();  // bodies move here (physics and tile collision)
             text::update();
+            // A finished conversation (or Text.Show the player dismissed) takes the box off the screen.
+            if (text::open() && !text::waiting() && !script::cutsceneRunning()) text::close();
             actors::touches();
             checkLinks();
             actors::removeDead();

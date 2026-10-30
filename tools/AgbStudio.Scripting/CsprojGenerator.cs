@@ -65,7 +65,7 @@ public static class CsprojGenerator
                 <RootNamespace>{ns}</RootNamespace>
                 <AssemblyName>{Names.Identifier(projectName)}.Scripts</AssemblyName>
                 <TreatWarningsAsErrors>{(ctx.Analyzer.TreatWarningsAsErrors ? "true" : "false")}</TreatWarningsAsErrors>
-                <NoWarn>$(NoWarn);CS1998;CS0414;CS0169</NoWarn>
+                <NoWarn>$(NoWarn);CS1998;CS0414;CS0169;CS4014</NoWarn>
                 <BaseOutputPath>{IdeDir}/bin/</BaseOutputPath>
                 <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
               </PropertyGroup>

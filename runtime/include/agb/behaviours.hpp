@@ -156,6 +156,8 @@ namespace physics {
 bool moveX(Actor& a, fixed dx, int stepUp = 0);
 // Surface y of a slope tile at world x (true when the tile at (x, y) is a slope).
 bool slopeSurface(int x, int y, int& surface);
+// True when the actor overlaps another living actor that is blocking.
+bool blockedByActors(const Actor& self);
 bool moveY(Actor& a, fixed dy, bool dropThroughOneWay = false);
 bool boxTouches(const Box& box, data::Collision type);
 }  // namespace physics

@@ -22,6 +22,9 @@ public:
     void show(const data::TextRun* run, u8 charsPerFrame = 2, u8 firstLine = 0);
     void update();  // reveals more glyphs and queues the changed tiles
     void skip();    // reveal everything now
+    // The player pressed A while typing: reveal the rest quickly (12 characters a frame keeps a long Thai line
+    // within the frame budget and still looks instant).
+    void fastForward() { if (speed_ < 12) speed_ = 12; }
     bool done() const;
     void setBlip(void (*blip)()) { blip_ = blip; }
     void showContinueMarker(bool on);

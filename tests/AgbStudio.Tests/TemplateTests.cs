@@ -94,4 +94,101 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
         s.Stop();
     }
+
+    static LiveActor Me(PlaySession s) => s.Actors().Single(a => a.Name == "Player");
+
+    // Frames that overran while walking or talking, with the profiler split (shown when a test fails).
+    static readonly List<string> Overruns = new();
+
+    static void Walk(PlaySession s, GbaKeys dir, Func<LiveActor, bool> until, int max = 400)
+    {
+        for (var i = 0; i < max && !until(Me(s)); i++)
+        {
+            s.Keys = dir;
+            var before = s.Profiler()?.Overruns ?? 0;
+            s.Step();
+            var p = s.Profiler();
+            if (p != null && p.Overruns != before) Overruns.Add($"frame {s.Frame} at {Me(s).X},{Me(s).Y} logic {p.Logic} render {p.Render} audio {p.Audio}");
+        }
+        s.Keys = 0;
+        s.Step();
+    }
+
+    // Presses A until the dialogue box (light paper at the bottom of the screen) is gone.
+    static void CloseDialogue(PlaySession s)
+    {
+        for (var i = 0; i < 12; i++)
+        {
+            var c = Pixel(s, 120, 140);
+            if (c.R < 230 || c.G < 230 || c.B < 230) return;  // the box paper is near white (BGR555 0x7BDE)
+            Press(s, GbaKeys.A);
+            for (var k = 0; k < 20; k++) s.Step();
+        }
+        Assert.Fail("the dialogue box did not close; log: " + string.Join(" | ", s.Log.TakeLast(15)));
+    }
+
+    static (int R, int G, int B) Pixel(PlaySession s, int x, int y)
+    {
+        var c = s.Core.Frame[y * LibretroCore.Width + x];
+        return ((int)(c >> 16) & 255, (int)(c >> 8) & 255, (int)c & 255);
+    }
+
+    [Fact]
+    public void TopDownAdventureTalksPushesUnlocksAndEnters()
+    {
+        var (p, r) = Build("topdown");
+        Assert.Equal("Mode 0 · 1 BG layers · 6 actors · 4 scripts", TemplateInfo.Stats(p));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);
+        for (var i = 0; i < 40; i++) s.Step();
+        uint State(int offset) => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + (uint)offset);
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+
+        // Talk to the elder (200, 120): the dialogue box opens over the bottom of the screen.
+        Walk(s, GbaKeys.Up, a => a.Y <= 125);  // row 7, clear of the fence posts on row 6
+        Walk(s, GbaKeys.Right, a => a.X >= 180);
+        s.Keys = GbaKeys.A;
+        for (var i = 0; i < 32; i++)
+        {
+            var before = s.Profiler()?.Overruns ?? 0;
+            s.Step();
+            s.Keys = 0;
+            var pr = s.Profiler();
+            if (pr != null && pr.Overruns != before) Overruns.Add($"talk frame +{i} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
+        }
+        var box = Pixel(s, 120, 140);
+        Assert.True(box.R > 230 && box.G > 230 && box.B > 230, $"dialogue box paper {box}");
+        CloseDialogue(s);
+
+        // Push the crate (72, 112) one tile left, out of the opening of the fenced corner.
+        Walk(s, GbaKeys.Left, a => a.X <= 88);
+        Walk(s, GbaKeys.Up, a => a.Y <= 104);
+        s.Keys = GbaKeys.Left;
+        for (var i = 0; i < 40; i++) s.Step();
+        s.Keys = 0;
+        for (var i = 0; i < 10; i++) s.Step();
+        var crate = s.Actors().Single(a => a.Name == "Crate");
+        Assert.True((int)crate.X == 56, $"crate at {crate.X},{crate.Y}; player at {Me(s).X},{Me(s).Y}");
+
+        // Through the opening to the key, then back out to the door.
+        Walk(s, GbaKeys.Left, a => a.X <= 72);
+        Walk(s, GbaKeys.Up, a => a.Y <= 60, 200);
+        Assert.Equal(1u, State(8));  // keys
+        CloseDialogue(s);
+        Walk(s, GbaKeys.Down, a => a.Y >= 120);
+        Walk(s, GbaKeys.Right, a => a.X >= 152);
+        Walk(s, GbaKeys.Up, a => a.Y <= 104);
+        s.Keys = GbaKeys.Up;
+        for (var i = 0; i < 20; i++) s.Step();
+        Assert.Equal(1u, State(12) & 0xFF);  // doorOpen
+        Assert.Equal(0u, State(8));          // the key was used
+        for (var i = 0; i < 60 && SceneIndex() != 0; i++) s.Step();
+        s.Keys = 0;
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.Equal(0, SceneIndex());  // House
+        Assert.False(s.Log.Any(l => l.Contains("took longer than one frame", StringComparison.Ordinal)), string.Join(" | ", s.Log.Concat(Overruns)));
+        s.Stop();
+    }
 }

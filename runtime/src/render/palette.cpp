@@ -47,7 +47,8 @@ struct Flash {
     u8 frames;
 };
 Flash g_flash{};
-bool g_dirty = true;
+bool g_dirty = true;     // every bank must be recomputed (reset, fades, tints, flashes)
+u32 g_dirtyBanks = 0;    // only these banks changed (bit per bank: 0-15 BG, 16-31 OBJ)
 
 u16 cycled(int index) {
     const int bankStart = index & ~15;
@@ -114,13 +115,13 @@ void setBank(bool obj, int bank, const u16* colors16) {
     u16* dst = g_base + (obj ? 256 : 0) + bank * 16;
     // Index 0 is transparent in every bank; BG bank 0 index 0 is the backdrop, set by setBackdrop().
     for (int i = (!obj && bank == 0) ? 1 : 0; i < 16; ++i) dst[i] = colors16[i];
-    g_dirty = true;
+    g_dirtyBanks |= 1u << ((obj ? 16 : 0) + bank);
 }
 
 u16 baseColor(int index) { return g_base[index & 511]; }
 void setBaseColor(int index, u16 c) {
     g_base[index & 511] = c;
-    g_dirty = true;
+    g_dirtyBanks |= 1u << ((index & 511) >> 4);
 }
 void setBackdrop(u16 c) { setBaseColor(0, c); }
 
@@ -191,17 +192,24 @@ void update() {
             if (c.offset + c.step >= len || c.offset + c.step < 0) c.step = static_cast<s8>(-c.step);
             c.offset = static_cast<u8>(c.offset + c.step);
         }
-        g_dirty = true;
+        g_dirtyBanks |= 1u << ((c.obj ? 16 : 0) + c.bank);
     }
     if (g_flash.frames) {
         --g_flash.frames;
         g_dirty = true;
     }
-    if (!g_dirty) return;
+    if (!g_dirty && !g_dirtyBanks) return;
+    // Recompute only what changed: a menu loading one bank must not cost all 512 colours.
+    const u32 banks = g_dirty ? 0xFFFFFFFFu : g_dirtyBanks;
     g_dirty = g_flash.frames != 0;
+    g_dirtyBanks = 0;
     u16* out = commit::palette();
     for (int i = 0; i < 512; ++i) {
         const u32 bankBit = 1u << ((i >> 4) & 31);
+        if (!(banks & bankBit)) {
+            i |= 15;  // skip the rest of this bank
+            continue;
+        }
         u16 c = cycled(i);
         if (g_tint.amount && (g_tint.mask & bankBit)) c = blend(c, g_tint.color, g_tint.amount);
         if (g_fade.current && (g_fade.mask & bankBit)) c = blend(c, g_fade.color, g_fade.current);

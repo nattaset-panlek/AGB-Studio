@@ -286,6 +286,8 @@ public sealed class ScriptCompiler
     static ImmutableDictionary<string, ReportDiagnostic> SeverityOptions(AnalyzerSettings s)
     {
         var b = ImmutableDictionary.CreateBuilder<string, ReportDiagnostic>();
+        // Calling a [Cutscene] method without await starts it (Scripting API): not a mistake here.
+        b["CS4014"] = ReportDiagnostic.Suppress;
         foreach (var (id, sev) in s.Rules)
             b[id] = sev switch
             {

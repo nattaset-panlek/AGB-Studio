@@ -73,6 +73,7 @@ public:
     fixed2 vel;          // set by bodies; read by the live Inspector
     Box collider{0, 0, 0, 0};
     bool solid = false;  // trigger zones are not solid
+    bool blocking = false;  // bodies cannot walk through it (doors, crates, people; C# actor.blocking)
     bool alive = false, dying = false, visible = true, facingLeft = false, onGround = false;
     s8 state = 0;        // short state id shown in the Play Mode Inspector ("state Jump")
     render::sprites::Id sprite = render::sprites::kNone;

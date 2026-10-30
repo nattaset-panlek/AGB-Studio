@@ -24,6 +24,14 @@ bool boxTouches(const Box& b, data::Collision type) {
     return scene::collisionAt(b.x + b.w - 1, b.y + b.h - 1) == type;
 }
 
+bool blockedByActors(const Actor& self) {
+    bool blocked = false;
+    actors::forEach([&](Actor& o) {
+        if (!blocked && &o != &self && o.blocking && o.isAlive() && self.overlaps(o)) blocked = true;
+    });
+    return blocked;
+}
+
 bool slopeSurface(int x, int y, int& surface) {
     const data::Collision c = scene::collisionAt(x, y);
     if (c != data::Collision::SlopeUp && c != data::Collision::SlopeDown) return false;
@@ -179,10 +187,23 @@ void TopDownMover::lateUpdate() {
         if (ix > 0) facing = 1;
         else if (ix < 0) facing = 3;
     }
+    // Tiles stop the body; blocking actors (doors, crates, people) too, one axis at a time so it slides along them.
+    const fixed ox = a.pos.x;
     if (physics::moveX(a, vx)) vx = fixed();
+    if (physics::blockedByActors(a)) {
+        a.pos.x = ox;
+        vx = fixed();
+    }
+    const fixed oy = a.pos.y;
     if (physics::moveY(a, vy)) vy = fixed();
+    if (physics::blockedByActors(a)) {
+        a.pos.y = oy;
+        vy = fixed();
+    }
     a.vel = {vx, vy};
     if (facing == 1 || facing == 3) a.setFacingLeft(facing == 3);
+    // Sprite sheets with "up", "down" and "side" animations follow the facing direction.
+    a.playAnimation(facing == 0 ? "up" : facing == 2 ? "down" : "side");
 }
 
 // ---- Projectile -------------------------------------------------------------------------------------

@@ -18,8 +18,9 @@ public sealed record TemplateInfo(string Id, string Name, string Genre, string S
     {
         var start = p.Settings.General.StartScene;
         var scenes = p.SceneFiles().Select(GameProject.Load<SceneFile>).ToList();
-        // The first playable scene (not the title) is the one the template is about.
-        var main = scenes.FirstOrDefault(s => s.Name != start && s.Menu == null) ?? scenes.FirstOrDefault();
+        // The scene the title menu starts (the first playable scene) is the one the template is about.
+        var first = scenes.FirstOrDefault(s => s.Name == start)?.Menu?.Items.FirstOrDefault(i => i.Command == MenuCommand.LoadScene)?.Scene;
+        var main = scenes.FirstOrDefault(s => s.Name == first) ?? scenes.FirstOrDefault(s => s.Name != start && s.Menu == null) ?? scenes.FirstOrDefault();
         var layers = 0;
         if (main != null && main.Map.Length > 0)
         {
@@ -39,6 +40,10 @@ public static class TemplateCatalog
             "A side-view action game: the player runs and jumps through levels, collects coins and stomps enemies.",
             ["Player controller with jump and coyote time", "Enemy patrol and stomp", "Coins, score and HUD", "Checkpoints and lives", "Title screen and pause menu"],
             PlatformerTemplate.Create),
+        new("topdown", "Top-down Adventure", "Adventure", "Explore, talk, push blocks, open doors.",
+            "A top-down adventure: the player explores a village, talks to its people, pushes crates out of the way and unlocks doors.",
+            ["Player movement in 8 directions", "Talk to NPCs with dialogue", "Push blocks", "Doors and keys", "Title screen and pause menu"],
+            TopDownTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);

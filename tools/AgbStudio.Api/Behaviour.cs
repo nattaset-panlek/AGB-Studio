@@ -147,6 +147,10 @@ public sealed class Actor
     [Cpp("{this.}visible", Set = "{this.}setVisible({value})")]
     public bool visible { get => false; set { } }
 
+    /// <summary>When true, bodies (Top-down Mover) cannot walk through this actor: doors, crates, people.</summary>
+    [Cpp("{this.}blocking")]
+    public bool blocking { get => false; set { } }
+
     /// <summary>Mirrors the sprite horizontally.</summary>
     [Cpp("{this.}facingLeft", Set = "{this.}setFacingLeft({value})")]
     public bool facingLeft { get => false; set { } }

@@ -117,6 +117,12 @@ public static class Scene
     [Cpp("agb::api::Scene::Current()")]
     public static int Current => 0;
 
+    /// <summary>True when the collision tile at this world pixel is solid (walls, water, trees).</summary>
+    /// <param name="x">World x in pixels.</param>
+    /// <param name="y">World y in pixels.</param>
+    [Cpp("agb::scene::solidAt({0}, {1})")]
+    public static bool SolidAt(int x, int y) => false;
+
     /// <summary>The actor with this Hierarchy name, or null.</summary>
     /// <param name="name">Actor name.</param>
     [Cpp("agb::api::Scene::Find({0})")]

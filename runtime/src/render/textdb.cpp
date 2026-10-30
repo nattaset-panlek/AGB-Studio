@@ -15,6 +15,7 @@ BoxStyle g_style;
 render::TextBox g_box;
 bool g_open = false;
 bool g_awaitA = false;
+bool g_acked = false;  // the player pressed A for the line on screen (wait only once per line)
 void (*g_blip)() = nullptr;
 
 // Choice state (options drawn under the text)
@@ -84,6 +85,9 @@ render::TextBox g_labels[kMaxLabels];
 int g_labelCount = 0;
 
 u16 g_blank = 0;
+// The dialogue box keeps its tiles for the whole scene: closing only points its map at the blank tile, so dialogue
+// after dialogue does not use more VRAM.
+bool g_boxReady = false;
 
 // Text layer: highest priority, 32x32 map in its own screen block, shared by the box, labels and menus.
 // Its first tile is a blank tile of its own: every map entry without text points at it (tile 0 of the char
@@ -162,15 +166,23 @@ void clearLabels() {
     g_labelCount = 0;
     g_layerReady = false;
     g_open = false;
+    g_boxReady = false;  // the scene's arena and VRAM are reset
 }
 
 static bool ensureOpen() {
     if (g_open) return true;
     if (!ensureLayer()) return false;
+    if (g_boxReady) {
+        g_box.remap();
+        g_box.clear();
+        g_open = true;
+        return true;
+    }
     if (!g_box.init(g_style.bg, g_style.tileX, g_style.tileY, g_style.widthTiles, g_style.heightTiles, g_style.paletteBank,
                     render::TextBox::Style{1, 4, 5}))
         return false;
     g_open = true;
+    g_boxReady = true;
     return true;
 }
 
@@ -181,6 +193,7 @@ bool sayRun(const data::TextRun* r, void (*blip)(), s8 speed) {
     g_box.show(r, speed >= 0 ? static_cast<u8>(speed) : g_style.charsPerFrame);
     g_current = r;
     g_awaitA = false;
+    g_acked = false;
     g_choosing = false;
     g_chosen = -1;
     return true;
@@ -203,7 +216,7 @@ void update() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].update();
     if (!g_open) return;
     if (!g_box.done()) {
-        if (input::pressed(Key::A) || input::pressed(Key::B)) g_box.skip();
+        if (input::pressed(Key::A) || input::pressed(Key::B)) g_box.fastForward();
         g_box.update();
         return;
     }
@@ -219,23 +232,23 @@ void update() {
         g_box.update();
         return;
     }
-    if (!g_awaitA) {
+    if (!g_awaitA && !g_acked) {
         g_awaitA = true;
         g_box.showContinueMarker(true);
-    } else if (input::pressed(Key::A)) {
+    } else if (g_awaitA && input::pressed(Key::A)) {
         g_awaitA = false;
+        g_acked = true;
         g_box.showContinueMarker(false);
     }
     g_box.update();
 }
 
-bool waiting() { return g_open && (!g_box.done() || g_awaitA || g_choosing); }
+// Waiting until the line has been read: typing, then A pressed once (or a choice made).
+bool waiting() { return g_open && (!g_box.done() || !g_acked || g_choosing); }
 
 void close() {
     if (!g_open) return;
-    g_box.clear();
-    g_box.update();
-    g_box.release();
+    g_box.unmap(g_blank);
     g_open = false;
 }
 
