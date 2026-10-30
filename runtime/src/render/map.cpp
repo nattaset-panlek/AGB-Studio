@@ -90,7 +90,34 @@ void MapLayerView::drawColumn(int tileX, int y0, int y1) {
 }
 
 void MapLayerView::drawRow(int tileY, int x0, int x1) {
-    for (int x = x0; x <= x1; ++x) drawTile(x, tileY);
+    const data::MapLayer& l = *layer_;
+    // Fast path for tile layers without wrap: one metatile row, no division per cell.
+    if (l.type != data::LayerType::Tile || l.wrap || !l.tileset) {
+        for (int x = x0; x <= x1; ++x) drawTile(x, tileY);
+        return;
+    }
+    const int h = l.height * 2, w = l.width * 2;
+    const bool rowInside = tileY >= 0 && tileY < h;
+    const u16* cells = rowInside ? l.cells + (tileY >> 1) * l.width : nullptr;
+    const data::Metatile* metas = l.tileset->metatiles;
+    const u16 count = l.tileset->metatileCount;
+    const int quadRow = (tileY & 1) * 2;
+    const u16 tileBase = placement_.firstTile, palBase = placement_.paletteBank;
+    for (int x = x0; x <= x1; ++x) {
+        u16 se = 0;
+        if (rowInside && x >= 0 && x < w) {
+            const u16 mt = cells[x >> 1];
+            if (mt < count) {
+                const u16 raw = metas[mt].se[(x & 1) + quadRow];
+                se = static_cast<u16>(((data::seTile(raw) + tileBase) & 0x3FF) | (raw & (data::kSeHFlip | data::kSeVFlip)) |
+                                      (((data::sePal(raw) + palBase) & 15) << 12));
+            }
+        }
+        const int i = shadowIndex(x, tileY);
+        if (shadow_[i] == se) continue;
+        shadow_[i] = se;
+        dirtyRows_[(i >> 10) & 3] |= 1u << ((i >> 5) & 31);
+    }
 }
 
 void MapLayerView::setCamera(int x, int y) {
@@ -119,8 +146,8 @@ void MapLayerView::setCamera(int x, int y) {
 
 void MapLayerView::drawAll() {
     if (!layer_ || !shadow_) return;
-    drawnX1_ = drawnY1_ = -1;
-    setCamera(cameraX_, cameraY_);
+    // setCamera() has already drawn the window when it was called since init; only redraw if not.
+    if (drawnX1_ < drawnX0_) setCamera(cameraX_, cameraY_);
     const int blocks = bg::screenBlockCount(size_);
     commit::copyNow(commit::bgMap(screenBlock_), shadow_, static_cast<u32>(blocks) * 2048);
     for (auto& w : dirtyRows_) w = 0;

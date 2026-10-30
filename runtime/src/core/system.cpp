@@ -72,6 +72,9 @@ void onVBlank() {
 }  // namespace
 
 void init() {
+    // ROM wait states 3/1 with the prefetch buffer: the standard cartridge setting, about twice as fast
+    // as the boot default for code and data in ROM.
+    REG_WAITCNT = WS_STANDARD;
     debug::init();
     irq_init(nullptr);
     irq_add(II_VBLANK, onVBlank);
