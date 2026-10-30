@@ -34,7 +34,10 @@ bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
     c.size = size;
     bg::configure(layer.bg, c);
     bg::setVisible(layer.bg, true);
-    drawnX1_ = drawnY1_ = -1;
+    // Nothing drawn yet: an empty window (x1 < x0) makes the first setCamera draw everything on the fast
+    // path, also when this view is reused for the next scene.
+    drawnX0_ = drawnY0_ = 0;
+    drawnX1_ = drawnY1_ = -1;
     return true;
 }
 

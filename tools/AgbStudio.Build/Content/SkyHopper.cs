@@ -198,7 +198,10 @@ public static class SkyHopper
         var cave = Level("Cave_01", 24, 40, "cave_tiles", 3);
         GameProject.Save(Path.Combine(p.MapsDir, "Cave_01.map"), cave);
         GameProject.Save(Path.Combine(p.MapsDir, "Summit.map"), Level("Summit", 16, 10, "forest_tiles", 4));
-        GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), SampleProjects.GroundMap("Title", 15, 10, -1, -1, -1));
+        var titleMap = SampleProjects.GroundMap("Title", 15, 10, -1, -1, -1);
+        // Ground only (Figma "In-game · Title screen"): no floating platform behind the menu.
+        for (var x = 0; x < 15; x++) titleMap.Layers[0].Cells[6 * 15 + x] = 0;
+        GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), titleMap);
     }
 
     static ActorData Player(int x, int y) => new()
@@ -246,8 +249,19 @@ public static class SkyHopper
         var scenes = new[]
         {
             new SceneFile { Name = "Title", Width = 15, Height = 10, Map = "Title", MapX = 40, MapY = 60, Music = new MusicSettings { Track = "bgm_title" },
-                Actors = { new ActorData { Name = "Title Menu", Kind = ActorKind.TextLabel, X = 72, Y = 96, Text = "ui.menu.start", Components = { new ComponentData { Type = "TitleMenu" } } } },
-                Links = { } , Backdrop = "#1E1A28" },
+                Actors = { new ActorData { Name = "Title Menu", Kind = ActorKind.TextLabel, X = 88, Y = 40, Text = "ui.title", Components = { new ComponentData { Type = "TitleMenu" } } } },
+                // Figma "In-game · Title screen": Start / Continue / Options with the triangle cursor.
+                Menu = new SceneMenu
+                {
+                    X = 88, Y = 72, Width = 96, Height = 48, Spacing = 14,
+                    Items =
+                    {
+                        new SceneMenuItem { Text = "ui.menu.start", Command = MenuCommand.LoadScene, Scene = "Forest_01" },
+                        new SceneMenuItem { Text = "ui.menu.continue", Command = MenuCommand.Continue },
+                        new SceneMenuItem { Text = "ui.menu.options", Command = MenuCommand.Options },
+                    },
+                },
+                Links = { } , Backdrop = "#78BEFA" },
             forest,
             new SceneFile { Name = "Forest_02", Width = 32, Height = 20, Map = "Forest_02", MapX = 480, MapY = 60, Music = new MusicSettings { Track = "bgm_forest" }, Backdrop = "#78BEFA",
                 Actors = { Player(24, 288), Slime("Slime", 200, 304), new ActorData { Name = "Owl", Kind = ActorKind.Empty, Sprite = "owl", Animation = "idle", X = 300, Y = 288, Tag = "NPC", Components = { new ComponentData { Type = "Owl" } } },
@@ -340,6 +354,7 @@ public static class SkyHopper
         Add("dlg.forest.owl_01", "A slime took them to the cave!", "เจ้าสไลม์ขโมยไปไว้ในถ้ำน่ะสิ!", "Dialogue", "Owl");
         Add("dlg.forest.choice_cave", "Go to the cave", "ไปที่ถ้ำ", "Dialogue", "Hopper");
         Add("dlg.forest.choice_again", "Ask again", "ถามอีกครั้ง", "Dialogue", "Hopper");
+        Add("ui.title", "SKY HOPPER", "สกายฮอปเปอร์", "UI & menus");
         Add("ui.menu.start", "Start", "เริ่มเกม", "UI & menus");
         Add("ui.menu.continue", "Continue", "เล่นต่อ", "UI & menus");
         Add("ui.menu.options", "Options", "ตั้งค่า", "UI & menus");
@@ -350,7 +365,7 @@ public static class SkyHopper
         Add("boss.summit.intro", "You made it all the way up here?", "มาถึงยอดเขาจนได้นะ", "Dialogue", "Slime King");
         string[] thaiWords = ["ป่า", "ถ้ำ", "ภูเขา", "เหรียญ", "หัวใจ", "ดาว", "อัญมณี", "สไลม์", "นกฮูก", "ค้างคาว", "สะพาน", "แม่น้ำ", "ประตู", "กุญแจ", "หีบ", "ร้านค้า"];
         string[] enWords = ["forest", "cave", "mountain", "coin", "heart", "star", "gem", "slime", "owl", "bat", "bridge", "river", "door", "key", "chest", "shop"];
-        var groups = new (string Prefix, string Group, int Count)[] { ("dlg.extra", "Dialogue", 112 - 8), ("ui.extra", "UI & menus", 86 - 4), ("item.extra", "Items", 48 - 2), ("misc", "", 95) };
+        var groups = new (string Prefix, string Group, int Count)[] { ("dlg.extra", "Dialogue", 112 - 8), ("ui.extra", "UI & menus", 86 - 5), ("item.extra", "Items", 48 - 2), ("misc", "", 95) };
         var missingTh = 14 - 1;  // shop.welcome is already missing
         foreach (var (prefix, group, count) in groups)
             for (var i = 0; i < count && en.Strings.Count < 340; i++)
@@ -455,7 +470,37 @@ public class PlayerController : Behaviour
 """);
         Script("Coin", "public class Coin : Behaviour\n{\n    void OnTouch(Actor other)\n    {\n        if (other.tag == \"Player\") Sound.Play(\"coin\");\n    }\n}");
         Script("Slime", "public class Slime : Behaviour\n{\n    public fixed speed = 0.5;\n    public int damage = 1;\n}");
-        Script("GameState", "public class GameState : Behaviour\n{\n    void Start()\n    {\n        Game.lives = 3;\n    }\n}");
+        // GameState.cs also holds the Items.db effect actions (Figma Database Editor, Effect column): Figma's
+        // Build ROM dialog counts 12 scripts.
+        Script("GameState", """
+public class GameState : Behaviour
+{
+    void Start()
+    {
+        Game.lives = 3;
+    }
+}
+
+// Items.db effect cells call these by name.
+[DatabaseActions]
+public static class ItemEffects
+{
+    public const int door = 1;      // Unlock(door): flag 1 opens the cave door
+    public static bool doubleJump;  // Feather: doubleJump = true
+
+    public static void Unlock(int flag) { Game.flags[flag] = true; }
+
+    public static void Explode(int radius) { Camera.Shake(radius / 4, 20); }
+
+    public static void Invincible(fixed seconds)
+    {
+        var player = Scene.Find("Player");
+        if (player == null) return;
+        var health = player.Get<Health>();
+        if (health != null) health.invincibleLeft = (int)(seconds * 60);
+    }
+}
+""");
         Script("HUD", "public class HUD : Behaviour\n{\n    public int lastScore = -1;\n}");
         Script("TitleMenu", "public class TitleMenu : Behaviour\n{\n    void Update()\n    {\n        if (Input.Pressed(Key.Start)) Scene.Load(\"Forest_01\");\n    }\n}");
         Script("CameraFollow", "public class CameraFollow : Behaviour\n{\n    public int shakeFrames = 0;\n}");

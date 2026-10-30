@@ -19,6 +19,7 @@ public sealed class SceneFile
     public bool AlphaBlending { get; set; }
     public bool Mosaic { get; set; }
     public string Backdrop { get; set; } = "#000000";
+    public SceneMenu? Menu { get; set; }    // title screens (Menu / UI kit)
     // World Map card position and the template it started from.
     public int MapX { get; set; }
     public int MapY { get; set; }
@@ -133,3 +134,24 @@ public sealed class MapLayerData
     public string Image { get; set; } = "";         // Image layers: png asset
     public List<int> Cells { get; set; } = new();   // metatile per cell, row-major (Width x Height)
 }
+
+// A menu opened when the scene has entered (title screens): rows with the triangle cursor on the text layer.
+public sealed class SceneMenu
+{
+    public int X { get; set; } = 88;      // panel position and size in pixels (rounded to 8 px tiles)
+    public int Y { get; set; } = 72;
+    public int Width { get; set; } = 96;
+    public int Height { get; set; } = 48;
+    public int Spacing { get; set; } = 14;
+    public List<SceneMenuItem> Items { get; set; } = new();
+}
+
+public sealed class SceneMenuItem
+{
+    public string Text { get; set; } = "";     // string key in the Localization tables, or plain ASCII text
+    public MenuCommand Command { get; set; }
+    public string Scene { get; set; } = "";    // LoadScene: target scene name
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum MenuCommand { LoadScene, Continue, Options, QuitToTitle }

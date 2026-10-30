@@ -34,6 +34,8 @@ bool actionHeld(int action);
 bool actionPressed(int action);
 // Runtime remap (Project Settings · Input "Let players remap buttons").
 void remapAction(int action, u16 keys);
+u16 actionKeys(int action);
+int actionCount();
 
 }  // namespace input
 }  // namespace agb

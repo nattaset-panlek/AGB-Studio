@@ -17,6 +17,7 @@ public sealed class ProjectFile
     public ScriptingSettings Scripting { get; set; } = new();
     public LocalizationSettings Localization { get; set; } = new();
     public AudioSettings Audio { get; set; } = new();
+    public UiSettings Ui { get; set; } = new();
     public List<string> Tags { get; set; } = new() { "Player", "Enemy", "Coin" };
     public string LastScene { get; set; } = "";
 }
@@ -35,6 +36,23 @@ public sealed class GeneralSettings
     public bool BootSplash { get; set; } = true;
     public int SplashSeconds { get; set; } = 2;
     public bool SkipSplashInDebug { get; set; } = true;
+}
+
+// Menu / UI kit (Figma "AGB Studio · Screens", In-game row): the pause menu, the options screen and the
+// colours of every in-game menu. Labels come from string keys "ui.*" when the Localization tables have them.
+public sealed class UiSettings
+{
+    public bool PauseMenu { get; set; } = true;      // the "Pause" input action opens it in any scene
+    public string TitleScene { get; set; } = "";     // "Quit to title" (empty = General · Start scene)
+    public string Font { get; set; } = "";           // empty = General · Default font
+    public string Ink { get; set; } = "#1E1A28";     // menu text on paper and on title screens
+    public string Muted { get; set; } = "#9AA0AE";
+    public string Paper { get; set; } = "#F8F4E8";   // pause box
+    public string Screen { get; set; } = "#1E1A28";  // options screen background
+    public string ScreenInk { get; set; } = "#E6E8EE";
+    public string BarTrack { get; set; } = "#3A3F4E";
+    public string BarFill { get; set; } = "#3B4FD8";
+    public int Dim { get; set; } = 9;                 // pause overlay: darkens the scene by Dim/16
 }
 
 // Project Settings · Input: GBA button -> action name -> keyboard / gamepad in the emulator.

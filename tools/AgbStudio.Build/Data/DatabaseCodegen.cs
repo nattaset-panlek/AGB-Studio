@@ -16,6 +16,10 @@ public static class DatabaseCodegen
 
     public static string IdEnum(string table) => Cpp.Ident(Singular(table)) + "Id";
 
+    // The row struct: the singular name ("Items" -> Item), or "<Table>Row" when the table name has no plural
+    // (a "Dialogue" table would otherwise give the row and the table class the same name).
+    public static string RowStruct(string table) => Cpp.Ident(Singular(table)) is var s && s == Cpp.Ident(table) ? s + "Row" : s;
+
     public static string CppType(FieldDef f, string structName) => f.Type switch
     {
         "int" => "int",
@@ -58,7 +62,7 @@ public static class DatabaseCodegen
         h.Append("namespace agb_db {\n");
         foreach (var t in tables)
         {
-            var st = Cpp.Ident(Singular(t.Name));
+            var st = RowStruct(t.Name);
             var ids = t.Rows.Select(r => r.GetValueOrDefault(t.KeyField) ?? "").ToList();
             h.Append($"enum class {IdEnum(t.Name)} : unsigned short {{ ");
             h.Append(string.Join(", ", ids.Select(i => Cpp.Ident(i))));
@@ -66,7 +70,8 @@ public static class DatabaseCodegen
             foreach (var f in t.Fields.Where(f => f.Type == "enum" && f.Name != t.KeyField))
                 h.Append($"enum class {st}{Cpp.Ident(Capital(f.Name))} : unsigned char {{ {string.Join(", ", f.EnumValues.Select(Cpp.Ident))} }};\n");
             h.Append($"struct {st} {{\n");
-            foreach (var f in t.Fields.Where(f => f.Name != t.KeyField)) h.Append($"    {CppType(f, st)} {Cpp.Ident(f.Name)};\n");
+            foreach (var f in t.Fields.Where(f => f.Name != t.KeyField))
+                h.Append(f.Type == "script" ? $"    void (*{Cpp.Ident(f.Name)})();\n" : $"    {CppType(f, st)} {Cpp.Ident(f.Name)};\n");
             if (t.Fields.All(f => f.Name == t.KeyField)) h.Append("    unsigned char unused;\n");
             h.Append("};\n");
             h.Append($"extern const {st} agbdata_{Cpp.Ident(t.Name)}[];\n");

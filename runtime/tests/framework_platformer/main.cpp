@@ -136,9 +136,9 @@ void setupData() {
     g_actors[3] = {"Goal Flag", ActorKind::TriggerZone, nullptr, 440, 144, 4, 2, nullptr, {-8, -32, 16, 32}, nullptr, 0, nullptr, false, -1};
     g_actors2[0] = {"Player", ActorKind::Player, &g_sheet, 30, 30, 1, 1, "idle", {}, kPlayerB, 3, nullptr, false, -1};
     g_scene0 = {"Forest_01", kW, kH, 0, g_layers, 1, 0, g_actors, 4, {0, 32, 24, true, 0, 0}, -1, false, kLinks, 1,
-                nullptr, nullptr, nullptr, 0x7E10, false, false};
+                nullptr, nullptr, nullptr, 0x7E10, false, false, nullptr};
     g_scene1 = {"Forest_02", 16, 10, 0, g_layers2, 1, 0, g_actors2, 1, {0, 32, 24, true, 0, 0}, -1, false, nullptr, 0,
-                nullptr, nullptr, nullptr, 0x7E10, false, false};
+                nullptr, nullptr, nullptr, 0x7E10, false, false, nullptr};
     g_scenes[0] = &g_scene0;
     g_scenes[1] = &g_scene1;
     g_game = {};

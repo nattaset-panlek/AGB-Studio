@@ -127,7 +127,7 @@ s32 Say(Context& ctx, const s32* args, int argc) {
         return 0;
     }
     g_blipSound = r.blip;
-    if (text::say(r.text, r.blip >= 0 ? blip : nullptr)) {
+    if (text::say(r.text, r.blip >= 0 ? blip : nullptr, r.speed)) {
         ctx.wait = textSayDone;
         return 0;
     }

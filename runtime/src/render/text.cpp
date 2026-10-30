@@ -6,6 +6,12 @@
 
 namespace agb::render {
 
+namespace detail {
+// glyph.iwram.cpp (ARM code in IWRAM)
+void blitGlyph(u32* tiles, int wTiles, int hTiles, const u8* bits, int gw, int gh, int bpp, int x0, int y0, u8 ink, u8 shadow);
+void fillRect(u32* tiles, int wTiles, int hTiles, int x, int y, int w, int h, u8 index);
+}  // namespace detail
+
 bool TextBox::init(int bg, int tileX, int tileY, int widthTiles, int heightTiles, u8 paletteBank, Style style) {
     bg_ = bg;
     tileX_ = tileX;
@@ -20,35 +26,70 @@ bool TextBox::init(int bg, int tileX, int tileY, int widthTiles, int heightTiles
     firstTile_ = p.firstTile;
     tiles_ = static_cast<u32*>(screenArena().alloc(static_cast<u32>(w_ * h_) * 32));
     if (!tiles_) return false;
-    // The BG layer must use this char block for the tile indices below to be right.
+    // Tiles in a later char block are reachable from the layer's char block while the index stays below
+    // 1024; otherwise the layer moves to this box's char block (the first box on a fresh layer).
     const bg::Config& c = bg::config(bg);
-    if (c.charBlock != charBlock_) {
+    const int offset = (charBlock_ - c.charBlock) * 512 + firstTile_;
+    if (charBlock_ >= c.charBlock && offset + w_ * h_ <= 1024) {
+        mapBase_ = static_cast<u16>(offset);
+    } else {
         bg::Config nc = c;
         nc.charBlock = static_cast<u8>(charBlock_);
         bg::configure(bg, nc);
+        mapBase_ = firstTile_;
     }
-    // Map entries: sequential tiles row by row (32-wide screen block).
-    u16* map = commit::bgMap(c.screenBlock);
-    u16 row[32];
-    for (int y = 0; y < h_; ++y) {
-        for (int x = 0; x < w_; ++x) row[x] = static_cast<u16>((firstTile_ + y * w_ + x) | (bank_ << 12));
-        commit::copyNow(map + (tileY_ + y) * 32 + tileX_, row, static_cast<u32>(w_) * 2);
-    }
+    remap();
     clear();
     commitTiles();
     return true;
 }
 
+void TextBox::remap() {
+    if (bg_ < 0 || !tiles_) return;
+    // Map entries: sequential tiles row by row (32-wide screen block).
+    u16* map = commit::bgMap(bg::config(bg_).screenBlock);
+    u16 row[32];
+    for (int y = 0; y < h_; ++y) {
+        for (int x = 0; x < w_; ++x) row[x] = static_cast<u16>((mapBase_ + y * w_ + x) | (bank_ << 12));
+        commit::copyNow(map + (tileY_ + y) * 32 + tileX_, row, static_cast<u32>(w_) * 2);
+    }
+}
+
+void TextBox::unmap(u16 blank) {
+    if (bg_ < 0) return;
+    u16* map = commit::bgMap(bg::config(bg_).screenBlock);
+    for (int y = 0; y < h_; ++y) commit::fillNow(map + (tileY_ + y) * 32 + tileX_, blank * 0x00010001u, static_cast<u32>(w_) * 2);
+}
+
+void TextBox::drawRun(const data::TextRun& run, int x, int y) {
+    if (!tiles_) return;
+    for (u16 i = 0; i < run.count; ++i) {
+        const data::PlacedGlyph& pg = run.glyphs[i];
+        drawGlyph(*run.font, pg.glyph, x + pg.x, y + pg.line * run.font->lineHeight + pg.dy);
+    }
+}
+
 void TextBox::release() {
     tiles_ = nullptr;
     run_ = nullptr;
+    dirtyLo_ = dirtyHi_ = 0xFFFF;
 }
 
 void TextBox::clear() {
     if (!tiles_) return;
     const u32 fill = style_.paper * 0x11111111u;
     for (int i = 0; i < w_ * h_ * 8; ++i) tiles_[i] = fill;
-    dirty_ = true;
+    markDirty(0, h_ * 8 - 1);
+}
+
+void TextBox::markDirty(int y0, int y1) {
+    // Whole tile rows: the commit copies one contiguous range of the box's tiles.
+    y0 = y0 < 0 ? 0 : y0;
+    y1 = y1 >= h_ * 8 ? h_ * 8 - 1 : y1;
+    if (y1 < y0) return;
+    const u16 lo = static_cast<u16>((y0 >> 3) * w_), hi = static_cast<u16>(((y1 >> 3) + 1) * w_ - 1);
+    if (lo < dirtyLo_) dirtyLo_ = lo;
+    if (hi > dirtyHi_ || dirtyHi_ == 0xFFFF) dirtyHi_ = hi;
 }
 
 void TextBox::setPixel(int x, int y, u8 index) {
@@ -66,9 +107,9 @@ u8 TextBox::pixel(int x, int y) const {
 }
 
 void TextBox::fillRect(int x, int y, int w, int h, u8 index) {
-    for (int yy = y; yy < y + h; ++yy)
-        for (int xx = x; xx < x + w; ++xx) setPixel(xx, yy, index);
-    dirty_ = true;
+    if (!tiles_) return;
+    detail::fillRect(tiles_, w_, h_, x, y, w, h, index);
+    markDirty(y, y + h - 1);
 }
 
 int TextBox::drawAscii(const data::Font& font, const char* text, int x, int y) {
@@ -83,23 +124,11 @@ int TextBox::drawAscii(const data::Font& font, const char* text, int x, int y) {
 }
 
 void TextBox::drawGlyph(const data::Font& font, u16 index, int px, int py) {
-    if (index >= font.glyphCount) return;
+    if (index >= font.glyphCount || !tiles_) return;
     const data::Glyph& g = font.glyphs[index];
-    const u8* bits = font.bitmaps + g.offset;
-    const int bpp = font.bpp;
-    const int rowBytes = (g.width * bpp + 7) / 8;
-    for (int pass = (font.shadow && style_.shadow) ? 0 : 1; pass < 2; ++pass) {
-        for (int y = 0; y < g.height; ++y)
-            for (int x = 0; x < g.width; ++x) {
-                const int bit = x * bpp;
-                const int v = (bits[y * rowBytes + bit / 8] >> (8 - bpp - bit % 8)) & ((1 << bpp) - 1);
-                if (!v) continue;
-                const int dx = px + g.left + x, dy = py + g.top + y;
-                if (pass == 0) setPixel(dx + 1, dy + 1, style_.shadow);
-                else setPixel(dx, dy, static_cast<u8>(bpp == 1 ? style_.ink : style_.ink + (3 - v)));
-            }
-    }
-    dirty_ = true;
+    detail::blitGlyph(tiles_, w_, h_, font.bitmaps + g.offset, g.width, g.height, font.bpp, px + g.left, py + g.top, style_.ink,
+                      font.shadow ? style_.shadow : 0);
+    markDirty(py + g.top, py + g.top + g.height);
 }
 
 void TextBox::show(const data::TextRun* run, u8 charsPerFrame, u8 firstLine) {
@@ -156,13 +185,22 @@ void TextBox::showContinueMarker(bool on) {
     const int x0 = w_ * 8 - 9, y0 = h_ * 8 - 6;
     for (int r = 0; r < 3; ++r)
         for (int c = r; c < 5 - r; ++c) setPixel(x0 + c, y0 + r, on ? style_.ink : style_.paper);
-    dirty_ = true;
+    markDirty(y0, y0 + 2);
 }
 
+// Copies the changed tile rows to VRAM, at most 8 KB per frame so a full panel shares the frame's DMA budget
+// with the rest of the game; the remainder goes on the next update().
 void TextBox::commitTiles() {
-    if (!dirty_ || !tiles_) return;
-    u8* dst = reinterpret_cast<u8*>(commit::bgTiles(charBlock_)) + static_cast<u32>(firstTile_) * 32;
-    if (commit::queueCopy(dst, tiles_, static_cast<u32>(w_ * h_) * 32)) dirty_ = false;
+    if (dirtyHi_ == 0xFFFF || dirtyLo_ > dirtyHi_ || !tiles_) return;
+    constexpr u16 kMaxTiles = 256;
+    const u16 count = static_cast<u16>(dirtyHi_ - dirtyLo_ + 1 > kMaxTiles ? kMaxTiles : dirtyHi_ - dirtyLo_ + 1);
+    u8* dst = reinterpret_cast<u8*>(commit::bgTiles(charBlock_)) + static_cast<u32>(firstTile_ + dirtyLo_) * 32;
+    if (!commit::queueCopy(dst, tiles_ + dirtyLo_ * 8, static_cast<u32>(count) * 32)) return;
+    dirtyLo_ = static_cast<u16>(dirtyLo_ + count);
+    if (dirtyLo_ > dirtyHi_) {
+        dirtyLo_ = 0xFFFF;
+        dirtyHi_ = 0xFFFF;
+    }
 }
 
 }  // namespace agb::render

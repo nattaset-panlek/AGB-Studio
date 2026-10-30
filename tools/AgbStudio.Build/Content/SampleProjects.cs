@@ -163,6 +163,7 @@ public static class SampleText
         });
         p.Settings.General.DefaultFont = "thai_vwf";
         p.Settings.Localization.Source = sourceLanguage;
+        p.Settings.General.DefaultLanguage = sourceLanguage;
         p.Settings.Localization.Languages = [new LanguageInfo { Code = "th", Name = "ไทย", Font = "thai_vwf" }, new LanguageInfo { Code = "en", Name = "English", Font = "thai_vwf" }];
         p.SaveSettings();
         GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), new StringTable

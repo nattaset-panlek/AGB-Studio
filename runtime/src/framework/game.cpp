@@ -5,6 +5,7 @@
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
 #include "agb/input.hpp"
+#include "agb/natives.hpp"
 #include "agb/render/bg.hpp"
 #include "agb/render/palette.hpp"
 #include "agb/rng.hpp"
@@ -12,6 +13,7 @@
 #include "agb/system.hpp"
 #include "agb/task.hpp"
 #include "agb/text.hpp"
+#include "agb/ui.hpp"
 
 namespace agb {
 
@@ -90,6 +92,7 @@ public:
                 render::bg::reset();
                 render::palettes::reset();
                 render::effects::reset();
+                ui::closeSceneMenu();
                 text::clearLabels();
                 task::destroyAll();
                 script::resetContexts();
@@ -139,6 +142,7 @@ public:
                 g_scene.lastLoadFrames = system::frame() - g_scene.loadStartFrame;
                 g_scene.loaded = true;
                 if (d->onEnter) d->onEnter();
+                if (d->menu) ui::openSceneMenu(*d->menu);
                 return true;
         }
     }
@@ -151,10 +155,15 @@ public:
             return;
         }
         render::effects::update();
+        if (!g_paused && ui::pauseRequested()) {
+            ui::openPause();
+            return;
+        }
         if (!g_paused) {
             profile::begin(profile::Category::Logic);
+            if (ui::sceneMenuOpen()) ui::updateSceneMenu();
             actors::startNew();
-            actors::updateBehaviours();
+            if (!script::natives::locked()) actors::updateBehaviours();  // LockAll freezes actor scripts
             script::run();
             task::runAll();
             actors::lateUpdate();  // bodies move here (physics and tile collision)
@@ -208,6 +217,61 @@ private:
 
 AGB_EWRAM_BSS u8 g_sceneScreenStorage[sizeof(SceneScreen)] AGB_ALIGN4;
 SceneScreen* g_sceneScreen = nullptr;
+
+// Boot splash (Project Settings · General · Boot splash): the image fades in, stays, fades out, then the
+// start scene loads.
+class SplashScreen final : public Screen {
+public:
+    static constexpr u16 kFade = 20;
+    const char* name() const override { return "boot splash"; }
+
+    bool load(int step) override {
+        const ui::Splash& s = *g_def->splash;
+        if (step == 0) {
+            render::bg::reset();
+            render::palettes::reset();
+            render::effects::reset();
+            screenArena().reset();
+            render::bg::setVideoMode(0);
+            render::palettes::setBackdrop(s.backdrop);
+            render::effects::setBrightness(render::effects::kBg0 | render::effects::kBg1 | render::effects::kBg2 | render::effects::kBg3 |
+                                               render::effects::kObj | render::effects::kBackdrop, -16);
+            return false;
+        }
+        if (!s.image || !view_.init(*s.image, render::bg::Size::S32x32)) debug::log("warning: the boot splash image could not be loaded");
+        view_.setCamera(0, 0);
+        view_.drawAll();
+        render::effects::beginIn(render::effects::Transition::Fade, kFade);
+        timer_ = 0;
+        out_ = false;
+        return true;
+    }
+
+    void update() override {
+        render::effects::update();
+        render::palettes::update();
+        view_.commit();
+        ++timer_;
+        if (!out_ && timer_ + kFade >= g_def->splash->frames) {
+            render::effects::beginOut(render::effects::Transition::Fade, kFade);
+            out_ = true;
+        }
+        if (out_ && render::effects::transitionDone() && render::effects::transitionLevel() >= 16) {
+            view_.release();
+            g_scene.nextScene = g_def->startScene;
+            g_scene.nextX = g_scene.nextY = -1;
+            g_scene.transition = render::effects::Transition::Fade;
+            g_scene.transitionFrames = 15;
+            game::replace(g_sceneScreen);
+        }
+    }
+
+private:
+    render::MapLayerView view_;
+    u16 timer_ = 0;
+    bool out_ = false;
+};
+AGB_EWRAM_BSS u8 g_splashStorage[sizeof(SplashScreen)] AGB_ALIGN4;
 
 debug::GameInfo g_info;
 
@@ -263,13 +327,24 @@ void boot(const GameDef& def) {
     if (def.actionKeys) input::setActionMap(def.actionKeys, def.actionCount);
     audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8)});
     rng::seed(0xA6B5);
-    if (def.textTables) text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
+    if (def.textTables) {
+        text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
+        text::setLanguage(def.textLanguage);
+    }
     if (def.init) def.init();
     g_depth = 0;
     g_paused = false;
     actors::reset();
+    ui::setKit(def.ui);
     g_sceneScreen = new (g_sceneScreenStorage) SceneScreen();
-    if (def.sceneCount) {
+#if defined(AGB_DEBUG)
+    const bool splash = def.splash && !def.skipSplash;
+#else
+    const bool splash = def.splash != nullptr;
+#endif
+    if (splash && def.sceneCount) {
+        push(new (g_splashStorage) SplashScreen());
+    } else if (def.sceneCount) {
         g_scene.def = def.scenes[def.startScene];
         g_scene.index = def.startScene;
         g_scene.spawnX = g_scene.spawnY = -1;
@@ -335,6 +410,7 @@ void pop() {
     if (g_depth == 0) return;
     g_stack[g_depth - 1]->exit();
     --g_depth;
+    if (g_depth) g_stack[g_depth - 1]->resume();
 }
 
 void replace(Screen* screen) {

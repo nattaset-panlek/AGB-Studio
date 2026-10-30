@@ -83,16 +83,25 @@ constexpr int kMaxLabels = 6;
 render::TextBox g_labels[kMaxLabels];
 int g_labelCount = 0;
 
-// Text layer: highest priority, 32x32 map in its own screen block, shared by the box and labels.
+u16 g_blank = 0;
+
+// Text layer: highest priority, 32x32 map in its own screen block, shared by the box, labels and menus.
+// Its first tile is a blank tile of its own: every map entry without text points at it (tile 0 of the char
+// block may belong to a tileset).
 bool ensureLayer() {
     if (g_layerReady) return true;
     const int sb = render::bg::allocScreenBlocks(render::bg::Size::S32x32);
     if (sb < 0) return false;
+    const auto blank = render::bg::reserveTiles(1);
+    if (!blank.valid()) return false;
+    commit::fillNow(reinterpret_cast<u8*>(commit::bgTiles(blank.charBlock)) + blank.firstTile * 32, 0, 32);
     render::bg::Config c;
+    c.charBlock = static_cast<u8>(blank.charBlock);
     c.screenBlock = static_cast<u8>(sb);
     c.priority = 0;
     render::bg::configure(g_style.bg, c);
-    commit::fillNow(commit::bgMap(sb), 0, 2048);
+    g_blank = blank.firstTile;
+    commit::fillNow(commit::bgMap(sb), g_blank * 0x00010001u, 2048);
     loadPalette();
     render::bg::setScroll(g_style.bg, 0, 0);
     render::bg::setVisible(g_style.bg, true);
@@ -100,6 +109,9 @@ bool ensureLayer() {
     return true;
 }
 }  // namespace
+
+int layer() { return ensureLayer() ? g_style.bg : -1; }
+u16 blankEntry() { return g_blank; }
 
 int addLabel(int x, int y, int widthPx, const data::TextRun* r) {
     if (g_labelCount >= kMaxLabels || !ensureLayer()) return -1;
@@ -136,11 +148,11 @@ static bool ensureOpen() {
     return true;
 }
 
-bool sayRun(const data::TextRun* r, void (*blip)()) {
+bool sayRun(const data::TextRun* r, void (*blip)(), s8 speed) {
     if (!r || !ensureOpen()) return false;
     g_blip = blip;
     g_box.setBlip(blip);
-    g_box.show(r, g_style.charsPerFrame);
+    g_box.show(r, speed >= 0 ? static_cast<u8>(speed) : g_style.charsPerFrame);
     g_current = r;
     g_awaitA = false;
     g_choosing = false;
@@ -148,7 +160,7 @@ bool sayRun(const data::TextRun* r, void (*blip)()) {
     return true;
 }
 
-bool say(u16 key, void (*blip)()) { return sayRun(run(key), blip); }
+bool say(u16 key, void (*blip)(), s8 speed) { return sayRun(run(key), blip, speed); }
 
 void choose(const u16* optionKeys, u8 count) {
     g_options = optionKeys;

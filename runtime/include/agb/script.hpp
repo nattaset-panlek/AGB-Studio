@@ -68,6 +68,12 @@ void setTables(const Script* scripts, u16 scriptCount, const Native* natives, u1
 // Typed state store (blueprint 07). Ids: 0x0000-0x3FFF persistent (save), 0x4000 per-map,
 // 0x8000 session (RAM only). Flags and vars use separate id spaces.
 void setPersistentStore(u8* flagBits, u16 flagCount, s32* vars, u16 varCount);
+// The saved part of the store lives in the generated GameState (member scriptStore), so Save.Write keeps it.
+constexpr u16 kPersistentFlags = 256, kPersistentVars = 32;
+struct PersistentStore {
+    u8 flags[kPersistentFlags / 8];
+    s32 vars[kPersistentVars];
+};
 void clearMapStore();   // called on scene change
 bool flag(u16 id);
 void setFlag(u16 id, bool value);

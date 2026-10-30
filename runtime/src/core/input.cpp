@@ -63,6 +63,9 @@ void setActionMap(const u16* actionKeys, int count) {
 bool actionHeld(int a) { return a >= 0 && a < g_actionCount && (g_cur & g_actions[a]); }
 bool actionPressed(int a) { return a >= 0 && a < g_actionCount && (g_cur & ~g_prev & g_actions[a]); }
 
+u16 actionKeys(int a) { return a >= 0 && a < g_actionCount ? g_actions[a] : 0; }
+int actionCount() { return g_actionCount; }
+
 void remapAction(int a, u16 keys) {
     if (a >= 0 && a < g_actionCount) g_actions[a] = keys & kAllKeys;
 }

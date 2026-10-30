@@ -8,6 +8,12 @@
 #include "agb/render/map.hpp"
 #include "agb/save.hpp"
 
+namespace agb::ui {
+struct MenuDef;
+struct Kit;
+struct Splash;
+}  // namespace agb::ui
+
 namespace agb {
 
 class Screen {
@@ -18,6 +24,7 @@ public:
     virtual void enter() {}
     virtual void update() {}
     virtual void exit() {}
+    virtual void resume() {}  // the screen above was popped (an overlay closed)
     virtual const char* name() const { return "screen"; }
     // Overlays (pause menu, dialogue box) are pushed over a scene and keep it drawn but paused.
     virtual bool overlay() const { return false; }
@@ -63,6 +70,7 @@ struct SceneDef {
     void (*onExit)();
     u16 backdrop;                 // BGR555
     bool alphaBlend, mosaic;
+    const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
 };
 
 // Input actions from Project Settings · Input (name -> keys) are part of the game definition.
@@ -79,10 +87,13 @@ struct GameDef {
     const void* soundbank;
     u8 audioChannels;
     void (*init)();         // generated per-game setup (script natives, fonts, strings)
-    bool skipSplash;
+    bool skipSplash;        // Debug builds start without the boot splash
     const void* const* textTables;  // agb::text::Table per language
     u8 textLanguages;
     u8 textFallback;
+    const ui::Splash* splash;  // Project Settings · General · Boot splash (nullptr = none)
+    const ui::Kit* ui;         // menus, pause overlay and options screen (nullptr = none)
+    u8 textLanguage;           // Project Settings · General · Default language (index into textTables)
 };
 
 namespace game {

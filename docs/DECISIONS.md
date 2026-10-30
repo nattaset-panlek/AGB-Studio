@@ -72,3 +72,12 @@ Status key: **decided (default)** = taken under the goal; **decided (user)** = a
 
 ## D-21 C# source-level debugging · decided (default)
 - Answer: cooperative debugging in Debug builds. The translator inserts line probes and a shadow call stack into the generated C++; the runtime checks a breakpoint table in the debug channel and pauses inside the game loop while the editor reads state through emulator memory. No GDB stub.
+
+## D-22 The `fixed` type name in scripts · decided (default)
+- Question: Figma writes `public fixed speed = 1.5;`, but `fixed` is a reserved word in standard C# (unsafe fixed buffers), so that line does not parse as normal C#.
+- Options: (a) rewrite the `fixed` keyword to `Fixed` before parsing in the built-in Script Editor and accept `Fixed` / `@fixed` in external IDEs; (b) change every Figma example to `Fixed`; (c) a custom parser.
+- Answer: **(a)**. The built-in editor shows and saves `fixed` exactly as in Figma; the compiler rewrites it to `Fixed` (same length, so lines and columns stay right) and code fixes write `fixed` back. Projects opened in an external IDE use `Fixed` (the generated project adds `global using Fixed = GBA.@fixed;`) or `@fixed`.
+
+## D-23 Menu / UI kit · decided (default)
+- Question: the blueprint lists a "Menu / UI kit" and Figma refers to a boot splash, title screen, pause menu and an options menu for button remap, but none of them was designed (checklist 1.3 and 1.4 item 6).
+- Answer: the four screens were designed in Figma section "AGB Studio · Screens", In-game row (frames "In-game · Boot splash", "In-game · Title screen", "In-game · Pause menu", "In-game · Options"), then built to match: `agb::ui` in the runtime, `ProjectFile.Ui` (pause menu, colours, font) and `SceneFile.Menu` (title screens) in the project files. Labels come from string keys `ui.*` when the Localization tables have them.

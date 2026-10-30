@@ -32,8 +32,9 @@ struct BoxStyle {
 
 void configureBox(const BoxStyle& style);
 // Opens the box (if needed) and starts typing `key`; returns false if the key is missing.
-bool say(u16 key, void (*blip)() = nullptr);
-bool sayRun(const data::TextRun* run, void (*blip)() = nullptr);
+// `speed` overrides BoxStyle::charsPerFrame for this line (Dialogue Editor line "Text speed"), -1 = default.
+bool say(u16 key, void (*blip)() = nullptr, s8 speed = -1);
+bool sayRun(const data::TextRun* run, void (*blip)() = nullptr, s8 speed = -1);
 void update();          // types, handles A to skip / continue; called by the scene each frame
 bool waiting();         // true while text is typing or waiting for A
 void close();
@@ -44,6 +45,9 @@ void choose(const u16* optionKeys, u8 count);
 int choice();
 
 render::TextBox& box();
+// The shared text layer (created on first use); returns its BG index, or -1 when VRAM is full.
+int layer();
+u16 blankEntry();  // map entry of the text layer's blank tile (closed panels point at it)
 
 // Text Label actors and HUD text: small text boxes on the text layer at screen pixel positions.
 int addLabel(int x, int y, int widthPx, const data::TextRun* run);

@@ -32,15 +32,23 @@ public:
     void fillRect(int x, int y, int w, int h, u8 index);
     // Runtime ASCII text (HUD numbers); returns the pen x after the text.
     int drawAscii(const data::Font& font, const char* text, int x, int y);
+    // Draws every glyph of a run now with its top-left at (x, y) (menus and titles).
+    void drawRun(const data::TextRun& run, int x, int y);
+    void setInk(u8 ink) { style_.ink = ink; }
+    // Points the box's map entries at `blank` (closing a menu); the tiles stay reserved.
+    void unmap(u16 blank = 0);
+    void remap();  // writes the map entries again (another panel covered this one)
     int widthPx() const { return w_ * 8; }
     int heightPx() const { return h_ * 8; }
 
 private:
     void setPixel(int x, int y, u8 index);
+    void markDirty(int y0, int y1);  // pixel rows
     void commitTiles();
 
     int bg_ = -1, tileX_ = 0, tileY_ = 0, w_ = 0, h_ = 0;
     u16 firstTile_ = 0;
+    u16 mapBase_ = 0;  // tile index of the first tile as seen from the layer's char block
     s8 charBlock_ = -1;
     u8 bank_ = 0;
     Style style_;
@@ -50,7 +58,7 @@ private:
     u16 next_ = 0;          // next glyph index in the run
     u16 step_ = 0;          // reveal step reached
     u8 speed_ = 2;
-    bool dirty_ = false;
+    u16 dirtyLo_ = 0xFFFF, dirtyHi_ = 0xFFFF;  // changed tiles not yet copied to VRAM (inclusive)
     bool marker_ = false;
     void (*blip_)() = nullptr;
 };

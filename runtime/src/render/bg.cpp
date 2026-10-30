@@ -113,6 +113,18 @@ void setScroll(int bg, int x, int y) {
     commit::setReg(static_cast<commit::Reg>(commit::Bg0VOfs + bg * 2), static_cast<u16>(y & 0x1FF));
 }
 
+Mark mark() {
+    Mark m{};
+    for (int i = 0; i < 4; ++i) m.tilesInBlock[i] = g_tilesInBlock[i];
+    m.units = g_unitUsed;
+    return m;
+}
+
+void rewind(const Mark& m) {
+    for (int i = 0; i < 4; ++i) g_tilesInBlock[i] = m.tilesInBlock[i];
+    g_unitUsed = m.units;
+}
+
 TilesetPlacement reserveTiles(u16 tiles, bool bpp8) {
     const u32 bytes = static_cast<u32>(tiles) * (bpp8 ? 64 : 32);
     for (int cb = 0; cb < 4; ++cb) {

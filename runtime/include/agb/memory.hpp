@@ -31,6 +31,7 @@ public:
     }
 
     void reset() { used_ = 0; }
+    void rewind(u32 used) { if (used < used_) used_ = used; }  // frees everything allocated after used()
     u32 used() const { return used_; }
     u32 peak() const { return peak_; }
     u32 size() const { return size_; }
