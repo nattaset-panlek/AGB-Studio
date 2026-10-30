@@ -35,9 +35,16 @@ static_assert(__builtin_offsetof(Channel, log) == 64, "debug channel layout is s
 Channel& channel();
 
 void init();
+#if defined(AGB_RELEASE) && !defined(AGB_KEEP_LOGS)
+// Release builds ("Strip Debug.Log calls"): inline no-ops, so the text never reaches the ROM.
+inline void log(const char*) {}
+inline void logf(const char*, ...) {}
+inline void warnOnce(u32, const char*) {}
+#else
 void log(const char* text);
 void logf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 void warnOnce(u32 id, const char* text);
+#endif
 void setFrame(u32 frame);
 void testPass();
 void testFail(const char* reason);

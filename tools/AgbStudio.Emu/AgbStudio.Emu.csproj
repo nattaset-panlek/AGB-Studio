@@ -6,4 +6,7 @@
   <ItemGroup>
     <None Include="$(AgbRoot)third_party\mgba\mgba_libretro.dll" Link="mgba_libretro.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgbStudio.Core\AgbStudio.Core.csproj" />
+  </ItemGroup>
 </Project>

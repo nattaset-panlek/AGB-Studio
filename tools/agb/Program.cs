@@ -1,4 +1,5 @@
 using AgbStudio.Build;
+using AgbStudio.Core;
 using AgbStudio.Emu;
 
 namespace AgbStudio.Cli;

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
 
-namespace AgbStudio.Emu;
+namespace AgbStudio.Core;
 
 /// <summary>Minimal PNG encoder and decoder for 8-bit RGBA / RGB / palette images (no interlace).</summary>
 public static class Png

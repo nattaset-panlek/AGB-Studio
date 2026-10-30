@@ -26,10 +26,8 @@ void init() {
     for (auto& w : g_warned) w = 0;
 }
 
+#if !defined(AGB_RELEASE) || defined(AGB_KEEP_LOGS)
 void log(const char* text) {
-#if defined(AGB_RELEASE) && !defined(AGB_KEEP_LOGS)
-    AGB_UNUSED(text);
-#else
     u32 head = g_channel.logHead;
     for (const char* p = text; *p; ++p) {
         g_channel.log[head % kLogSize] = *p;
@@ -38,20 +36,15 @@ void log(const char* text) {
     g_channel.log[head % kLogSize] = '\n';
     ++head;
     g_channel.logHead = head;
-#endif
 }
 
 void logf(const char* fmt, ...) {
-#if defined(AGB_RELEASE) && !defined(AGB_KEEP_LOGS)
-    AGB_UNUSED(fmt);
-#else
     char buf[160];
     va_list args;
     va_start(args, fmt);
     vformat(buf, sizeof buf, fmt, args);
     va_end(args);
     log(buf);
-#endif
 }
 
 void warnOnce(u32 id, const char* text) {
@@ -60,6 +53,7 @@ void warnOnce(u32 id, const char* text) {
     g_warned[word] |= bit;
     logf("warning: %s", text);
 }
+#endif
 
 void setFrame(u32 frame) { g_channel.frame = frame; }
 

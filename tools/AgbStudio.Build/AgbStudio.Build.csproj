@@ -2,4 +2,7 @@
   <PropertyGroup>
     <RootNamespace>AgbStudio.Build</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgbStudio.Core\AgbStudio.Core.csproj" />
+  </ItemGroup>
 </Project>
