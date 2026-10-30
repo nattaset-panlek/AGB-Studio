@@ -1728,20 +1728,276 @@
   "h": 900
  },
  {
-  "id": "T-L01",
-  "node": "3422:81998",
+  "id": "T-P02",
+  "node": "3419:64214",
   "set": "frame",
-  "variant": "Scene Editor · Light",
+  "variant": "Play Mode",
   "w": 1440,
   "h": 900
  },
  {
-  "id": "T-O07",
-  "node": "3415:55299",
+  "id": "T-P03",
+  "node": "3419:65727",
   "set": "frame",
-  "variant": "Command Palette",
-  "w": 640,
-  "h": 325
+  "variant": "Tilemap Editor",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P04",
+  "node": "3418:60710",
+  "set": "frame",
+  "variant": "Script Editor",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P05",
+  "node": "3421:71724",
+  "set": "frame",
+  "variant": "Console panel",
+  "w": 860,
+  "h": 250
+ },
+ {
+  "id": "T-P06",
+  "node": "3421:71818",
+  "set": "frame",
+  "variant": "Animation panel",
+  "w": 860,
+  "h": 250
+ },
+ {
+  "id": "T-P07",
+  "node": "3420:68020",
+  "set": "frame",
+  "variant": "Database",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P08",
+  "node": "3419:64899",
+  "set": "frame",
+  "variant": "Sprite Editor",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P09",
+  "node": "3420:67485",
+  "set": "frame",
+  "variant": "Font Manager",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P10",
+  "node": "3420:66398",
+  "set": "frame",
+  "variant": "Palette Manager",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P11",
+  "node": "3421:71076",
+  "set": "frame",
+  "variant": "Build Report",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P12",
+  "node": "3418:62615",
+  "set": "frame",
+  "variant": "Launcher",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P13",
+  "node": "3418:61848",
+  "set": "frame",
+  "variant": "World Map",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P14",
+  "node": "3420:68704",
+  "set": "frame",
+  "variant": "Localization",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P15",
+  "node": "3421:69191",
+  "set": "frame",
+  "variant": "Audio",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P16",
+  "node": "3421:70003",
+  "set": "frame",
+  "variant": "Dialogue Editor",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P17",
+  "node": "3418:61211",
+  "set": "frame",
+  "variant": "Logic Graph",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P18",
+  "node": "3421:71362",
+  "set": "frame",
+  "variant": "Scripting API",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P19",
+  "node": "3421:70414",
+  "set": "frame",
+  "variant": "Debugger",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P20",
+  "node": "3422:77321",
+  "set": "frame",
+  "variant": "Launcher · Templates",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P21",
+  "node": "3422:78112",
+  "set": "frame",
+  "variant": "Launcher · Learn",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P22",
+  "node": "3422:78646",
+  "set": "frame",
+  "variant": "Scene Editor · Empty project",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P23",
+  "node": "3422:78973",
+  "set": "frame",
+  "variant": "Debugger · Memory",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P24",
+  "node": "3422:79328",
+  "set": "frame",
+  "variant": "Debugger · Palettes",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P25",
+  "node": "3422:80205",
+  "set": "frame",
+  "variant": "SFX Designer",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-P26",
+  "node": "3422:80620",
+  "set": "frame",
+  "variant": "Auto-tile Rules panel",
+  "w": 860,
+  "h": 250
+ },
+ {
+  "id": "T-D01",
+  "node": "3414:53033",
+  "set": "frame",
+  "variant": "New Project",
+  "w": 1180,
+  "h": 668
+ },
+ {
+  "id": "T-D02",
+  "node": "3414:53562",
+  "set": "frame",
+  "variant": "New Scene",
+  "w": 520,
+  "h": 470
+ },
+ {
+  "id": "T-D03",
+  "node": "3414:53635",
+  "set": "frame",
+  "variant": "Scene Settings",
+  "w": 600,
+  "h": 646
+ },
+ {
+  "id": "T-D04",
+  "node": "3414:53789",
+  "set": "frame",
+  "variant": "Import Asset",
+  "w": 900,
+  "h": 460
+ },
+ {
+  "id": "T-D05",
+  "node": "3414:53944",
+  "set": "frame",
+  "variant": "Export ROM",
+  "w": 560,
+  "h": 488
+ },
+ {
+  "id": "T-D06",
+  "node": "3414:54024",
+  "set": "frame",
+  "variant": "Build ROM",
+  "w": 600,
+  "h": 440
+ },
+ {
+  "id": "T-D07",
+  "node": "3414:54102",
+  "set": "frame",
+  "variant": "Flash to Cartridge",
+  "w": 560,
+  "h": 368
+ },
+ {
+  "id": "T-D08",
+  "node": "3414:54162",
+  "set": "frame",
+  "variant": "Project Settings",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-D09",
+  "node": "3414:54346",
+  "set": "frame",
+  "variant": "Preferences",
+  "w": 900,
+  "h": 620
  },
  {
   "id": "T-D10",
@@ -1752,12 +2008,348 @@
   "h": 390
  },
  {
+  "id": "T-D11",
+  "node": "3414:54561",
+  "set": "frame",
+  "variant": "About",
+  "w": 460,
+  "h": 304
+ },
+ {
   "id": "T-D12",
   "node": "3414:54618",
   "set": "frame",
   "variant": "Unsaved Changes",
   "w": 460,
   "h": 262
+ },
+ {
+  "id": "T-D13",
+  "node": "3422:72077",
+  "set": "frame",
+  "variant": "New Sprite",
+  "w": 520,
+  "h": 506
+ },
+ {
+  "id": "T-D14",
+  "node": "3422:72151",
+  "set": "frame",
+  "variant": "New Script",
+  "w": 560,
+  "h": 564
+ },
+ {
+  "id": "T-D15",
+  "node": "3422:72220",
+  "set": "frame",
+  "variant": "New Font",
+  "w": 560,
+  "h": 506
+ },
+ {
+  "id": "T-D16",
+  "node": "3422:72298",
+  "set": "frame",
+  "variant": "Add Characters",
+  "w": 600,
+  "h": 388
+ },
+ {
+  "id": "T-D17",
+  "node": "3422:72367",
+  "set": "frame",
+  "variant": "New Table",
+  "w": 520,
+  "h": 440
+ },
+ {
+  "id": "T-D18",
+  "node": "3422:72427",
+  "set": "frame",
+  "variant": "Add Field",
+  "w": 520,
+  "h": 516
+ },
+ {
+  "id": "T-D19",
+  "node": "3422:72513",
+  "set": "frame",
+  "variant": "Import CSV",
+  "w": 780,
+  "h": 478
+ },
+ {
+  "id": "T-D20",
+  "node": "3422:72665",
+  "set": "frame",
+  "variant": "Add Language",
+  "w": 520,
+  "h": 416
+ },
+ {
+  "id": "T-D21",
+  "node": "3422:72726",
+  "set": "frame",
+  "variant": "New Speaker",
+  "w": 520,
+  "h": 438
+ },
+ {
+  "id": "T-D22",
+  "node": "3422:72820",
+  "set": "frame",
+  "variant": "Opening Project",
+  "w": 480,
+  "h": 322
+ },
+ {
+  "id": "T-D23",
+  "node": "3422:72873",
+  "set": "frame",
+  "variant": "Build ROM · Failed",
+  "w": 600,
+  "h": 382
+ },
+ {
+  "id": "T-D24",
+  "node": "3422:72938",
+  "set": "frame",
+  "variant": "Import Asset · Errors",
+  "w": 720,
+  "h": 436
+ },
+ {
+  "id": "T-S01",
+  "node": "3417:59062",
+  "set": "frame",
+  "variant": "Project Settings · General",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S02",
+  "node": "3417:59217",
+  "set": "frame",
+  "variant": "Project Settings · Save data",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S03",
+  "node": "3417:59402",
+  "set": "frame",
+  "variant": "Project Settings · Build",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S04",
+  "node": "3417:59558",
+  "set": "frame",
+  "variant": "Project Settings · Scripting",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S05",
+  "node": "3417:59770",
+  "set": "frame",
+  "variant": "Project Settings · Localization",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S06",
+  "node": "3418:59999",
+  "set": "frame",
+  "variant": "Preferences · Appearance",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S07",
+  "node": "3418:60159",
+  "set": "frame",
+  "variant": "Preferences · Editor",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S08",
+  "node": "3418:60348",
+  "set": "frame",
+  "variant": "Preferences · Paths",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-S09",
+  "node": "3418:60512",
+  "set": "frame",
+  "variant": "Preferences · Shortcuts",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "T-O01",
+  "node": "3415:54660",
+  "set": "frame",
+  "variant": "Scene Switcher",
+  "w": 320,
+  "h": 356
+ },
+ {
+  "id": "T-O02",
+  "node": "3415:54892",
+  "set": "frame",
+  "variant": "Video Mode",
+  "w": 380,
+  "h": 400
+ },
+ {
+  "id": "T-O03",
+  "node": "3415:54946",
+  "set": "frame",
+  "variant": "Grid & Snap",
+  "w": 300,
+  "h": 328
+ },
+ {
+  "id": "T-O04",
+  "node": "3415:54997",
+  "set": "frame",
+  "variant": "Asset Picker",
+  "w": 440,
+  "h": 368
+ },
+ {
+  "id": "T-O05",
+  "node": "3415:55146",
+  "set": "frame",
+  "variant": "Component Picker",
+  "w": 400,
+  "h": 464
+ },
+ {
+  "id": "T-O06",
+  "node": "3415:55222",
+  "set": "frame",
+  "variant": "Budget Details",
+  "w": 420,
+  "h": 398
+ },
+ {
+  "id": "T-O07",
+  "node": "3415:55299",
+  "set": "frame",
+  "variant": "Command Palette",
+  "w": 640,
+  "h": 325
+ },
+ {
+  "id": "T-O08",
+  "node": "3422:73001",
+  "set": "frame",
+  "variant": "Add Node",
+  "w": 380,
+  "h": 269
+ },
+ {
+  "id": "T-O09",
+  "node": "3422:73051",
+  "set": "frame",
+  "variant": "Link Settings",
+  "w": 360,
+  "h": 330
+ },
+ {
+  "id": "T-O10",
+  "node": "3422:73112",
+  "set": "frame",
+  "variant": "Palette Effect",
+  "w": 380,
+  "h": 372
+ },
+ {
+  "id": "T-O11",
+  "node": "3422:73187",
+  "set": "frame",
+  "variant": "Find & Replace",
+  "w": 540,
+  "h": 124
+ },
+ {
+  "id": "T-O12",
+  "node": "3422:73241",
+  "set": "frame",
+  "variant": "Record Shortcut",
+  "w": 340,
+  "h": 264
+ },
+ {
+  "id": "T-O13",
+  "node": "3422:73276",
+  "set": "frame",
+  "variant": "Tutorial Steps",
+  "w": 380,
+  "h": 466
+ },
+ {
+  "id": "T-L01",
+  "node": "3422:81998",
+  "set": "frame",
+  "variant": "Scene Editor · Light",
+  "w": 1440,
+  "h": 900
+ },
+ {
+  "id": "T-L02",
+  "node": "3422:82738",
+  "set": "frame",
+  "variant": "New Project · Light",
+  "w": 1180,
+  "h": 668
+ },
+ {
+  "id": "T-L03",
+  "node": "3422:83044",
+  "set": "frame",
+  "variant": "Preferences · Appearance · Light",
+  "w": 900,
+  "h": 620
+ },
+ {
+  "id": "IG-01",
+  "node": "3424:83418",
+  "set": "frame",
+  "variant": "In-game · Boot splash",
+  "w": 720,
+  "h": 480
+ },
+ {
+  "id": "IG-02",
+  "node": "3424:83429",
+  "set": "frame",
+  "variant": "In-game · Title screen",
+  "w": 720,
+  "h": 480
+ },
+ {
+  "id": "IG-03",
+  "node": "3424:83444",
+  "set": "frame",
+  "variant": "In-game · Pause menu",
+  "w": 720,
+  "h": 480
+ },
+ {
+  "id": "IG-04",
+  "node": "3424:83460",
+  "set": "frame",
+  "variant": "In-game · Options",
+  "w": 720,
+  "h": 480
  },
  {
   "id": "T-M01",
@@ -1822,5 +2414,133 @@
   "variant": "Open Recent",
   "w": 264,
   "h": 123
+ },
+ {
+  "id": "T-M09",
+  "node": "3408:48018",
+  "set": "menu",
+  "variant": "Create",
+  "w": 264,
+  "h": 270
+ },
+ {
+  "id": "T-M10",
+  "node": "3408:48196",
+  "set": "menu",
+  "variant": "Add Actor",
+  "w": 264,
+  "h": 192
+ },
+ {
+  "id": "T-M11",
+  "node": "3408:48291",
+  "set": "menu",
+  "variant": "Add to Scene",
+  "w": 264,
+  "h": 253
+ },
+ {
+  "id": "T-M12",
+  "node": "3408:48424",
+  "set": "menu",
+  "variant": "Actor Context Menu",
+  "w": 264,
+  "h": 210
+ },
+ {
+  "id": "T-M13",
+  "node": "3408:48520",
+  "set": "menu",
+  "variant": "Asset Context Menu",
+  "w": 264,
+  "h": 236
+ },
+ {
+  "id": "T-M14",
+  "node": "3408:48625",
+  "set": "menu",
+  "variant": "Component Menu",
+  "w": 264,
+  "h": 149
+ },
+ {
+  "id": "T-M15",
+  "node": "3408:48692",
+  "set": "menu",
+  "variant": "Zoom",
+  "w": 264,
+  "h": 175
+ },
+ {
+  "id": "T-M16",
+  "node": "3408:48764",
+  "set": "menu",
+  "variant": "Animation List",
+  "w": 264,
+  "h": 149
+ },
+ {
+  "id": "T-M17",
+  "node": "3422:81238",
+  "set": "menu",
+  "variant": "Project Context Menu",
+  "w": 264,
+  "h": 175
+ },
+ {
+  "id": "T-M18",
+  "node": "3422:81311",
+  "set": "menu",
+  "variant": "Play Speed",
+  "w": 264,
+  "h": 175
+ },
+ {
+  "id": "T-M19",
+  "node": "3422:81385",
+  "set": "menu",
+  "variant": "OAM Size",
+  "w": 264,
+  "h": 175
+ },
+ {
+  "id": "T-M20",
+  "node": "3422:81457",
+  "set": "menu",
+  "variant": "Add Layer",
+  "w": 264,
+  "h": 123
+ },
+ {
+  "id": "T-M21",
+  "node": "3422:81517",
+  "set": "menu",
+  "variant": "Node Context Menu",
+  "w": 264,
+  "h": 175
+ },
+ {
+  "id": "T-M22",
+  "node": "3422:81590",
+  "set": "menu",
+  "variant": "Scene Context Menu",
+  "w": 264,
+  "h": 149
+ },
+ {
+  "id": "T-M23",
+  "node": "3422:81653",
+  "set": "menu",
+  "variant": "Add to Dialogue",
+  "w": 264,
+  "h": 149
+ },
+ {
+  "id": "T-M24",
+  "node": "3422:81722",
+  "set": "menu",
+  "variant": "Command",
+  "w": 264,
+  "h": 166
  }
 ]

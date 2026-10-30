@@ -17,6 +17,13 @@ using Xunit.Abstractions;
 
 namespace AgbStudio.Editor.Tests.Shot;
 
+/// <summary>Renders windows for SHOT. Each Phase 11+ window group adds one class (found by reflection), so groups never
+/// edit this file: <c>Windows()</c> yields (evidence id, render(path, width, height)).</summary>
+public interface IShotSource
+{
+    IEnumerable<(string Id, Action<string, int, int> Render)> Windows();
+}
+
 /// <summary>
 /// SHOT (checklist 2.5) for P10.01, P10.05, P10.07, P10.12, P10.13, P10.08: renders every component variant and the
 /// Phase 10 windows headless at 100% DPI, compares them with the Figma exports and writes docs/evidence/app,
@@ -54,15 +61,28 @@ public class ShotTests(ITestOutputHelper log)
             results.Add((ImageDiff.Compare(item.Id, FigmaPng(item.Id), AppPng(item.Id), DiffPng(item.Id), ComponentBg), item.Set));
         }
 
-        // windows
-        foreach (var (id, render) in Windows())
+        // windows: Phase 10 here, later phases from IShotSource classes
+        var sources = typeof(ShotTests).Assembly.GetTypes()
+            .Where(t => typeof(IShotSource).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false } && t.GetConstructor(Type.EmptyTypes) != null)
+            .OrderBy(t => t.FullName, StringComparer.Ordinal)
+            .SelectMany(t => ((IShotSource)Activator.CreateInstance(t)!).Windows());
+        foreach (var (id, render) in Windows().Concat(sources))
         {
             var m = manifest[id];
             render(AppPng(id), (int)Math.Round(m.w), (int)Math.Round(m.h));
             results.Add((ImageDiff.Compare(id, FigmaPng(id), AppPng(id), DiffPng(id), FrameBg), m.set + " " + m.variant));
         }
 
-        var notRendered = manifest.Keys.Except(results.Select(r => r.R.Id)).ToList();
+        // Every window and menu that is built must be in SHOT; frames of windows not built yet are only listed.
+        // In-game screens (IG-*) are captured by the emulator tests (AgbStudio.Tests.UiKitTests).
+        using var built = new Fixture(withApp: false);
+        bool Built(string id) => id.StartsWith("T-L", StringComparison.Ordinal)
+            ? Built(id switch { "T-L01" => "T-P01", "T-L02" => "T-D01", _ => "T-S06" })
+            : built.Services.Windows.IsRegistered(id) || id is "T-P01" or "T-O07" or "T-D10" or "T-D12" || MenuModel.TitleBarMenus().Any(m => m.Id == id) || id == "T-M08";
+        var notRendered = manifest.Keys.Where(k => !k.StartsWith("C-", StringComparison.Ordinal) && !k.StartsWith("IG-", StringComparison.Ordinal))
+            .Except(results.Select(r => r.R.Id)).Where(Built).ToList();
+        var notBuilt = manifest.Keys.Where(k => k.StartsWith("T-", StringComparison.Ordinal)).Except(results.Select(r => r.R.Id)).Where(k => !Built(k)).ToList();
+        if (notBuilt.Count > 0) log.WriteLine($"not built yet ({notBuilt.Count}): {string.Join(", ", notBuilt)}");
         var regions = new List<(string Id, string Region, double Diff)>();
         foreach (var id in new[] { "T-P01", "T-L01" })
             foreach (var (name, rect) in ChromeRegions)

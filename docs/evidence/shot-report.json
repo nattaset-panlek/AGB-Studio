@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-30 22:07:08Z",
+  "generated": "2026-10-30 22:10:27Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
