@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>agb</AssemblyName>
+    <RootNamespace>AgbStudio.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgbStudio.Emu\AgbStudio.Emu.csproj" />
+    <ProjectReference Include="..\AgbStudio.Build\AgbStudio.Build.csproj" />
+  </ItemGroup>
+</Project>

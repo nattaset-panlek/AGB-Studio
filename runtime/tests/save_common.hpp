@@ -1,0 +1,108 @@
+// Save tests shared by the per-save-type ROMs. Each ROM defines AGB_SAVE_TYPE and carries the
+// save-type ID string that emulators and flash carts scan for (exactly one per ROM).
+#pragma once
+#include "test.hpp"
+#include "agb/save.hpp"
+
+using namespace agb;
+
+namespace {
+struct Payload {
+    u32 score;
+    u8 lives;
+    u8 pad;
+    u16 coins;
+    u8 flags[16];
+};
+
+void configure(u16 version = 1, u16 size = sizeof(Payload)) {
+    save::Config c;
+    c.type = save::Type::AGB_SAVE_TYPE;
+    c.slots = 3;
+    c.payloadSize = size;
+    c.formatVersion = version;
+    c.checksum = true;
+    save::configure(c);
+}
+}  // namespace
+
+AGB_TEST(write_then_read_each_slot) {
+    configure();
+    for (int s = 0; s < 3; ++s) save::erase(s);
+    CHECK(!save::exists(0));
+    Payload p{1234, 3, 0, 77, {}};
+    p.flags[5] = 0xA5;
+    CHECK(save::write(1, &p));
+    Payload q{};
+    CHECK(save::read(1, &q));
+    CHECK_EQ(q.score, 1234u);
+    CHECK_EQ(q.lives, 3);
+    CHECK_EQ(q.coins, 77);
+    CHECK_EQ(q.flags[5], 0xA5);
+    CHECK(!save::read(0, &q));
+    CHECK(!save::read(2, &q));
+}
+
+AGB_TEST(newest_copy_wins_and_corruption_falls_back) {
+    configure();
+    save::erase(0);
+    Payload p{1, 1, 0, 1, {}};
+    CHECK(save::write(0, &p));  // copy A, counter 1
+    p.score = 2;
+    CHECK(save::write(0, &p));  // copy B, counter 2
+    Payload q{};
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 2u);
+    // Corrupt the newest copy (B): the older copy must load instead.
+    const u32 copy = save::maxPayload() + 16;  // bytes per copy
+    u8 bad = 0x5A;
+    save::deviceWrite(copy + 20, &bad, 1);
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 1u);
+    // The next write goes over the corrupt copy and wins again.
+    p.score = 3;
+    CHECK(save::write(0, &p));
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 3u);
+}
+
+AGB_TEST(older_format_version_migrates) {
+    configure(1, 8);  // old layout: 8 bytes
+    save::erase(2);
+    u8 old[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    CHECK(save::write(2, old));
+    configure(2, sizeof(Payload));  // new layout appends fields
+    Payload q{};
+    CHECK(save::read(2, &q));
+    CHECK(save::lastReadMigrated());
+    CHECK_EQ(q.score, 0x04030201u);
+    CHECK_EQ(q.flags[0], 0);
+}
+
+AGB_TEST(slots_do_not_alias) {
+    // Earlier tests left slot 0 at score 3 and slot 1 at 1234; slot 2 was written last. On Flash 128K
+    // slot 2 lives in the second 64 KB bank, so this catches missing bank switches.
+    configure();
+    Payload q{};
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 3u);
+    CHECK(save::read(1, &q));
+    CHECK_EQ(q.score, 1234u);
+    Payload p{99, 9, 0, 9, {}};
+    CHECK(save::write(2, &p));
+    CHECK(save::write(2, &p));
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 3u);
+}
+
+AGB_TEST(capacity_and_crc) {
+    configure();
+    CHECK(save::bytesUsed() <= save::capacityBytes(save::Type::AGB_SAVE_TYPE));
+    CHECK_EQ(save::crc32("123456789", 9), 0xCBF43926u);
+}
+
+int main() {
+    AGB_SAVE_TEST_KEEP_ID();
+    system::init();
+    test::runAll();
+}

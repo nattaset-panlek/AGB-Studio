@@ -1,0 +1,7 @@
+build/
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+/docs/evidence/app/*.tmp

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>AgbStudio.Emu</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(AgbRoot)third_party\mgba\mgba_libretro.dll" Link="mgba_libretro.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
