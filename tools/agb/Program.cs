@@ -99,7 +99,10 @@ public static class Program
     {
         var path = args.FirstOrDefault(a => !a.StartsWith("--")) ?? ".";
         var project = AgbStudio.Core.Project.GameProject.Open(path);
-        var builder = new AgbStudio.Build.Pipeline.GameBuilder(project, new Toolchain(), new ConsoleObserver(args.Contains("--verbose")));
+        var builder = new AgbStudio.Build.Pipeline.GameBuilder(project, new Toolchain(), new ConsoleObserver(args.Contains("--verbose")))
+        {
+            Scripts = new AgbStudio.Scripting.ScriptBackend(),
+        };
         var result = builder.Build(new AgbStudio.Build.Pipeline.BuildOptions
         {
             Clean = args.Contains("--clean"),

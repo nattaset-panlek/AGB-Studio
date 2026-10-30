@@ -1,0 +1,95 @@
+; forest_intro.intro args 0 locals 1
+0000: Line 13
+0003: PushI8 5
+0005: PushI8 0
+0007: PushI8 0
+0009: PushI8 2
+000B: PushI8 2
+000D: Native #0 argc 5
+0011: Pop
+0012: Line 14
+0015: PushI8 3
+0017: PushI8 0
+0019: PushI8 1
+001B: PushI8 1
+001D: PushI8 2
+001F: Native #0 argc 5
+0023: Pop
+0024: PushI8 2
+0026: GetFlag 0x0000
+0029: Not
+002A: JumpIfFalse -> 0032
+002D: PushI8 1
+002F: Jump -> 0034
+0032: PushI8 -1
+0034: Native #1 argc 2
+0038: StoreLocal 0
+003A: LoadLocal 0
+003C: PushI8 0
+003E: Eq
+003F: JumpIfTrue -> 004D
+0042: LoadLocal 0
+0044: PushI8 1
+0046: Eq
+0047: JumpIfTrue -> 005C
+004A: Jump -> 0062
+004D: Line 14
+0050: LoadVar 0x0002
+0053: PushI8 1
+0055: Add
+0056: StoreVar 0x0002
+0059: Jump -> 0062
+005C: Line 14
+005F: Jump -> 00B1
+0062: Line 20
+0065: PushI8 6
+0067: PushI8 0
+0069: PushI8 0
+006B: PushI8 2
+006D: PushI8 2
+006F: Native #0 argc 5
+0073: Pop
+0074: PushI8 1
+0076: SetFlag 0x0000
+0079: Line 21
+007C: PushI8 0
+007E: PushI8 0
+0080: PushI8 2
+0082: Native #12 argc 3
+0086: Pop
+0087: Line 22
+008A: PushI8 0
+008C: Native #7 argc 1
+0090: Pop
+0091: Line 23
+0094: PushI8 2
+0096: PushI8 10
+0098: Native #10 argc 2
+009C: Pop
+009D: Line 24
+00A0: PushI8 12
+00A2: WaitFrames
+00A3: Line 25
+00A6: PushI8 1
+00A8: SetFlag 0x0001
+00AB: Line 26
+00AE: PushI8 0
+00B0: Ret
+00B1: Line 27
+00B4: LoadVar 0x0001
+00B7: PushI8 2
+00B9: Ne
+00BA: JumpIfFalse -> 00CC
+00BD: PushI8 4
+00BF: PushI8 0
+00C1: PushI8 0
+00C3: PushI8 2
+00C5: PushI8 2
+00C7: Native #0 argc 5
+00CB: Pop
+00CC: Line 28
+00CF: PushI8 1
+00D1: Native #11 argc 1
+00D5: Pop
+00D6: PushI8 0
+00D8: Ret

@@ -50,7 +50,10 @@ public sealed record ScriptDiagnostic(
             var args = d.Properties.TryGetValue(GaeRules.ArgsProperty, out var a) && a != null ? a.Split('|') : [];
             shortMessage = GaeRules.ShortMessage(d.Id, args);
         }
-        return new ScriptDiagnostic(d.Id, sev, d.GetMessage(System.Globalization.CultureInfo.InvariantCulture), file,
+        var message = d.GetMessage(System.Globalization.CultureInfo.InvariantCulture);
+        // Build log style of the Figma design: "';' expected" (Roslyn writes "; expected").
+        if (d.Id.StartsWith("CS", StringComparison.Ordinal) && Regex.IsMatch(message, @"^\S{1,2} expected$")) message = $"'{message[..message.IndexOf(' ')]}' expected";
+        return new ScriptDiagnostic(d.Id, sev, message, file,
             span.StartLinePosition.Line + 1, span.StartLinePosition.Character + 1,
             span.EndLinePosition.Line + 1, span.EndLinePosition.Character + 1, shortMessage);
     }

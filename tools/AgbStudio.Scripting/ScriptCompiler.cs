@@ -125,7 +125,7 @@ public sealed class ScriptCompiler
                             var g = LogicGraph.Parse(s.Text);
                             var code = GraphCodeGen.Generate(g, Path.GetFileNameWithoutExtension(s.Path));
                             result.GeneratedCSharp[s.Path] = code;
-                            csharp.Add((s.Path + ".cs", code, false));
+                            csharp.Add((Path.ChangeExtension(s.Path, ".cs"), code, false));
                             break;
                         }
                     default:
@@ -143,13 +143,15 @@ public sealed class ScriptCompiler
         }
         foreach (var (src, dlg) in dialogues)
         {
-            var code = DialogueCompiler.ToCSharp(dlg, src.Path, ctx, vars, result.AutoFlags, out var dlgDiags);
+            var code = DialogueCompiler.ToCSharp(dlg, Display(src.Path), ctx, vars, result.AutoFlags, out var dlgDiags);
             foreach (var d in dlgDiags) result.Diagnostics.Add(d with { File = Display(src.Path) });
             result.GeneratedCSharp[src.Path] = code;
             csharp.Add((src.Path + ".cs", code, true));
         }
         var events = SceneEventsSource(ctx);
         if (events != null) csharp.Add((Path.Combine(outDir, "SceneEvents.g.cs"), events, true));
+        var dbScripts = DbScripts.Source(ctx, DbScripts.ActionClasses(csharp.Select(c => c.Text)));
+        if (dbScripts != null) csharp.Add((Path.Combine(outDir, "DbScripts.g.cs"), dbScripts, true));
         result.ProjectApiSource = ProjectApi.CSharp(ctx, vars);
         if (result.Diagnostics.Any(d => d.IsError)) return result;
 
@@ -163,7 +165,7 @@ public sealed class ScriptCompiler
             specificDiagnosticOptions: SeverityOptions(ctx.Analyzer));
         var compilation = CSharpCompilation.Create(Names.Identifier(ctx.ProjectName) + "Scripts", userTrees.Prepend(apiTree), ApiReference.All, options);
         var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(new GbaSubsetAnalyzer());
-        var withAnalyzers = compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(AnalyzerOptions.Empty, null, true, false));
+        var withAnalyzers = compilation.WithAnalyzers(analyzers, new CompilationWithAnalyzersOptions(new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty), null, true, false));
         var diagnostics = withAnalyzers.GetAllDiagnosticsAsync(cancel).GetAwaiter().GetResult();
         foreach (var d in diagnostics.Where(d => d.Severity != DiagnosticSeverity.Hidden && !d.IsSuppressed).OrderBy(d => d.Location.SourceTree?.FilePath).ThenBy(d => d.Location.SourceSpan.Start))
         {
@@ -241,7 +243,12 @@ public sealed class ScriptCompiler
             files.Write(o.Name + ".hpp", o.Header);
             if (o.Source != null) result.Sources.Add(files.Write(o.Name + ".cpp", o.Source));
         }
-        var registry = new RegistryWriter(model, ctx, tables, outputs, ops);
+        // Saved flags and variables live in GameState::scriptStore (runtime agb::script::PersistentStore).
+        var saved = vars.Where(v => v.Id < 0x4000).ToList();
+        if (saved.Any(v => v.Type == "bool" && v.Id >= 256) || saved.Any(v => v.Type != "bool" && v.Id >= 32))
+            result.Diagnostics.Add(new ScriptDiagnostic("AGB0002", ScriptSeverity.Error,
+                "Too many saved script flags or variables: the save keeps at most 256 flags and 32 variables.", "", 1, 1));
+        var registry = new RegistryWriter(model, ctx, tables, outputs, ops, vars);
         files.Write(ScriptCompileResult.RegistryHeader, registry.Header());
         result.Sources.Add(files.Write("agb_scripts.cpp", registry.Source()));
         files.Write(ProjectApi.CSharpFileName, result.ProjectApiSource);
@@ -259,6 +266,7 @@ public sealed class ScriptCompiler
             result.Scripts.Add(new ScriptInfo(s.Id, s.Name, s.Symbol, s.File, s.Line, s.Locals, s.Args, s.Code, s.Lines));
         result.Natives.AddRange(tables.Natives);
         result.SceneScripts.AddRange(outputs.Where(o => o.Role == TypeRole.SceneScript).Select(o => o.Name));
+        files.Write("debug-map.json", DebugMap(model));
         files.Write("scripts.json", Manifest(result, model, files));
         RemoveStale(outDir, files);
         result.Changed.AddRange(files.Changed);
@@ -323,6 +331,22 @@ public sealed class ScriptCompiler
         var lines = Seconds(text).Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0)
             .Select(l => l.EndsWith(';') || l.EndsWith('}') ? l : l + ";");
         return string.Join(" ", lines);
+    }
+
+    /// <summary>
+    /// debug-map.json for the editor: breakpoints are (fileId &lt;&lt; 16) | line, where fileId indexes "files" (file names;
+    /// "paths" holds the project-relative paths), and AGB_SCOPE method ids index "methods".
+    /// </summary>
+    static string DebugMap(ScriptModel model)
+    {
+        var files = model.FileIds.OrderBy(f => f.Value).ToList();
+        var doc = new
+        {
+            files = files.Select(f => Path.GetFileName(f.Key)),
+            paths = files.Select(f => f.Key),
+            methods = model.MethodNames,
+        };
+        return JsonSerializer.Serialize(doc, new JsonSerializerOptions { WriteIndented = true }) + "\n";
     }
 
     static string Manifest(ScriptCompileResult r, ScriptModel model, GeneratedFiles files)

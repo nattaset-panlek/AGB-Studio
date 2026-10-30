@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "name": "forest_intro",
+  "textSpeed": 2,
+  "blip": "blip",
+  "speakers": [
+    { "name": "Elder", "portrait": "elder_happy" }
+  ],
+  "conversations": [
+    {
+      "id": "intro",
+      "lines": [
+        { "id": "hello", "speaker": "Elder", "key": "forest_intro.hello", "text": { "en": "Hopper! The coins are gone.", "th": "ฮอปเปอร์ เหรียญหายไปหมดแล้ว" } },
+        { "id": "ask", "speaker": "Elder", "key": "forest_intro.ask", "portrait": "elder_worried", "speed": 1,
+          "text": { "en": "Will you help me?", "th": "ช่วยข้าได้ไหม" },
+          "choices": [
+            { "key": "forest.yes", "text": { "en": "Yes", "th": "ได้" }, "goto": "thanks", "thenSet": "Story.Visits = Story.Visits + 1" },
+            { "key": "forest.no", "text": { "en": "No", "th": "ไม่" }, "goto": "bye", "showIf": "!Flags.Helped" }
+          ] },
+        { "id": "thanks", "speaker": "Elder", "key": "forest_intro.thanks", "text": { "en": "Thank you! Take this." }, "thenSet": [ "Flags.Helped = true" ] },
+        { "command": "giveItem", "table": "Items", "item": "Potion", "count": 2 },
+        { "command": "playSound", "sound": "jump" },
+        { "command": "shakeCamera", "amplitude": 2, "frames": 10 },
+        { "command": "wait", "frames": 12 },
+        { "command": "setFlag", "flag": "MetElder", "value": true },
+        { "command": "end" },
+        { "id": "bye", "speaker": "Elder", "key": "forest_intro.bye", "text": { "en": "Come back soon." }, "showIf": "Story.Forest != ForestState.Rescued" },
+        { "command": "goToScene", "scene": "Forest_02" }
+      ]
+    }
+  ]
+}

@@ -1,19 +1,19 @@
 namespace GBA;
 
 /// <summary>A row of on / off values: the type of <c>bitset N</c> fields in Project Settings · Save data.</summary>
-[Cpp("agbgen::Bitset")]
+[Cpp("unsigned char*")]
 public struct Bitset
 {
     /// <summary>Gets or sets bit <paramref name="index"/> (out-of-range indexes read false and are not written).</summary>
     /// <param name="index">Bit index from 0.</param>
-    [Cpp("{this.}get({0})", Set = "{this.}set({0}, {value})")]
+    [Cpp("agb_bit_get({this}, {0})", Set = "agb_bit_set({this}, {0}, {value})")]
     public bool this[int index] { get => false; set { } }
 
     /// <summary>Number of bits.</summary>
-    [Cpp("{this.}size()")]
+    [Cpp("agb_bit_size({this})")]
     public int Length => 0;
 
     /// <summary>Number of bits that are on.</summary>
-    [Cpp("{this.}count()")]
+    [Cpp("agb_bit_count({this})")]
     public int Count => 0;
 }

@@ -72,6 +72,17 @@ internal sealed class ScriptModel
 
     public string DisplayPath(string path) => _display(path);
 
+    /// <summary>Method names for the Debugger call stack ("PlayerController.Update()"), indexed by AGB_SCOPE.</summary>
+    public List<string> MethodNames { get; } = new();
+
+    public int MethodNameId(string name)
+    {
+        var i = MethodNames.IndexOf(name);
+        if (i >= 0) return i;
+        MethodNames.Add(name);
+        return MethodNames.Count - 1;
+    }
+
     public int FileId(SyntaxTree tree) => FileIds.TryGetValue(_display(tree.FilePath), out var id) ? id : 0;
 
     public bool IsUser(ITypeSymbol? t) => t is INamedTypeSymbol n && UserTypes.Contains(n.OriginalDefinition);

@@ -18,14 +18,16 @@ internal sealed class RegistryWriter
     readonly ScriptTables _tables;
     readonly List<TypeOutput> _types;
     readonly OpcodeTable _ops;
+    readonly List<ScriptVarDef> _vars;  // project variables and flags created by dialogues
 
-    public RegistryWriter(ScriptModel m, ScriptCompileContext ctx, ScriptTables tables, List<TypeOutput> types, OpcodeTable ops)
+    public RegistryWriter(ScriptModel m, ScriptCompileContext ctx, ScriptTables tables, List<TypeOutput> types, OpcodeTable ops, List<ScriptVarDef> vars)
     {
         _m = m;
         _ctx = ctx;
         _tables = tables;
         _types = types;
         _ops = ops;
+        _vars = vars;
     }
 
     IEnumerable<TypeOutput> Behaviours => _types.Where(t => t.Role == TypeRole.Behaviour && !t.Abstract && t.Emitted);
@@ -85,10 +87,17 @@ internal sealed class RegistryWriter
             bool agb_set_field(agb::Behaviour* behaviour, int index, agb::s32 raw);
             agb::Behaviour* agb_make_with(agb::BehaviourCreate create, agb::Arena& arena, const agb_FieldValue* values, int count);
 
-            // GameDef.init: registers the script and native tables, paths, names and the persistent flag / variable store.
+            // GameDef.init: registers the script and native tables, paths, names, the persistent flag / variable store and
+            // the Debugger file / method names.
             void agb_scripts_init();
 
             """.Replace("\r\n", "\n"));
+        var cells = DbScripts.Cells(_ctx);
+        if (cells.Count > 0)
+        {
+            sb.Append("// Database cells of type script (the table's void (*)() members).\n");
+            foreach (var c in cells) sb.Append($"void {DbScripts.Symbol(c)}();\n");
+        }
         sb.Append("// Scene hooks for SceneDef.onLoad / onEnter / onExit (Scene Settings events, then the SceneScript of the same name).\n");
         foreach (var scene in _ctx.Scenes.OrderBy(s => s.Value).Select(s => s.Key))
         {
@@ -111,6 +120,7 @@ internal sealed class RegistryWriter
             if (SceneScriptFor(scene) is { } t) includes.Add(t.Name);
             if (HasEventClass(scene)) includes.Add("SceneEvents_" + BuildCpp.Ident(scene));
         }
+        foreach (var t in DbScripts.Cells(_ctx).Select(c => c.Table).Distinct()) includes.Add(DbScripts.ClassName(t));
         foreach (var i in includes) sb.Append($"#include \"{i}.hpp\"\n");
         sb.Append("\nnamespace {\n");
 
@@ -157,10 +167,16 @@ internal sealed class RegistryWriter
             }
             sb.Append("};\n");
         }
-        var vars = _ctx.Vars.Where(v => v.Id < 0x4000).ToList();
+        var vars = _vars.Where(v => v.Id < 0x4000).ToList();
         var flagCount = Math.Max(1, vars.Where(v => v.Type == "bool").Select(v => v.Id + 1).DefaultIfEmpty(0).Max());
         var varCount = Math.Max(1, vars.Where(v => v.Type != "bool").Select(v => v.Id + 1).DefaultIfEmpty(0).Max());
-        sb.Append($"// Persistent script flags and variables (ids below 0x4000).\nagb::u8 g_flags[{(flagCount + 7) / 8}];\nagb::s32 g_vars[{varCount}];\n");
+        // Persistent flags and variables (ids below 0x4000) are saved: they live in GameState::scriptStore.
+        flagCount = Math.Min(flagCount, 256);
+        varCount = Math.Min(varCount, 32);
+        // Debugger names (agb/probe.hpp): AGB_PROBE / AGB_SCOPE ids index these tables.
+        var files = _m.FileIds.OrderBy(f => f.Value).Select(f => Path.GetFileName(f.Key)).DefaultIfEmpty("").Select(Names.CppString);
+        sb.Append($"const char* const kDebugFiles[] = {{{string.Join(", ", files)}}};\n");
+        sb.Append($"const char* const kDebugMethods[] = {{{string.Join(", ", _m.MethodNames.DefaultIfEmpty("").Select(Names.CppString))}}};\n");
         var sceneObjects = _ctx.Scenes.Keys.Select(SceneScriptFor).OfType<TypeOutput>().Distinct().ToList();
         foreach (var t in sceneObjects) sb.Append($"{t.CppName} g_scene_{t.Name};\n");
         sb.Append("}  // namespace\n\n");
@@ -206,10 +222,15 @@ internal sealed class RegistryWriter
         sb.Append(_tables.Scripts.Count > 0
             ? $"    agb::script::setTables(kScripts, {_tables.Scripts.Count}, kNatives, {_tables.Natives.Count});\n"
             : $"    agb::script::setTables(nullptr, 0, kNatives, {_tables.Natives.Count});\n");
-        sb.Append($"    agb::script::setPersistentStore(g_flags, {flagCount}, g_vars, {varCount});\n");
+        sb.Append($"    agb::script::setPersistentStore(agb_state.scriptStore.flags, {flagCount}, agb_state.scriptStore.vars, {varCount});\n");
         if (_ctx.Paths.Count > 0) sb.Append($"    agb::script::natives::setPaths(kPaths, {_ctx.Paths.Count});\n");
         if (_tables.Names.Count > 0) sb.Append($"    agb::script::natives::setNames(kNames, {_tables.Names.Count});\n");
+        sb.Append("    agb::dbg::setNames(kDebugFiles, kDebugMethods);\n");
         sb.Append("}\n");
+
+        // ---- database script cells ----
+        foreach (var c in DbScripts.Cells(_ctx))
+            sb.Append($"\nvoid {DbScripts.Symbol(c)}() {{ ::AgbGenerated::{DbScripts.ClassName(c.Table)}::{DbScripts.Method(c)}(); }}\n");
 
         // ---- scene hooks ----
         foreach (var scene in _ctx.Scenes.OrderBy(s => s.Value).Select(s => s.Key))

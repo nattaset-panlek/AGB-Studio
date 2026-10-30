@@ -76,7 +76,9 @@ internal sealed class ScriptAssembler
 
     public void Line(int line)
     {
-        if (Lines.Count > 0 && Lines[^1].Line == line && Lines[^1].Pc == Pc) return;
+        // One marker per line unless a jump can land between two markers of the same line.
+        if (Lines.Count > 0 && Lines[^1].Line == line && !_labelSinceLine) return;
+        _labelSinceLine = false;
         Lines.Add((Pc, line));
         Op16("Line", line, 0);
     }
@@ -87,7 +89,13 @@ internal sealed class ScriptAssembler
         return _labels.Count - 1;
     }
 
-    public void Mark(int label) => _labels[label] = Pc;
+    public void Mark(int label)
+    {
+        _labels[label] = Pc;
+        _labelSinceLine = true;
+    }
+
+    bool _labelSinceLine;
 
     /// <summary>Jump, JumpIfFalse or JumpIfTrue to a label (relative s16 from the next instruction).</summary>
     public void Jump(string name, int label)

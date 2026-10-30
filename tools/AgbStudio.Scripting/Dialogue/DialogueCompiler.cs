@@ -57,7 +57,8 @@ public static partial class DialogueCompiler
                 var l = c.Lines[li];
                 var at = $"/conversations/{ci}/lines/{li}";
                 sb.Append($"#line {Line(f, at)} \"{file}\"\n");
-                sb.Append($"            {Label(ids[li])}: ;\n");
+                // Label and statement share the line that #line maps to the dialogue line.
+                sb.Append($"            {Label(ids[li])}: ;");
                 var body = new StringBuilder();
                 if (l.Command != null) Command(body, l, f, at, path, diagnostics);
                 else Say(body, f, c, l, speakers, labels, at, path, file, diagnostics, ci, li);
@@ -67,8 +68,8 @@ public static partial class DialogueCompiler
                     else body.Append($"goto {Label(l.Next)};");
                 }
                 var text = body.ToString().Trim();
-                if (l.ShowIf is { Length: > 0 } cond) sb.Append($"            if ({cond}) {{ {text} }}\n");
-                else if (text.Length > 0) sb.Append($"            {text}\n");
+                if (l.ShowIf is { Length: > 0 } cond) sb.Append($" if ({cond}) {{ {text} }}\n");
+                else sb.Append(text.Length > 0 ? $" {text}\n" : "\n");
             }
             sb.Append("#line default\n        }\n\n");
         }

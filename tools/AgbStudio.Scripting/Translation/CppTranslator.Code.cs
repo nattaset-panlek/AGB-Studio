@@ -15,7 +15,9 @@ internal sealed partial class CppTranslator
     void Stmt(IOperation op)
     {
         var (file, line) = Pos(op);
-        var probe = Debug && !op.IsImplicit ? $"AGB_PROBE({FileIdOf(file)}, {line}); " : "";
+        // One probe per source line: a statement on the same line as its if / loop is not probed again.
+        var probe = Debug && !op.IsImplicit && op is not IBlockOperation && line != _probedLine ? $"AGB_PROBE({FileIdOf(file)}, {line}); " : "";
+        if (probe.Length > 0) _probedLine = line;
         switch (op)
         {
             case IBlockOperation b:
@@ -198,7 +200,8 @@ internal sealed partial class CppTranslator
         }
         var t = TypeOf(sym.Type, v.Syntax);
         var value = init != null ? Expr(init).Text : DefaultValue(sym.Type);
-        _w.Line($"{probe}{(sym.IsConst ? "constexpr " : "")}{t} {Names.Cpp(sym.Name)} = {value};", file, line);
+        var unused = _used.Contains(sym) ? "" : "[[maybe_unused]] ";
+        _w.Line($"{probe}{unused}{(sym.IsConst ? "constexpr " : "")}{t} {Names.Cpp(sym.Name)} = {value};", file, line);
     }
 
     string Cond(IOperation op) => Expr(op).Text;
@@ -274,7 +277,7 @@ internal sealed partial class CppTranslator
                     return new CppExpr(sym + e.At(Unary), Unary);
                 }
             case IConditionalOperation c:
-                return new CppExpr($"{Expr(c.Condition).At(Or)} ? {Expr(c.WhenTrue!).At(Cond)} : {Expr(c.WhenFalse!).At(Cond)}", CppExpr.Cond);
+                return new CppExpr($"{Expr(c.Condition).At(Or)} ? {Expr(c.WhenTrue!).At(CppExpr.Cond)} : {Expr(c.WhenFalse!).At(CppExpr.Cond)}", CppExpr.Cond);
             case ISimpleAssignmentOperation a:
                 {
                     if (a.Target is IPropertyReferenceOperation pr && (SetterTemplate(pr) != null || (_m.IsUser(pr.Property.ContainingType) && !IsAutoProperty(pr.Property))))
@@ -333,8 +336,6 @@ internal sealed partial class CppTranslator
                 return new CppExpr(dv.Type != null ? DefaultValue(dv.Type) : "{}", Primary);
             case INameOfOperation or ISizeOfOperation when op.ConstantValue.HasValue:
                 return Constant(op.ConstantValue.Value, op.Type);
-            case IIsNullOperation isn:
-                return new CppExpr($"{Expr(isn.Operand).At(Eq)} == nullptr", Eq);
             case IIsPatternOperation ip when ip.Pattern is IConstantPatternOperation { Value.ConstantValue: { HasValue: true, Value: null } }:
                 return new CppExpr($"{Expr(ip.Value).At(Eq)} == nullptr", Eq);
             case IIsPatternOperation ip when ip.Pattern is INegatedPatternOperation { Pattern: IConstantPatternOperation { Value.ConstantValue: { HasValue: true, Value: null } } }:
@@ -427,7 +428,7 @@ internal sealed partial class CppTranslator
         if (to == null || from == null || conv.Conversion.IsIdentity) return Expr(operand);
         if (conv.ConstantValue.HasValue && (to.SpecialType != SpecialType.None || to.TypeKind == TypeKind.Enum)) return Constant(conv.ConstantValue.Value, to);
         if (operand.ConstantValue.HasValue && operand.ConstantValue.Value == null && to.IsReferenceType) return new CppExpr("nullptr", Primary);
-        if (conv.Conversion.IsNumeric || conv.Conversion.IsEnumeration)
+        if (conv.Conversion.IsNumeric || to.TypeKind == TypeKind.Enum || from.TypeKind == TypeKind.Enum)
         {
             if (conv.Conversion.IsImplicit && to.SpecialType == SpecialType.System_Int32 &&
                 from.SpecialType is SpecialType.System_Byte or SpecialType.System_SByte or SpecialType.System_Int16 or SpecialType.System_UInt16 or SpecialType.System_Char)
@@ -442,7 +443,7 @@ internal sealed partial class CppTranslator
             if (conv.Conversion.IsImplicit) return e.IsRef ? new CppExpr("&" + e.At(Unary), Unary) : e;
             return new CppExpr($"static_cast<{TypeOf(to, conv.Syntax)}>({(e.IsRef ? "&" + e.At(Unary) : e.Text)})", Primary);
         }
-        if (conv.Conversion.IsBoxing || conv.Conversion.IsUnboxing)
+        if (to.SpecialType == SpecialType.System_Object || to.TypeKind == TypeKind.Interface || from.SpecialType == SpecialType.System_Object)
         {
             Error(conv, "Boxing (object, interfaces) is not available on GBA.");
             return Expr(operand);

@@ -1,0 +1,33 @@
+; Forest.AskHelp args 1 locals 2
+0000: Line 19
+0003: PushI8 2
+0005: PushI8 1
+0007: Native #1 argc 2
+000B: StoreLocal 1
+000D: Line 20
+0010: LoadLocal 1
+0012: PushI8 0
+0014: Eq
+0015: JumpIfFalse -> 0037
+0018: Line 22
+001B: PushI8 0
+001D: PushI8 0
+001F: Native #20 argc 1
+0023: PushI8 5
+0025: LoadLocal 0
+0027: Mul
+0028: Add
+0029: Native #21 argc 2
+002D: Pop
+002E: Line 23
+0031: PushI8 30
+0033: WaitFrames
+0034: Jump -> 0044
+0037: Line 27
+003A: PushI8 1
+003C: PushI16 128
+003F: Native #7 argc 2
+0043: Pop
+0044: Line 29
+0047: LoadLocal 1
+0049: Ret

@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "class": "PlayerLogic",
+  "nodes": [
+    { "id": "n1", "type": "OnUpdate", "x": 40, "y": 60 },
+    { "id": "n2", "type": "ButtonPressed", "x": 40, "y": 160, "props": { "button": "A" } },
+    { "id": "n3", "type": "IsOnGround", "x": 40, "y": 240 },
+    { "id": "n4", "type": "And", "x": 260, "y": 190 },
+    { "id": "n5", "type": "Branch", "x": 460, "y": 60 },
+    { "id": "n6", "type": "SetVelocityY", "x": 680, "y": 40, "props": { "value": -3.50 } },
+    { "id": "n7", "type": "PlaySound", "x": 900, "y": 40, "props": { "sound": "jump.wav", "volume": 0.8 } },
+    { "id": "n8", "type": "OnTouch", "x": 40, "y": 360 },
+    { "id": "n9", "type": "CompareTag", "x": 260, "y": 360, "props": { "tag": "Coin" } },
+    { "id": "n10", "type": "AddToVariable", "x": 480, "y": 360, "props": { "variable": "score", "amount": 10 } },
+    { "id": "n11", "type": "Destroy", "x": 700, "y": 360 }
+  ],
+  "links": [
+    { "from": "n1.out", "to": "n5.in" },
+    { "from": "n2.value", "to": "n4.a" },
+    { "from": "n3.value", "to": "n4.b" },
+    { "from": "n4.value", "to": "n5.condition" },
+    { "from": "n5.true", "to": "n6.in" },
+    { "from": "n6.out", "to": "n7.in" },
+    { "from": "n8.out", "to": "n9.in" },
+    { "from": "n8.other", "to": "n9.actor" },
+    { "from": "n9.match", "to": "n10.in" },
+    { "from": "n10.out", "to": "n11.in" },
+    { "from": "n8.other", "to": "n11.actor" }
+  ]
+}

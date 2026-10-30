@@ -174,12 +174,25 @@ public sealed class RangeAttribute : Attribute
 }
 
 /// <summary>
+/// Lets database script cells call this static class's methods by name: an Items table cell "Unlock(door)"
+/// calls <c>Unlock</c> of a <c>[DatabaseActions]</c> class.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class DatabaseActionsAttribute : Attribute
+{
+    /// <summary>Marks the class.</summary>
+    public DatabaseActionsAttribute() { }
+}
+
+/// <summary>
 /// Marks an <c>async Task</c> method as a cutscene: it compiles to Event Script bytecode and can <c>await</c>
 /// Say, Choice, Move and Wait. Calling it from normal code starts it.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public sealed class CutsceneAttribute : Attribute
 {
+    /// <summary>Marks the method as a cutscene.</summary>
+    public CutsceneAttribute() { }
 }
 
 /// <summary>

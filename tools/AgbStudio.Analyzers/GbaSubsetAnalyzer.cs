@@ -132,22 +132,22 @@ public sealed class GbaSubsetAnalyzer : DiagnosticAnalyzer
 
     static void StringConcat(OperationAnalysisContext c)
     {
+        // Plain ifs rather than a pattern switch with `when` clauses: the Release IL of that switch was
+        // rejected by the runtime ("Common Language Runtime detected an invalid program").
         var op = c.Operation;
-        switch (op)
-        {
-            case IBinaryOperation b when b.OperatorKind == BinaryOperatorKind.Add && b.Type?.SpecialType == SpecialType.System_String:
-                // Report the outermost part of a chain a + b + c once.
-                if (op.Parent is IBinaryOperation pb && pb.OperatorKind == BinaryOperatorKind.Add && pb.Type?.SpecialType == SpecialType.System_String) return;
-                break;
-            case ICompoundAssignmentOperation ca when ca.OperatorKind == BinaryOperatorKind.Add && ca.Target.Type?.SpecialType == SpecialType.System_String:
-                break;
-            case IInterpolatedStringOperation:
-                break;
-            default:
-                return;
-        }
-        if (InLoop(op)) Report(c, GaeRules.StringConcatInLoop, op.Syntax.GetLocation());
+        bool concat;
+        if (op is IBinaryOperation b)
+            // Report the outermost part of a chain a + b + c once.
+            concat = IsStringAdd(b) && !(op.Parent is IBinaryOperation pb && IsStringAdd(pb));
+        else if (op is ICompoundAssignmentOperation ca)
+            concat = ca.OperatorKind == BinaryOperatorKind.Add && IsString(ca.Target.Type);
+        else
+            concat = op is IInterpolatedStringOperation;
+        if (concat && InLoop(op)) Report(c, GaeRules.StringConcatInLoop, op.Syntax.GetLocation());
     }
+
+    static bool IsString(ITypeSymbol? t) => t != null && t.SpecialType == SpecialType.System_String;
+    static bool IsStringAdd(IBinaryOperation b) => b.OperatorKind == BinaryOperatorKind.Add && IsString(b.Type);
 
     static bool InLoop(IOperation op)
     {

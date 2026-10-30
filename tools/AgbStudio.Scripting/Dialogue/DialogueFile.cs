@@ -160,13 +160,6 @@ internal static class JsonLines
             foreach (var (array, index, prop) in stack) sb.Append('/').Append(array ? index.ToString(System.Globalization.CultureInfo.InvariantCulture) : prop);
             return sb.ToString();
         }
-        void Value()
-        {
-            if (stack.Count == 0) return;
-            var top = stack[^1];
-            map.TryAdd(Path(), LineAt(reader.TokenStartIndex));
-            if (top.Array) stack[^1] = (true, top.Index + 1, null);
-        }
         try
         {
             while (reader.Read())
@@ -187,7 +180,9 @@ internal static class JsonLines
                         if (stack.Count > 0 && stack[^1].Array) stack[^1] = (true, stack[^1].Index + 1, null);
                         break;
                     default:
-                        Value();
+                        if (stack.Count == 0) break;
+                        map.TryAdd(Path(), LineAt(reader.TokenStartIndex));
+                        if (stack[^1].Array) stack[^1] = (true, stack[^1].Index + 1, null);
                         break;
                 }
             }

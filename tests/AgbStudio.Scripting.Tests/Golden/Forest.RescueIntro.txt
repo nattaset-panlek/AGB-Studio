@@ -1,0 +1,26 @@
+; Forest.RescueIntro args 0 locals 0
+0000: Line 9
+0003: Native #5 argc 0
+0007: Pop
+0008: Line 10
+000B: PushI8 0
+000D: Native #8 argc 1
+0011: Pop
+0012: Line 11
+0015: PushI8 0
+0017: PushI8 -1
+0019: PushI8 -1
+001B: PushI8 -1
+001D: PushI8 -1
+001F: Native #0 argc 5
+0023: Pop
+0024: Line 12
+0027: PushI8 -1
+0029: PushI8 0
+002B: Native #2 argc 2
+002F: Pop
+0030: Line 13
+0033: PushI8 2
+0035: StoreVar 0x0001
+0038: Native #6 argc 0
+003C: Pop

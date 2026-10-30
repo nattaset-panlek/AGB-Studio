@@ -8,9 +8,11 @@ namespace AgbStudio.Scripting.Translation;
 /// </summary>
 internal sealed class CppWriter
 {
+    const char Marker = '\u0001';
+
     readonly StringBuilder _sb = new();
     readonly string _selfName;
-    int _physical = 1;          // line number of the next line in this file
+    int _physical = 1;          // line number of the next line in this writer
     string? _mappedFile;        // null = lines map to this file itself
     int _mappedLine;            // source line the next written line maps to
     public int Indent { get; set; }
@@ -35,7 +37,8 @@ internal sealed class CppWriter
     {
         if (_mappedFile == null) return;
         _mappedFile = null;
-        Raw($"#line {_physical + 1} \"{_selfName}\"");
+        // The final line number is known once the text is placed in its file (see Finish).
+        Raw($"#line {Marker}{_physical + 1}{Marker} \"{_selfName}\"");
     }
 
     /// <summary>Writes text without indentation or mapping (preprocessor lines, blank lines).</summary>
@@ -47,5 +50,26 @@ internal sealed class CppWriter
 
     public void Blank() => Line("");
 
-    public override string ToString() => _sb.ToString();
+    public override string ToString() => Finish(0);
+
+    /// <summary>The text, for placement after <paramref name="linesBefore"/> lines of other text in the same file.</summary>
+    public string Finish(int linesBefore)
+    {
+        var text = _sb.ToString();
+        var sb = new StringBuilder(text.Length);
+        var i = 0;
+        while (i < text.Length)
+        {
+            var a = text.IndexOf(Marker, i);
+            if (a < 0)
+            {
+                sb.Append(text, i, text.Length - i);
+                break;
+            }
+            var b = text.IndexOf(Marker, a + 1);
+            sb.Append(text, i, a - i).Append(int.Parse(text[(a + 1)..b], System.Globalization.CultureInfo.InvariantCulture) + linesBefore);
+            i = b + 1;
+        }
+        return sb.ToString();
+    }
 }
