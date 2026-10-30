@@ -104,10 +104,9 @@ public class ShellE2ETests : IDisposable
         Key(Avalonia.Input.Key.Return);
         Assert.Equal("T-P02", _fx.Services.Windows.Requests[^1].Window);
         Assert.Equal("build.playFromHere", _fx.Services.Windows.Requests[^1].Source);
-        // the palette closed; Play Mode is Phase 12, so its not-built notice is on top
-        Assert.Equal("T-P02", Assert.IsType<NotBuiltNotice>(_win.Overlays.Open.Single()).Tag);
-        Key(Avalonia.Input.Key.Escape);
+        // the palette closed and Play Mode (T-P02, Phase 12) replaced the workspace
         Assert.False(_win.Overlays.IsOpen);
+        Assert.Equal("T-P02", _win.CurrentPageId);
         // ">" lists commands only
         Key(Avalonia.Input.Key.K, RawInputModifiers.Control);
         palette = Assert.IsType<CommandPalette>(_win.Overlays.Open.Single());

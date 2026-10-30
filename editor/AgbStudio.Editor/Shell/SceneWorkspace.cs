@@ -42,8 +42,8 @@ public sealed class SceneWorkspace : DockPanel
         var layers = new[] { "BG0", "BG1", "BG2", "BG3", "OBJ" }.Select(l => new LayerToggle { Content = l, IsOn = l != "BG3", Name = "Layer_" + l }).ToArray();
         var play = UI.Row(4,
             new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
-            new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" },
-            new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+            new PlayControl { Kind = PlayKind.Pause, Command = s.Commands.TryGet("play.pause", out var pause) ? pause : null, Name = "PauseButton" },
+            new PlayControl { Kind = PlayKind.Step, Command = s.Commands.TryGet("play.frameStep", out var step) ? step : null, Name = "StepButton" });
         // P10.18 tooltips: command title and its current shortcut
         Tip(play.Children[0], "build.play");
         string[] toolCommands = ["scene.tool.select", "scene.tool.move", "scene.tool.paint", "", "", "scene.toggleGrid"];

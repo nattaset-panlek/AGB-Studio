@@ -88,10 +88,11 @@ public class WindowServiceTests
         using var fx = new Fixture();
         var win = new MainWindow(fx.Services);
         win.Show();
-        _ = fx.Services.Windows.Open("T-P19", source: "test");
+        // an id nothing registers (every Figma window gets built in Phase 11-13)
+        _ = fx.Services.Windows.Open("T-X98", source: "test");
         Capture.Pump();
         var notice = Assert.IsType<NotBuiltNotice>(win.Overlays.Open.Single());
-        Assert.Equal("T-P19", notice.Tag);
+        Assert.Equal("T-X98", notice.Tag);
         _ = fx.Services.Windows.Open("T-X99");
         Capture.Pump();
         Assert.Equal(2, win.Overlays.Open.Count);
