@@ -41,7 +41,7 @@ public sealed class MenuBuilder(CommandRegistry commands, ShortcutService shortc
         {
             case SeparatorEntry: return new Separator();
             case SubmenuEntry s:
-                var sub = new MenuItem { Header = s.Title, Tag = s };
+                var sub = new MenuItem { Header = s.Title, Tag = s, Icon = s.Glyph != null ? new Icon { Glyph = s.Glyph, Size = 14 } : null };
                 Fill(sub.Items, s.Entries());
                 return sub;
             case CommandEntry c:
