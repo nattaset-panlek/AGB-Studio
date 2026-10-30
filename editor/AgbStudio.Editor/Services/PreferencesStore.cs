@@ -7,8 +7,9 @@ public enum ThemeMode { Dark, Light, System }
 
 /// <summary>
 /// Per-user preferences (P10.14), with the defaults shown in Preferences · Appearance (T-S06) and Preferences · Editor (T-S07).
+/// The other Preferences tabs add their fields in Windows/Settings/PreferencesFields.cs.
 /// </summary>
-public sealed class Preferences
+public sealed partial class Preferences
 {
     // Appearance (T-S06)
     public ThemeMode Theme { get; set; } = ThemeMode.Dark;

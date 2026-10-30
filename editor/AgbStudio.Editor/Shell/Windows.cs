@@ -56,6 +56,13 @@ public sealed class CommandHandlerAttribute(string commandId) : Attribute
     public string CommandId { get; } = commandId;
 }
 
+/// <summary>
+/// Runs a public static method (no parameters, or one <see cref="EditorServices"/>) once when the main window starts,
+/// after its own commands are wired: enable conditions of menu commands, event subscriptions of a window group.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class EditorStartupAttribute : Attribute;
+
 /// <summary>What a window receives when it is opened.</summary>
 public sealed class WindowContext
 {

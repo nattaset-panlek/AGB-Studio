@@ -59,9 +59,10 @@ public sealed class EditorServices : IServiceProvider
             Undo = new UndoService(() => prefs.Current.UndoHistory),
             Documents = documents,
             Toasts = new ToastService(),
-            Toolchain = new ToolchainStatusService(),
+            // Preferences · Paths › devkitPro (empty = DEVKITPRO or D:\devkitPro)
+            Toolchain = new ToolchainStatusService(() => prefs.Current.DevkitProOrNull()),
             Project = project,
-            Build = new BuildService(project, () => null),
+            Build = new BuildService(project, () => prefs.Current.DevkitProOrNull()),
             Emulator = new EmulatorHost(),
             Theme = app is null ? null : new ThemeService(app),
             Autosave = new AutosaveService(autosaveTimer ?? new DispatcherRepeatingTimer(), () => prefs.Current.AutosaveMinutes, documents.SaveAllAsync),

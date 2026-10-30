@@ -60,6 +60,7 @@ public sealed class MainWindow : Window, IShellHost
         Content = _scale;
 
         WireCommands();
+        s.Windows.RunStartup();
         s.Project.Changed += UpdateTitle;
         s.Documents.Changed += UpdateTitle;
         s.Toasts.Visible.CollectionChanged += (_, _) => RebuildToasts();
