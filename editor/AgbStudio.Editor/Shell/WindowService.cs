@@ -78,8 +78,20 @@ public sealed class WindowService : IWindowRouter
                     }.Handle(() => Invoke(m)));
                 if (m.GetCustomAttribute<CommandHandlerAttribute>() is { } h)
                     commands.Get(h.CommandId).Handle(() => Invoke(m));
+                if (m.GetCustomAttribute<EditorStartupAttribute>() is not null) _startup.Add(m);
             }
         }
+    }
+
+    readonly List<MethodInfo> _startup = [];
+    bool _started;
+
+    /// <summary>Runs the <see cref="EditorStartupAttribute"/> methods once (called by the main window).</summary>
+    public void RunStartup()
+    {
+        if (_started) return;
+        _started = true;
+        foreach (var m in _startup) Invoke(m);
     }
 
     static IEnumerable<Type> SafeTypes(Assembly a)

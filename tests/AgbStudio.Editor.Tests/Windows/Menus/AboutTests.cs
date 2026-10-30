@@ -1,0 +1,99 @@
+using AgbStudio.Editor.Controls;
+using AgbStudio.Editor.Shell;
+using AgbStudio.Editor.Tests.Shot;
+using AgbStudio.Editor.Tests.Support;
+using AgbStudio.Editor.Tests.Windows.Settings;
+using AgbStudio.Editor.Windows.Menus;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.VisualTree;
+
+namespace AgbStudio.Editor.Tests.Windows.Menus;
+
+/// <summary>P11.63: About (T-D11) and Keyboard Shortcuts (T-D10) from the Help menu.</summary>
+public sealed class AboutTests : IDisposable
+{
+    readonly Fixture _fx = new();
+    readonly List<string> _opened = [];
+    MainWindow? _win;
+
+    public void Dispose()
+    {
+        _win?.Close();
+        _fx.Dispose();
+    }
+
+    MainWindow Shell(EditorConfig config)
+    {
+        _fx.Services.Set(new EditorLinks { Config = config, Open = _opened.Add, Fetch = (_, _) => throw new InvalidOperationException("no network in tests") });
+        _win = new MainWindow(_fx.Services) { Width = 1440, Height = 900 };
+        _win.Show();
+        Capture.Pump();
+        return _win;
+    }
+
+    [AvaloniaFact]
+    public void HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite()
+    {
+        var win = Shell(new EditorConfig { WebsiteUrl = "https://agb.example/studio" });
+        _fx.Services.Commands.Execute("help.about");
+        Capture.Pump();
+        var about = Assert.IsType<AboutDialog>(win.Overlays.Open.Single());
+        Assert.Equal(("T-D11", "help.about"), _fx.Services.Windows.Requests[^1]);
+        Assert.Equal((460, 304), ((int)about.Bounds.Width, (int)about.Bounds.Height));
+        Assert.Equal("0.1.0", About.Version);
+        Assert.Equal($"Version 0.1.0 · {About.BuildDate:yyyy-MM-dd}", about.VersionLine);
+        var texts = about.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+        Assert.Contains("AGB Studio", texts);
+        Assert.Contains(AboutDialog.Credits, texts);
+        Assert.Contains("About AGB Studio", about.GetVisualDescendants().OfType<DialogHeader>().Select(h => h.Title));
+
+        win.Click(about.LicensesButton);
+        var notices = Assert.Single(_opened);
+        Assert.EndsWith("THIRD_PARTY.md", notices);
+        var components = About.LicensedComponents(notices);
+        foreach (var c in new[] { "mGBA libretro core", "libtonc (Tonc library)", "maxmod (libmm)", "Roslyn (Microsoft.CodeAnalysis)", "Avalonia", "Inter", "Noto Sans Thai" })
+            Assert.Contains(c, components);
+
+        Assert.True(about.WebsiteButton.IsEnabled);
+        win.Click(about.WebsiteButton);
+        Assert.Equal("https://agb.example/studio", _opened[^1]);
+        win.Click(about.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Assert.False(win.Overlays.IsOpen);
+    }
+
+    [AvaloniaFact]
+    public void Website_IsDisabledWhenNoUrlIsConfigured()
+    {
+        var win = Shell(new EditorConfig());
+        _fx.Services.Commands.Execute("help.about");
+        Capture.Pump();
+        var about = Assert.IsType<AboutDialog>(win.Overlays.Open.Single());
+        Assert.False(about.WebsiteButton.IsEnabled);
+    }
+
+    [AvaloniaFact]
+    public void EditorJson_IsReadWithItsD13Keys()
+    {
+        var path = Path.Combine(_fx.Folder, "editor.json");
+        File.WriteAllText(path, """{ "bugUrl": "https://bugs.example/new", "updateFeed": "https://feed.example/latest.json", "websiteUrl": "https://agb.example" }""");
+        var c = EditorConfig.Load(path);
+        Assert.Equal(("https://bugs.example/new", "https://feed.example/latest.json", "https://agb.example"), (c.BugUrl, c.UpdateFeed, c.WebsiteUrl));
+        Assert.Equal("", EditorConfig.Load(Path.Combine(_fx.Folder, "missing.json")).BugUrl);
+    }
+
+    [AvaloniaFact]
+    public void KeyboardShortcuts_GroupsAndSearch()
+    {
+        var win = Shell(new EditorConfig());
+        win.Key(PhysicalKey.Slash, RawInputModifiers.Control);
+        var dlg = Assert.IsType<KeyboardShortcutsDialog>(win.Overlays.Open.Single());
+        var groups = dlg.Find<Grid>("ShortcutColumns").Children.OfType<StackPanel>().Select(s => s.Children.OfType<TextBlock>().First().Text).ToList();
+        Assert.Equal(["GENERAL", "SCENE"], groups);
+        dlg.Search.Text = "Ctrl+B";
+        Capture.Pump();
+        Assert.Equal(["Build ROM"], dlg.VisibleLabels);
+    }
+}
