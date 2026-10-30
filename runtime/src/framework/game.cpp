@@ -44,12 +44,12 @@ struct SceneState {
 };
 SceneState g_scene;
 void publishGameInfo();
-bool g_handoverChecked = false;
+[[maybe_unused]] bool g_handoverChecked = false;
 
 // Hot reload (D-15): the editor writes the hand-over block shortly after the reloaded ROM starts. During its
 // first second a Debug build looks for it between scene loads and continues where the previous build was:
 // game state restored, then the saved scene loaded with the player at the saved position.
-void applyHandover();
+[[maybe_unused]] void applyHandover();
 
 const char* const kLoadSteps[] = {"fade out", "free and reset", "tiles to VRAM", "map and palette", "spawn actors", "OnLoad script", "fade in"};
 
@@ -237,7 +237,7 @@ void beginLoad(Screen* s) {
 }  // namespace
 
 namespace {
-void applyHandover() {
+[[maybe_unused]] void applyHandover() {
 #if defined(AGB_DEBUG)
     if (system::frame() > 60) {
         g_handoverChecked = true;
