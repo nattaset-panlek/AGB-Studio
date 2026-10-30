@@ -146,6 +146,9 @@ public sealed unsafe class LibretroCore : IDisposable
     }
 
     public Span<byte> SaveRam => MemorySpan(0);
+    /// <summary>EWRAM through the core's system RAM pointer; usable right after LoadRom, before the first frame
+    /// (the memory map that Memory() uses is published by the core on its first frame).</summary>
+    public Span<byte> SystemRam => MemorySpan(2);
 
     Span<byte> MemorySpan(uint id)
     {

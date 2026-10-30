@@ -27,12 +27,32 @@ struct Channel {
     const void* profiler;      // 48 agb::profile::Stats
     void* debugger;            // 52 agb::dbg::State (breakpoints, pause)
     const void* symbols;       // 56 generated watch symbols
-    u32 reserved;              // 60
+    const void* game;          // 60 agb::debug::GameInfo (hot reload reads the running game's state)
     char log[kLogSize];        // 64
 };
 static_assert(__builtin_offsetof(Channel, log) == 64, "debug channel layout is shared with the host");
 
 Channel& channel();
+
+// What hot reload needs from the running game (D-15).
+struct GameInfo {
+    u16 scene;
+    s16 playerX, playerY;
+    u16 stateSize;
+    const void* state;
+};
+
+// Hand-over block written by the editor into the last 4 KB of EWRAM before a reloaded ROM's first frame.
+// crt0 does not clear this area; the runtime reads it once at boot in Debug builds.
+constexpr u32 kHandoverAddress = 0x0203F000;
+constexpr u32 kHandoverMagic = 0x544F4841;  // "AHOT"
+struct Handover {
+    u32 magic;
+    u16 scene;
+    s16 playerX, playerY;
+    u16 stateSize;
+    u8 state[4080];
+};
 
 void init();
 #if defined(AGB_RELEASE) && !defined(AGB_KEEP_LOGS)

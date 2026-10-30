@@ -43,6 +43,13 @@ struct SceneState {
     bool loaded = false;
 };
 SceneState g_scene;
+void publishGameInfo();
+bool g_handoverChecked = false;
+
+// Hot reload (D-15): the editor writes the hand-over block shortly after the reloaded ROM starts. During its
+// first second a Debug build looks for it between scene loads and continues where the previous build was:
+// game state restored, then the saved scene loaded with the player at the saved position.
+void applyHandover();
 
 const char* const kLoadSteps[] = {"fade out", "free and reset", "tiles to VRAM", "map and palette", "spawn actors", "OnLoad script", "fade in"};
 
@@ -174,6 +181,7 @@ public:
         render::sprites::build();
         render::palettes::update();
         actors::publishDebug();
+        publishGameInfo();
     }
 
     void exit() override {
@@ -201,6 +209,23 @@ private:
 AGB_EWRAM_BSS u8 g_sceneScreenStorage[sizeof(SceneScreen)] AGB_ALIGN4;
 SceneScreen* g_sceneScreen = nullptr;
 
+debug::GameInfo g_info;
+
+void publishGameInfo() {
+    g_info.scene = g_scene.index;
+    g_info.stateSize = g_def ? g_def->stateSize : 0;
+    g_info.state = g_def ? g_def->state : nullptr;
+    Actor* player = nullptr;
+    actors::forEach([&](Actor& a) {
+        if (!player && a.kind == ActorKind::Player) player = &a;
+    });
+    if (player) {
+        g_info.playerX = static_cast<s16>(player->pos.x.floor());
+        g_info.playerY = static_cast<s16>(player->pos.y.floor());
+    }
+    debug::channel().game = &g_info;
+}
+
 // Staged load driver for the top screen.
 int g_loadStep = -1;
 u32 g_stepCycles[8];
@@ -208,6 +233,24 @@ u32 g_stepCycles[8];
 void beginLoad(Screen* s) {
     AGB_UNUSED(s);
     g_loadStep = 0;
+}
+}  // namespace
+
+namespace {
+void applyHandover() {
+#if defined(AGB_DEBUG)
+    if (system::frame() > 60) {
+        g_handoverChecked = true;
+        return;
+    }
+    auto* h = reinterpret_cast<debug::Handover*>(debug::kHandoverAddress);
+    if (h->magic != debug::kHandoverMagic || !g_def) return;
+    h->magic = 0;
+    g_handoverChecked = true;
+    if (g_def->state && h->stateSize == g_def->stateSize) __builtin_memcpy(g_def->state, h->state, g_def->stateSize);
+    if (h->scene < g_def->sceneCount) game::loadScene(h->scene, h->playerX, h->playerY, render::effects::Transition::Cut, 1);
+    debug::logf("Hot reload: continued in %s", h->scene < g_def->sceneCount ? g_def->scenes[h->scene]->name : "?");
+#endif
 }
 }  // namespace
 
@@ -230,6 +273,7 @@ void boot(const GameDef& def) {
         g_scene.def = def.scenes[def.startScene];
         g_scene.index = def.startScene;
         g_scene.spawnX = g_scene.spawnY = -1;
+
         g_scene.transition = render::effects::Transition::Fade;
         g_scene.transitionFrames = 15;
         push(g_sceneScreen);
@@ -237,6 +281,9 @@ void boot(const GameDef& def) {
 }
 
 void frame() {
+#if defined(AGB_DEBUG)
+    if (!g_handoverChecked && g_loadStep < 0 && !g_scene.changePending) applyHandover();
+#endif
     const u32 overruns = profile::stats().overruns;
     const int stepBefore = g_loadStep;
     input::update();

@@ -10,7 +10,7 @@ public sealed class DebugChannel
     // Field offsets in agb::debug::Channel
     public const uint OffVersion = 8, OffStatus = 12, OffFrame = 16, OffLogHead = 20, OffLogSize = 24,
         OffHostCommand = 28, OffHostArg = 32, OffActorTable = 36, OffActorCount = 40, OffActorStride = 44,
-        OffProfiler = 48, OffDebugger = 52, OffSymbols = 56, OffLog = 64;
+        OffProfiler = 48, OffDebugger = 52, OffSymbols = 56, OffGame = 60, OffLog = 64;
 
     readonly LibretroCore _core;
     uint _logRead;
@@ -25,6 +25,7 @@ public sealed class DebugChannel
     public uint Profiler => _core.ReadU32(Address + OffProfiler);
     public uint Debugger => _core.ReadU32(Address + OffDebugger);
     public uint Symbols => _core.ReadU32(Address + OffSymbols);
+    public uint Game => _core.ReadU32(Address + OffGame);
 
     DebugChannel(LibretroCore core, uint address)
     {
