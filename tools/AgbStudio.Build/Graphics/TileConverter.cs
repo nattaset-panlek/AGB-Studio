@@ -92,6 +92,20 @@ public sealed class TileSet4
         return (index, false, false);
     }
 
+    /// <summary>Adds a tile without deduplication (animated tiles must own their VRAM slot).</summary>
+    public int AddUnique(byte[] pixels)
+    {
+        _tiles.Add(pixels);
+        return _tiles.Count - 1;
+    }
+
+    public static byte[] Pack(byte[] pixels)
+    {
+        var o = new byte[32];
+        for (var i = 0; i < 32; i++) o[i] = (byte)(pixels[i * 2] | (pixels[i * 2 + 1] << 4));
+        return o;
+    }
+
     static string Key(byte[] p) => Convert.ToHexString(p);
 
     public static byte[] Flip(byte[] p, bool h, bool v)

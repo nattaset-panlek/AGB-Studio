@@ -1,7 +1,7 @@
 // Built-in natives of the Event Script VM (blueprint 07): the cutscene API of the C# scripts (Say, Choice,
-// Move, LockAll, ...) and the Dialogue Editor commands. The dialogue box, inventory and other game parts
-// plug in through hooks; without hooks the natives log what they would do and do not wait, so scripts
-// also run in tests and in games without a dialogue box.
+// Move, LockAll, ...) and the Dialogue Editor commands. Say, Choice and Text.Show use the agb::text dialogue
+// box unless a hook replaces it; when the game has no string tables they log what they would show and do
+// not wait, so scripts also run in tests. Inventory (GiveItem) and actor freezing (LockAll) use hooks.
 #pragma once
 #include "agb/fixed.hpp"
 #include "agb/script.hpp"

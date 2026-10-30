@@ -23,6 +23,7 @@ u16 g_tilesInBlock[4];  // next free tile per char block (tile units of 32 bytes
 struct LoadedTileset {
     const data::Tileset* tileset;
     TilesetPlacement placement;
+    u16 animTick;
 };
 LoadedTileset g_loaded[8];
 int g_loadedCount = 0;
@@ -164,8 +165,24 @@ TilesetPlacement loadTileset(const data::Tileset* ts) {
     if (!p.valid()) return p;
     const int bank = ts->palette ? palettes::acquire(ts->palette, false) : 0;
     p.paletteBank = static_cast<u8>(bank < 0 ? 0 : bank);
-    if (g_loadedCount < 8) g_loaded[g_loadedCount++] = {ts, p};
+    if (g_loadedCount < 8) g_loaded[g_loadedCount++] = {ts, p, 0};
     return p;
+}
+
+void animateTiles() {
+    for (int i = 0; i < g_loadedCount; ++i) {
+        LoadedTileset& l = g_loaded[i];
+        const data::Tileset* ts = l.tileset;
+        if (!ts->animCount) continue;
+        ++l.animTick;
+        for (int a = 0; a < ts->animCount; ++a) {
+            const data::TileAnim& an = ts->anims[a];
+            if (!an.ticksPerFrame || l.animTick % an.ticksPerFrame) continue;
+            const u32 frame = (l.animTick / an.ticksPerFrame) % an.frameCount;
+            u8* dst = reinterpret_cast<u8*>(commit::bgTiles(l.placement.charBlock)) + (static_cast<u32>(l.placement.firstTile) + an.baseTile) * 32;
+            commit::queueCopy(dst, static_cast<const u8*>(an.frameTiles) + frame * 4 * 32, 4 * 32);
+        }
+    }
 }
 
 int allocScreenBlocks(Size size) {

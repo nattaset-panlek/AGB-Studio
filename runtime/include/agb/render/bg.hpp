@@ -50,6 +50,9 @@ TilesetPlacement reserveTiles(u16 tiles, bool bpp8 = false);
 int allocScreenBlocks(Size size);
 int allocAffineScreenBlocks(AffineSize size);
 
+// Advances animated tiles of every loaded tileset (called once per frame by the scene).
+void animateTiles();
+
 // Budget figures for Budget Details / Build Report (bytes and counts).
 u32 tileBytesUsed();
 int screenBlocksUsed();

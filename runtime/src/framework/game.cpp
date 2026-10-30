@@ -169,6 +169,7 @@ public:
             g_scene.views[i].setCamera(cx, cy);
             g_scene.views[i].commit();
         }
+        render::bg::animateTiles();
         actors::syncSprites(cx, cy);
         render::sprites::build();
         render::palettes::update();

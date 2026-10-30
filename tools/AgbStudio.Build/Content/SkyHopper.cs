@@ -92,7 +92,9 @@ public static class SkyHopper
             Tiles = { [1] = new TileProperties { Name = "rock", Collision = CollisionType.Solid }, [2] = new TileProperties { Name = "ledge", Collision = CollisionType.OneWay },
                 [3] = new TileProperties { Name = "lava", Collision = CollisionType.Hazard }, [4] = new TileProperties { Name = "pool", Collision = CollisionType.Water } },
         });
-        SkyHills().Save(Path.Combine(tiles, "sky_bg.png"));
+        var images = Path.Combine(p.AssetsDir, "images");
+        SkyHills().Save(Path.Combine(images, "sky_bg.png"));
+        Hills().Save(Path.Combine(images, "hills_bg.png"));
     }
 
     static Canvas Creature(uint body, uint accent, int size, int frames)
@@ -141,17 +143,27 @@ public static class SkyHopper
         return c;
     }
 
+    // Sky with clouds, 256x256 so it wraps as a 32x32 background.
     static Canvas SkyHills()
     {
-        var c = new Canvas(256, 64);
-        c.Rect(0, 0, 256, 64, PixelArt.Sky);
+        var c = new Canvas(256, 256);
+        for (var y = 0; y < 256; y++) c.Rect(0, y, 256, 1, y < 128 ? PixelArt.Sky : Canvas.Rgb(150, 205, 250));
+        c.Blit(PixelArt.Cloud(), 30, 30);
+        c.Blit(PixelArt.Cloud(), 150, 18);
+        c.Blit(PixelArt.Cloud(), 200, 70);
+        return c;
+    }
+
+    // Rolling hills along the bottom, transparent above.
+    static Canvas Hills()
+    {
+        var c = new Canvas(256, 256);
         for (var x = 0; x < 256; x++)
         {
-            var h = (int)(18 + 10 * Math.Sin(x / 22.0) + 5 * Math.Sin(x / 9.0));
-            c.Rect(x, 64 - h, 1, h, PixelArt.GrassDark);
+            var h = (int)(60 + 22 * Math.Sin(x / 22.0) + 9 * Math.Sin(x / 9.0));
+            c.Rect(x, 256 - h, 1, h, PixelArt.GrassDark);
+            c.Rect(x, 256 - h, 1, 2, PixelArt.Grass);
         }
-        c.Blit(PixelArt.Cloud(), 30, 10);
-        c.Blit(PixelArt.Cloud(), 150, 6);
         return c;
     }
 
@@ -178,8 +190,8 @@ public static class SkyHopper
     static void WriteMaps(GameProject p)
     {
         var forest = Level("Forest_01", 30, 20, "forest_tiles", 1);
-        forest.Layers.Insert(0, new MapLayerData { Name = "Hills", Bg = 1, Priority = 2, ParallaxX = 0.5, ParallaxY = 0.5, Wrap = true, Cells = Enumerable.Repeat(0, 30 * 20).ToList() });
-        forest.Layers.Insert(0, new MapLayerData { Name = "Sky", Bg = 0, Priority = 3, ParallaxX = 0.2, ParallaxY = 0.2, Wrap = true, Cells = Enumerable.Repeat(0, 30 * 20).ToList() });
+        forest.Layers.Insert(0, new MapLayerData { Name = "Hills", Bg = 1, Type = LayerType.Image, Image = "hills_bg", Priority = 2, ParallaxX = 0.5, ParallaxY = 0.5, Wrap = true });
+        forest.Layers.Insert(0, new MapLayerData { Name = "Sky", Bg = 0, Type = LayerType.Image, Image = "sky_bg", Priority = 3, ParallaxX = 0.2, ParallaxY = 0.2, Wrap = true });
         forest.CollisionLayer = 2;
         GameProject.Save(Path.Combine(p.MapsDir, "Forest_01.map"), forest);
         GameProject.Save(Path.Combine(p.MapsDir, "Forest_02.map"), Level("Forest_02", 32, 20, "forest_tiles", 2));

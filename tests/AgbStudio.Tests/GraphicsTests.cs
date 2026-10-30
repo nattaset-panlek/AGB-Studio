@@ -167,3 +167,26 @@ public sealed class GraphicsTests
         Assert.Equal(px, png.Pixels);
     }
 }
+
+public sealed class AutoTileTests
+{
+    [Fact]
+    public void GrassEdgesResolveFromNeighbours()
+    {
+        var set = AgbStudio.Build.Content.SampleProjects.ForestTilesetMeta().AutoTiles[0];
+        const int w = 6, h = 4;
+        var cells = new int[w * h].ToList();
+        // Paint a 4x2 block of ground in the middle.
+        for (var y = 2; y < 4; y++)
+            for (var x = 1; x < 5; x++) AutoTile.Paint(cells, w, h, x, y, set);
+        int At(int x, int y) => cells[y * w + x];
+        Assert.Equal(AgbStudio.Build.Content.PixelArt.TGrassLeft, At(1, 2));   // top-left corner: nothing above, nothing left
+        Assert.Equal(AgbStudio.Build.Content.PixelArt.TGrassTop, At(2, 2));    // top edge
+        Assert.Equal(AgbStudio.Build.Content.PixelArt.TGrassRight, At(4, 2));  // top-right
+        Assert.Equal(AgbStudio.Build.Content.PixelArt.TDirt, At(2, 3));        // inner (below the map edge counts as ground)
+        Assert.Equal(0, At(0, 2));
+        // Erasing the top-middle cell turns the cell below into a top edge.
+        AutoTile.Erase(cells, w, h, 2, 2, set);
+        Assert.Equal(AgbStudio.Build.Content.PixelArt.TGrassTop, At(2, 3));
+    }
+}

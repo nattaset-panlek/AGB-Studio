@@ -217,3 +217,53 @@ public sealed class TextPipelineTests(EmulatorFixture emu)
         Assert.True(firstLine is "ต้องรีบตามหา" or "ต้องรีบตามหาก่อน" or "ต้องรีบ", $"first line '{firstLine}'");
     }
 }
+
+[Collection("emulator")]
+public sealed class LayerFeatureTests(EmulatorFixture emu)
+{
+    [Fact]
+    public void ImageLayerAndAnimatedTilesShowInTheRom()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "mini_layers"));
+        // Sky image layer behind the ground.
+        var sky = new Canvas(256, 256);
+        sky.Rect(0, 0, 256, 256, Canvas.Rgb(120, 190, 250));
+        sky.Rect(0, 0, 256, 8, Canvas.Rgb(250, 250, 245));
+        sky.Save(Path.Combine(p.AssetsDir, "images", "sky.png"));
+        var mapPath = Path.Combine(p.MapsDir, "Forest_01.map");
+        var map = GameProject.Load<MapFile>(mapPath);
+        map.Layers.Insert(0, new MapLayerData { Name = "Sky", Bg = 0, Type = LayerType.Image, Image = "sky", Priority = 3, ParallaxX = 0.2, ParallaxY = 0.2, Wrap = true });
+        map.CollisionLayer = 1;
+        // Water tiles that alternate with dirt every 8 frames.
+        for (var x = 2; x < 6; x++) map.Layers[1].Cells[8 * map.Width + x] = PixelArt.TWater;
+        GameProject.Save(mapPath, map);
+        var tsPath = Path.Combine(p.AssetsDir, "tilesets", "forest_tiles.png");
+        var meta = p.LoadMeta<TilesetMeta>(tsPath);
+        meta.Tiles[PixelArt.TWater].Animation = [PixelArt.TWater, PixelArt.TDirt];
+        meta.Tiles[PixelArt.TWater].AnimationTicks = 8;
+        GameProject.Save(GameProject.MetaPath(tsPath), meta);
+        var r = new GameBuilder(p, new Toolchain()).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+
+        var core = emu.Core;
+        core.LoadRom(r.RomPath);
+        for (var i = 0; i < 40; i++) core.RunFrame();
+        var a = (uint[])core.Frame.Clone();
+        var changed = false;
+        for (var i = 0; i < 9 && !changed; i++)
+        {
+            core.RunFrame();
+            // Water cell at metatile (3, 8) -> screen pixel (3 * 16 + 8, 8 * 16 + 8).
+            changed = core.Frame[(8 * 16 + 8) * 240 + 3 * 16 + 8] != a[(8 * 16 + 8) * 240 + 3 * 16 + 8];
+        }
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "layers.png"), core.Frame, 240, 160);
+        core.UnloadRom();
+        Assert.True(changed, "the animated water tile did not change on screen");
+        // Sky colour at the top of the screen (white stripe at y < 8 scrolls with parallax 0.2 from camera y 0).
+        var top = a[2 * 240 + 100];
+        Assert.Equal(0xFFu, top >> 24);
+        Assert.True(((top >> 16) & 0xFF) > 200 && (top & 0xFF) > 200, $"top pixel {top:X8}");
+        var skyPixel = a[40 * 240 + 100];
+        Assert.True((skyPixel & 0xFF) > 200 && ((skyPixel >> 16) & 0xFF) < 160, $"sky pixel {skyPixel:X8}");
+    }
+}

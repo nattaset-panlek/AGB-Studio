@@ -35,11 +35,14 @@ struct Metatile {
     u16 se[4];  // top-left, top-right, bottom-left, bottom-right
 };
 
+// Animated editor tile (Tilemap Editor tile property "Animation"): the base metatile owns 4 unique tiles at
+// `baseTile`; every `ticksPerFrame` frames the next frame's 4 tiles (uncompressed, in `frameTiles`) are copied
+// over them, so every copy of the tile on the map animates together.
 struct TileAnim {
-    u16 metatile;        // metatile whose tiles animate
+    u16 baseTile;          // first of the 4 tiles, relative to the tileset
     u8 frameCount;
     u8 ticksPerFrame;
-    const u16* frames;   // per frame: first hardware tile of the 4 replacement tiles in `gfx`
+    const void* frameTiles;  // frameCount * 4 tiles of 4bpp (32 bytes each)
 };
 
 struct Tileset {

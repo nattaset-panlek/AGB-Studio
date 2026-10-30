@@ -12,6 +12,7 @@ public sealed class ConvertedTileset
     public List<byte> Tags { get; } = new();
     public List<ImportProblem> Problems { get; } = new();
     public int MetatileColumns { get; init; }
+    public List<(int BaseTile, byte[] FrameTiles, int Frames, int Ticks)> Anims { get; } = new();
 }
 
 /// <summary>Converts a tileset image (16x16 editor tiles) or an image layer (8x8 tiles) to tiles, palettes and
@@ -80,6 +81,34 @@ public static class TilesetConverter
             }
             result.Metatiles.Add(se);
             var props = meta.Tiles.GetValueOrDefault(m);
+            if (props?.Animation is { Count: > 1 } frames)
+            {
+                // Four unique tiles for the base, then each frame's tiles converted with the base tile's bank.
+                byte[] TilePixels(int metatile, int q, int bank)
+                {
+                    var (ox, oy) = tileOrigins[metatile * 4 + q];
+                    var px = new byte[64];
+                    for (var y = 0; y < 8; y++)
+                        for (var x = 0; x < 8; x++)
+                        {
+                            var i = (oy + y) * img.Width + ox + x;
+                            px[y * 8 + x] = img.Transparent[i] ? (byte)0 : banks.IndexOf(bank, img.Colors[i]);
+                        }
+                    return px;
+                }
+                var baseTile = -1;
+                for (var q = 0; q < 4; q++)
+                {
+                    var bank = se[q] >> 12;
+                    var t = tiles.AddUnique(TilePixels(m, q, bank));
+                    if (q == 0) baseTile = t;
+                    se[q] = (ushort)(t | (bank << 12));
+                }
+                var data = new List<byte>();
+                foreach (var f in frames.Where(f => f >= 0 && f < mcols * mrows))
+                    for (var q = 0; q < 4; q++) data.AddRange(TileSet4.Pack(TilePixels(f, q, se[q] >> 12)));
+                result.Anims.Add((baseTile, data.ToArray(), data.Count / 128, Math.Max(1, props.AnimationTicks)));
+            }
             result.Collision.Add(props?.Collision ?? CollisionType.None);
             var tag = props == null || props.Tag == "" ? 0 : tagNames.ToList().IndexOf(props.Tag) + 1;
             result.Tags.Add((byte)Math.Max(0, tag));
