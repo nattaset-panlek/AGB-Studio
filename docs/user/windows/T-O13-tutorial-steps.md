@@ -32,6 +32,7 @@ stays open when the page changes, for example when the project opens or Play Mod
 
 ## Related
 
+- [Tutorials: the steps of each tutorial](../tutorials/README.md)
 - [Launcher · Learn](T-P21-launcher-learn.md)
 - [Launcher](T-P12-launcher.md)
 - [Scene Editor](T-P01-scene-editor.md)
