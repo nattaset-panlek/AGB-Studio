@@ -174,25 +174,39 @@ public sealed class FakeCartridge(string name = "GBxCart RW · USB (COM4)") : IC
     public string Name { get; } = name;
     public CartridgeStatus Status { get; set; } = new(true, "Cartridge detected · SKYH", "Current game: SKYHOPPER rev 2", "SKYHOPPER", FlashMegabytes: 32);
     public byte[]? Save { get; set; } = [1, 2, 3, 4];
-    public byte[] Flash { get; private set; } = [];
+    /// <summary>What the cartridge holds (a game with a header: the device reports its title, as GBxCart RW does).</summary>
+    public byte[] Flash { get; set; } = [];
     public bool CorruptOnWrite { get; set; }
+    /// <summary>Writes stopped by Cancel; the flash keeps what it held.</summary>
+    public int CancelledWrites { get; private set; }
     /// <summary>When set, writing stops after this many bytes until <see cref="Gate"/> completes.</summary>
     public long PauseAt { get; set; } = -1;
     public TaskCompletionSource Gate { get; } = new();
 
-    public Task<CartridgeStatus> DetectAsync(CancellationToken ct) => Task.FromResult(Status);
+    public Task<CartridgeStatus> DetectAsync(CancellationToken ct) => Task.FromResult(
+        Flash.Length >= 0xC0 && Flash[0xB2] == 0x96 && System.Text.Encoding.ASCII.GetString(Flash, 0xA0, 12).TrimEnd('\0', ' ') is var title
+            ? Status with { Detail = $"Current game: {title} rev {Flash[0xBC]}", CurrentTitle = title }
+            : Status);
     public Task<byte[]?> ReadSaveAsync(string romName, IProgress<long> progress, CancellationToken ct) => Task.FromResult(Save);
 
     public async Task WriteRomAsync(string romName, byte[] rom, IProgress<long> progress, CancellationToken ct)
     {
         var data = new byte[rom.Length];
-        for (var o = 0; o < rom.Length; o += 16 * 1024)
+        try
         {
-            ct.ThrowIfCancellationRequested();
-            var n = Math.Min(16 * 1024, rom.Length - o);
-            Array.Copy(rom, o, data, o, n);
-            progress.Report(o + n);
-            if (PauseAt >= 0 && o + n >= PauseAt && !Gate.Task.IsCompleted) await Gate.Task.WaitAsync(ct);
+            for (var o = 0; o < rom.Length; o += 16 * 1024)
+            {
+                ct.ThrowIfCancellationRequested();
+                var n = Math.Min(16 * 1024, rom.Length - o);
+                Array.Copy(rom, o, data, o, n);
+                progress.Report(o + n);
+                if (PauseAt >= 0 && o + n >= PauseAt && !Gate.Task.IsCompleted) await Gate.Task.WaitAsync(ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            CancelledWrites++;
+            throw;
         }
         if (CorruptOnWrite && data.Length > 0) data[0] ^= 0xFF;
         Flash = data;

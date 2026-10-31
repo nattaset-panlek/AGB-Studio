@@ -116,17 +116,26 @@ public sealed class SdCardFlashCart(string root) : ICartridgeDevice
     {
         var target = Path.Combine(Root, romName);
         var temp = target + ".part";
-        var fs = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16, true);
-        await using (fs.ConfigureAwait(false))
+        try
         {
-            for (var o = 0; o < rom.Length; o += 32 * 1024)
+            var fs = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16, true);
+            await using (fs.ConfigureAwait(false))
             {
-                ct.ThrowIfCancellationRequested();
-                var n = Math.Min(32 * 1024, rom.Length - o);
-                await fs.WriteAsync(rom.AsMemory(o, n), ct).ConfigureAwait(false);
-                progress.Report(o + n);
+                for (var o = 0; o < rom.Length; o += 32 * 1024)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var n = Math.Min(32 * 1024, rom.Length - o);
+                    await fs.WriteAsync(rom.AsMemory(o, n), ct).ConfigureAwait(false);
+                    progress.Report(o + n);
+                }
+                await fs.FlushAsync(ct).ConfigureAwait(false);
             }
-            await fs.FlushAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is OperationCanceledException or IOException or UnauthorizedAccessException)
+        {
+            // G-ERR.04: a cancelled or failed copy leaves no half-written .part file; the game on the card stays as it was
+            try { File.Delete(temp); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            throw;
         }
         File.Move(temp, target, true);
     }

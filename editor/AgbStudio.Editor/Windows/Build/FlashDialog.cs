@@ -38,6 +38,8 @@ public sealed class FlashDialog : FigmaDialog
     public string ProgressText => _progressText.Text ?? "";
     public string StageText => _stage.Text ?? "";
     public string InfoTitle => _infoTitle.Text ?? "";
+    public string InfoDetail => _infoDetail.Text ?? "";
+    public string Hint => _footer.Hint ?? "";
     public Task Detection { get; private set; } = Task.CompletedTask;
 
     public FlashDialog(WindowContext ctx) : this(ctx.Services) { }
@@ -77,15 +79,20 @@ public sealed class FlashDialog : FigmaDialog
         progress.Children.AddRange([_stage, _bar, _progressText]);
         var content = UI.Column(14, Device, infoBox, UI.Column(15, Backup, Verify), progress);
         content.Margin = new Thickness(20, 20, 20, 16);
-        _footer = new DialogFooter { CancelText = "Cancel", ConfirmText = "Flash", Hint = "Keep the cartridge connected until it finishes." };
+        _footer = new DialogFooter { CancelText = "Cancel", ConfirmText = "Flash", Hint = KeepConnected };
+        // Cancel while it flashes stops the flash and the dialog stays open to say so (G-ERR.04); otherwise it closes
         _footer.Cancel += (_, _) => { if (_cts != null) _cts.Cancel(); else Close(null); };
         _footer.Confirm += (_, _) => _ = FlashAsync();
         _footer.TemplateApplied += (_, e) => { _confirm = e.NameScope.Find<AgbButton>("PART_Confirm"); UpdateButtons(); };
         Build("Flash to Cartridge", "chip", content, _footer, 560);
+        // closing the dialog (X, Esc) while it flashes stops the flash too, as closing Build ROM stops a build
+        DetachedFromVisualTree += (_, _) => _cts?.Cancel();
         SetProgress("Writing", 0, RomBytes);
         if (Devices.Count > 0) SelectDevice(Devices[0]);
         else ShowStatus(new CartridgeStatus(false, "No device found", "Connect a GBxCart RW or insert a flash cart's SD card"));
     }
+
+    const string KeepConnected = "Keep the cartridge connected until it finishes.";
 
     long RomBytes => RomPath != null && File.Exists(RomPath) ? new FileInfo(RomPath).Length : 0;
 
@@ -161,6 +168,7 @@ public sealed class FlashDialog : FigmaDialog
         if (_cts != null || Selected is not { } d || RomPath is null || !File.Exists(RomPath) || Status?.Detected != true) return false;
         _cts = new CancellationTokenSource();
         UpdateButtons();
+        _footer.Hint = KeepConnected;
         var rom = await File.ReadAllBytesAsync(RomPath);
         var name = Path.GetFileName(RomPath);
         try
@@ -173,8 +181,15 @@ public sealed class FlashDialog : FigmaDialog
                 {
                     var dir = Path.Combine(p.BuildDir, "save-backups");
                     Directory.CreateDirectory(dir);
-                    BackupPath = Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(name)}-{DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)}.sav");
-                    await File.WriteAllBytesAsync(BackupPath, save, _cts.Token);
+                    var backup = Path.Combine(dir, $"{Path.GetFileNameWithoutExtension(name)}-{DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture)}.sav");
+                    try { await File.WriteAllBytesAsync(backup, save, _cts.Token); }
+                    catch (OperationCanceledException)
+                    {
+                        // no half-written backup is left behind
+                        try { File.Delete(backup); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                        throw;
+                    }
+                    BackupPath = backup;
                 }
             }
             SetProgress("Writing", 0, rom.Length);
@@ -196,7 +211,19 @@ public sealed class FlashDialog : FigmaDialog
         }
         catch (OperationCanceledException)
         {
-            _s.Toasts.Show("Flashing cancelled. Flash again before playing the cartridge.", ToastStatus.Error);
+            // G-ERR.04: the dialog says where it stopped and asks the device again what the cartridge holds now
+            var at = ProgressText;
+            var stage = _stage.Text;
+            _stage.Text = "Cancelled";
+            _footer.Hint = stage switch
+            {
+                "Backing up" => "Cancelled before writing: the cartridge was not changed.",
+                "Verifying" => "Cancelled while verifying: the ROM is written but not checked. Flash again to check it.",
+                _ => $"Flashing cancelled at {at}. Flash again before playing the cartridge.",
+            };
+            _s.Toasts.Show(stage == "Backing up" ? "Flashing cancelled. The cartridge was not changed." : "Flashing cancelled. Flash again before playing the cartridge.",
+                stage == "Backing up" ? ToastStatus.Success : ToastStatus.Error);
+            if (Selected is { } dev) SelectDevice(dev);
             return false;
         }
         catch (Exception e) when (e is IOException or NotSupportedException or UnauthorizedAccessException)

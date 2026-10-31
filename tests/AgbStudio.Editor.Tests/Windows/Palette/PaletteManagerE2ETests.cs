@@ -131,7 +131,8 @@ public class PaletteManagerE2ETests : ArtWindowHarness
         var dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
         Assert.Equal("Palette", Assert.Single(dlg.Items).Detected);
         Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
-        Capture.Pump();
+        // Import Asset converts off the UI thread, then the page loads the palette
+        AgbStudio.Editor.Tests.Windows.Build.GroupFixture.PumpUntil(() => !Win.Overlays.IsOpen && page.Bank?.Colors.Count == 4, 30_000);
         Assert.True(File.Exists(Path.Combine(Fx.Services.Project.Current!.PalettesDir, "warm.gpl")));
         var bank = page.Bank!;
         Assert.Equal(4, bank.Colors.Count);

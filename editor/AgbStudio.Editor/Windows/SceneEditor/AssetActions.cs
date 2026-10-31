@@ -85,6 +85,9 @@ public sealed class AssetActions
 
     public int Count(AssetCategory c) => Files(c).Count;
 
+    /// <summary>Files were added to the project outside these actions (Import Asset): the Assets panel lists them again.</summary>
+    public void FilesChanged() => Changed?.Invoke();
+
     public IReadOnlyList<AssetItem> List(AssetCategory c) => Files(c).Select(f => Item(f, c)).ToList();
 
     public AssetItem? Find(string path)

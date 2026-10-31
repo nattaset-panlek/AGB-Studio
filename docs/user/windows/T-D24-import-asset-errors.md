@@ -26,7 +26,8 @@ supported) and gives fixes you can click straight away.
   - **How to convert**: explains how to turn the file into `.wav` (sound effect, 11 kHz mono) or `.xm` / `.mod`
     (music) with another program.
 - **Footer**: the hint "Files with errors are skipped." and **Import N files**, which converts only the ready files and
-  shows "Imported N files". **Cancel** closes without importing.
+  shows "Imported N files". **Cancel** closes without importing; while the files are being converted it stops the
+  import and leaves the project as it was, as in [Import Asset](T-D04-import-asset.md).
 
 ## Related
 

@@ -229,7 +229,8 @@ public class SpriteEditorE2ETests : ArtWindowHarness
         Assert.True(item.IsReady, item.Error ?? item.Warning);
         Assert.Equal((16, 16, "hero"), (item.FrameWidth, item.FrameHeight, item.SharePalette));
         Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
-        Capture.Pump();
+        // Import Asset converts off the UI thread, then the page opens the new sprite
+        AgbStudio.Editor.Tests.Windows.Build.GroupFixture.PumpUntil(() => !Win.Overlays.IsOpen && page.Doc?.FileName == "walker.png", 30_000);
         Assert.False(Win.Overlays.IsOpen);
 
         var doc = page.Doc!;
@@ -263,7 +264,7 @@ public class SpriteEditorE2ETests : ArtWindowHarness
         dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
         Assert.Equal("Sprite sheet", Assert.Single(dlg.Items).Detected);
         Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
-        Capture.Pump();
+        AgbStudio.Editor.Tests.Windows.Build.GroupFixture.PumpUntil(() => !Win.Overlays.IsOpen, 30_000);
         Assert.Contains(Fx.Services.Project.Current!.SpriteFiles(), s => Path.GetFileName(s) == "jelly.aseprite");
 
         // a file that is not an image is reported in Import Asset (the page's own import refuses it with a toast)
