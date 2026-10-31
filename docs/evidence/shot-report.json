@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 06:56:15Z",
+  "generated": "2026-10-31 08:21:13Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3233,30 +3233,30 @@
       "set": "frame Scene Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 14.09,
-      "BestShiftDiffPercent": 14.09,
+      "DiffPercent": 2.88,
+      "BestShiftDiffPercent": 2.88,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 15.01,
-      "ColourDiffPercent": 30.78
+      "MeanChannelError": 4.4,
+      "ColourDiffPercent": 10.87
     },
     {
       "Id": "T-L01",
       "set": "frame Scene Editor \u00B7 Light",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 14.26,
-      "BestShiftDiffPercent": 14.26,
+      "DiffPercent": 3,
+      "BestShiftDiffPercent": 3,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 15.31,
-      "ColourDiffPercent": 30.86
+      "MeanChannelError": 4.69,
+      "ColourDiffPercent": 10.94
     },
     {
       "Id": "T-O07",
@@ -3428,30 +3428,30 @@
       "set": "frame Audio",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.29,
-      "BestShiftDiffPercent": 5.29,
+      "DiffPercent": 4.94,
+      "BestShiftDiffPercent": 4.94,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 5.4,
-      "ColourDiffPercent": 8.59
+      "MeanChannelError": 4.94,
+      "ColourDiffPercent": 7.95
     },
     {
       "Id": "T-P25",
       "set": "frame SFX Designer",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.95,
-      "BestShiftDiffPercent": 2.95,
+      "DiffPercent": 2.7,
+      "BestShiftDiffPercent": 2.7,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.94,
-      "ColourDiffPercent": 4.82
+      "MeanChannelError": 2.67,
+      "ColourDiffPercent": 4.59
     },
     {
       "Id": "T-P11",
@@ -3465,23 +3465,23 @@
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.81,
-      "ColourDiffPercent": 3.31
+      "MeanChannelError": 1.76,
+      "ColourDiffPercent": 3.32
     },
     {
       "Id": "T-D06",
       "set": "frame Build ROM",
       "figma": "600x440",
       "app": "600x440",
-      "DiffPercent": 2.32,
-      "BestShiftDiffPercent": 2.32,
+      "DiffPercent": 2.29,
+      "BestShiftDiffPercent": 2.29,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.76,
-      "ColourDiffPercent": 4.44
+      "MeanChannelError": 2.71,
+      "ColourDiffPercent": 4.42
     },
     {
       "Id": "T-D23",
@@ -3503,15 +3503,15 @@
       "set": "frame Export ROM",
       "figma": "560x488",
       "app": "560x488",
-      "DiffPercent": 2.45,
-      "BestShiftDiffPercent": 2.45,
+      "DiffPercent": 2.39,
+      "BestShiftDiffPercent": 2.39,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.82,
-      "ColourDiffPercent": 5.04
+      "MeanChannelError": 2.71,
+      "ColourDiffPercent": 4.99
     },
     {
       "Id": "T-D07",
@@ -3533,15 +3533,15 @@
       "set": "frame Import Asset",
       "figma": "900x460",
       "app": "900x460",
-      "DiffPercent": 3.31,
-      "BestShiftDiffPercent": 2.88,
+      "DiffPercent": 3.17,
+      "BestShiftDiffPercent": 2.74,
       "shift": [
         -1,
         0
       ],
       "LayoutOffset": 1,
-      "MeanChannelError": 3.82,
-      "ColourDiffPercent": 5.02
+      "MeanChannelError": 3.7,
+      "ColourDiffPercent": 4.86
     },
     {
       "Id": "T-D24",
@@ -3563,30 +3563,30 @@
       "set": "frame Database",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.72,
-      "BestShiftDiffPercent": 1.72,
+      "DiffPercent": 1.6,
+      "BestShiftDiffPercent": 1.6,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.02,
-      "ColourDiffPercent": 3.75
+      "MeanChannelError": 1.87,
+      "ColourDiffPercent": 3.58
     },
     {
       "Id": "T-D17",
       "set": "frame New Table",
       "figma": "520x440",
       "app": "520x440",
-      "DiffPercent": 1.8,
-      "BestShiftDiffPercent": 1.8,
+      "DiffPercent": 1.77,
+      "BestShiftDiffPercent": 1.77,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.1,
-      "ColourDiffPercent": 4.7
+      "MeanChannelError": 2.07,
+      "ColourDiffPercent": 4.66
     },
     {
       "Id": "T-D18",
@@ -3623,15 +3623,15 @@
       "set": "frame Localization",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.74,
-      "BestShiftDiffPercent": 3.74,
+      "DiffPercent": 3.69,
+      "BestShiftDiffPercent": 3.69,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 5.47,
-      "ColourDiffPercent": 6.69
+      "MeanChannelError": 5.36,
+      "ColourDiffPercent": 6.44
     },
     {
       "Id": "T-D20",
@@ -3653,30 +3653,30 @@
       "set": "frame Dialogue Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.05,
-      "BestShiftDiffPercent": 2.05,
+      "DiffPercent": 1.92,
+      "BestShiftDiffPercent": 1.92,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.7,
-      "ColourDiffPercent": 3.43
+      "MeanChannelError": 2.57,
+      "ColourDiffPercent": 3.21
     },
     {
       "Id": "T-D21",
       "set": "frame New Speaker",
       "figma": "520x438",
       "app": "520x438",
-      "DiffPercent": 2.76,
-      "BestShiftDiffPercent": 2.76,
+      "DiffPercent": 2.67,
+      "BestShiftDiffPercent": 2.67,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.37,
-      "ColourDiffPercent": 7.61
+      "MeanChannelError": 3.38,
+      "ColourDiffPercent": 7.28
     },
     {
       "Id": "T-M23",
@@ -3713,23 +3713,23 @@
       "set": "frame Launcher",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.05,
-      "BestShiftDiffPercent": 1.05,
+      "DiffPercent": 1.01,
+      "BestShiftDiffPercent": 1.01,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.21,
-      "ColourDiffPercent": 2.56
+      "MeanChannelError": 1.16,
+      "ColourDiffPercent": 2.53
     },
     {
       "Id": "T-P20",
       "set": "frame Launcher \u00B7 Templates",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.2,
-      "BestShiftDiffPercent": 1.2,
+      "DiffPercent": 1.21,
+      "BestShiftDiffPercent": 1.21,
       "shift": [
         0,
         0
@@ -3743,15 +3743,15 @@
       "set": "frame Launcher \u00B7 Learn",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 0.85,
-      "BestShiftDiffPercent": 0.85,
+      "DiffPercent": 0.78,
+      "BestShiftDiffPercent": 0.78,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.04,
-      "ColourDiffPercent": 2.27
+      "MeanChannelError": 0.92,
+      "ColourDiffPercent": 2.21
     },
     {
       "Id": "T-O13",
@@ -3833,30 +3833,30 @@
       "set": "frame Scene Editor \u00B7 Empty project",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.2,
-      "BestShiftDiffPercent": 1.2,
+      "DiffPercent": 0.96,
+      "BestShiftDiffPercent": 0.96,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.58,
-      "ColourDiffPercent": 3.21
+      "MeanChannelError": 1.24,
+      "ColourDiffPercent": 2.62
     },
     {
       "Id": "T-P02",
       "set": "frame Play Mode",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 13.06,
-      "BestShiftDiffPercent": 13.06,
+      "DiffPercent": 2.96,
+      "BestShiftDiffPercent": 2.96,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 12.44,
-      "ColourDiffPercent": 30.82
+      "MeanChannelError": 3.95,
+      "ColourDiffPercent": 5.58
     },
     {
       "Id": "T-M18",
@@ -3878,45 +3878,45 @@
       "set": "frame Debugger",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.27,
-      "BestShiftDiffPercent": 5.27,
+      "DiffPercent": 5.11,
+      "BestShiftDiffPercent": 5.11,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 6.39,
-      "ColourDiffPercent": 7.44
+      "MeanChannelError": 6.26,
+      "ColourDiffPercent": 7.35
     },
     {
       "Id": "T-P23",
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.15,
-      "BestShiftDiffPercent": 3.15,
+      "DiffPercent": 2.96,
+      "BestShiftDiffPercent": 2.96,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.56,
-      "ColourDiffPercent": 5.57
+      "MeanChannelError": 3.35,
+      "ColourDiffPercent": 5.26
     },
     {
       "Id": "T-P24",
       "set": "frame Debugger \u00B7 Palettes",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.51,
-      "BestShiftDiffPercent": 2.51,
+      "DiffPercent": 2.27,
+      "BestShiftDiffPercent": 2.27,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.03,
-      "ColourDiffPercent": 4.67
+      "MeanChannelError": 2.75,
+      "ColourDiffPercent": 3.55
     },
     {
       "Id": "T-P05",
@@ -3938,15 +3938,15 @@
       "set": "frame Animation panel",
       "figma": "860x250",
       "app": "860x250",
-      "DiffPercent": 5.03,
-      "BestShiftDiffPercent": 4.57,
+      "DiffPercent": 4.13,
+      "BestShiftDiffPercent": 3.95,
       "shift": [
         0,
-        -2
+        -1
       ],
-      "LayoutOffset": 2,
-      "MeanChannelError": 7.46,
-      "ColourDiffPercent": 19.15
+      "LayoutOffset": 1,
+      "MeanChannelError": 4.84,
+      "ColourDiffPercent": 7.71
     },
     {
       "Id": "T-D02",
@@ -3983,15 +3983,15 @@
       "set": "frame Scene Switcher",
       "figma": "320x356",
       "app": "320x356",
-      "DiffPercent": 7.18,
-      "BestShiftDiffPercent": 6.97,
+      "DiffPercent": 6.8,
+      "BestShiftDiffPercent": 6.43,
       "shift": [
         0,
         -1
       ],
       "LayoutOffset": 1,
-      "MeanChannelError": 6.7,
-      "ColourDiffPercent": 11.24
+      "MeanChannelError": 6.28,
+      "ColourDiffPercent": 10.52
     },
     {
       "Id": "T-O02",
@@ -4028,15 +4028,15 @@
       "set": "frame Asset Picker",
       "figma": "440x368",
       "app": "440x368",
-      "DiffPercent": 4.5,
-      "BestShiftDiffPercent": 4.5,
+      "DiffPercent": 4.19,
+      "BestShiftDiffPercent": 4.19,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 5.61,
-      "ColourDiffPercent": 8.72
+      "MeanChannelError": 5.26,
+      "ColourDiffPercent": 8.47
     },
     {
       "Id": "T-O05",
@@ -4058,15 +4058,15 @@
       "set": "frame Budget Details",
       "figma": "420x398",
       "app": "420x398",
-      "DiffPercent": 4.66,
-      "BestShiftDiffPercent": 4.66,
+      "DiffPercent": 4.68,
+      "BestShiftDiffPercent": 4.68,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 5.87,
-      "ColourDiffPercent": 12.75
+      "MeanChannelError": 5.89,
+      "ColourDiffPercent": 12.78
     },
     {
       "Id": "T-M09",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.72,
-      "BestShiftDiffPercent": 2.72,
+      "DiffPercent": 2.55,
+      "BestShiftDiffPercent": 2.55,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.2,
-      "ColourDiffPercent": 4.95
+      "MeanChannelError": 2.98,
+      "ColourDiffPercent": 4.68
     },
     {
       "Id": "T-D14",
@@ -4238,30 +4238,30 @@
       "set": "frame Scripting API",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.34,
-      "BestShiftDiffPercent": 1.34,
+      "DiffPercent": 1.22,
+      "BestShiftDiffPercent": 1.22,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.6,
-      "ColourDiffPercent": 2.51
+      "MeanChannelError": 1.41,
+      "ColourDiffPercent": 2.4
     },
     {
       "Id": "T-P17",
       "set": "frame Logic Graph",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.77,
-      "BestShiftDiffPercent": 5.77,
+      "DiffPercent": 4.12,
+      "BestShiftDiffPercent": 4.12,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 8.95,
-      "ColourDiffPercent": 13.1
+      "MeanChannelError": 7.24,
+      "ColourDiffPercent": 9.88
     },
     {
       "Id": "T-O08",
@@ -4305,8 +4305,8 @@
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.87,
-      "ColourDiffPercent": 4.13
+      "MeanChannelError": 1.79,
+      "ColourDiffPercent": 3.73
     },
     {
       "Id": "T-O09",
@@ -4478,15 +4478,15 @@
       "set": "frame Preferences \u00B7 Paths",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.38,
-      "BestShiftDiffPercent": 1.38,
+      "DiffPercent": 1.39,
+      "BestShiftDiffPercent": 1.39,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.78,
-      "ColourDiffPercent": 3.02
+      "MeanChannelError": 1.79,
+      "ColourDiffPercent": 3.03
     },
     {
       "Id": "T-S09",
@@ -4553,30 +4553,30 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.66,
-      "BestShiftDiffPercent": 1.66,
+      "DiffPercent": 2.59,
+      "BestShiftDiffPercent": 2.59,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.36,
-      "ColourDiffPercent": 5.05
+      "MeanChannelError": 2.85,
+      "ColourDiffPercent": 5.9
     },
     {
       "Id": "T-P10",
       "set": "frame Palette Manager",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.41,
-      "BestShiftDiffPercent": 2.41,
+      "DiffPercent": 1.9,
+      "BestShiftDiffPercent": 1.9,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.31,
-      "ColourDiffPercent": 7.35
+      "MeanChannelError": 2.55,
+      "ColourDiffPercent": 6.06
     },
     {
       "Id": "T-D13",
@@ -4628,30 +4628,30 @@
       "set": "frame Tilemap Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 14.48,
-      "BestShiftDiffPercent": 14.48,
+      "DiffPercent": 3.7,
+      "BestShiftDiffPercent": 3.7,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 13.27,
-      "ColourDiffPercent": 32.03
+      "MeanChannelError": 4.38,
+      "ColourDiffPercent": 9.36
     },
     {
       "Id": "T-P26",
       "set": "frame Auto-tile Rules panel",
       "figma": "860x250",
       "app": "860x250",
-      "DiffPercent": 6.46,
-      "BestShiftDiffPercent": 6.36,
+      "DiffPercent": 4.15,
+      "BestShiftDiffPercent": 4.15,
       "shift": [
         0,
-        -1
+        0
       ],
-      "LayoutOffset": 1,
-      "MeanChannelError": 6.25,
-      "ColourDiffPercent": 13.75
+      "LayoutOffset": 0,
+      "MeanChannelError": 3.36,
+      "ColourDiffPercent": 7.41
     },
     {
       "Id": "T-M20",
@@ -4673,15 +4673,15 @@
       "set": "frame Font Manager",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 11.33,
-      "BestShiftDiffPercent": 11.33,
+      "DiffPercent": 10.63,
+      "BestShiftDiffPercent": 10.63,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 14.04,
-      "ColourDiffPercent": 13.86
+      "MeanChannelError": 13.94,
+      "ColourDiffPercent": 13.63
     },
     {
       "Id": "T-D15",
@@ -4703,14 +4703,14 @@
       "set": "frame Add Characters",
       "figma": "600x388",
       "app": "600x388",
-      "DiffPercent": 3.97,
-      "BestShiftDiffPercent": 3.97,
+      "DiffPercent": 3.94,
+      "BestShiftDiffPercent": 3.94,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 4.77,
+      "MeanChannelError": 4.75,
       "ColourDiffPercent": 6.14
     },
     {
@@ -4973,15 +4973,15 @@
       "set": "Play Mode game view \u00B7 Hitboxes and Tile collision on",
       "figma": "860x510",
       "app": "860x510",
-      "DiffPercent": 32.91,
-      "BestShiftDiffPercent": 32.91,
+      "DiffPercent": 4.01,
+      "BestShiftDiffPercent": 4.01,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 29.34,
-      "ColourDiffPercent": 78.19
+      "MeanChannelError": 6.79,
+      "ColourDiffPercent": 17.16
     }
   ],
   "chromeRegions": [
