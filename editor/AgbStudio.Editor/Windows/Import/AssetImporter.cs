@@ -329,7 +329,7 @@ public static class AssetImporter
                 GameProject.Save(GameProject.MetaPath(music), new MusicMeta());
                 written.Add(GameProject.MetaPath(music));
                 break;
-            case ImportKind.Palette: Copy(Path.Combine(p.AssetsDir, "palettes")); break;
+            case ImportKind.Palette: Copy(p.PalettesDir); break;
             case ImportKind.Font:
                 var font = Copy(p.FontsDir);
                 var fontFile = Path.Combine(p.FontsDir, item.Name + ".font");

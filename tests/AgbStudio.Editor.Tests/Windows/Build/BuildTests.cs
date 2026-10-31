@@ -42,12 +42,16 @@ public class BuildRomTests
         Assert.Equal((9.0, 12.0), (progress.Value, progress.Maximum));
         Assert.Equal(3, d.GetVisualDescendants().OfType<ConsoleLine>().Count());
         Assert.Equal("Building skyhopper.gba…", d.Title);
-        // link and gbafix follow the native build lines
-        s.Line(@"[13/14] LINK D:\x\build\obj\skyhopper.elf");
-        Assert.Equal(StepState.Running, s.Step(GameBuilder.StepLink).State);
+        // GameBuilder hands the compile step over to Link + gbafix when ninja starts linking; the log shows the lines
         s.StepFinished(GameBuilder.StepCompile, TimeSpan.FromSeconds(0.34), true, "12 files");
         Assert.Equal((StepState.Done, "12 files · 0.34 s"), (s.Step(GameBuilder.StepCompile).State, s.Step(GameBuilder.StepCompile).Detail));
-        Assert.Equal(StepState.Done, s.Step(GameBuilder.StepLink).State);
+        Assert.Equal(StepState.Pending, s.Step(GameBuilder.StepLink).State);
+        s.StepStarted(GameBuilder.StepLink, "");
+        s.Line(@"[13/14] LINK D:\x\build\obj\skyhopper.elf");
+        Assert.Equal(StepState.Running, s.Step(GameBuilder.StepLink).State);
+        Assert.Equal("ld … skyhopper.elf", s.Log[^1].Text);
+        s.StepFinished(GameBuilder.StepLink, TimeSpan.FromSeconds(0.05), true, "skyhopper.gba");
+        Assert.Equal((StepState.Done, "skyhopper.gba · 0.05 s"), (s.Step(GameBuilder.StepLink).State, s.Step(GameBuilder.StepLink).Detail));
     }
 
     [AvaloniaFact]

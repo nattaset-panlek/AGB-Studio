@@ -39,7 +39,7 @@ public sealed record BuildFailure(string Rom, IReadOnlyList<BuildStepView> Steps
 /// The real build stream (P11.57): an <see cref="IBuildObserver"/> that <see cref="Services.BuildService"/> passes to
 /// GameBuilder. Events arrive on the build thread and are applied on the UI thread to the four steps the dialog shows
 /// in Figma order (C# → C++, Convert assets, Compile, Link + gbafix; the pipeline converts assets first, issue 1.4-8).
-/// "Generate game" counts towards C# → C++; Link + gbafix follows the LINK / GBAFIX lines of the native build.
+/// "Generate game" counts towards C# → C++; GameBuilder reports Link + gbafix as its own step when ninja starts linking.
 /// </summary>
 public sealed class BuildStream : IBuildObserver
 {
@@ -88,13 +88,7 @@ public sealed class BuildStream : IBuildObserver
         if (ok)
         {
             s.State = StepState.Done;
-            if (step == GameBuilder.StepCompile)
-            {
-                s.Detail = $"{s.Total} files · {Secs(s.Seconds)} s";
-                var link = Step(GameBuilder.StepLink);
-                if (link.State != StepState.Failed) link.State = StepState.Done;
-            }
-            else s.Detail = $"{s.Result} · {Secs(s.Seconds)} s";
+            s.Detail = step == GameBuilder.StepCompile ? $"{s.Total} files · {Secs(s.Seconds)} s" : $"{s.Result} · {Secs(s.Seconds)} s";
             return;
         }
         Fail(s);
@@ -136,9 +130,6 @@ public sealed class BuildStream : IBuildObserver
                 _firstCompile = false;
                 break;
             case "LINK":
-                var link = Step(GameBuilder.StepLink);
-                link.State = StepState.Running;
-                link.Detail = file;
                 Log.Add(new BuildLogLine(_clock(), ConsoleLevel.Info, $"ld … {file}"));
                 break;
             default:
@@ -185,26 +176,13 @@ public sealed class BuildStream : IBuildObserver
 
     static string Secs(double s) => s.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 
-    // ---- history of failed builds ------------------------------------------------------------------------
+    // ---- history ----------------------------------------------------------------------------------------------
 
-    static readonly JsonSerializerOptions HistoryJson = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
+    /// <summary>The build history GameBuilder keeps (successful and failed builds, newest first); empty when unreadable.</summary>
     public static List<BuildReport.HistoryEntry> LoadHistory(GameProject p)
     {
-        var path = Path.Combine(p.BuildDir, "report-history.json");
-        try { return File.Exists(path) ? JsonSerializer.Deserialize<List<BuildReport.HistoryEntry>>(File.ReadAllText(path), HistoryJson) ?? [] : []; }
+        try { return BuildReport.LoadHistory(p.BuildDir); }
         catch (Exception e) when (e is IOException or JsonException) { return []; }
-    }
-
-    /// <summary>GameBuilder writes history only for builds that produce a report; failed builds are added here so Build Report lists them.</summary>
-    public static void RecordFailure(GameProject p, BuildResult r, DateTime at)
-    {
-        var first = r.Diagnostics.FirstOrDefault(d => d.Severity == Severity.Error);
-        var text = first is null ? "Build failed" : first.Line > 0 && first.File.Length > 0 ? $"{Path.GetFileName(first.File)}({first.Line}): {first.Message}" : first.ToString();
-        var history = LoadHistory(p);
-        history.Insert(0, new BuildReport.HistoryEntry(at, 0, Math.Round(r.Elapsed.TotalSeconds, 2), r.Diagnostics.Count(d => d.Severity == Severity.Warning), r.Errors.Count(), text));
-        Directory.CreateDirectory(p.BuildDir);
-        File.WriteAllText(Path.Combine(p.BuildDir, "report-history.json"), JsonSerializer.Serialize(history.Take(20).ToList(), HistoryJson));
     }
 
     /// <summary>"Usually under a second." from the history of successful builds; null without history.</summary>

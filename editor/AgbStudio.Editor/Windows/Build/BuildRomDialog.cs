@@ -89,7 +89,7 @@ public sealed class BuildRomDialog : FigmaDialog
         return result;
     }
 
-    /// <summary>Applies the end of a build: status bar, history, export copy, Run in Emulator, or Build ROM · Failed.</summary>
+    /// <summary>Applies the end of a build (GameBuilder records it in the history): status bar, export copy, Run in Emulator, or Build ROM · Failed.</summary>
     public void Finish(BuildResult result)
     {
         Stream.Complete(result);
@@ -100,7 +100,6 @@ public sealed class BuildRomDialog : FigmaDialog
         Completed?.Invoke(result);
         if (!result.Success)
         {
-            if (p != null) BuildStream.RecordFailure(p, result, DateTime.Now);
             Close(result);
             _ = _s.Windows.Open("T-D23", Stream.Failure(_rom), source: "BuildRomFailed");
             return;
