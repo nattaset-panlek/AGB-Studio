@@ -207,52 +207,52 @@
 ### 4.1 Pages (Editor Map board 3 · 19)
 
 - **T-P01 Scene Editor** · 1440 x 900 · from: default workspace
-  - [ ] implemented
+  - [x] implemented — evidence: test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, test:ViewportTests.Cursor_ZoomAndPan, test:ViewportTests.LayerTogglesHideBackgroundsAndSprites, test:ViewportTests.ChipsOpenTheirWindows, test:ViewportTests.PaintFillAndErase_EditTheMapWithUndo, test:HierarchyTests.Selection_IsSharedWithViewportAndInspector, test:InspectorTests.Header_TransformAndSpriteOfThePlayer, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:PlayAcrossEditorTests.PauseAndStep_OnEveryPage_ActOnTheRunningGame, doc:docs/user/windows/T-P01-scene-editor.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P02 Play Mode** · 1440 x 900 · from: #11 Play, #15 Tab Game, Build › Play, Build › Play from Here, Build › Build & Run in Emulator, Build Report › Run in mGBA
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, test:PlayModeE2ETests.P12_08_StatusBar_FrameFpsVBlankCpu_RunningPaused_HotReload, test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, doc:docs/user/windows/T-P02-play-mode.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P03 Tilemap Editor** · 1440 x 900 · from: #16 Tab Forest_01.map, Scene › Background Layers…, Create › Tileset / Tilemap
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:TilemapE2ETests.OpensFromTheMapTabBackgroundLayersAndCreateMenu, test:SceneDialogTests.SetAsStartScene_AndBackgroundLayers, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:TilemapE2ETests.TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView, test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, test:TilemapE2ETests.MapPanel_SizeBgSizeColoursWrap_AndBudget, test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, doc:docs/user/windows/T-P03-tilemap-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P04 Script Editor** · 1440 x 900 · from: #17 Tab PlayerController.cs, #31 Script component, Create › C# Script, Actor Context Menu › Edit Script, Component Menu › Edit Script
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ScriptEditorTests.OpensFromTheDocTabAndListsTheScripts, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentMenu_EveryItem, test:ScriptEditorTests.LineNumbersHighlightingAndBreadcrumb, test:ScriptEditorTests.AutocompleteListsApiMembersAndInsertsTheChoice, test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, test:ScriptEditorTests.SidePanelAttachedToCompilesToExposedFieldsOutlineAndApi, test:ScriptEditorTests.BottomPanelProblemsTerminalOutputAndStatusLine, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ScriptEditorSettingsTests.AnalyzerChip_OpensProjectSettingsOnScripting, test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, doc:docs/user/windows/T-P04-script-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P05 Console panel** · 860 x 250 · from: #21 Console tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:BottomPanelTests.Console_LinesFiltersCountsAndClickToCode, test:BottomPanelTests.Console_TakesBuildResultsFromTheBuildService, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, doc:docs/user/windows/T-P05-console-panel.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P06 Animation panel** · 860 x 250 · from: #22 Animation tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:BottomPanelTests.Animation_ListFramesPlayStepAndOnionSkin, test:BottomPanelTests.Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo, doc:docs/user/windows/T-P06-animation-panel.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P07 Database** · 1440 x 900 · from: #23 Database tab, Tools › Database, Create › Data Table
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, doc:docs/user/windows/T-P07-database.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P08 Sprite Editor** · 1440 x 900 · from: #24 Asset (double-click), Create › Sprite, Asset Context Menu › Open, Animation List › Edit Animations…
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, test:SpriteEditorE2ETests.P11_22_Canvas_TileGridZoomToolsAndFrameIndex, test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, test:SpriteEditorE2ETests.P11_26_Timeline_AnimationsTicksLoopPingPongOnionSkin, doc:docs/user/windows/T-P08-sprite-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P09 Font Manager** · 1440 x 900 · from: #26 Font asset, Tools › Font Manager, Create › Font
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, doc:docs/user/windows/T-P09-font-manager.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P10 Palette Manager** · 1440 x 900 · from: #30 Palette, Assets › Optimize Palettes…, Tools › Palette Manager, Create › Palette, Sprite Editor › Palette slots
-  - [ ] implemented
+  - [x] implemented — evidence: test:InspectorTests.Header_TransformAndSpriteOfThePlayer, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PaletteManagerE2ETests.CreatePalette_AndBanksPlus, test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, test:PaletteManagerE2ETests.P11_33_BanksUsedByListsAndColourEditor, test:PaletteManagerE2ETests.P11_34_ToolsMergeSortLockAndOptimize, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, doc:docs/user/windows/T-P10-palette-manager.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P11 Build Report** · 1440 x 900 · from: #34 Build status, Build › Build Report, Budget Details › Open Build Report
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BuildReportTests.MenuCommands_OpenTheBuildWindows, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, test:BuildReportTests.Report_ShowsSizeTimesWarningsVramBreakdownAssetsAndHistory, test:BuildReportTests.HeaderFields_EditProjectSettings_AndExportActionsOpenTheirWindows, test:BudgetAndHistoryTests.P13_08_BuildReportHistory_AcrossBuilds_IncludingFailures, doc:docs/user/windows/T-P11-build-report.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P12 Launcher** · 1440 x 900 · from: app start, File › Open Project…, Help › Getting Started
-  - [ ] implemented
+  - [x] implemented — evidence: test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:PrototypeFlowTests.T_X01_FlowStart_FromTheLauncher_EveryLinkItReaches, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, test:LauncherE2ETests.P11_07_WhatsNew_ComesFromTheReleaseNotes, test:OpeningProjectTests.P11_06_CancelDuringLoadAssets_LeavesTheOpenProjectAsItWas, doc:docs/user/windows/T-P12-launcher.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P13 World Map** · 1440 x 900 · from: Scene › World Map
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:WorldMapTests.CtrlM_ShowsScenesLinksStartSceneAndInspector, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, doc:docs/user/windows/T-P13-world-map.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P14 Localization** · 1440 x 900 · from: Tools › Localization
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:LocalizationWindowTests.P11_41_SearchGroupsAndMissingOnly, test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:LocalizationWindowTests.P11_41_FitCheckSaysHowManyLinesTheBoxNeeds, test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, doc:docs/user/windows/T-P14-localization.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P15 Audio** · 1440 x 900 · from: Tools › Audio, Create › Sound Effect, Create › Music
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:AudioPageTests.ToolsAudio_ListsTheProjectsMusicAndSoundsWithLengths, test:AudioPageTests.TrackInfo_ComesFromTheModuleAndMeta, test:AudioPageTests.Tracker_ShowsThePatternAndFollowsSeek, test:AudioPageTests.Play_RendersTheModuleToPcmAndFollowsThePlayhead, test:AudioPageTests.Inspector_EditsTheMetaUndoAndSave, test:AudioPageTests.TrackerTools_SelectPencilEraser_WriteTheModule, test:AudioPageTests.ChannelsMixerBudget_AndPreviewSfx, doc:docs/user/windows/T-P15-audio.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P16 Dialogue Editor** · 1440 x 900 · from: Tools › Dialogue Editor, Create › Dialogue
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:DialogueWindowTests.P11_46_NewConversationFromCreateMenuAndUndo, test:DialogueWindowTests.P11_46_ConversationsLinesChoicesSpeakersAndLanguageToggle, test:DialogueWindowTests.P11_46_LineInspectorAndGbaPreview, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, doc:docs/user/windows/T-P16-dialogue-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P17 Logic Graph** · 1440 x 900 · from: Tools › Logic Graph, Create › Logic Graph
   - [ ] implemented
@@ -261,7 +261,7 @@
   - [ ] implemented
   - [ ] matches Figma
 - **T-P19 Debugger** (Profiler view) · 1440 x 900 · from: #9 Debug, Tools › Debugger
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_01_Profiler_120FramesAgainstBudget_ThisFrameLogicRenderAudioIdle, test:DebuggerE2ETests.P13_02_VramTiles_ByCharBlock_MatchEmulatorMemory, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, test:DebuggerE2ETests.P13_06_Breakpoints_StopAtPlayerController19_PausedAtFrame_CallStackInCSharpNames, test:BreakpointUiTests.Breakpoints_FromTheScriptEditorGutterF9AndTheBreakpointsView_StopTheGame, test:BreakpointUiTests.OamSpritesAndProfilerViews_ShowTheirOwnData, doc:docs/user/windows/T-P19-debugger.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.2 Dialogs (Editor Map board 3 · 12)
@@ -270,34 +270,34 @@
   - [ ] implemented
   - [ ] matches Figma
 - **T-D02 New Scene** · 520 x 470 · from: Scene › New Scene…, Scene Switcher › New Scene…, World Map › New Scene
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, test:SceneDialogTests.NewScene_CreatesTheSceneFromTheOptions_AndUndo, doc:docs/user/windows/T-D02-new-scene.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D03 Scene Settings** · 600 x 646 · from: #18 Scene size chip, Scene › Scene Settings…
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:SceneDialogTests.SceneSettings_AppliesEverySection_RenamesWithLinks_AndUndo, doc:docs/user/windows/T-D03-scene-settings.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D04 Import Asset** · 900 x 460 · from: File › Import Asset…, Assets › Import…, Sprite Editor › Drop zone, Palette Manager › Import .pal / .gpl, Audio › Music +
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, test:ImportDialogTests.FileImportAsset_ListsFilesShowsOptionsAndImports, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, doc:docs/user/windows/T-D04-import-asset.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D05 Export ROM** · 560 x 488 · from: File › Export ROM (.gba)…
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ExportRomTests.Fields_ComeFromTheProject_ValidateAndExportARelease, test:ExportRomBootTests.PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom, doc:docs/user/windows/T-D05-export-rom.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D06 Build ROM** (progress) · 600 x 440 · from: #10 Build ROM, Build › Build ROM, Build Report › Build again
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, doc:docs/user/windows/T-D06-build-rom.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D07 Flash to Cartridge** · 560 x 368 · from: Build › Flash to Cartridge…, Build Report › Flash to cartridge
   - [ ] implemented
   - [ ] matches Figma
 - **T-D08 Project Settings** (Input tab) · 900 x 620 · from: File › Project Settings…
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, test:PlayModeE2ETests.P12_09_KeyboardAndGamepad_FromProjectSettingsInput, doc:docs/user/windows/T-D08-project-settings.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D09 Preferences** (Emulator tab) · 900 x 620 · from: #35 Emulator status, File › Preferences…, Launcher › Settings tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.OpensAtEmulatorFromFileMenuShortcutAndStatusBar_TabsFromTheirIds, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D10 Keyboard Shortcuts** · 760 x 390 · from: Help › Keyboard Shortcuts
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.Menu_ClickFileOpensItAndHelpKeyboardShortcutsOpensTheDialog, test:AboutTests.KeyboardShortcuts_GroupsAndSearch, doc:docs/user/windows/T-D10-keyboard-shortcuts.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D11 About** · 460 x 304 · from: Help › About AGB Studio
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:AboutTests.Website_IsDisabledWhenNoUrlIsConfigured, doc:docs/user/windows/T-D11-about.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D12 Unsaved Changes** · 460 x 262 · from: File › Exit, closing the app or opening another project with unsaved files
   - [ ] implemented
@@ -306,55 +306,55 @@
 ### 4.3 Settings tabs (9 frames; with T-D08 and T-D09 this makes 21 dialogs)
 
 - **T-S01 Project Settings · General** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, doc:docs/user/windows/T-S01-project-settings-general.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S02 Project Settings · Save data** · 900 x 620
   - [ ] implemented
   - [ ] matches Figma
 - **T-S03 Project Settings · Build** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.BuildTab_FieldsChangeTheBuild, test:ProjectSettingsTests.Tabs_ShowTheProjectsData, test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, doc:docs/user/windows/T-S03-project-settings-build.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S04 Project Settings · Scripting** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.TreatWarningsAsErrors_FailsTheScriptStepOnAWarning, test:ScriptEditorSettingsTests.InlineHints_OffKeepsTheHintClosed_OnOpensIt, test:ScriptEditorSettingsTests.AnalyzerChip_OpensProjectSettingsOnScripting, doc:docs/user/windows/T-S04-project-settings-scripting.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S05 Project Settings · Localization** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LimitTests.MissingStringsWarnOrFailAsLocalizationSays, doc:docs/user/windows/T-S05-project-settings-localization.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S06 Preferences · Appearance** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferenceEffectsTests.Appearance_PixelGridAt400Percent_AndReduceMotion, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S07 Preferences · Editor** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferenceEffectsTests.Editor_DefaultSnapCollisionOverlayAndBudgetInInspector, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ServiceTests.Undo_RespectsHistoryLimitFromPreferences, test:ServiceTests.Autosave_SavesDirtyDocumentsEveryNMinutes, test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:ExternalEditorDetectionTests.SettingsPersistWithFigmaDefaults, doc:docs/user/windows/T-S07-preferences-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-S08 Preferences · Paths** · 900 x 620
   - [ ] implemented
   - [ ] matches Figma
 - **T-S09 Preferences · Shortcuts** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, test:PreferencesTests.Shortcuts_ShowTheConflictChip, test:CommandAndShortcutTests.Shortcuts_RebindToCtrlG_ReportsGoToLine, test:CommandAndShortcutTests.Shortcuts_PersistInPreferencesAndResetToDefaults, doc:docs/user/windows/T-S09-preferences-shortcuts.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.4 Popovers (Editor Map board 3 · 7)
 
 - **T-O01 Scene Switcher** · 320 x 356 · from: #8 Breadcrumb
-  - [ ] implemented
+  - [x] implemented — evidence: test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, doc:docs/user/windows/T-O01-scene-switcher.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O02 Video Mode** · 380 x 400 · from: #12 Video mode chip
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, doc:docs/user/windows/T-O02-video-mode.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O03 Grid & Snap** · 300 x 328 · from: #19 Grid chip
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.GridSnap_SizeSwitchesAndColour, test:ViewportTests.GridButtonAndGridSnapDrawTheOverlays, doc:docs/user/windows/T-O03-grid-and-snap.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O04 Asset Picker** · 440 x 368 · from: #28 Sheet dropdown, Add to Scene › Prefab…, Tilemap Editor › Tileset dropdown
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.SheetAndAnimationDropdowns, test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:PopoverAndMenuTests.AssetPicker_SearchTabsAndPick, doc:docs/user/windows/T-O04-asset-picker.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O05 Component Picker** · 400 x 464 · from: #32 Add Component, Actor Context Menu › Add Behaviour…
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, doc:docs/user/windows/T-O05-component-picker.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O06 Budget Details** · 420 x 398 · from: #33 GBA Budget
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.GbaBudget_ShowsLiveMetersAndOpensBudgetDetails, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, test:BudgetAndHistoryTests.P13_07_PaletteSharingSuggestion_ForTheFixture, test:BudgetAndHistoryTests.P13_07_LiveBudget_FromTheRunningGame, doc:docs/user/windows/T-O06-budget-details.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O07 Command Palette** · 640 x 325 · from: Edit › Command Palette…, Edit › Find in Project…, Ctrl+K
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.CommandPalette_CtrlK_TypeArrowEnter, test:ShellE2ETests.CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches, test:CommandAndShortcutTests.Palette_FindsTheFigmaResultsForPla, doc:docs/user/windows/T-O07-command-palette.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.5 Menus (Editor Map board 2 · 16 and board 4 · 8)
@@ -386,112 +386,112 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] implemented
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M08.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M09 Create** (Assets › Create): Sprite, Tileset / Tilemap, Font, Palette, Sound Effect, Music, Data Table, C# Script, Logic Graph, Dialogue
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, test:PaletteManagerE2ETests.CreatePalette_AndBanksPlus, test:DialogueWindowTests.P11_46_NewConversationFromCreateMenuAndUndo, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, doc:docs/user/windows/README.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M10 Add Actor** (Scene › Add Actor): Empty Actor, Player, Enemy, Pickup, Trigger Zone, Camera Zone, Text Label
-  - [ ] implemented
+  - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, doc:docs/user/windows/README.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M11 Add to Scene** (#13 Hierarchy +): the 7 actor types, Tilemap Layer, Prefab…
-  - [ ] implemented
+  - [x] implemented — evidence: test:HierarchyTests.AddButtonAndContextMenu, test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M12 Actor Context Menu** (#14): Rename, Duplicate, Delete, Add Behaviour…, Edit Script, Make Prefab, Focus in View
-  - [ ] implemented
+  - [x] implemented — evidence: test:HierarchyTests.AddButtonAndContextMenu, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M12.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M13 Asset Context Menu** (#25): Open, Rename, Duplicate, Delete, Find Usages, Reimport, Show in Explorer, Create Animation
-  - [ ] implemented
+  - [x] implemented — evidence: test:BottomPanelTests.Assets_ContextMenuAndDragIntoTheScene, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:SystemShellTests.AssetsShowInExplorer_RevealsTheSelectionOrTheProject, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M14 Component Menu** (#27 Inspector …): Copy Component, Paste Values, Reset, Edit Script, Remove Component
-  - [ ] implemented
+  - [x] implemented — evidence: test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:PopoverAndMenuTests.ComponentMenu_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M14.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M15 Zoom** (#20): 100%, 200%, 300%, 400%, Fit to Screen, Pixel-perfect
-  - [ ] implemented
+  - [x] implemented — evidence: test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M15.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M16 Animation List** (#29): animations of the selected sprite, Edit Animations…
-  - [ ] implemented
+  - [x] implemented — evidence: test:InspectorTests.SheetAndAnimationDropdowns, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M17 Project Context Menu** (Launcher, right-click a project): Open, Show in Explorer, Duplicate, Rename, Remove from list, Delete project…
-  - [ ] implemented
+  - [x] implemented — evidence: test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, doc:docs/user/windows/T-P12-launcher.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M18 Play Speed** (Play Mode speed chip): 1/4x, 1/2x, 1x, 2x, 4x, Frame step
-  - [ ] implemented
+  - [x] implemented — evidence: test:PlayModeE2ETests.P12_04_PlaySpeed_QuarterToFourTimes_AndFrameStep, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M18.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M19 OAM Size** (Sprite Editor): Square 8x8 / 16x16 / 32x32 / 64x64, Wide 16x8 / 32x8 / 32x16 / 64x32, Tall 8x16 / 8x32 / 16x32 / 32x64
-  - [ ] implemented
+  - [x] implemented — evidence: test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, doc:docs/user/windows/T-P08-sprite-editor.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M19.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M20 Add Layer** (Tilemap Editor): Tile layer, Image layer, Rotate / scale layer (Mode 1-2), Collision-only layer
-  - [ ] implemented
+  - [x] implemented — evidence: test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, test:TilemapModelTests.Layers_AddTypesOnFreeBackgrounds_CollisionOnlyBecomesTheSource, doc:docs/user/windows/T-P03-tilemap-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M21 Node Context Menu** (Logic Graph, right-click a node): Duplicate, Disable, Group into comment, Collapse, Show generated C#, Delete
-  - [ ] implemented
+  - [x] implemented — evidence: test:LogicGraphTests.RightClickNode_ContextMenuDuplicateDisableGroupCollapseShowCodeDelete, doc:docs/user/windows/T-P17-logic-graph.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M21.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M22 Scene Context Menu** (World Map, right-click a scene): Open, Rename, Duplicate, Set as start scene, Delete
-  - [ ] implemented
+  - [x] implemented — evidence: test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, doc:docs/user/windows/T-P13-world-map.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M23 Add to Dialogue** (Dialogue Editor › Add line · choice · command): Line, Choice, Command, Condition, Paste
-  - [ ] implemented
+  - [x] implemented — evidence: test:DialogueWindowTests.P11_47_AddLineChoiceCommandsConditionAndPaste, test:DialogueWindowTests.P11_47_AddToDialogueAndCommandMenusMatchFigma, doc:docs/user/windows/T-P16-dialogue-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-M24 Command** (Add to Dialogue › Command): Go to scene…, Set flag…, Give item…, Play sound…, Wait…, Shake camera…
-  - [ ] implemented
+  - [x] implemented — evidence: test:DialogueWindowTests.P11_47_AddToDialogueAndCommandMenusMatchFigma, test:DialogueWindowTests.P11_47_AddLineChoiceCommandsConditionAndPaste, doc:docs/user/windows/T-P16-dialogue-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.6 Design round 2: extra pages (7)
 
 - **T-P20 Launcher · Templates** · 1440 x 900 · from: Launcher › Templates tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_02_Templates_FiltersSearchDetailsAndUseThisTemplate, doc:docs/user/windows/T-P20-launcher-templates.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P21 Launcher · Learn** · 1440 x 900 · from: Launcher › Learn tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:LauncherE2ETests.P11_03_Samples_EachIsMadeAndOpened, doc:docs/user/windows/T-P21-launcher-learn.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P22 Scene Editor · Empty project** (empty state) · 1440 x 900 · from: File › New Project (Empty)
   - [ ] implemented
   - [ ] matches Figma
 - **T-P23 Debugger · Memory** · 1440 x 900 · from: Debugger › Views › Memory
-  - [ ] implemented
+  - [x] implemented — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_05_Memory_MapByCategory_WatchList_HexView_AddWatch, doc:docs/user/windows/T-P23-debugger-memory.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P24 Debugger · Palettes** · 1440 x 900 · from: Debugger › Views › Palettes
-  - [ ] implemented
+  - [x] implemented — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_04_Palettes_LiveRam_ChangedOutline_AddressBgr555Rgb_UsedBy_OpenAndBreak, doc:docs/user/windows/T-P24-debugger-palettes.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P25 SFX Designer** · 1440 x 900 · from: Audio › Sound effects +
-  - [ ] implemented
+  - [x] implemented — evidence: test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, test:SfxDesignerTests.OpensTheEffectWithItsFieldsRegistersAndScriptLine, test:SfxDesignerTests.PresetsChannelDutyAndSliders_ChangeTheEffect, test:SfxDesignerTests.BakeToWav_SavesTheSampleAndHardwareKeepsZeroBytes, test:SfxDesignerTests.WaveChannel_PencilDrawsWaveRam_AndPlusCreatesAnEffect, test:DmgSoundTests.Preview_SoundsLikeTheEmulator, doc:docs/user/windows/T-P25-sfx-designer.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P26 Auto-tile Rules panel** · 860 x 250 · from: Tilemap Editor › Auto-tile rules tab
-  - [ ] implemented
+  - [x] implemented — evidence: test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, test:TilemapModelTests.AutoTileRules_AddEditDelete, test:TilemapModelTests.AutoTile_PaintingAMemberResolvesTheGrassEdgesRules, doc:docs/user/windows/T-P26-auto-tile-rules-panel.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.7 Design round 2: extra dialogs (12, includes loading and error states)
 
 - **T-D13 New Sprite** · 520 x 506 · from: Sprite Editor › Sprites +
-  - [ ] implemented
+  - [x] implemented — evidence: test:SpriteEditorE2ETests.P11_27_NewSprite_FromSpritesPlus, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, doc:docs/user/windows/T-D13-new-sprite.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D14 New Script** · 560 x 564 · from: Script Editor › Scripts +, Component Picker › New C# script…
-  - [ ] implemented
+  - [x] implemented — evidence: test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, test:ScriptToolsTests.NewScript_OpenInExternalEditorAfterCreating, doc:docs/user/windows/T-D14-new-script.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D15 New Font** · 560 x 506 · from: Font Manager › Fonts +
-  - [ ] implemented
+  - [x] implemented — evidence: test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, test:FontModelTests.NewFont_DefaultsBuildAPreviewAndCreateTheFile, doc:docs/user/windows/T-D15-new-font.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D16 Add Characters** · 600 x 388 · from: Font Manager › Add characters from text…
   - [ ] implemented
   - [ ] matches Figma
 - **T-D17 New Table** · 520 x 440 · from: Database › Tables +
-  - [ ] implemented
+  - [x] implemented — evidence: test:DatabaseWindowTests.P11_40_NewTableFromEmptyCsvAndCopy_UndoRemovesTheFile, doc:docs/user/windows/T-D17-new-table.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D18 Add Field** · 520 x 516 · from: Database › Schema +
-  - [ ] implemented
+  - [x] implemented — evidence: test:DatabaseWindowTests.P11_40_AddFieldRarityEnumIsOneBytePerRow, doc:docs/user/windows/T-D18-add-field.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D19 Import CSV** · 780 x 478 · from: Database › Import CSV
   - [ ] implemented
   - [ ] matches Figma
 - **T-D20 Add Language** · 520 x 416 · from: Project Settings › Localization › Add language, Localization › Languages +
-  - [ ] implemented
+  - [x] implemented — evidence: test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, doc:docs/user/windows/T-D20-add-language.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D21 New Speaker** · 520 x 438 · from: Dialogue Editor › Speakers +
-  - [ ] implemented
+  - [x] implemented — evidence: test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, doc:docs/user/windows/T-D21-new-speaker.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D22 Opening Project** (loading state) · 480 x 322 · from: Launcher › Project card, File › Open Recent
   - [ ] implemented
   - [ ] matches Figma
 - **T-D23 Build ROM · Failed** (error state) · 600 x 382 · from: Build ROM when a step fails
-  - [ ] implemented
+  - [x] implemented — evidence: test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, doc:docs/user/windows/T-D23-build-rom-failed.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D24 Import Asset · Errors** (error state) · 720 x 436 · from: Import Asset when a file can't be converted
   - [ ] implemented
@@ -500,172 +500,172 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
 ### 4.8 Design round 2: extra popovers (6)
 
 - **T-O08 Add Node** · 380 x 269 · from: Logic Graph › Right-click canvas, Nodes › Add node…
-  - [ ] implemented
+  - [x] implemented — evidence: test:LogicGraphTests.RightClickCanvas_AddNodeSearchEnterAndShiftEnter, test:LogicGraphTests.NodesAddNode_OpensTheAddNodePopover, doc:docs/user/windows/T-O08-add-node.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O09 Link Settings** · 360 x 330 · from: World Map › Link chip (click a link)
-  - [ ] implemented
+  - [x] implemented — evidence: test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, doc:docs/user/windows/T-O09-link-settings.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O10 Palette Effect** · 380 x 372 · from: Palette Manager › Fade / Cycle
-  - [ ] implemented
+  - [x] implemented — evidence: test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, doc:docs/user/windows/T-O10-palette-effect.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O11 Find & Replace** · 540 x 124 · from: Script Editor › Ctrl+F / Ctrl+H
   - [ ] implemented
   - [ ] matches Figma
 - **T-O12 Record Shortcut** · 340 x 264 · from: Preferences › Shortcuts › pencil
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, doc:docs/user/windows/T-O12-record-shortcut.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-O13 Tutorial Steps** · 380 x 466 · from: Launcher › Learn › Tutorial Start / Continue
-  - [ ] implemented
+  - [x] implemented — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:TutorialTests.P11_04_FirstPlatformerStep3_SubStepsTickThemselves_BackSkipNext, test:TutorialTests.P11_04_FinishingTheLastStepMarksTheTutorialDone, test:TutorialTests.P11_04_OpenedThroughTheWindowServiceItShowsTheTutorial, doc:docs/user/windows/T-O13-tutorial-steps.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 
 ### 4.9 States (error / empty / loading) and where they are designed
 
 ทุก state ต้องเกิดขึ้นจริงจากเงื่อนไขจริง ไม่ใช่แค่หน้าจอแสดงผล
 
-- [ ] Empty: whole project empty -> T-P22 (Hierarchy "Nothing selected", Inspector "Select an actor or a layer", Assets "No assets yet", viewport "This scene is empty", Add player / Import images)
-- [ ] Loading: opening a project -> T-D22 (Read project, Load assets with count, Compile scripts, Open last scene, Cancel)
-- [ ] Loading: build progress -> T-D06 (per-step time, per-file progress, log)
+- [x] Empty: whole project empty -> T-P22 (Hierarchy "Nothing selected", Inspector "Select an actor or a layer", Assets "No assets yet", viewport "This scene is empty", Add player / Import images) — evidence: test:EmptyProjectTests.P11_09_EmptyProject_OpensWithEveryEmptyState, test:EmptyProjectTests.Contents_EmptyOnlyWithoutAssetsScriptsActorsAndMap, test:EmptyProjectTests.P11_09_AddPlayer_PutsThePlayerInTheSceneAndOpensTheSceneEditor, doc:docs/user/windows/T-P22-scene-editor-empty-project.md, commit:c407d74 (2026-10-31)
+- [x] Loading: opening a project -> T-D22 (Read project, Load assets with count, Compile scripts, Open last scene, Cancel) — evidence: test:OpeningProjectTests.P11_06_CancelDuringLoadAssets_LeavesTheOpenProjectAsItWas, test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, doc:docs/user/windows/T-D22-opening-project.md, commit:c407d74 (2026-10-31)
+- [x] Loading: build progress -> T-D06 (per-step time, per-file progress, log) — evidence: test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:LongOperationTests.Build_CancelledFromBuildRom_LeavesTheProjectConsistent_UiStaysResponsive, doc:docs/user/windows/T-D06-build-rom.md, commit:c407d74 (2026-10-31)
 - [ ] Loading: flashing a cartridge -> T-D07 (Writing x / y KB, keep connected)
-- [ ] Error: build failed -> T-D23 (failed step, skipped steps, clickable errors, Go to first error)
-- [ ] Error: import failed -> T-D24 (per-file problem in plain language, fix buttons, files with errors skipped)
-- [ ] Error / warning inline: analyzer diagnostic popup with quick fixes -> T-P04
-- [ ] Warning: shortcut conflict -> T-S09, T-O12
-- [ ] Warning: localization missing / too long -> T-P14 ("missing", "long")
+- [x] Error: build failed -> T-D23 (failed step, skipped steps, clickable errors, Go to first error) — evidence: test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, doc:docs/user/windows/T-D23-build-rom-failed.md, commit:c407d74 (2026-10-31)
+- [x] Error: import failed -> T-D24 (per-file problem in plain language, fix buttons, files with errors skipped) — evidence: test:ImportDialogTests.Problems_OpenTheErrorsDialog_FixesAndSkipsErrors, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:AssetImporterTests.Fixes_ReduceOrSplitIntoLayeredSprites, doc:docs/user/windows/T-D24-import-asset-errors.md, commit:c407d74 (2026-10-31)
+- [x] Error / warning inline: analyzer diagnostic popup with quick fixes -> T-P04 — evidence: test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, doc:docs/user/windows/T-P04-script-editor.md, commit:c407d74 (2026-10-31)
+- [x] Warning: shortcut conflict -> T-S09, T-O12 — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, test:PreferencesTests.Shortcuts_ShowTheConflictChip, test:CommandAndShortcutTests.Shortcuts_RebindToCtrlG_ReportsGoToLine, doc:docs/user/windows/T-S09-preferences-shortcuts.md, doc:docs/user/windows/T-O12-record-shortcut.md, commit:c407d74 (2026-10-31)
+- [x] Warning: localization missing / too long -> T-P14 ("missing", "long") — evidence: test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:LocalizationWindowTests.P11_41_SearchGroupsAndMissingOnly, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:LocalizationWindowTests.P11_41_FitCheckSaysHowManyLinesTheBoxNeeds, doc:docs/user/windows/T-P14-localization.md, commit:c407d74 (2026-10-31)
 - [ ] Warning: missing glyphs -> T-P09, T-D16 ("3 missing")
-- [ ] Warning: CSV row problems -> T-D19
-- [ ] Warning: location inside devkitPro -> T-D01 ("A folder outside D:\devkitPro is safer for updates")
-- [ ] Status found / not set for tools and paths -> T-S08, T-D09
-- [ ] Unsaved changes -> T-D12, dirty dot on Doc Tab
+- [x] Warning: CSV row problems -> T-D19 — evidence: test:DatabaseWindowTests.P11_40_ImportCsvWarnsOnRows7And15ThenImports, doc:docs/user/windows/T-D19-import-csv.md, commit:c407d74 (2026-10-31)
+- [x] Warning: location inside devkitPro -> T-D01 ("A folder outside D:\devkitPro is safer for updates") — evidence: test:NewProjectTests.Fields_DeriveFromTheNameValidateAndWarnInsideDevkitPro, test:NewProjectTests.Rules_RomTitleGameCodeLocationAndDevkitPro, doc:docs/user/windows/T-D01-new-project.md, commit:c407d74 (2026-10-31)
+- [x] Status found / not set for tools and paths -> T-S08, T-D09 — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferenceEffectsTests.Paths_ProjectsFolderImageEditorTiled_AndBrowse, test:ProjectSettingsTests.Tabs_ShowTheProjectsData, test:ServiceTests.Toolchain_ReportsFoundAndNotFoundWithFakeFolders, doc:docs/user/windows/T-S08-preferences-paths.md, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
+- [x] Unsaved changes -> T-D12, dirty dot on Doc Tab — evidence: test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, test:OpeningProjectTests.P11_06_UnsavedChangesAreAskedFirstAndBrokenProjectsFailCleanly, test:ShellE2ETests.Exit_WithUnsavedChanges_ShowsDialog_DontSaveCloses_SaveAllSaves, doc:docs/user/windows/T-D12-unsaved-changes.md, commit:c407d74 (2026-10-31)
 
 ### 4.10 Light theme
 
 - **T-L01 Scene Editor · Light** · 1440 x 900 · from: Preferences › Appearance › Light
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, test:ShotTests.Shot_AllComponentsAndWindows, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-L02 New Project · Light** · 1180 x 668
   - [ ] implemented
   - [ ] matches Figma
 - **T-L03 Preferences · Appearance · Light** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - [ ] T-L04 Every other window switches to "AGB Studio · Light" tokens with no hard-coded colours (game pixels and code colours stay as designed) · Verify: `REV` + automated scan for colour literals outside the token file
 
 ### 4.11 System windows from Editor Map board 4 (operating-system dialogs, no visual check)
 
-- [ ] T-Y01 Launcher › Open… -> folder picker
-- [ ] T-Y02 Localization › Export .csv -> save dialog
-- [ ] T-Y03 Script Editor › Open externally -> external editor process at the right file and line
-- [ ] T-Y04 Preferences › Paths › Browse… -> file picker
+- [x] T-Y01 Launcher › Open… -> folder picker — evidence: test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, doc:docs/user/windows/T-P12-launcher.md, commit:c407d74 (2026-10-31)
+- [x] T-Y02 Localization › Export .csv -> save dialog — evidence: test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, doc:docs/user/windows/T-P14-localization.md, commit:c407d74 (2026-10-31)
+- [x] T-Y03 Script Editor › Open externally -> external editor process at the right file and line — evidence: test:ScriptToolsTests.OpenExternally_StartsTheConfiguredEditorAtTheCaretLine, doc:docs/user/windows/T-P04-script-editor.md, doc:docs/evidence/external-ide.md, commit:c407d74 (2026-10-31)
+- [x] T-Y04 Preferences › Paths › Browse… -> file picker — evidence: test:PreferenceEffectsTests.Paths_ProjectsFolderImageEditorTiled_AndBrowse, doc:docs/user/windows/T-S08-preferences-paths.md, commit:c407d74 (2026-10-31)
 
 ### 4.12 Editor Map board 1: Scene Editor buttons (35)
 
 Verify ทุกข้อด้วย `E2E`: คลิกแล้วหน้าต่างที่ถูกต้องเปิด
 
-- [ ] T-B01 File -> File menu
+- [x] T-B01 File -> File menu — evidence: test:ShellE2ETests.Menu_ClickFileOpensItAndHelpKeyboardShortcutsOpensTheDialog, test:MenuActionTests.ProjectCommands_AreDisabledWithoutAProject_AndEnabledWhenOneOpens, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
 - [ ] T-B02 Edit -> Edit menu
 - [ ] T-B03 Assets -> Assets menu
-- [ ] T-B04 Scene -> Scene menu
+- [x] T-B04 Scene -> Scene menu — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
 - [ ] T-B05 Build -> Build menu
 - [ ] T-B06 Tools -> Tools menu
 - [ ] T-B07 Help -> Help menu
-- [ ] T-B08 Breadcrumb -> Scene Switcher
-- [ ] T-B09 Debug -> Debugger
-- [ ] T-B10 Build -> Build ROM
-- [ ] T-B11 Play -> Play Mode
-- [ ] T-B12 Video mode chip -> Video Mode
-- [ ] T-B13 Hierarchy + -> Add to Scene
-- [ ] T-B14 Actor (right-click) -> Actor Context Menu
-- [ ] T-B15 Tab Game -> Play Mode
-- [ ] T-B16 Tab Forest_01.map -> Tilemap Editor
-- [ ] T-B17 Tab PlayerController.cs -> Script Editor
-- [ ] T-B18 Scene size chip -> Scene Settings
-- [ ] T-B19 Grid chip -> Grid & Snap
-- [ ] T-B20 Zoom chip -> Zoom
-- [ ] T-B21 Console tab -> Console panel
-- [ ] T-B22 Animation tab -> Animation panel
-- [ ] T-B23 Database tab -> Database
-- [ ] T-B24 Asset (double-click) -> Sprite Editor (or the editor for that asset type)
-- [ ] T-B25 Asset (right-click) -> Asset Context Menu
-- [ ] T-B26 Font asset -> Font Manager
-- [ ] T-B27 Inspector … -> Component Menu
-- [ ] T-B28 Sheet dropdown -> Asset Picker
-- [ ] T-B29 Animation dropdown -> Animation List
-- [ ] T-B30 Palette -> Palette Manager
-- [ ] T-B31 Script component -> Script Editor
-- [ ] T-B32 Add Component -> Component Picker
-- [ ] T-B33 GBA Budget -> Budget Details
-- [ ] T-B34 Build status -> Build Report
-- [ ] T-B35 Emulator status -> Preferences (Emulator tab)
+- [x] T-B08 Breadcrumb -> Scene Switcher — evidence: test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, doc:docs/user/windows/T-O01-scene-switcher.md, commit:c407d74 (2026-10-31)
+- [x] T-B09 Debug -> Debugger — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P19-debugger.md, commit:c407d74 (2026-10-31)
+- [x] T-B10 Build -> Build ROM — evidence: test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, doc:docs/user/windows/T-D06-build-rom.md, commit:c407d74 (2026-10-31)
+- [x] T-B11 Play -> Play Mode — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-B12 Video mode chip -> Video Mode — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-O02-video-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-B13 Hierarchy + -> Add to Scene — evidence: test:HierarchyTests.AddButtonAndContextMenu, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B14 Actor (right-click) -> Actor Context Menu — evidence: test:HierarchyTests.AddButtonAndContextMenu, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B15 Tab Game -> Play Mode — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-B16 Tab Forest_01.map -> Tilemap Editor — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:TilemapE2ETests.OpensFromTheMapTabBackgroundLayersAndCreateMenu, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P03-tilemap-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B17 Tab PlayerController.cs -> Script Editor — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ScriptEditorTests.OpensFromTheDocTabAndListsTheScripts, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P04-script-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B18 Scene size chip -> Scene Settings — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D03-scene-settings.md, commit:c407d74 (2026-10-31)
+- [x] T-B19 Grid chip -> Grid & Snap — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-O03-grid-and-snap.md, commit:c407d74 (2026-10-31)
+- [x] T-B20 Zoom chip -> Zoom — evidence: test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B21 Console tab -> Console panel — evidence: test:BottomPanelTests.Console_LinesFiltersCountsAndClickToCode, doc:docs/user/windows/T-P05-console-panel.md, commit:c407d74 (2026-10-31)
+- [x] T-B22 Animation tab -> Animation panel — evidence: test:BottomPanelTests.Animation_ListFramesPlayStepAndOnionSkin, doc:docs/user/windows/T-P06-animation-panel.md, commit:c407d74 (2026-10-31)
+- [x] T-B23 Database tab -> Database — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P07-database.md, commit:c407d74 (2026-10-31)
+- [x] T-B24 Asset (double-click) -> Sprite Editor (or the editor for that asset type) — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P08-sprite-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B25 Asset (right-click) -> Asset Context Menu — evidence: test:BottomPanelTests.Assets_ContextMenuAndDragIntoTheScene, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B26 Font asset -> Font Manager — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P09-font-manager.md, commit:c407d74 (2026-10-31)
+- [x] T-B27 Inspector … -> Component Menu — evidence: test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:PopoverAndMenuTests.ComponentMenu_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B28 Sheet dropdown -> Asset Picker — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.SheetAndAnimationDropdowns, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-O04-asset-picker.md, commit:c407d74 (2026-10-31)
+- [x] T-B29 Animation dropdown -> Animation List — evidence: test:InspectorTests.SheetAndAnimationDropdowns, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, doc:docs/user/windows/T-P01-scene-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B30 Palette -> Palette Manager — evidence: test:InspectorTests.Header_TransformAndSpriteOfThePlayer, doc:docs/user/windows/T-P10-palette-manager.md, commit:c407d74 (2026-10-31)
+- [x] T-B31 Script component -> Script Editor — evidence: test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, doc:docs/user/windows/T-P04-script-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-B32 Add Component -> Component Picker — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-O05-component-picker.md, commit:c407d74 (2026-10-31)
+- [x] T-B33 GBA Budget -> Budget Details — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.GbaBudget_ShowsLiveMetersAndOpensBudgetDetails, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-O06-budget-details.md, commit:c407d74 (2026-10-31)
+- [x] T-B34 Build status -> Build Report — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P11-build-report.md, commit:c407d74 (2026-10-31)
+- [x] T-B35 Emulator status -> Preferences (Emulator tab) — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:PreferencesTests.OpensAtEmulatorFromFileMenuShortcutAndStatusBar_TabsFromTheirIds, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
 
 ### 4.13 Editor Map board 4: buttons on other pages (52)
 
 Verify ทุกข้อด้วย `E2E`
 
-- [ ] T-C01 Launcher › New Project -> New Project
-- [ ] T-C02 Launcher › Open… -> folder picker
-- [ ] T-C03 Launcher › Templates tab -> Launcher · Templates
-- [ ] T-C04 Launcher › Learn tab -> Launcher · Learn
-- [ ] T-C05 Launcher › Settings tab -> Preferences
-- [ ] T-C06 Launcher › Project card -> Opening Project
-- [ ] T-C07 Launcher › Project card (right-click) -> Project Context Menu
-- [ ] T-C08 Launcher › Tutorial Start / Continue -> Tutorial Steps
-- [ ] T-C09 Launcher › Use this template -> New Project
-- [ ] T-C10 Play Mode › Speed chip 1x -> Play Speed
-- [ ] T-C11 Play Mode › Stop -> Scene Editor
-- [ ] T-C12 Sprite Editor › Sprites + -> New Sprite
-- [ ] T-C13 Sprite Editor › Drop zone -> Import Asset
-- [ ] T-C14 Sprite Editor › OAM size -> OAM Size
-- [ ] T-C15 Sprite Editor › Palette slots -> Palette Manager
-- [ ] T-C16 Tilemap Editor › Tileset dropdown -> Asset Picker
-- [ ] T-C17 Tilemap Editor › Add layer -> Add Layer
-- [ ] T-C18 Tilemap Editor › Auto-tile rules tab -> Auto-tile Rules panel
-- [ ] T-C19 Script Editor › Scripts + -> New Script
-- [ ] T-C20 Script Editor › Open externally -> external editor
+- [x] T-C01 Launcher › New Project -> New Project — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D01-new-project.md, commit:c407d74 (2026-10-31)
+- [x] T-C02 Launcher › Open… -> folder picker — evidence: test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, doc:docs/user/windows/T-P12-launcher.md, doc:docs/user/windows/T-D22-opening-project.md, commit:c407d74 (2026-10-31)
+- [x] T-C03 Launcher › Templates tab -> Launcher · Templates — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P20-launcher-templates.md, commit:c407d74 (2026-10-31)
+- [x] T-C04 Launcher › Learn tab -> Launcher · Learn — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P21-launcher-learn.md, commit:c407d74 (2026-10-31)
+- [x] T-C05 Launcher › Settings tab -> Preferences — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
+- [x] T-C06 Launcher › Project card -> Opening Project — evidence: test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, doc:docs/user/windows/T-D22-opening-project.md, commit:c407d74 (2026-10-31)
+- [x] T-C07 Launcher › Project card (right-click) -> Project Context Menu — evidence: test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, doc:docs/user/windows/T-P12-launcher.md, commit:c407d74 (2026-10-31)
+- [x] T-C08 Launcher › Tutorial Start / Continue -> Tutorial Steps — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, doc:docs/user/windows/T-O13-tutorial-steps.md, commit:c407d74 (2026-10-31)
+- [x] T-C09 Launcher › Use this template -> New Project — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_02_Templates_FiltersSearchDetailsAndUseThisTemplate, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D01-new-project.md, commit:c407d74 (2026-10-31)
+- [x] T-C10 Play Mode › Speed chip 1x -> Play Speed — evidence: test:PlayModeE2ETests.P12_04_PlaySpeed_QuarterToFourTimes_AndFrameStep, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-C11 Play Mode › Stop -> Scene Editor — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-C12 Sprite Editor › Sprites + -> New Sprite — evidence: test:SpriteEditorE2ETests.P11_27_NewSprite_FromSpritesPlus, doc:docs/user/windows/T-D13-new-sprite.md, commit:c407d74 (2026-10-31)
+- [x] T-C13 Sprite Editor › Drop zone -> Import Asset — evidence: test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, doc:docs/user/windows/T-D04-import-asset.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
+- [x] T-C14 Sprite Editor › OAM size -> OAM Size — evidence: test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, doc:docs/user/windows/T-P08-sprite-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-C15 Sprite Editor › Palette slots -> Palette Manager — evidence: test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, doc:docs/user/windows/T-P10-palette-manager.md, commit:c407d74 (2026-10-31)
+- [x] T-C16 Tilemap Editor › Tileset dropdown -> Asset Picker — evidence: test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, doc:docs/user/windows/T-O04-asset-picker.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
+- [x] T-C17 Tilemap Editor › Add layer -> Add Layer — evidence: test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, doc:docs/user/windows/T-P03-tilemap-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-C18 Tilemap Editor › Auto-tile rules tab -> Auto-tile Rules panel — evidence: test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, doc:docs/user/windows/T-P26-auto-tile-rules-panel.md, commit:c407d74 (2026-10-31)
+- [x] T-C19 Script Editor › Scripts + -> New Script — evidence: test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, doc:docs/user/windows/T-D14-new-script.md, commit:c407d74 (2026-10-31)
+- [x] T-C20 Script Editor › Open externally -> external editor — evidence: test:ScriptToolsTests.OpenExternally_StartsTheConfiguredEditorAtTheCaretLine, doc:docs/user/windows/T-P04-script-editor.md, commit:c407d74 (2026-10-31)
 - [ ] T-C21 Script Editor › Ctrl+F / Ctrl+H -> Find & Replace
-- [ ] T-C22 Script Editor › Open Scripting API -> Scripting API
-- [ ] T-C23 Logic Graph › Right-click canvas -> Add Node
-- [ ] T-C24 Logic Graph › Right-click node -> Node Context Menu
-- [ ] T-C25 World Map › New Scene -> New Scene
-- [ ] T-C26 World Map › Scene card (right-click) -> Scene Context Menu
-- [ ] T-C27 World Map › Link chip -> Link Settings
-- [ ] T-C28 Palette Manager › Fade / Cycle -> Palette Effect
-- [ ] T-C29 Palette Manager › Import .pal / .gpl -> Import Asset
-- [ ] T-C30 Font Manager › Fonts + -> New Font
-- [ ] T-C31 Font Manager › Add characters from text… -> Add Characters
-- [ ] T-C32 Database › Tables + -> New Table
-- [ ] T-C33 Database › Schema + -> Add Field
-- [ ] T-C34 Database › Import CSV -> Import CSV
-- [ ] T-C35 Localization › Languages + -> Add Language
-- [ ] T-C36 Localization › Export .csv -> save dialog
-- [ ] T-C37 Audio › Sound effects + -> SFX Designer
-- [ ] T-C38 Audio › Music + -> Import Asset
-- [ ] T-C39 Dialogue Editor › Speakers + -> New Speaker
-- [ ] T-C40 Dialogue Editor › Add line · choice · command -> Add to Dialogue
-- [ ] T-C41 Debugger › Views › Memory -> Debugger · Memory
-- [ ] T-C42 Debugger › Views › Palettes -> Debugger · Palettes
-- [ ] T-C43 Build Report › Build again -> Build ROM
-- [ ] T-C44 Build ROM (a step fails) -> Build ROM · Failed
-- [ ] T-C45 Import Asset (a file can't be converted) -> Import Asset · Errors
-- [ ] T-C46 Build Report › Run in mGBA -> Play Mode
-- [ ] T-C47 Build Report › Flash to cartridge -> Flash to Cartridge
-- [ ] T-C48 Component Picker › New C# script… -> New Script
-- [ ] T-C49 Preferences › Shortcuts › pencil -> Record Shortcut
-- [ ] T-C50 Preferences › Paths › Browse… -> file picker
-- [ ] T-C51 Budget Details › Open Build Report -> Build Report
+- [x] T-C22 Script Editor › Open Scripting API -> Scripting API — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P18-scripting-api.md, commit:c407d74 (2026-10-31)
+- [x] T-C23 Logic Graph › Right-click canvas -> Add Node — evidence: test:LogicGraphTests.RightClickCanvas_AddNodeSearchEnterAndShiftEnter, doc:docs/user/windows/T-O08-add-node.md, commit:c407d74 (2026-10-31)
+- [x] T-C24 Logic Graph › Right-click node -> Node Context Menu — evidence: test:LogicGraphTests.RightClickNode_ContextMenuDuplicateDisableGroupCollapseShowCodeDelete, doc:docs/user/windows/T-P17-logic-graph.md, commit:c407d74 (2026-10-31)
+- [x] T-C25 World Map › New Scene -> New Scene — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D02-new-scene.md, commit:c407d74 (2026-10-31)
+- [x] T-C26 World Map › Scene card (right-click) -> Scene Context Menu — evidence: test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, doc:docs/user/windows/T-P13-world-map.md, commit:c407d74 (2026-10-31)
+- [x] T-C27 World Map › Link chip -> Link Settings — evidence: test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, doc:docs/user/windows/T-O09-link-settings.md, commit:c407d74 (2026-10-31)
+- [x] T-C28 Palette Manager › Fade / Cycle -> Palette Effect — evidence: test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, doc:docs/user/windows/T-O10-palette-effect.md, commit:c407d74 (2026-10-31)
+- [x] T-C29 Palette Manager › Import .pal / .gpl -> Import Asset — evidence: test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, doc:docs/user/windows/T-D04-import-asset.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
+- [x] T-C30 Font Manager › Fonts + -> New Font — evidence: test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, doc:docs/user/windows/T-D15-new-font.md, commit:c407d74 (2026-10-31)
+- [x] T-C31 Font Manager › Add characters from text… -> Add Characters — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D16-add-characters.md, commit:c407d74 (2026-10-31)
+- [x] T-C32 Database › Tables + -> New Table — evidence: test:DatabaseWindowTests.P11_40_NewTableFromEmptyCsvAndCopy_UndoRemovesTheFile, doc:docs/user/windows/T-D17-new-table.md, commit:c407d74 (2026-10-31)
+- [x] T-C33 Database › Schema + -> Add Field — evidence: test:DatabaseWindowTests.P11_40_AddFieldRarityEnumIsOneBytePerRow, doc:docs/user/windows/T-D18-add-field.md, commit:c407d74 (2026-10-31)
+- [x] T-C34 Database › Import CSV -> Import CSV — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DatabaseWindowTests.P11_40_ImportCsvWarnsOnRows7And15ThenImports, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D19-import-csv.md, commit:c407d74 (2026-10-31)
+- [x] T-C35 Localization › Languages + -> Add Language — evidence: test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, doc:docs/user/windows/T-D20-add-language.md, commit:c407d74 (2026-10-31)
+- [x] T-C36 Localization › Export .csv -> save dialog — evidence: test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, doc:docs/user/windows/T-P14-localization.md, commit:c407d74 (2026-10-31)
+- [x] T-C37 Audio › Sound effects + -> SFX Designer — evidence: test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, doc:docs/user/windows/T-P25-sfx-designer.md, commit:c407d74 (2026-10-31)
+- [x] T-C38 Audio › Music + -> Import Asset — evidence: test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, doc:docs/user/windows/T-D04-import-asset.md, commit:c407d74 (2026-10-31)
+- [x] T-C39 Dialogue Editor › Speakers + -> New Speaker — evidence: test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, doc:docs/user/windows/T-D21-new-speaker.md, commit:c407d74 (2026-10-31)
+- [x] T-C40 Dialogue Editor › Add line · choice · command -> Add to Dialogue — evidence: test:DialogueWindowTests.P11_47_AddLineChoiceCommandsConditionAndPaste, test:DialogueWindowTests.P11_47_AddToDialogueAndCommandMenusMatchFigma, doc:docs/user/windows/T-P16-dialogue-editor.md, commit:c407d74 (2026-10-31)
+- [x] T-C41 Debugger › Views › Memory -> Debugger · Memory — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, doc:docs/user/windows/T-P23-debugger-memory.md, commit:c407d74 (2026-10-31)
+- [x] T-C42 Debugger › Views › Palettes -> Debugger · Palettes — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, doc:docs/user/windows/T-P24-debugger-palettes.md, commit:c407d74 (2026-10-31)
+- [x] T-C43 Build Report › Build again -> Build ROM — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D06-build-rom.md, commit:c407d74 (2026-10-31)
+- [x] T-C44 Build ROM (a step fails) -> Build ROM · Failed — evidence: test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, doc:docs/user/windows/T-D23-build-rom-failed.md, commit:c407d74 (2026-10-31)
+- [x] T-C45 Import Asset (a file can't be converted) -> Import Asset · Errors — evidence: test:ImportDialogTests.Problems_OpenTheErrorsDialog_FixesAndSkipsErrors, doc:docs/user/windows/T-D24-import-asset-errors.md, commit:c407d74 (2026-10-31)
+- [x] T-C46 Build Report › Run in mGBA -> Play Mode — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-P02-play-mode.md, commit:c407d74 (2026-10-31)
+- [x] T-C47 Build Report › Flash to cartridge -> Flash to Cartridge — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BuildReportTests.HeaderFields_EditProjectSettings_AndExportActionsOpenTheirWindows, doc:docs/evidence/prototype-links.md, doc:docs/user/windows/T-D07-flash-to-cartridge.md, commit:c407d74 (2026-10-31)
+- [x] T-C48 Component Picker › New C# script… -> New Script — evidence: test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, doc:docs/user/windows/T-D14-new-script.md, commit:c407d74 (2026-10-31)
+- [x] T-C49 Preferences › Shortcuts › pencil -> Record Shortcut — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, doc:docs/user/windows/T-O12-record-shortcut.md, commit:c407d74 (2026-10-31)
+- [x] T-C50 Preferences › Paths › Browse… -> file picker — evidence: test:PreferenceEffectsTests.Paths_ProjectsFolderImageEditorTiled_AndBrowse, doc:docs/user/windows/T-S08-preferences-paths.md, commit:c407d74 (2026-10-31)
+- [x] T-C51 Budget Details › Open Build Report -> Build Report — evidence: test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, doc:docs/user/windows/T-P11-build-report.md, commit:c407d74 (2026-10-31)
 - [ ] T-C52 File menu › New Project (Empty) -> Scene Editor · Empty project (see 1.4 item 3)
 
 ### 4.14 Prototype links
 
-- [ ] T-X01 Flow "AGB Studio · start" (from Launcher) works end to end in the app · Verify: `E2E` script that follows the flow
+- [x] T-X01 Flow "AGB Studio · start" (from Launcher) works end to end in the app · Verify: `E2E` script that follows the flow — evidence: test:PrototypeFlowTests.T_X01_FlowStart_FromTheLauncher_EveryLinkItReaches, test:PrototypeLinkTests.Export_HasTheTwoFlowsAnd120Links_EveryFrameIsAWindow_EveryNodeHasAnAppControl, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
 - [ ] T-X02 Flow "AGB Studio · editor" (from Scene Editor) works end to end · Verify: `E2E`
 - [ ] T-X03 All 120 prototype click links in Screens go to the same window in the app; every Cancel / Close closes its overlay; tabs and Stop lead back · Verify: export the link list from Figma read-only at test time, generate an `E2E` case per link
 
 ### 4.15 Design tokens, type, icons, art
 
-- [ ] T-K01 29 colour tokens, same names in "AGB Studio" (Dark) and "AGB Studio · Light": bg/canvas, bg/base, bg/panel, bg/raised, bg/hover, bg/sunken, border/default, border/strong, text/primary, text/secondary, text/muted, text/on-accent, text/on-selected, accent/default, accent/selected, accent/subtle, accent/hover, accent/pressed, status/success, status/warning, status/danger, status/danger-subtle, status/danger-hover, status/danger-pressed, kind/script, kind/data, kind/audio, axis/x, axis/y · Verify: `UT` compares a read-only Figma export with the app token file (names and values, both themes)
+- [x] T-K01 29 colour tokens, same names in "AGB Studio" (Dark) and "AGB Studio · Light": bg/canvas, bg/base, bg/panel, bg/raised, bg/hover, bg/sunken, border/default, border/strong, text/primary, text/secondary, text/muted, text/on-accent, text/on-selected, accent/default, accent/selected, accent/subtle, accent/hover, accent/pressed, status/success, status/warning, status/danger, status/danger-subtle, status/danger-hover, status/danger-pressed, kind/script, kind/data, kind/audio, axis/x, axis/y · Verify: `UT` compares a read-only Figma export with the app token file (names and values, both themes) — evidence: test:TokenTests.TokenFile_NamesAndValuesMatchFigma, test:TokenTests.BothThemes_HaveIdenticalKeys, test:TokenTests.TokenFile_IsGeneratedFromFigmaExport, doc:docs/evidence/figma/tokens.json, commit:c407d74 (2026-10-31)
 - [x] T-K02 20 text styles: Header 1, Header 2, Body, Brand/13, Title/18, Title/14, Body/12, Body/12 Medium, Body/12 Semibold, Label/11, Label/11 Medium, Caption/10, Overline/11, Mono/10, Mono/11, Mono/11 Bold, Mono/13, Thai/13, Thai/13 Medium, Pixel/10 · Verify: `UT` style table vs Figma export, `SHOT` type specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, test:TokenTests.TextStyles_MatchFigma, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
-- [ ] T-K03 Fonts bundled with licence files: Inter, JetBrains Mono, IBM Plex Sans Thai (and Looped), Press Start 2P, Nunito ExtraBold (wordmark) · Verify: `REV` against G-LEGAL
-- [ ] T-K04 70 icons (icon/play … icon/gift) exported as vector and used by name · Verify: `UT` every icon name referenced in UI exists, none missing
+- [x] T-K03 Fonts bundled with licence files: Inter, JetBrains Mono, IBM Plex Sans Thai (and Looped), Press Start 2P, Nunito ExtraBold (wordmark) · Verify: `REV` against G-LEGAL — evidence: test:DesignSystemTests.Fonts_BundledWithOflLicences, doc:editor/AgbStudio.Editor/Assets/Fonts, doc:docs/THIRD_PARTY.md, doc:docs/evidence/legal-review.md, commit:c407d74 (2026-10-31)
+- [x] T-K04 70 icons (icon/play … icon/gift) exported as vector and used by name · Verify: `UT` every icon name referenced in UI exists, none missing — evidence: test:DesignSystemTests.Icons_All70ExportedFromFigma, test:DesignSystemTests.Icons_EveryNameUsedInTheUiExists, doc:editor/AgbStudio.Editor/Assets/Icons, commit:c407d74 (2026-10-31)
 - [ ] T-K05 Art used inside the UI (art/scene x4, art/sprite x6, art/tileset x1, art/genre x8) and 19 thumbnails (thumb/*) · Verify: `REV` each is original design work, `SHOT` on the windows that show them
 
 ### 4.16 Components (47 buildable)
@@ -673,145 +673,145 @@ Verify ทุกข้อด้วย `E2E`
 แต่ละชิ้นต้องมีครบทุก variant และ state ใน Figma รวม Hover / Pressed / Disabled / Focus ตรวจด้วย `SHOT` ต่อ variant
 
 - **Menu Item** (Kind: Default, Submenu, Checked, Danger · State: Default, Hover, Disabled · shortcut, icon)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-item-default-default.png, shot:docs/evidence/diff/C-menu-item-default-hover.png, shot:docs/evidence/diff/C-menu-item-default-disabled.png, shot:docs/evidence/diff/C-menu-item-submenu-default.png, shot:docs/evidence/diff/C-menu-item-submenu-hover.png, shot:docs/evidence/diff/C-menu-item-checked-default.png, shot:docs/evidence/diff/C-menu-item-danger-default.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Menu Bar Item** (Default, Open)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Menu_ClickFileOpensItAndHelpKeyboardShortcutsOpensTheDialog, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-bar-item-default.png, shot:docs/evidence/diff/C-menu-bar-item-open.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Button** (Primary, Secondary, Ghost, Danger · SM, LG · Default, Hover, Pressed, Disabled · icon)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Icon Button** (Default, Active, Disabled, Hover, Pressed)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Play Control** (Play, Pause, Step, Stop)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Toasts_ShowAndCloseAndTooltipsUseTheTooltipComponent, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Layer Toggle** (On, Off, Active)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Chip** (Default, Accent, Success, Warning, Danger, Script · icon)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Switch** (On, Off)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-switch-on.png, shot:docs/evidence/diff/C-switch-off.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Checkbox** (On, Off · label)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-checkbox-on.png, shot:docs/evidence/diff/C-checkbox-off.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Segment** (Default, Active, Hover)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-segment-default.png, shot:docs/evidence/diff/C-segment-active.png, shot:docs/evidence/diff/C-segment-hover.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Progress** (OK, Warn, Danger, Accent · 0-100)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-progress-ok-0.png, shot:docs/evidence/diff/C-progress-ok-10.png, shot:docs/evidence/diff/C-progress-ok-20.png, shot:docs/evidence/diff/C-progress-ok-30.png, shot:docs/evidence/diff/C-progress-ok-40.png, shot:docs/evidence/diff/C-progress-ok-50.png, shot:docs/evidence/diff/C-progress-ok-60.png, shot:docs/evidence/diff/C-progress-ok-70.png, shot:docs/evidence/diff/C-progress-ok-80.png, shot:docs/evidence/diff/C-progress-ok-90.png, shot:docs/evidence/diff/C-progress-ok-100.png, shot:docs/evidence/diff/C-progress-warn-0.png, shot:docs/evidence/diff/C-progress-warn-10.png, shot:docs/evidence/diff/C-progress-warn-20.png, shot:docs/evidence/diff/C-progress-warn-30.png, shot:docs/evidence/diff/C-progress-warn-40.png, shot:docs/evidence/diff/C-progress-warn-50.png, shot:docs/evidence/diff/C-progress-warn-60.png, shot:docs/evidence/diff/C-progress-warn-70.png, shot:docs/evidence/diff/C-progress-warn-80.png, shot:docs/evidence/diff/C-progress-warn-90.png, shot:docs/evidence/diff/C-progress-warn-100.png, shot:docs/evidence/diff/C-progress-danger-0.png, shot:docs/evidence/diff/C-progress-danger-10.png, shot:docs/evidence/diff/C-progress-danger-20.png, shot:docs/evidence/diff/C-progress-danger-30.png, shot:docs/evidence/diff/C-progress-danger-40.png, shot:docs/evidence/diff/C-progress-danger-50.png, shot:docs/evidence/diff/C-progress-danger-60.png, shot:docs/evidence/diff/C-progress-danger-70.png, shot:docs/evidence/diff/C-progress-danger-80.png, shot:docs/evidence/diff/C-progress-danger-90.png, shot:docs/evidence/diff/C-progress-danger-100.png, shot:docs/evidence/diff/C-progress-accent-0.png, shot:docs/evidence/diff/C-progress-accent-10.png, shot:docs/evidence/diff/C-progress-accent-20.png, shot:docs/evidence/diff/C-progress-accent-30.png, shot:docs/evidence/diff/C-progress-accent-40.png, shot:docs/evidence/diff/C-progress-accent-50.png, shot:docs/evidence/diff/C-progress-accent-60.png, shot:docs/evidence/diff/C-progress-accent-70.png, shot:docs/evidence/diff/C-progress-accent-80.png, shot:docs/evidence/diff/C-progress-accent-90.png, shot:docs/evidence/diff/C-progress-accent-100.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Slider** (0-100, knob with border/strong ring)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Tree Item** (Default, Selected, Hover · toggle None, Open, Closed · meta, icon)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Doc Tab** (Default, Active, Hover · dirty dot)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Panel Tab** (Default, Active, Hover · count)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **List Item** (Default, Selected, Hover)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Nav Item** (Default, Active, Hover)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Section Header** (Open, Closed · meta)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Field** (Text, Dropdown, XY, Slider, Toggle)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Swatch** (Default, Selected, Empty, Transparent)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-swatch-default.png, shot:docs/evidence/diff/C-swatch-selected.png, shot:docs/evidence/diff/C-swatch-empty.png, shot:docs/evidence/diff/C-swatch-transparent.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Status Item** (Default, Dot)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Console Line** (Info, Success, Warning, Error)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Toast** (Success, Error)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Toasts_ShowAndCloseAndTooltipsUseTheTooltipComponent, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-toast-success.png, shot:docs/evidence/diff/C-toast-error.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Asset Card** (Default, Selected)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-asset-card-default.png, shot:docs/evidence/diff/C-asset-card-selected.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Frame Thumb** (Default, Active)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-frame-thumb-default.png, shot:docs/evidence/diff/C-frame-thumb-active.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Scene Card** (Default, Selected)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Template Card** (Default, Selected)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Glyph Cell** (Default, Selected, Missing)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Table Cell** (Header, Default, Mono, Selected)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-table-cell-header.png, shot:docs/evidence/diff/C-table-cell-default.png, shot:docs/evidence/diff/C-table-cell-mono.png, shot:docs/evidence/diff/C-table-cell-selected.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Text Input** (Default, Focus · help text)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Thai_TypingIntoTextFieldsAndSearch, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-text-input-default.png, shot:docs/evidence/diff/C-text-input-focus.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Select** (Default, Focus · help text)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-select-default.png, shot:docs/evidence/diff/C-select-focus.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Tab** (Default, Active)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-tab-default.png, shot:docs/evidence/diff/C-tab-active.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Node Header** (Event, Input, Physics, Flow, Data, Sound, Actor, Math)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-node-header-event.png, shot:docs/evidence/diff/C-node-header-input.png, shot:docs/evidence/diff/C-node-header-physics.png, shot:docs/evidence/diff/C-node-header-flow.png, shot:docs/evidence/diff/C-node-header-data.png, shot:docs/evidence/diff/C-node-header-sound.png, shot:docs/evidence/diff/C-node-header-actor.png, shot:docs/evidence/diff/C-node-header-math.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Node Pin** (Exec, Bool, Fixed, Actor, Text · In, Out)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-node-pin-exec-in.png, shot:docs/evidence/diff/C-node-pin-exec-out.png, shot:docs/evidence/diff/C-node-pin-bool-in.png, shot:docs/evidence/diff/C-node-pin-bool-out.png, shot:docs/evidence/diff/C-node-pin-fixed-in.png, shot:docs/evidence/diff/C-node-pin-fixed-out.png, shot:docs/evidence/diff/C-node-pin-actor-in.png, shot:docs/evidence/diff/C-node-pin-actor-out.png, shot:docs/evidence/diff/C-node-pin-text-in.png, shot:docs/evidence/diff/C-node-pin-text-out.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **brand/app-icon** (Light, Dark, Indigo)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Window_HasTheAppIcon, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-brand-app-icon-light.png, shot:docs/evidence/diff/C-brand-app-icon-dark.png, shot:docs/evidence/diff/C-brand-app-icon-indigo.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Menu Separator**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-separator.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Badge**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-badge.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Keycap**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-keycap.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Panel Header**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Search Field**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Thai_TypingIntoTextFieldsAndSearch, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-search-field.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Meter**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-meter.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Tooltip**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.Toasts_ShowAndCloseAndTooltipsUseTheTooltipComponent, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-tooltip.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Title Bar** (no brand text; starts at the File menu)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, test:ShellE2ETests.TitleBar_HasSevenMenusAndNoBrandText, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-title-bar.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Dialog Header**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **Dialog Footer** (hint hugs its text so a long hint never pushes the buttons out)
   - [ ] implemented
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-dialog-footer.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Popover Header**
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-popover-header.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **brand/mark** (Plus Pad)
-  - [ ] implemented
+  - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-brand-mark.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 
 Doc-only components, not built in the app: Doc/Callout, Doc/Target Chip (annotation of the Editor Map)
