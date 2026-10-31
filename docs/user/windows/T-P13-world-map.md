@@ -18,8 +18,9 @@ it to plan the levels and the order of the story.
   every card into view. Undo and Redo are on the right.
 - **Scenes**: every scene with its size in tiles, or "menu" / "boss". Click to select, double-click to open it in the
   Scene Editor. The + button opens New Scene.
-- **Links from (scene)**: the links of the selected scene, such as "Goal Flag → Forest_02", with their kind (on touch,
-  door, respawn). Click one to open Link Settings.
+- **Links from (scene)**: the links of the selected scene, such as "Goal Flag → Forest_02", with their kind: on touch
+  (the player walks into the trigger), door (the player stands in it and presses Up) or respawn (the player falls into
+  it, or loses the last heart in this scene). Click one to open Link Settings.
 - **Map**: each scene is a card with a picture, its name and size. Drag a card to move it; its place is saved. Lines
   join linked scenes, and each line has a chip (the trigger, or a condition such as "3 stars"); click the chip for Link
   Settings. Title menu starts are dashed. The mouse wheel zooms; the middle button or the Hand tool moves the view.

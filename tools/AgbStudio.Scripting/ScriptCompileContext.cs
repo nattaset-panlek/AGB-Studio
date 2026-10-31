@@ -73,6 +73,13 @@ public sealed class ScriptCompileContext
     public List<ScriptVarDef> Vars { get; set; } = new();
 
     /// <summary>
+    /// Saved ids of the flags that dialogues declare ("Set flag" and conditions), from earlier builds
+    /// (Project Settings · Save data, <c>save.flagIds</c>). A flag keeps its id; a new one never takes a recorded id,
+    /// so adding a flag does not change what existing save data means. The result's <c>FlagIds</c> is the updated map.
+    /// </summary>
+    public Dictionary<string, int> FlagIds { get; set; } = new();
+
+    /// <summary>
     /// Stable behaviour type indexes (kTypeId = 64 + index) by class name, kept in the project so ids survive
     /// renames of other classes. New classes get the next free index; the result returns the updated map.
     /// </summary>

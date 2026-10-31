@@ -60,7 +60,7 @@ public sealed partial class OpcodeTable
                 case "PushI8": sb.Append(' ').Append((sbyte)code[p]); break;
                 case "PushI16": sb.Append(' ').Append(BitConverter.ToInt16(code, p)); break;
                 case "PushI32": sb.Append(' ').Append(BitConverter.ToInt32(code, p)); break;
-                case "Jump" or "JumpIfFalse" or "JumpIfTrue":
+                case "Jump" or "JumpIfFalse" or "JumpIfTrue" or "WaitUntil":
                     sb.Append(" -> ").Append((p + op.OperandBytes + BitConverter.ToInt16(code, p)).ToString("X4"));
                     break;
                 case "Native": sb.Append($" #{BitConverter.ToUInt16(code, p)} argc {code[p + 2]}"); break;

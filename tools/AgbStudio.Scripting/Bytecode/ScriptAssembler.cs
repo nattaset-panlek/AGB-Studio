@@ -97,7 +97,7 @@ internal sealed class ScriptAssembler
 
     bool _labelSinceLine;
 
-    /// <summary>Jump, JumpIfFalse or JumpIfTrue to a label (relative s16 from the next instruction).</summary>
+    /// <summary>Jump, JumpIfFalse, JumpIfTrue or WaitUntil to a label (relative s16 from the next instruction).</summary>
     public void Jump(string name, int label)
     {
         _code.Add(_ops[name].Code);

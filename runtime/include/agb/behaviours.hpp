@@ -146,10 +146,11 @@ public:
     void onTouch(Actor& other) override;
     void onDestroy() override;
     SoundEvent event = SoundEvent::Touch;
-    u16 sample = 0;
+    u16 sample = 0;  // Sound.Play id: a soundbank sample, or an SFX Designer effect (audio::kDmgSfxFlag)
     fixed volume = fixed(1);
 
 private:
+    void play();
     bool wasGround_ = true;
 };
 

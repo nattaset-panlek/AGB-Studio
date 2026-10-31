@@ -31,6 +31,7 @@ MyGame/
   text/strings.<lang>.json  Localization tables (StringTable)
   text/strings.meta.json  per-key group, speaker, notes, box width and lines (StringMeta)
   dialogue/*.dlg          Dialogue Editor files (DialogueFile)
+  prefabs/*.prefab        Make Prefab: one actor (ActorData) each
   build/                  everything the build writes (never edited by hand)
 ```
 
@@ -41,7 +42,7 @@ MyGame/
 | `name`, `tags`, `lastScene` | project name, tag list (Project Settings · Tags), the scene opened last |
 | `general` | game title, ROM title (12 ASCII), game code (4), maker code (2), version, start scene, default font and language, boot splash and its length, skip splash in Debug |
 | `input`, `allowRemap` | the ten buttons with an action name and keyboard key each; whether the Options screen remaps them |
-| `save` | save type (`None`, `Sram32K`, `Flash64K`, `Flash128K`, `Eeprom8K`), slots, autosave, checksum, save fields (name and type) |
+| `save` | save type (`None`, `Sram32K`, `Flash64K`, `Flash128K`, `Eeprom8K`), slots, autosave, checksum, save fields (name and type), `flagIds` (written by the build: the saved flag id of each Dialogue Editor flag; a flag keeps its id and a new flag never reuses one, so adding a flag does not change what old save data means) |
 | `build` | configuration (`Debug` / `Release`), optimise flags, compress graphics (LZ77), output folder, strip debug log, ROM size warning (MB), keep asserts, run after build |
 | `scripting` | analyzer severities (`GAE001`..`GAE006`), shop currency field and other script options |
 | `localization` | source language, languages (code, name, font, fallback), Thai word wrap, show missing keys, fail on missing |
@@ -55,6 +56,13 @@ only sets the display mode), `map` (a map name), `camera` (`follow` actor, `dead
 `music` (`track`, `volume`, `fadeOnSceneChange`), `events` (`onLoad` / `onEnter` / `onExit` C# statements), `actors`,
 `links`, `alphaBlending`, `mosaic`, `backdrop` (#RRGGBB), an optional title `menu`, the World Map card position
 (`mapX`, `mapY`) and the `template` the scene started from.
+
+A link (`LinkData`) has `from` (an actor of the scene, or empty for "Condition only"), `kind`, `to`, the spawn point
+(`spawnAt`, `spawnX`, `spawnY`), `transition`, `duration` in seconds and `onlyIf` (a C# condition). At run time:
+**OnTouch** fires when the player overlaps the From actor; **Door** when the player stands in it and presses Up;
+**Respawn** when the player overlaps it (a pit, spikes) or is lost in this scene (out of hearts, destroyed, or fallen
+below the map). A link without a From actor fires once its `onlyIf` holds (a Respawn link without one: when the player
+is lost). `onlyIf` is checked every time the link would fire.
 
 An actor (`ActorData`) has a `name`, `kind` (`Empty`, `Player`, `Enemy`, `Pickup`, `TriggerZone`, `CameraZone`,
 `TextLabel`), position (`x`, `y`), `sprite` and `animation`, `tag`, OBJ `priority`, `hidden`, the `prefab` it came
@@ -76,13 +84,15 @@ target `scene` for `LoadScene`.
 layer (`MapLayerData`) has a `name`, hardware `bg` (0-3), `type` (`Tile`, `Image`, `Affine`, `CollisionOnly`),
 `priority`, `parallaxX` / `parallaxY` (1 = moves with the camera), `wrap`, `cells` (one metatile index per cell,
 row-major) or, for image layers, the `image` name. Affine layers are converted at build time to 8bpp tiles with flips
-and palettes baked in (at most 256 tiles).
+and palettes baked in (at most 256 tiles). A map is the layout of a scene (blueprint "Layout"): several scenes can
+show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`).
 
-## `prefabs/<Name>.prefab`
+## `prefabs/<Name>.prefab` (ActorData)
 
-One `ActorData` (as in a scene) written by Actor Context Menu › Make Prefab, with `prefab` cleared; the actor in the
-scene gets `prefab` set to the name. Add to Scene › Prefab… places a copy. The build does not read prefab files:
-placed actors are stored in full in the scene.
+Written by Actor Context Menu › Make Prefab: the actor as it was, with its components and their Inspector values
+(`prefab` cleared); the actor in the scene gets `prefab` set to the name. Add to Scene › Prefab… places a copy. The
+build turns every prefab into a const actor template in ROM (`build/gen/prefabs.cpp`), and `Scene.Spawn("Name", x, y)`
+copies it in any scene when the scene has no actor of that name.
 
 ## Asset metadata (`<file>.meta.json`)
 

@@ -34,6 +34,15 @@ public abstract class ScriptBase
     [ScriptOp("op:WaitFrames")]
     protected static Task Wait(int frames) => Task.CompletedTask;
 
+    /// <summary>
+    /// Waits until a condition is true, checking it once per frame:
+    /// <c>await WaitUntil(() =&gt; Story.metOwl);</c>. The condition can read the cutscene's variables,
+    /// Story / Flags variables and Game fields.
+    /// </summary>
+    /// <param name="condition">Checked every frame; the cutscene continues on the first frame it is true.</param>
+    [ScriptOp("waituntil")]
+    protected static Task WaitUntil(Func<bool> condition) => Task.CompletedTask;
+
     /// <summary>Moves an actor along a path and waits until it arrives.</summary>
     /// <param name="actor">Actor to move.</param>
     /// <param name="path">Path name (see the generated <c>Path</c> class).</param>
