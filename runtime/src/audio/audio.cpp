@@ -115,6 +115,8 @@ void stopSample(SfxHandle h) {
     if (g_ready) mmEffectCancel(h);
 }
 
+bool sampleActive(SfxHandle h) { return g_ready && h != 0 && mmEffectActive(h); }
+
 void setEffectsVolume(fixed v) {
     if (!g_ready) return;
     const int x = (v.raw * 1024) >> 8;

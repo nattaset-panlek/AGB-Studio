@@ -27,6 +27,7 @@ void setMusicPosition(u8 order);
 using SfxHandle = u16;
 SfxHandle playSample(u16 sample, fixed volume = fixed(1), s8 pan = 0, fixed rate = fixed(1));
 void stopSample(SfxHandle handle);
+bool sampleActive(SfxHandle handle);  // the effect still owns a mixing channel
 void setEffectsVolume(fixed volume);
 
 // ---- DMG channels ---------------------------------------------------------------------------------
@@ -42,6 +43,9 @@ struct DmgSfx {
     u8 frames;      // how long the effect owns the channel
 };
 
+// Each DMG channel plays one effect at a time: a new effect on a busy channel replaces the one playing there (and owns
+// the channel for its own `frames`); effects on different channels play together. Maxmod uses only the Direct Sound
+// channels, so music never takes a DMG channel.
 void playDmg(const DmgSfx& sfx);
 // The game's SFX Designer effects (generated table); Sound.Play ids with the high bit set index it.
 void setDmgTable(const DmgSfx* table, u16 count);

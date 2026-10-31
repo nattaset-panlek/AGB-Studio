@@ -392,6 +392,10 @@ public sealed class GameBuilder
     {
         var inputs = _p.MusicFiles().Concat(_p.SoundFiles()).ToList();
         if (inputs.Count == 0) return;
+        // G-HW.08: every module fits in the mixing channels Maxmod is given.
+        var channelProblems = Audio.AudioChannels.Check(_p.Settings.Audio.Channels, _p.MusicFiles());
+        foreach (var problem in channelProblems) Add(new Diagnostic(Severity.Error, _p.ProjectPath, 0, 0, "", problem));
+        if (channelProblems.Count > 0) return;
         var outDir = Path.Combine(GenDir, "audio");
         var hash = AssetCache.HashFiles(inputs, ConverterVersion);
         var cpp = Path.Combine(outDir, "soundbank.cpp");
