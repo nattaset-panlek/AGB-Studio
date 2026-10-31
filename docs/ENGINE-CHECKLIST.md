@@ -369,7 +369,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-M03 Assets menu** (#3): Create, Import…, Reimport, Show in Explorer, Find Unused Assets, Optimize Palettes…
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M03.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M04 Scene menu** (#4): New Scene…, Scene Settings…, Set as Start Scene, Add Actor, Background Layers…, World Map
   - [ ] implemented
   - [ ] matches Figma
@@ -384,7 +384,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-M08 Open Recent** (File › Open Recent): recent projects, Clear Recent
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M08.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M09 Create** (Assets › Create): Sprite, Tileset / Tilemap, Font, Palette, Sound Effect, Music, Data Table, C# Script, Logic Graph, Dialogue
   - [ ] implemented
   - [ ] matches Figma
@@ -396,16 +396,16 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-M12 Actor Context Menu** (#14): Rename, Duplicate, Delete, Add Behaviour…, Edit Script, Make Prefab, Focus in View
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M12.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M13 Asset Context Menu** (#25): Open, Rename, Duplicate, Delete, Find Usages, Reimport, Show in Explorer, Create Animation
   - [ ] implemented
   - [ ] matches Figma
 - **T-M14 Component Menu** (#27 Inspector …): Copy Component, Paste Values, Reset, Edit Script, Remove Component
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M14.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M15 Zoom** (#20): 100%, 200%, 300%, 400%, Fit to Screen, Pixel-perfect
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M15.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M16 Animation List** (#29): animations of the selected sprite, Edit Animations…
   - [ ] implemented
   - [ ] matches Figma
@@ -414,16 +414,16 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-M18 Play Speed** (Play Mode speed chip): 1/4x, 1/2x, 1x, 2x, 4x, Frame step
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M18.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M19 OAM Size** (Sprite Editor): Square 8x8 / 16x16 / 32x32 / 64x64, Wide 16x8 / 32x8 / 32x16 / 64x32, Tall 8x16 / 8x32 / 16x32 / 32x64
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M19.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M20 Add Layer** (Tilemap Editor): Tile layer, Image layer, Rotate / scale layer (Mode 1-2), Collision-only layer
   - [ ] implemented
   - [ ] matches Figma
 - **T-M21 Node Context Menu** (Logic Graph, right-click a node): Duplicate, Disable, Group into comment, Collapse, Show generated C#, Delete
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-M21.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **T-M22 Scene Context Menu** (World Map, right-click a scene): Open, Rename, Duplicate, Set as start scene, Delete
   - [ ] implemented
   - [ ] matches Figma
@@ -663,7 +663,7 @@ Verify ทุกข้อด้วย `E2E`
 ### 4.15 Design tokens, type, icons, art
 
 - [ ] T-K01 29 colour tokens, same names in "AGB Studio" (Dark) and "AGB Studio · Light": bg/canvas, bg/base, bg/panel, bg/raised, bg/hover, bg/sunken, border/default, border/strong, text/primary, text/secondary, text/muted, text/on-accent, text/on-selected, accent/default, accent/selected, accent/subtle, accent/hover, accent/pressed, status/success, status/warning, status/danger, status/danger-subtle, status/danger-hover, status/danger-pressed, kind/script, kind/data, kind/audio, axis/x, axis/y · Verify: `UT` compares a read-only Figma export with the app token file (names and values, both themes)
-- [ ] T-K02 20 text styles: Header 1, Header 2, Body, Brand/13, Title/18, Title/14, Body/12, Body/12 Medium, Body/12 Semibold, Label/11, Label/11 Medium, Caption/10, Overline/11, Mono/10, Mono/11, Mono/11 Bold, Mono/13, Thai/13, Thai/13 Medium, Pixel/10 · Verify: `UT` style table vs Figma export, `SHOT` type specimen
+- [x] T-K02 20 text styles: Header 1, Header 2, Body, Brand/13, Title/18, Title/14, Body/12, Body/12 Medium, Body/12 Semibold, Label/11, Label/11 Medium, Caption/10, Overline/11, Mono/10, Mono/11, Mono/11 Bold, Mono/13, Thai/13, Thai/13 Medium, Pixel/10 · Verify: `UT` style table vs Figma export, `SHOT` type specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, test:TokenTests.TextStyles_MatchFigma, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - [ ] T-K03 Fonts bundled with licence files: Inter, JetBrains Mono, IBM Plex Sans Thai (and Looped), Press Start 2P, Nunito ExtraBold (wordmark) · Verify: `REV` against G-LEGAL
 - [ ] T-K04 70 icons (icon/play … icon/gift) exported as vector and used by name · Verify: `UT` every icon name referenced in UI exists, none missing
 - [ ] T-K05 Art used inside the UI (art/scene x4, art/sprite x6, art/tileset x1, art/genre x8) and 19 thumbnails (thumb/*) · Verify: `REV` each is original design work, `SHOT` on the windows that show them
@@ -674,10 +674,10 @@ Verify ทุกข้อด้วย `E2E`
 
 - **Menu Item** (Kind: Default, Submenu, Checked, Danger · State: Default, Hover, Disabled · shortcut, icon)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-item-default-default.png, shot:docs/evidence/diff/C-menu-item-default-hover.png, shot:docs/evidence/diff/C-menu-item-default-disabled.png, shot:docs/evidence/diff/C-menu-item-submenu-default.png, shot:docs/evidence/diff/C-menu-item-submenu-hover.png, shot:docs/evidence/diff/C-menu-item-checked-default.png, shot:docs/evidence/diff/C-menu-item-danger-default.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Menu Bar Item** (Default, Open)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-bar-item-default.png, shot:docs/evidence/diff/C-menu-bar-item-open.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Button** (Primary, Secondary, Ghost, Danger · SM, LG · Default, Hover, Pressed, Disabled · icon)
   - [ ] implemented
   - [ ] matches Figma
@@ -695,16 +695,16 @@ Verify ทุกข้อด้วย `E2E`
   - [ ] matches Figma
 - **Switch** (On, Off)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-switch-on.png, shot:docs/evidence/diff/C-switch-off.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Checkbox** (On, Off · label)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-checkbox-on.png, shot:docs/evidence/diff/C-checkbox-off.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Segment** (Default, Active, Hover)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-segment-default.png, shot:docs/evidence/diff/C-segment-active.png, shot:docs/evidence/diff/C-segment-hover.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Progress** (OK, Warn, Danger, Accent · 0-100)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-progress-ok-0.png, shot:docs/evidence/diff/C-progress-ok-10.png, shot:docs/evidence/diff/C-progress-ok-20.png, shot:docs/evidence/diff/C-progress-ok-30.png, shot:docs/evidence/diff/C-progress-ok-40.png, shot:docs/evidence/diff/C-progress-ok-50.png, shot:docs/evidence/diff/C-progress-ok-60.png, shot:docs/evidence/diff/C-progress-ok-70.png, shot:docs/evidence/diff/C-progress-ok-80.png, shot:docs/evidence/diff/C-progress-ok-90.png, shot:docs/evidence/diff/C-progress-ok-100.png, shot:docs/evidence/diff/C-progress-warn-0.png, shot:docs/evidence/diff/C-progress-warn-10.png, shot:docs/evidence/diff/C-progress-warn-20.png, shot:docs/evidence/diff/C-progress-warn-30.png, shot:docs/evidence/diff/C-progress-warn-40.png, shot:docs/evidence/diff/C-progress-warn-50.png, shot:docs/evidence/diff/C-progress-warn-60.png, shot:docs/evidence/diff/C-progress-warn-70.png, shot:docs/evidence/diff/C-progress-warn-80.png, shot:docs/evidence/diff/C-progress-warn-90.png, shot:docs/evidence/diff/C-progress-warn-100.png, shot:docs/evidence/diff/C-progress-danger-0.png, shot:docs/evidence/diff/C-progress-danger-10.png, shot:docs/evidence/diff/C-progress-danger-20.png, shot:docs/evidence/diff/C-progress-danger-30.png, shot:docs/evidence/diff/C-progress-danger-40.png, shot:docs/evidence/diff/C-progress-danger-50.png, shot:docs/evidence/diff/C-progress-danger-60.png, shot:docs/evidence/diff/C-progress-danger-70.png, shot:docs/evidence/diff/C-progress-danger-80.png, shot:docs/evidence/diff/C-progress-danger-90.png, shot:docs/evidence/diff/C-progress-danger-100.png, shot:docs/evidence/diff/C-progress-accent-0.png, shot:docs/evidence/diff/C-progress-accent-10.png, shot:docs/evidence/diff/C-progress-accent-20.png, shot:docs/evidence/diff/C-progress-accent-30.png, shot:docs/evidence/diff/C-progress-accent-40.png, shot:docs/evidence/diff/C-progress-accent-50.png, shot:docs/evidence/diff/C-progress-accent-60.png, shot:docs/evidence/diff/C-progress-accent-70.png, shot:docs/evidence/diff/C-progress-accent-80.png, shot:docs/evidence/diff/C-progress-accent-90.png, shot:docs/evidence/diff/C-progress-accent-100.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Slider** (0-100, knob with border/strong ring)
   - [ ] implemented
   - [ ] matches Figma
@@ -731,7 +731,7 @@ Verify ทุกข้อด้วย `E2E`
   - [ ] matches Figma
 - **Swatch** (Default, Selected, Empty, Transparent)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-swatch-default.png, shot:docs/evidence/diff/C-swatch-selected.png, shot:docs/evidence/diff/C-swatch-empty.png, shot:docs/evidence/diff/C-swatch-transparent.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Status Item** (Default, Dot)
   - [ ] implemented
   - [ ] matches Figma
@@ -740,13 +740,13 @@ Verify ทุกข้อด้วย `E2E`
   - [ ] matches Figma
 - **Toast** (Success, Error)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-toast-success.png, shot:docs/evidence/diff/C-toast-error.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Asset Card** (Default, Selected)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-asset-card-default.png, shot:docs/evidence/diff/C-asset-card-selected.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Frame Thumb** (Default, Active)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-frame-thumb-default.png, shot:docs/evidence/diff/C-frame-thumb-active.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Scene Card** (Default, Selected)
   - [ ] implemented
   - [ ] matches Figma
@@ -758,68 +758,68 @@ Verify ทุกข้อด้วย `E2E`
   - [ ] matches Figma
 - **Table Cell** (Header, Default, Mono, Selected)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-table-cell-header.png, shot:docs/evidence/diff/C-table-cell-default.png, shot:docs/evidence/diff/C-table-cell-mono.png, shot:docs/evidence/diff/C-table-cell-selected.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Text Input** (Default, Focus · help text)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-text-input-default.png, shot:docs/evidence/diff/C-text-input-focus.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Select** (Default, Focus · help text)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-select-default.png, shot:docs/evidence/diff/C-select-focus.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Tab** (Default, Active)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-tab-default.png, shot:docs/evidence/diff/C-tab-active.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Node Header** (Event, Input, Physics, Flow, Data, Sound, Actor, Math)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-node-header-event.png, shot:docs/evidence/diff/C-node-header-input.png, shot:docs/evidence/diff/C-node-header-physics.png, shot:docs/evidence/diff/C-node-header-flow.png, shot:docs/evidence/diff/C-node-header-data.png, shot:docs/evidence/diff/C-node-header-sound.png, shot:docs/evidence/diff/C-node-header-actor.png, shot:docs/evidence/diff/C-node-header-math.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Node Pin** (Exec, Bool, Fixed, Actor, Text · In, Out)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-node-pin-exec-in.png, shot:docs/evidence/diff/C-node-pin-exec-out.png, shot:docs/evidence/diff/C-node-pin-bool-in.png, shot:docs/evidence/diff/C-node-pin-bool-out.png, shot:docs/evidence/diff/C-node-pin-fixed-in.png, shot:docs/evidence/diff/C-node-pin-fixed-out.png, shot:docs/evidence/diff/C-node-pin-actor-in.png, shot:docs/evidence/diff/C-node-pin-actor-out.png, shot:docs/evidence/diff/C-node-pin-text-in.png, shot:docs/evidence/diff/C-node-pin-text-out.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **brand/app-icon** (Light, Dark, Indigo)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-brand-app-icon-light.png, shot:docs/evidence/diff/C-brand-app-icon-dark.png, shot:docs/evidence/diff/C-brand-app-icon-indigo.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Menu Separator**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-menu-separator.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Badge**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-badge.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Keycap**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-keycap.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Panel Header**
   - [ ] implemented
   - [ ] matches Figma
 - **Search Field**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-search-field.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Meter**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-meter.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Tooltip**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-tooltip.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Title Bar** (no brand text; starts at the File menu)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-title-bar.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Dialog Header**
   - [ ] implemented
   - [ ] matches Figma
 - **Dialog Footer** (hint hugs its text so a long hint never pushes the buttons out)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-dialog-footer.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Popover Header**
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-popover-header.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **brand/mark** (Plus Pad)
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-brand-mark.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 
 Doc-only components, not built in the app: Doc/Callout, Doc/Target Chip (annotation of the Editor Map)
 
 ### 4.17 Brand (section "AGB Studio · Brand")
 
 - [ ] T-R01 App icon from "Plus Pad" (5-square cross, ink arms, indigo #3b4fd8 centre) for exe, installer, taskbar, About (64 px) · Verify: `SHOT` vs Plus Pad · Logo sheet
-- [ ] T-R02 Wordmark "AGB Studio" in Nunito ExtraBold in the Launcher brand block · Verify: `SHOT` vs T-P12
+- [x] T-R02 Wordmark "AGB Studio" in Nunito ExtraBold in the Launcher brand block · Verify: `SHOT` vs T-P12 — evidence: shot:docs/evidence/diff/T-P12.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - [ ] T-R03 Banners (4) used for the release page and installer · Verify: `REV`
 - [ ] T-R04 ROM boot splash "AGB Studio logo · 2 s", skippable in Debug builds (Project Settings · General) · The GBA-size splash was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame
 
@@ -1096,7 +1096,7 @@ Entry gate:
 Items:
 - [ ] P10.01 App skeleton on the chosen stack: Title Bar (no brand text), menu bar with 7 menus, status bar [T-M01..T-M07] · Verify: `SHOT` vs Scene Editor chrome
 - [ ] P10.02 Token system with both collections and identical names [T-K01] · Verify: `UT`
-- [ ] P10.03 Text styles and bundled fonts [T-K02, T-K03] · Verify: `SHOT` specimen
+- [x] P10.03 Text styles and bundled fonts [T-K02, T-K03] · Verify: `SHOT` specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - [ ] P10.04 Icon set [T-K04] · Verify: `UT`
 - [ ] P10.05 Component library [4.16] · Verify: `SHOT` per component and state
 - [ ] P10.06 Docking layout: Hierarchy, Inspector, bottom panel tabs (Assets, Console, Animation, Database), document tabs with dirty dot [T-P01] · Verify: `E2E`
