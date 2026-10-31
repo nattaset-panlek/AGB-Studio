@@ -227,9 +227,20 @@ public sealed class PlayController : IDisposable
         Elf = ElfSymbols.TryLoad(Path.ChangeExtension(Path.Combine(Path.GetDirectoryName(romPath)!, "obj", Path.GetFileName(romPath)), ".elf"))
               ?? ElfSymbols.TryLoad(Path.ChangeExtension(romPath, ".elf"));
         WorldReader = _s.Project.Current is { } p ? new LiveWorldReader(p, Elf) : null;
-        Session = new PlaySession(core) { Speed = _speed, FastForward = Options.FastForwardSpeed };
+        var session = new PlaySession(core) { Speed = _speed, FastForward = Options.FastForwardSpeed };
+        try { session.Start(romPath); }
+        catch (Exception e) when (e is InvalidOperationException or IOException or UnauthorizedAccessException)
+        {
+            // G-ERR: a file the core refuses (not a GBA ROM, unreadable) leaves no half-made session behind; asking the
+            // core for its save RAM with no game loaded would crash the editor on Stop
+            Console.Add(ConsoleLevel.Error, $"{Path.GetFileName(romPath)}: {e.Message}");
+            _s.Toasts.Show($"Could not run {Path.GetFileName(romPath)} · see Console", ToastStatus.Error, TimeSpan.FromSeconds(4));
+            State = PlayState.Stopped;
+            Changed?.Invoke();
+            return false;
+        }
+        Session = session;
         Session.LogLine += ReceiveGameLine;
-        Session.Start(romPath);
         LoadSaveFile();
         State = PlayState.Running;
         _userPaused = false;
