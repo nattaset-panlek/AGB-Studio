@@ -231,7 +231,7 @@ public sealed class EmptyProjectPage : DockPanel
     Control AssetsEmpty()
     {
         // Figma T-P22: an 18 x 14 folder (a 20 px icon) whose middle is 2 px lower than an 18 px icon's; the text stays put
-        var icon = new Icon { Glyph = "folder", Size = 20, Margin = new Thickness(0, 1, 0, -3), HorizontalAlignment = HorizontalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted");
+        var icon = new Icon { Glyph = "folder", Size = 22.5, Margin = new Thickness(1, 0, 0, -4.5), HorizontalAlignment = HorizontalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted");
         var title = UI.Text("No assets yet", "Body/12 Semibold", "text/primary");
         title.HorizontalAlignment = HorizontalAlignment.Center;
         title.Margin = new Thickness(0, 10, 0, 0);
