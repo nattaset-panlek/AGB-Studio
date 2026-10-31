@@ -53,6 +53,35 @@ AGB_TEST(affine_layer_rotates_and_scales) {
     CHECK_EQ(map[2], 1);
 }
 
+AGB_TEST(affine_rotate_scale_sweep) {
+    // Every 8th step of the circle at five scales (160 transforms). For each: the matrix is a rotation by the angle
+    // divided by the scale, and the chosen texture point lands on the chosen screen point (hardware model: texture =
+    // reference + (pa * x + pb * y, pc * x + pd * y)). RuntimeRomTests.AffineSweepMatchesReferenceImages checks pixels.
+    const fixed scales[] = {fixed::lit(0.5), fixed(1), fixed::lit(1.5), fixed(2), fixed(3)};
+    int bad = 0, checked = 0;
+    for (const fixed sc : scales)
+        for (int a = 0; a < 256; a += 8) {
+            const fixed cx = fixed(128) + fixed(a % 7), cy = fixed(96) - fixed(a % 5);
+            const int sx = 120 - a % 9, sy = 80 + a % 11;
+            affine::setTransform(2, sc, static_cast<u8>(a), cx, cy, sx, sy);
+            const s32 pa = static_cast<s16>(commit::reg(commit::Bg2Pa)), pb = static_cast<s16>(commit::reg(commit::Bg2Pb));
+            const s32 pc = static_cast<s16>(commit::reg(commit::Bg2Pc)), pd = static_cast<s16>(commit::reg(commit::Bg2Pd));
+            const s32 len = 65536 / sc.raw;  // 1 / scale in 8.8; 8.8 rounding keeps the length within 5 %
+            const s32 c = math::cos(static_cast<u8>(a)).raw, s = math::sin(static_cast<u8>(a)).raw;
+            const s32 len2 = pa * pa + pc * pc, want2 = len * len;
+            const s32 cross = pa * s - pc * c, dot = pa * c + pc * s;
+            const bool ok = pa == pd && pb == -pc && (len2 - want2) * 100 <= 5 * want2 && (want2 - len2) * 100 <= 5 * want2 &&
+                            cross <= 3 * 256 && cross >= -3 * 256 && dot > 0 &&
+                            commit::bgRef(2, 0) + pa * sx + pb * sy == cx.raw && commit::bgRef(2, 1) + pc * sx + pd * sy == cy.raw;
+            ++checked;
+            if (!ok && bad++ < 4)
+                debug::logf("  scale %ld angle %d: pa %ld pb %ld pc %ld pd %ld ref %ld,%ld", sc.raw, a, pa, pb, pc, pd, commit::bgRef(2, 0),
+                            commit::bgRef(2, 1));
+        }
+    CHECK_EQ(checked, 160);
+    CHECK_EQ(bad, 0);
+}
+
 AGB_TEST(mode7_table_has_perspective) {
     affine::Mode7 m;
     m.camX = fixed(128);

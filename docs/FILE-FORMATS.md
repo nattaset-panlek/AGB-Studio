@@ -136,7 +136,7 @@ copies it in any scene when the scene has no actor of that name.
 | `obj/build.ninja`, `obj/*.elf`, `obj/*.elf.map`, `obj/obj/` | NativeBuild | the build graph, the linked ELF, its map file, objects |
 | `gen/` | GameBuilder, scripting compiler | generated C++ (assets, scenes, strings, scripts, database), the soundbank, debugger maps |
 | `cache/manifest.json` | AssetCache | hashes of converted assets for incremental builds |
-| `report.json` | BuildReport | ROM size by category, largest assets, IWRAM / EWRAM use, per-scene budgets, warnings |
+| `report.json` | BuildReport | ROM size by category, largest assets, IWRAM / EWRAM use, `ramSplit` (IWRAM / EWRAM by blueprint 10 row from the linker map, with each row's default budget), per-scene budgets, warnings |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
 
 ## Editor files (per user)

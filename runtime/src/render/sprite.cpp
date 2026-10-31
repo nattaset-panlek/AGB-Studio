@@ -4,6 +4,7 @@
 
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
+#include "agb/render/bg.hpp"
 #include "agb/render/palette.hpp"
 #include "agb/system.hpp"
 
@@ -64,7 +65,8 @@ void markTiles(int first, int count, bool used) {
 int allocTiles(int count) {
     // Sizes are powers of two in practice; align so large frames do not fragment small ones.
     const int align = count >= 8 ? 8 : count >= 4 ? 4 : 1;
-    for (int t = 0; t + count <= 1024; t += align)
+    // In Mode 3 the bitmap covers OBJ tiles 0..511 (render/bitmap.hpp).
+    for (int t = bg::videoMode() >= 3 ? 512 : 0; t + count <= 1024; t += align)
         if (tilesFree(t, count)) {
             markTiles(t, count, true);
             return t;
@@ -306,23 +308,36 @@ void update() {
 
 int build() {
     g_copies = 0;
-    // Order by (priority asc, order desc): earlier OAM entries draw in front.
+    // Order by (priority asc, order desc, index): earlier OAM entries draw in front. A counting pass by priority
+    // (4 buckets) then an insertion sort by order inside each bucket: with 128 sprites of mixed priorities a plain
+    // insertion sort took most of a frame (render_stress).
     s16 sorted[kMaxSprites];
-    int n = 0;
-    for (int i = 0; i < kMaxSprites; ++i)
-        if (g_sprites[i].alive && g_sprites[i].visible) sorted[n++] = static_cast<s16>(i);
-    for (int i = 1; i < n; ++i) {
-        const s16 v = sorted[i];
-        const Instance& a = g_sprites[v];
-        int j = i - 1;
-        while (j >= 0) {
-            const Instance& b = g_sprites[sorted[j]];
-            if (b.priority < a.priority || (b.priority == a.priority && b.order >= a.order)) break;
-            sorted[j + 1] = sorted[j];
-            --j;
-        }
-        sorted[j + 1] = v;
+    s16 orders[kMaxSprites];
+    int start[5] = {};
+    for (const Instance& s : g_sprites)
+        if (s.alive && s.visible) ++start[s.priority + 1];
+    for (int p = 1; p < 5; ++p) start[p] += start[p - 1];
+    const int n = start[4];
+    int fill[4] = {start[0], start[1], start[2], start[3]};
+    for (int i = 0; i < kMaxSprites; ++i) {
+        const Instance& s = g_sprites[i];
+        if (!s.alive || !s.visible) continue;
+        const int at = fill[s.priority]++;
+        sorted[at] = static_cast<s16>(i);
+        orders[at] = s.order;
     }
+    for (int p = 0; p < 4; ++p)
+        for (int i = start[p] + 1; i < start[p + 1]; ++i) {
+            const s16 v = sorted[i], o = orders[i];
+            int j = i - 1;
+            while (j >= start[p] && orders[j] < o) {
+                sorted[j + 1] = sorted[j];
+                orders[j + 1] = orders[j];
+                --j;
+            }
+            sorted[j + 1] = v;
+            orders[j + 1] = o;
+        }
     commit::ObjAttr* oam = commit::oam();
     int out = 0;
 #if defined(AGB_DEBUG)

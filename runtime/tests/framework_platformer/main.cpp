@@ -6,6 +6,7 @@
 #include "../test.hpp"
 #include "agb/api.hpp"
 #include "agb/behaviours.hpp"
+#include "agb/format.hpp"
 #include "agb/game.hpp"
 
 using namespace agb;
@@ -244,6 +245,31 @@ AGB_TEST(platformer_scene_end_to_end) {
     CHECK_EQ(profile::stats().overruns, overrunsBefore);
     debug::logf("frames run %d, scene load took %lu frames", g_framesRun, scene::lastLoadFrames());
     for (int i = 0; i < 7; ++i) debug::logf("  load step %d (%s): %lu cycles", i, scene::loadStepName(i), scene::loadStepCycles(i));
+}
+
+AGB_TEST(frame_phases_follow_blueprint_order) {
+    // P2.03: the frame-order trace of a running scene (the second scene of the test above) must follow blueprint 04:
+    // input, Screen.Update, behaviours, Event Script VM, tasks, physics, animate, build OAM, palette fade, mark dirty
+    // tilemaps, then the commit in VBlank.
+    CHECK(!game::loading());
+    using P = debug::Phase;
+    const P order[] = {P::Input,     P::ScreenUpdate, P::Behaviours,  P::ScriptVm, P::Tasks,       P::Physics,
+                       P::Animation, P::BuildOam,     P::PaletteFade, P::Tilemaps, P::VBlankCommit};
+    constexpr int kPerFrame = sizeof order / sizeof order[0];
+    debug::clearPhaseTrace();
+    frames(2);
+    P trace[32];
+    const int n = debug::phaseTrace(trace, 32);
+    CHECK_EQ(n, 2 * kPerFrame);
+    int wrong = 0;
+    for (int i = 0; i < n && i < 2 * kPerFrame; ++i)
+        if (trace[i] != order[i % kPerFrame] && wrong++ < 3)
+            debug::logf("  phase %d: %s, expected %s", i, debug::phaseName(trace[i]), debug::phaseName(order[i % kPerFrame]));
+    CHECK_EQ(wrong, 0);
+    char line[160];
+    int len = 0;
+    for (int i = 0; i < kPerFrame && i < n && len < 140; ++i) len += format(line + len, sizeof line - len, i ? ", %s" : "%s", debug::phaseName(trace[i]));
+    debug::logf("frame order: %s", line);
 }
 
 int main() { test::runAll(); }

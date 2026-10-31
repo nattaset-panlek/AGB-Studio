@@ -17,6 +17,9 @@ struct Registration {
 
 void fail(const char* file, int line, const char* expr);
 int failures();
+// After the run, fill the screen with green (all passed) or red (a test failed), so emulators without access to the
+// debug channel (VBA-M) show the result.
+void showResultOnScreen();
 // Runs every registered test, reports pass / fail and then keeps waiting for VBlank forever.
 [[noreturn]] void runAll();
 
