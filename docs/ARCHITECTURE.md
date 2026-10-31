@@ -9,7 +9,7 @@ Only what exists in the code is described; where a blueprint idea is not built, 
 | Folder | What it is |
 |---|---|
 | `runtime/include/agb`, `runtime/src` | The C++20 engine that runs on the GBA (no exceptions, no RTTI, no heap). `src/core`, `src/render`, `src/audio`, `src/framework`, `src/script` |
-| `runtime/tests/<name>/` | On-ROM test programs; each folder becomes one test ROM (`agb runtime-test`, `RuntimeRomTests`) |
+| `runtime/tests/<name>/` | On-ROM test programs; each folder becomes one test ROM (`agb runtime-test`, `RuntimeRomTests`), except `host_assert` and `host_probe`, which never finish on their own and are driven by their own C# tests |
 | `tools/AgbStudio.Core` | Project file formats (D-03, `Project/`) and the PNG codec |
 | `tools/AgbStudio.Build` | Toolchain detection, native build (`NativeBuild`), build pipeline (`Pipeline/`), asset converters (`Graphics/`, `Audio/`), fonts and Thai text (`Fonts/`), database codegen (`Data/`), generated template and sample content (`Content/`), packaging (`Packager`), lint (`Lint`) |
 | `tools/AgbStudio.Emu` | mGBA libretro host (D-06): ROM tests, debug channel reader, Play sessions, live Inspector, GIF capture |
@@ -21,8 +21,9 @@ Only what exists in the code is described; where a blueprint idea is not built, 
 | `third_party/` | mGBA libretro core, fonts, ICU Thai word list, each with its licence |
 
 D-04 lists `templates/` and `samples/` folders; they do not exist. Templates, samples and the Sky Hopper fixture are
-written by code in `tools/AgbStudio.Build/Content` (`Templates/*Template.cs`, `Samples.cs`, `SkyHopper.cs`,
-`PixelArt.cs`, `SplashArt.cs`, `Audio/XmWriter.cs`, `Audio/Chiptune.cs`) when a project is created.
+written by code in `tools/AgbStudio.Build/Content` (`Templates/*Template.cs`, `Samples.cs`, `SampleProjects.cs` (the
+`mini` sample), `SkyHopper.cs`, `PixelArt.cs`, `SplashArt.cs`) with the module and sound writers in
+`tools/AgbStudio.Build/Audio` (`XmWriter.cs`, `Chiptune.cs`, `AudioWriters.cs`) when a project is created.
 
 ## Blueprint sections and where they live
 
@@ -98,10 +99,11 @@ seven: fade out, free and reset, tiles to VRAM, map and palette, spawn actors, O
 takes more than three quarters of a frame logs a warning naming it. A running scene (`SceneScreen::update`) does:
 transitions, pause check, scene menu, new actors' Start, behaviours (unless a cutscene has `LockAll`), Event Script VM,
 tasks, physics and tile collision (`lateUpdate`), text typewriter, touches, links, removal of destroyed actors, sprite
-animation, then camera follow and shake, map layer streaming, animated tiles, sprites to the OAM shadow, palette
-effects and the debug-channel actor table. `system::waitVBlank()` sleeps in the BIOS until VBlank and flushes the
-commit queues, so the hardware changes of a frame land in VBlank. The profiler counts Logic and Render cycles per
-frame and frame overruns.
+animation, then camera follow and shake, actor sprites to the OAM shadow (`actors::syncSprites`, `sprites::build`),
+palette effects (`palettes::update`), map layer streaming, animated tiles and the debug-channel actor table.
+`system::waitVBlank()` sleeps in the BIOS until VBlank and flushes the commit queues, so the hardware changes of a
+frame land in VBlank. The profiler counts Logic, Render, Audio and Idle cycles per frame, the VBlank cycles left after
+the commit, and frame overruns.
 
 **Commit queues (P2.04).** Runtime modules write the OAM, palette and display-register shadows and queue VRAM writes;
 `commit::flush` (VBlank only) writes the registers, OAM and palette, then the queued VRAM writes in order up to the
@@ -122,14 +124,15 @@ the text layer only through the queue (`framework_ui` test `pause_and_resume_map
 `runtime/include/agb/data.hpp` defines what the build writes: tilesets with 16x16 metatiles (2x2 screen entries of one
 layer, with a collision type and a tag per metatile), map layers, sprite sheets with animations, fonts and
 pre-laid-out text runs. Scenes, actors and links are `SceneDef`, `ActorDef` and `LinkDef` in `game.hpp` /
-`actor.hpp`. Generated symbols use prefixes (`agbasset_`, `agbfont_`, `agbtext_`, `agbdata_`) so the build report can
-attribute ROM bytes per asset.
+`actor.hpp`. Generated symbols use prefixes (`agbasset_`, `agbfont_`, `agbtext_`, `agbdata_`). The build report
+attributes ROM bytes per asset by the generated object file each asset is written to (`gen/assets/sprite_*`,
+`tileset_*`, `gen/text/font_*`, `gen/data/db_*`, `gen/maps/map_*`, `gen/audio/soundbank`), read from the linker map.
 
 Not built from blueprint 08: primary / secondary tilesets (a map has one tileset), two-layer metatiles, a separate
 layout file shared between maps (layers live in `maps/<Name>.map`), and seamless map streaming (out of scope,
-checklist 1.2). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on that overlap
-while Up is pressed; Respawn fires on the overlap or when the player is lost (destroyed, out of hearts or fallen below
-the map) (`game.cpp` `checkLinks`).
+checklist 1.2). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on the frame Up
+goes down during that overlap (holding Up does not fire it); Respawn fires on the overlap or when the player is lost
+(destroyed, out of hearts or fallen below the map) (`game.cpp` `checkLinks`).
 
 ## Build pipeline (blueprint 11)
 
@@ -140,21 +143,25 @@ the map) (`game.cpp` `checkLinks`).
    DMG tables, fonts and per-language string tables (text laid out at build time), database tables. Each converted
    asset is keyed by a hash of its files, its meta and the converter version in `build/cache/manifest.json`, so an
    unchanged asset is not converted again.
-2. **C# → C++**: `IScriptBackend` (the scripting compiler) translates behaviours to C++, compiles `[Cutscene]` methods,
-   dialogue and Logic Graph code to bytecode, and reports diagnostics with `file(line,col)`.
+2. **C# → C++**: `IScriptBackend` (the scripting compiler) translates behaviours to C++ (the C# Behaviour class a
+   Logic Graph generates among them), compiles `[Cutscene]` methods and dialogue to bytecode, and reports diagnostics
+   with `file(line,col)`.
 3. **Generate game**: scenes, actors, links, the boot splash, the Menu / UI kit and the game definition as C++; then the
    hardware limit check of every scene (below).
-4. **Compile (devkitARM g++)**: runtime sources plus generated sources, Thumb by default, ARM for `*.iwram.cpp`,
+4. **Compile (devkitARM g++ -O2)**: runtime sources plus generated sources, Thumb by default, ARM for `*.iwram.cpp`,
    `-std=c++20 -fno-exceptions -fno-rtti`, `-Wall -Wextra -Werror`, `AGB_DEBUG` or `AGB_RELEASE`, optimise flags from
-   Project Settings · Build.
+   Project Settings · Build (`-O2` by default; the step keeps its name whatever the setting).
 5. **Link + gbafix**: link with `gba.specs`, `-lmm -ltonc`, `--gc-sections` and a map file, `objcopy` to a binary,
    `gbafix` writes the header (title, game code, maker, version, checksum). The step name switches from Compile to
    Link + gbafix when the first link line appears.
 
-After a successful build: `build/report.json` (ROM by category, per asset ROM bytes from the linker map with the VRAM,
-palette and RAM buffer bytes it takes when loaded, largest assets, IWRAM / EWRAM from the linker map, per-scene
-budgets, warnings; schema `docs/schemas/report.schema.json`), `build/report-history.json` (failed builds included;
-`report-history.schema.json`), and `THIRD_PARTY.txt` next to the ROM with the libtonc and maxmod notices. Generated files are written only when their content changes.
+After a successful build: `build/report.json` (ROM by category, per asset ROM bytes with the VRAM, palette and RAM
+buffer bytes it takes when loaded, largest assets, IWRAM / EWRAM from the linker map, per-scene budgets, warnings;
+schema `docs/schemas/report.schema.json`), `build/report-history.json` (failed builds included;
+`report-history.schema.json`), and `THIRD_PARTY.txt` next to the ROM with the AGB Studio runtime notice (MIT), then the
+libtonc and maxmod notices. Per asset ROM bytes come from the linker map for graphics, maps, fonts, text and data;
+music and sounds share the soundbank's bytes in proportion to their source file sizes, and DMG effects share the DMG
+table evenly. Generated files are written only when their content changes.
 
 **Native build with or without Ninja** (`NativeBuild.cs`): the build always writes `build.ninja`. When `ninja.exe` is on
 `PATH` it runs Ninja; otherwise it runs the same graph in-process: objects older than their source or any header in
@@ -168,7 +175,7 @@ converts assets first.
 
 | Where | What is checked |
 |---|---|
-| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text); OBJ VRAM of the sprite frames its actors show at once against 32 KB (16 KB in bitmap modes); sprite palettes against 16 (`GameBuilder.CheckHardwareLimits`) |
+| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text); OBJ VRAM of the sprite frames its actors show at once against 32 KB (16 KB in bitmap modes); sprite palettes against 16 (`GameBuilder.CheckHardwareLimits`). Whole game: save data of one slot larger than the save type with its slot count (`CheckSaveFits`, G-HW.06); a ROM over 32 MB (`BuildReport.RomSizeError`, G-HW.05) |
 | Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack |
 | Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type. The `render_limits` test ROM fills background VRAM (64 KB in tile modes, none left in Mode 3) and OBJ VRAM (32 KB, 16 KB in Mode 3) past the limit and checks the refusal, the warning and that nothing already placed changed (G-HW.01) |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
@@ -210,9 +217,12 @@ layout.
 - Tier 1: Roslyn parses user scripts against `AgbStudio.Api`; the analyzer enforces the GBA subset (GAE001-GAE006,
   D-07); `Translation/CppTranslator` writes C++20 per behaviour with `#line` back to the `.cs` file, so g++ errors and
   `Debug.Assert` name the C# line.
-- Tier 2: `[Cutscene] async` methods, Dialogue Editor files and map scripts compile to bytecode for the Event Script VM.
-  The opcode table `script_ops.def` is the single source for the VM and the compiler; natives are declared with
-  `[ScriptNative]`.
+- Tier 2: `[Cutscene] async` methods and Dialogue Editor files compile to bytecode for the Event Script VM. The opcode
+  table `script_ops.def` is the single source for the VM and the compiler; natives are declared with `[ScriptNative]`.
+  Map scripts (Scene Settings OnLoad / OnEnter / OnExit) and link conditions are not bytecode: they become static
+  methods of a C# class `SceneEvents_<Scene>` (`ScriptCompiler.cs`), are translated to C++ like tier 1 and are called
+  as functions (`SceneDef::onLoad`, `onEnter`, `onExit`). The header comment of `script.hpp` still says map scripts
+  run on the VM.
 - Tier 3: Database tables become generated C++ (one unit per table, enums and `Items.Get(ItemId.X)`); script cells
   compile through `Translation/DbScripts.cs`.
 - Logic Graph (`Graph/LogicGraph.cs`, `Graph/GraphCodeGen.cs`): a `.graph` file generates C# (D-11). Node catalog:
@@ -228,16 +238,17 @@ layout.
 ## Emulator host (D-06, D-16)
 
 `LibretroCore` loads `third_party/mgba/mgba_libretro.dll` once per process. `RomTestRunner` runs a ROM headless until
-the debug channel reports pass or fail (`agb romtest`, all runtime test ROMs). `PlaySession` drives Play Mode at
-59.73 fps: speed, pause, frame step, keyboard input and hot reload (D-15, the hand-over block in the last 4 KB of
-EWRAM). `Inspector` reads the live actor table, OAM, palettes, memory and profiler stats for Play Mode and the
-Debugger.
+the debug channel reports pass or fail (`agb romtest`, the runtime test ROMs of `agb runtime-test` and
+`RuntimeRomTests`; the `host_*` ROMs are run from their own tests). `PlaySession` drives Play Mode at 59.73 fps: speed,
+pause, frame step, keyboard input and hot reload (D-15, the hand-over block in the last 4 KB of EWRAM). `Inspector`
+reads the live actor table, OAM, palettes, memory and profiler stats for Play Mode and the Debugger.
 
 ## Packaging (D-19)
 
 `agb package [out]` (`Packager.cs`) publishes the editor self-contained for win-x64 into `bin/`, copies the runtime
-sources and headers, `third_party/fonts`, `third_party/icu`, `third_party/mgba`, `docs/user`, `THIRD_PARTY.md` and
-`RELEASE-NOTES.md` (also as `bin/release-notes.md`, which the Launcher's What's new reads), writes an empty
-`bin/editor.json` (D-13), a `README.txt` and the `agb-studio.root` marker that
-lets `NativeBuild.RepoRoot` find the runtime in an installed copy, and zips it as `AGB-Studio-<version>-win-x64.zip`.
+sources and headers, `third_party/fonts`, `third_party/icu`, `third_party/mgba`, `docs/user`, `docs/brand` (the
+release banners and icon), `THIRD_PARTY.md` and `RELEASE-NOTES.md` (also as `bin/release-notes.md`, which the
+Launcher's What's new reads), writes an empty `bin/editor.json` (D-13), a `README.txt` and the `agb-studio.root` marker
+that lets `NativeBuild.RepoRoot` find the runtime in an installed copy, and zips it as
+`AGB-Studio-<version>-win-x64.zip`.
 devkitPro is not bundled.

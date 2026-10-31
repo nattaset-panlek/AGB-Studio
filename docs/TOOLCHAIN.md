@@ -46,8 +46,10 @@ Run on 2026-10-31 from `D:\devkitPro\tools\bin` in an empty folder; first line o
 | `padbin` | 1 (no arguments; prints its usage) | `pads a binary file to an integer multiple of a given number of bytes` |
 | `bin2s --help` | 0 | `general-tools 1.4.4` |
 
-gbafix and mmutil also run in every game build and in the runtime test ROM builds (`NativeBuild.cs`,
-`SoundbankBuilder.cs`). gbalzss and padbin have no version flag; their version is the package version above.
+gbafix also runs whenever a game or runtime test ROM is linked (`NativeBuild.cs`). mmutil runs in a game build only
+when the project has MOD / XM / WAV files and its soundbank cache is out of date (`GameBuilder` `ConvertAudio`,
+`SoundbankBuilder.cs`), and in the runtime test ROM builds only for tests with an `audio/` folder (`RuntimeTests.cs`).
+gbalzss and padbin have no version flag; their version is the package version above.
 
 ## Emulators
 
@@ -67,8 +69,8 @@ Memory regions exposed by the core: IWRAM 0x03000000 32 KB, EWRAM 0x02000000 256
 | .NET SDK | 10.0.400 | editor, toolchain, scripting compiler, tests |
 | Ninja | 1.12.1 | optional: runs `build.ninja` when it is on `PATH`; without it the build runs the same graph in-process |
 | CMake | 4.4.3 | not needed by the chosen stack |
-| git | 2.39.1 | repository, "Initialize git repository" in New Project, `tools/check-commit-*.ps1` in `ci.cmd` |
-| Windows PowerShell | 5.1 | the commit-message checks in `ci.cmd` |
+| git | 2.39.1 | repository, "Initialize git repository" in New Project, `tools/check-commit-*.ps1` in `ci.cmd`, `tools/ci-artifacts.ps1` (the commit in the run folder name and `summary.txt`) |
+| Windows PowerShell | 5.1 | the commit-message checks in `ci.cmd` and `tools\ci-artifacts.ps1`, which `ci.cmd` runs after every pass or failure |
 | Node | 22.20.0 | only for the read-only Figma export script of the SHOT tests (`figma-export.mjs`); not needed to build |
 | Python | 3.10.11 | not needed by the chosen stack |
 

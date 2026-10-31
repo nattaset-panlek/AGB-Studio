@@ -25,6 +25,7 @@ Every entry has the same parts: **Date** (when the answer was taken), **Question
 - Question: File names and extensions (`.agbproj` in Figma vs `project.json` in the blueprint; `.scene`, `.map`, `.font`, `.db`, `.dlg`, `.sfx`, `.graph`), whether every file is diffable JSON text, and how formats are versioned.
 - Options: the Figma names or the blueprint names; all-JSON text or not; a version field per file.
 - Answer: every file is UTF-8 JSON with a `"format"` version field. Names follow Figma (Figma is the scope): `<Name>.agbproj` (project), `scenes/<Name>.scene`, `maps/<Name>.map`, `assets/**/<file>.meta.json`, `fonts/<name>.font`, `data/<table>.db`, `dialogue/<name>.dlg`, `audio/sfx/<name>.sfx`, `scripts/**/*.cs`, `scripts/**/*.graph`, `text/strings.<lang>.json`. Generated files live only under `build/`.
+- Note (2026-10-31): the code differs in three details. Prefabs (`prefabs/<Name>.prefab`, a plain `ActorData`) have no `"format"` field. Prefabs and `assets/palettes/` (imported `.pal` / `.gpl` palettes and the Palette Manager's `palettes.json`) are project files the list above does not name. Some generated files live outside `build/`: the external IDE files at the project root (`<Name>.csproj`, `Directory.Build.props`, `.editorconfig`, `.vscode/settings.json`, `.vscode/extensions.json`, `CsprojGenerator.cs`) and the C# file a Logic Graph generates next to its `.graph` (`GraphDocument.Save`). See `FILE-FORMATS.md`.
 
 ## D-04 Repo layout · decided (default)
 - Date: 2026-10-31
@@ -92,6 +93,7 @@ Every entry has the same parts: **Date** (when the answer was taken), **Question
 - Question: Where do Help › Report a Bug…, Check for Updates, Website, Community and Release notes go, and does Import CSV support Google Sheets?
 - Options: none listed.
 - Answer: Help › Report a Bug… opens the issue page set in `editor.json` (`bugUrl`); Check for Updates reads a release feed URL set in `editor.json` (`updateFeed`) and says "No update source configured" when empty; Website / Community / Release notes open configured URLs, with release notes also bundled offline. Google Sheets: export the sheet as CSV, then Import CSV (no live connection).
+- Note (2026-10-31): with an empty `updateFeed`, Check for Updates says "Could not check for updates: no update source is set. Add an updateFeed address to editor.json next to AGBStudio.exe." (`EditorLinks.cs`). `editor.json` has `communityUrl` and `releaseNotesUrl`, but nothing uses them: the Help menu has no Website, Community or Release notes item (`Commands/Catalog.cs`); Website is the button in About (`websiteUrl`); the Launcher's Community block has Release notes, which always opens the bundled notes, and Report a bug (`LauncherPage.cs`). `editor.json` also has `devkitProUrl`, the devkitPro installer page shown when devkitPro is not found.
 
 ## D-14 Audio formats and rates · decided (default)
 - Date: 2026-10-31
@@ -135,7 +137,7 @@ Every entry has the same parts: **Date** (when the answer was taken), **Question
 - Question: Who makes the original art, music and text of the templates and sample projects (all of it must be new), and when are the missing in-game screens (checklist 1.4 item 6) designed?
 - Options: none listed.
 - Answer: all template and sample art, music and text are made new for AGB Studio (pixel art drawn programmatically by the asset generator in `templates/_source`, chiptune modules generated as XM files, text written fresh). The missing in-game screens (boot splash, title, pause, options) are designed in Figma section "AGB Studio · Screens" before they are built, then built to match.
-- Note (2026-10-31): the asset generator is `tools/AgbStudio.Build/Content` (`PixelArt.cs`, `SplashArt.cs`, `Templates/*`, `Samples.cs`, `SkyHopper.cs`, `Audio/XmWriter.cs`, `Audio/Chiptune.cs`); there is no `templates/_source` folder.
+- Note (2026-10-31): the asset generator is `tools/AgbStudio.Build/Content` (`PixelArt.cs`, `SplashArt.cs`, `Templates/*`, `Samples.cs`, `SampleProjects.cs`, `SkyHopper.cs`) with the module and sound writers in `tools/AgbStudio.Build/Audio` (`XmWriter.cs`, `Chiptune.cs`, `AudioWriters.cs`); there is no `templates/_source` folder. Not every module is XM: the templates write XM (`TemplateKit.Music`, `XmWriter`), the mini sample writes one MOD (`tune.mod`, `Chiptune.SimpleTune`), and Sky Hopper writes two XM (`bgm_forest`, `bgm_title`) and two MOD (`bgm_cave`, `jingle_win`).
 
 ## D-21 C# source-level debugging · decided (default)
 - Date: 2026-10-31
@@ -162,9 +164,13 @@ Every entry has the same parts: **Date** (when the answer was taken), **Question
 - Answer: **(b)**. `Debug.Log`, `debug::log` / `logf`, `warnOnce` and failed asserts write to the log ring of the debug channel, which also carries the test status, the live actor table, profiler and debugger state. One mechanism serves the Console, the headless test runner, the live Inspector and the Debugger; the libretro host reads emulator memory and does not take text from the core's log interface, so mGBA debug-print text would not reach the editor; and the ROM does not depend on registers only mGBA has. Release builds strip the log text unless Project Settings · Build keeps it (`ARCHITECTURE.md` › Debug channel and logs).
 
 ## D-25 "Split into N palettes" for a 48-colour image · decided (default)
+- Date: 2026-10-31
 - Question: Figma's Import Asset · Errors card offers "Split into 3 palettes" for an image with 48 colours; the importer says "Split into 4 palettes".
+- Options: none listed.
 - Answer: **4**. A 4bpp GBA palette has 16 entries and entry 0 is transparent (for sprites, and for background tiles), so one palette holds 15 colours: 3 palettes hold at most 45, and every colour must be in at least one palette, so 48 colours need ceil(48 / 15) = 4. The message keeps "Split into 4 palettes"; 31 to 45 colours give "Split into 3 palettes". Test: `ImageConverterTests.FortyEightColoursNeedFourPalettesNotThree`. The Figma frame text is the one to change (Scope log).
+
 ## D-26 Performance targets: clean build, project open, Play start · decided (default)
+- Date: 2026-10-31
 - Question: G-PERF.03 asks for targets for a clean build, opening a project and starting Play, agreed in Phase 1. None were recorded, so nothing was measured against them.
 - Options: (a) wall-clock targets for the Sky Hopper fixture on the build machine; (b) targets per asset count; (c) no targets.
 - Answer: **(a)**, for Sky Hopper (5 scenes, 12 sprites, 12 scripts, 3 fonts, 9 audio files, 6 tables, 340 strings) on the build machine (16 GB, devkitARM with Ninja, `AGB_BUILD_JOBS=2`, other builds running):
