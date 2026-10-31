@@ -157,7 +157,7 @@ converts assets first.
 |---|---|
 | Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text) (`GameBuilder.CheckHardwareLimits`) |
 | Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack; per scene: OBJ tiles over 32 KB, more than 16 OBJ palettes |
-| Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
+| Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type. The `render_limits` test ROM fills background VRAM (64 KB in tile modes, none left in Mode 3) and OBJ VRAM (32 KB, 16 KB in Mode 3) past the limit and checks the refusal, the warning and that nothing already placed changed (G-HW.01) |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 
 The split of IWRAM and EWRAM into the rows of blueprint 10 is measured from the linker map (`RamBudget.cs`, report.json
