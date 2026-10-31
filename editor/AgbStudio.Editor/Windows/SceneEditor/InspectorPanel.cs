@@ -447,6 +447,11 @@ public sealed class InspectorPanel : Panel
             HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
         };
         button.Click += (_, _) => _ = _s.Windows.Open("T-O06", anchor: button, source: "GbaBudget");
-        return new Border { Padding = new Thickness(12, 8, 12, 12), Child = button };
+        // Preferences › Editor › "Show GBA budget in Inspector"
+        var section = new Border { Padding = new Thickness(12, 8, 12, 12), Child = button, Name = "BudgetSection", IsVisible = _s.Preferences.Current.ShowBudgetInInspector };
+        void Show() => section.IsVisible = _s.Preferences.Current.ShowBudgetInInspector;
+        section.AttachedToVisualTree += (_, _) => { _s.Preferences.Saved -= Show; _s.Preferences.Saved += Show; Show(); };
+        section.DetachedFromVisualTree += (_, _) => _s.Preferences.Saved -= Show;
+        return section;
     }
 }

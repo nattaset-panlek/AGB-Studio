@@ -211,6 +211,8 @@ public sealed class LauncherService
     public string DefaultLocationBase()
     {
         if (ProjectsFolder != null) return ProjectsFolder;
+        // Preferences › Paths › Projects folder
+        if (Preferences.Expand(Services.Preferences.Current.ProjectsFolder) is { Length: > 0 } chosen) return chosen;
         foreach (var r in Services.Recent.Items)
         {
             var root = System.IO.Path.GetDirectoryName(r.Path);

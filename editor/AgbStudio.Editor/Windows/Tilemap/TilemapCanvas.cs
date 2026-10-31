@@ -74,6 +74,7 @@ public sealed class TilemapCanvas : Control
         {
             using (ctx.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.None }))
                 ctx.DrawImage(_frame, new Rect(0, 0, TilemapSession.ScreenW, TilemapSession.ScreenH), win);
+            if (_s.Services?.Preferences.Current.PixelGridAt(z) == true) DrawPixelGrid(ctx, win, z);
             DrawGrid(ctx, win, z);
             if (_s.CollisionView) DrawCollision(ctx, win, z);
             DrawCursor(ctx, win, z);
@@ -88,6 +89,20 @@ public sealed class TilemapCanvas : Control
         ctx.DrawRectangle(warn, null, label, 3, 3);
         ctx.DrawText(text, new Point(label.X + 6, label.Y + (16 - text.Height) / 2));
     }
+
+    /// <summary>Preferences › Appearance: the grid between game pixels at 400% and above.</summary>
+    void DrawPixelGrid(DrawingContext ctx, Rect win, double z)
+    {
+        var pen = new Pen(Res("text/on-accent"), 1);
+        using (ctx.PushOpacity(0.06))
+        {
+            for (var x = 1; x < TilemapSession.ScreenW; x++) ctx.DrawLine(pen, new Point(win.X + x * z + 0.5, win.Y), new Point(win.X + x * z + 0.5, win.Bottom));
+            for (var y = 1; y < TilemapSession.ScreenH; y++) ctx.DrawLine(pen, new Point(win.X, win.Y + y * z + 0.5), new Point(win.Right, win.Y + y * z + 0.5));
+        }
+    }
+
+    /// <summary>True when the pixel grid is drawn at the current zoom.</summary>
+    public bool PixelGridShown => _s.Services?.Preferences.Current.PixelGridAt(_s.Zoom) == true;
 
     void DrawGrid(DrawingContext ctx, Rect win, double z)
     {

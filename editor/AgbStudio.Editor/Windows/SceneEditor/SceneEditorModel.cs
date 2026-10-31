@@ -54,14 +54,27 @@ public sealed class SceneEditorModel
     SceneEditorModel(EditorServices s)
     {
         _s = s;
+        ApplyDefaultSnap();
         s.Project.Changed += () =>
         {
             _assets = null;
+            ApplyDefaultSnap();
             OpenDefault();
         };
     }
 
     public EditorServices Services => _s;
+
+    /// <summary>Preferences › Editor › Default snap (8 / 16 / 32 px) is the grid a project opens with; 0 turns snapping off.</summary>
+    void ApplyDefaultSnap()
+    {
+        var snap = _s.Preferences.Current.DefaultSnap;
+        if (snap is 8 or 16 or 32) { Grid.Size = snap; Grid.Snap = true; }
+        else if (snap <= 0) Grid.Snap = false;
+    }
+
+    /// <summary>Preferences › Editor › "Show collision overlay in Scene": off hides Grid &amp; Snap › Tile collision in the viewport.</summary>
+    public bool CollisionOverlayAllowed => _s.Preferences.Current.ShowCollisionOverlay;
     public GameProject? Project => _s.Project.Current;
     public SceneAssets? Assets => Project is { } p ? _assets?.Project == p ? _assets : _assets = new SceneAssets(p) : null;
 

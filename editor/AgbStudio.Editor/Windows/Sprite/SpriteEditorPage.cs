@@ -87,6 +87,13 @@ public sealed class SpriteEditorPage : DockPanel
     public SpriteDoc? Doc => _doc;
     public ArtLibrary? Library => _lib;
     public PixelCanvas Canvas => _canvas;
+
+    /// <summary>Preferences › Appearance › "Show pixel grid at 400% zoom and above" for the sprite canvas.</summary>
+    void UsePixelGridPreference(EditorServices s)
+    {
+        _canvas.PixelGrid = z => s.Preferences.Current.PixelGridAt(z);
+        s.Preferences.Saved += _canvas.InvalidateVisual;
+    }
     public ColourEditor Colour => _colour;
     public int AnimationIndex => _anim;
     /// <summary>Position in the current animation (0-based); the canvas shows that frame.</summary>
@@ -109,6 +116,7 @@ public sealed class SpriteEditorPage : DockPanel
     {
         _s = s;
         Name = "SpriteEditor";
+        UsePixelGridPreference(s);
         PickImportFiles = async () => await s.System.PickFileAsync("Import sprite", ("PNG", ["*.png"])) is { } f ? [f] : [];
         _swatches = Enumerable.Range(0, 16).Select(i => new Swatch { Index = i.ToString(CultureInfo.InvariantCulture), Name = "Swatch_" + i, Cursor = new Cursor(StandardCursorType.Hand) }).ToArray();
         string[] glyphs = ["pencil", "eraser", "bucket", "line", "square", "pipette"];

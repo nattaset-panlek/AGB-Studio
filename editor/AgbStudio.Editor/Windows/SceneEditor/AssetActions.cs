@@ -178,6 +178,8 @@ public sealed class AssetActions
     /// <summary>Opens the asset in its editor; scripts as Preferences › "Open .cs with" says (the Script Editor or the external editor).</summary>
     public async Task<object?> Open(AssetItem a)
     {
+        // Preferences › Paths: background images and .aseprite files in the image editor, .tmx in Tiled, when set
+        if (Settings.ExternalTools.TryOpen(S, a.Path)) return null;
         if (a.Window != "T-P04") return await S.Windows.Open(a.Window, a.Path, source: "AssetCard");
         await Scripts.ScriptEditorPage.OpenScriptFile(S, a.Path, source: "AssetCard");
         return null;

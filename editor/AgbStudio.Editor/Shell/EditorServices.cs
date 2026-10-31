@@ -33,6 +33,8 @@ public sealed class EditorServices : IServiceProvider
     public Avalonia.Controls.TopLevel? Top { get; set; }
     /// <summary>OS dialogs and Explorer (P10.17).</summary>
     public SystemShell System { get; set; } = new(() => null);
+    /// <summary>Opens a file in the outside program Preferences › Paths names for it (image editor, Tiled); false when there is none.</summary>
+    public Func<string, bool>? OpenWithTool { get; set; }
 
     /// <summary>Project Settings of the open project (in-memory when none is open).</summary>
     public IProjectSettingsStore ProjectSettings => Project.Settings;

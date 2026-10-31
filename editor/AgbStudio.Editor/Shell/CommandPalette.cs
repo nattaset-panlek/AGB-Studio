@@ -122,6 +122,7 @@ public sealed class CommandPalette : Border, IOverlayContent
         else if (item.File is { } f)
         {
             _history.Touch(f.Path);
+            if (_s.OpenWithTool?.Invoke(f.Path) == true) return;
             _ = _s.Windows.Open(EditorFor(f), f.Path, source: "CommandPalette");
         }
     }

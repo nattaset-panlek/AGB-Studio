@@ -230,6 +230,9 @@ public sealed class GridSnapPopover : ScenePopover
         ShowGrid.IsChecked = g.ShowGrid;
         Snap.IsChecked = g.Snap;
         TileCollision.IsChecked = g.TileCollision;
+        // Preferences › Editor › "Show collision overlay in Scene" off: the overlay is not available here
+        TileCollision.IsEnabled = _m.CollisionOverlayAllowed;
+        if (!TileCollision.IsEnabled) ToolTip.SetTip(TileCollision, new TipContent("Turned off in Preferences › Editor"));
         CameraBounds.IsChecked = g.CameraBounds;
         ShowGrid.IsCheckedChanged += (_, _) => { g.ShowGrid = ShowGrid.IsChecked == true; _m.GridChanged(); };
         Snap.IsCheckedChanged += (_, _) => { g.Snap = Snap.IsChecked == true; _m.GridChanged(); };

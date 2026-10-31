@@ -259,7 +259,8 @@ public sealed class GbaScreenView : Control
             ctx.DrawImage(_bitmap, new Rect(0, 0, 240, 160), screen);
         using (ctx.PushClip(screen))
         {
-            if (_m.Grid.TileCollision) DrawCollision(ctx, k);
+            if (_m.Grid.TileCollision && _m.CollisionOverlayAllowed) DrawCollision(ctx, k);
+            if (PixelGridShown) DrawPixelGrid(ctx, screen, k);
             if (_m.Grid.ShowGrid && _m.Grid.Size > 0) DrawGrid(ctx, screen, k);
             if (_m.Grid.CameraBounds) DrawCameraBounds(ctx, k);
             if (_m.IsTileTool) DrawBrush(ctx, k);
@@ -360,6 +361,17 @@ public sealed class GbaScreenView : Control
     }
 
     IBrush? Token(string key) => this.FindResource(key) as IBrush ?? Application.Current?.FindResource(key) as IBrush;
+
+    /// <summary>Preferences › Appearance: the grid between game pixels at 400% and above.</summary>
+    public bool PixelGridShown => _m.Services.Preferences.Current.PixelGridAt(Scale);
+
+    void DrawPixelGrid(DrawingContext ctx, Rect screen, double k)
+    {
+        if (Token("lit/white") is not ISolidColorBrush b) return;
+        var pen = new Pen(new SolidColorBrush(b.Color, 0.06), 1);
+        for (var x = 1; x < 240; x++) { var vx = Math.Round(screen.X + x * k) + 0.5; ctx.DrawLine(pen, new Point(vx, screen.Top), new Point(vx, screen.Bottom)); }
+        for (var y = 1; y < 160; y++) { var vy = Math.Round(screen.Y + y * k) + 0.5; ctx.DrawLine(pen, new Point(screen.Left, vy), new Point(screen.Right, vy)); }
+    }
 
     void DrawGrid(DrawingContext ctx, Rect screen, double k)
     {
