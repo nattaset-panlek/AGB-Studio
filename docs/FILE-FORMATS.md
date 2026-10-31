@@ -90,7 +90,7 @@ in.
 | `<rom>.gba`, `obj/*.elf`, `obj/*.map` | GameBuilder | the ROM, the linked ELF and its map file |
 | `gen/` | GameBuilder | generated C++ (assets, scenes, strings, scripts) |
 | `cache/` | AssetCache | hashes of converted assets for incremental builds |
-| `report.json` | BuildReport | ROM size by category, largest assets, IWRAM / EWRAM use, per-scene budgets, warnings |
+| `report.json` | BuildReport | ROM size by category, largest assets, IWRAM / EWRAM use, `ramSplit` (IWRAM / EWRAM by blueprint 10 row from the linker map, with each row's default budget), per-scene budgets, warnings |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
 
 ## Editor files (per user)

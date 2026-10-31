@@ -26,6 +26,8 @@ public sealed class BuildReport
     public long EwramBytes { get; set; }
     public long IwramCapacity { get; set; } = 32 * 1024;
     public long EwramCapacity { get; set; } = 256 * 1024;
+    /// <summary>IWRAM / EWRAM by blueprint 10 row, from the linker map (G-HW.04).</summary>
+    public List<RamBudget.Row> RamSplit { get; set; } = new();
     public List<string> Warnings { get; set; } = new();
     public int Errors { get; set; }
     public int AssetsConverted { get; set; }
@@ -115,6 +117,14 @@ public sealed class BuildReport
             r.Warnings.Add($"ROM is {r.RomBytes / 1024 / 1024} MB, over the {s.Build.WarnRomMegabytes} MB warning set in Project Settings · Build.");
         if (r.IwramBytes > r.IwramCapacity - 8 * 1024)
             r.Warnings.Add($"IWRAM uses {r.IwramBytes / 1024} KB of 32 KB; less than 8 KB is left for the stack.");
+        var mapPath = result.ElfPath + ".map";
+        if (result.ElfPath.Length > 0 && File.Exists(mapPath))
+        {
+            var ram = RamBudget.FromMap(LinkerMap.Read(mapPath));
+            r.RamSplit = ram.Rows;
+            var stackWarned = r.IwramBytes > r.IwramCapacity - 8 * 1024;
+            r.Warnings.AddRange(ram.Warnings().Where(w => !(stackWarned && w.StartsWith("IWRAM: code and data", StringComparison.Ordinal))));
+        }
         r.Scenes = SceneBudgets(p, assets);
         return r;
     }
