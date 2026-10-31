@@ -43,7 +43,10 @@ public sealed class AssetsPanel : DockPanel, IEditTarget
         SetDock(left, Avalonia.Controls.Dock.Left);
         Children.Add(left);
         Children.Add(new ScrollViewer { Content = new Border { Padding = new Thickness(12, 10, 12, 10), Child = _cards }, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled });
-        AddHandler(PointerPressedEvent, (_, e) => _dragFrom = e.GetPosition(this), RoutingStrategies.Tunnel);
+        // a click in the panel gives it the keyboard (as the Animation panel and the scene view do): Ctrl+C / Ctrl+V /
+        // Del then act on the selected asset, not on a text box that had the focus before
+        Focusable = true;
+        AddHandler(PointerPressedEvent, (_, e) => { _dragFrom = e.GetPosition(this); Focus(); }, RoutingStrategies.Tunnel, handledEventsToo: true);
         _assets.Changed += Rebuild;
         _m.Changed += RebuildCounts;
         _m.SelectionChanged += Rebuild;

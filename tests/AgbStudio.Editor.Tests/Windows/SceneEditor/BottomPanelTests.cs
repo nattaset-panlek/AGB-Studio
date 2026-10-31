@@ -191,8 +191,15 @@ public sealed class BottomPanelTests : IDisposable
         int Sprites() => p.SpriteFiles().Count();
         var n = Sprites();
         Capture.Pump();
+        // whatever had the keyboard before (here the Hierarchy search box; in a full run possibly a control another test
+        // left focused), clicking a card gives it to the Assets panel
+        var search = _w.Find<SearchField>("HierarchySearch");
+        search.Focus();
+        Capture.Pump();
+        Assert.True(search.IsFocused);
         _w.Click(Card("coin.png"));
         Capture.Pump();
+        Assert.True(Assets.IsKeyboardFocusWithin);
         // the shortcuts go to the Assets panel that has the selection
         _w.Key(PhysicalKey.C, RawInputModifiers.Control);
         _w.Key(PhysicalKey.V, RawInputModifiers.Control);

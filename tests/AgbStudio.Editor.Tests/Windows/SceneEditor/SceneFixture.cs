@@ -43,19 +43,33 @@ public sealed class SceneWindow : IDisposable
 
     public Point Center(Control c) => c.TranslatePoint(new Point(c.Bounds.Width / 2, c.Bounds.Height / 2), Win)!.Value;
 
-    public void Click(Control c, MouseButton button = MouseButton.Left, RawInputModifiers mods = RawInputModifiers.None) => ClickAt(Center(c), button, mods);
+    Point? _last;
+
+    /// <summary>
+    /// One click at the control's centre. A click on the spot of the previous one lands 6 px aside: Avalonia counts two
+    /// clicks within 500 ms and 4 px as a double-click, and how fast a test runs depends on what ran before it.
+    /// </summary>
+    public void Click(Control c, MouseButton button = MouseButton.Left, RawInputModifiers mods = RawInputModifiers.None)
+    {
+        var p = Center(c);
+        if (_last is { } l && Math.Abs(l.X - p.X) <= 4 && Math.Abs(l.Y - p.Y) <= 4)
+            p += new Point(Math.Max(0, Math.Min(6, c.Bounds.Width / 2 - 1)) * (l.X > p.X ? -1 : 1), 0);
+        ClickAt(p, button, mods);
+    }
 
     public void ClickAt(Point p, MouseButton button = MouseButton.Left, RawInputModifiers mods = RawInputModifiers.None)
     {
         Win.MouseMove(p, mods);
         Win.MouseDown(p, button, mods);
         Win.MouseUp(p, button, mods);
+        _last = p;
         Capture.Pump();
     }
 
     public void DoubleClick(Control c)
     {
         var p = Center(c);
+        _last = p;
         Win.MouseMove(p);
         Win.MouseDown(p, MouseButton.Left);
         Win.MouseUp(p, MouseButton.Left);
