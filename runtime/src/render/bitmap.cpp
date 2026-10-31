@@ -27,11 +27,11 @@ void begin() {
 
 void show(const u16* pixels) { commit::copyNow(buffer(), pixels, kWidth * kHeight * 2); }
 
-void fill(int x, int y, int width, int height, u16 color) {
+bool fill(int x, int y, int width, int height, u16 color) {
     const int x0 = x < 0 ? 0 : x, y0 = y < 0 ? 0 : y;
     const int x1 = x + width > kWidth ? kWidth : x + width, y1 = y + height > kHeight ? kHeight : y + height;
-    if (x0 >= x1 || y0 >= y1) return;
-    for (int row = y0; row < y1; ++row) commit::fillNow(buffer() + row * kWidth + x0, color | (static_cast<u32>(color) << 16), static_cast<u32>(x1 - x0) * 2);
+    if (x0 >= x1 || y0 >= y1) return true;
+    return commit::queueFill(buffer() + y0 * kWidth + x0, color, static_cast<u32>(x1 - x0) * 2, static_cast<u32>(y1 - y0), kWidth * 2);
 }
 
 bool queueRows(const u16* pixels, int firstRow, int rows) {

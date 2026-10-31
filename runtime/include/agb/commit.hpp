@@ -21,6 +21,7 @@ enum Reg : u8 {
 
 constexpr u32 kDefaultDmaBudget = 16 * 1024;  // bytes per VBlank
 constexpr int kDmaQueueSize = 64;
+constexpr int kQueueReserve = 16;  // entries queueCopy leaves free for fills and sequences, which are never retried
 
 void init();
 void flush();  // called by system::waitVBlank only
@@ -41,15 +42,28 @@ u16* palette();
 void markPaletteDirty();
 
 // Queues a VRAM copy for the next VBlank. Returns false (and logs once) when the budget is used up;
-// the caller retries next frame.
+// the caller retries next frame. `src` must stay valid until that VBlank.
 bool queueCopy(void* dst, const void* src, u32 bytes);
+// Queued writes the commit keeps whole: the caller keeps no source and never retries. A rectangle is `rows` rows of
+// `rowBytes` bytes, `dstStride` bytes apart (64 for a 32-wide screen block, 480 for the Mode 3 frame buffer). Rows that
+// do not fit this frame's budget wait for the next VBlank (counted in deferredCount, logged once). They return false
+// only when the queue is full (logged once).
+// Fills every halfword of the rectangle with `value`.
+bool queueFill(void* dst, u16 value, u32 rowBytes, u32 rows = 1, u32 dstStride = 0);
+// Writes value, value + 1, value + 2 ... row after row: a block of tiles mapped in order (text windows).
+bool queueSequence(void* dst, u16 value, u32 rowEntries, u32 rows, u32 dstStride);
 void setDmaBudget(u32 bytes);
-u32 queuedBytes();
+u32 queuedBytes();  // bytes waiting for the next VBlank, rows left over from earlier frames included
 u32 deferredCount();
 
-// Immediate copy for staged loads while the screen is blanked or faded to black.
+// Immediate copy for staged loads: while the screen is blanked or faded to black (the scene loader opens that window
+// with beginStagedLoad / endStagedLoad around each load step), or in VBlank. Debug builds count the calls made while
+// the picture shows in directWrites() and log the first one.
 void copyNow(void* dst, const void* src, u32 bytes);
 void fillNow(void* dst, u32 value, u32 bytes);
+void beginStagedLoad();
+void endStagedLoad();
+u32 directWrites();
 // Writes all shadow registers immediately (used at boot and inside staged loads).
 void flushRegistersNow();
 

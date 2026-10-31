@@ -109,7 +109,12 @@ copies it in any scene when the scene has no actor of that name.
 - `TilesetMeta`: `tiles` by metatile index (`name`, `collision` = `None`, `Solid`, `OneWay`, `Ladder`, `Hazard`,
   `Water`, `SlopeUp`, `SlopeDown`, `tag`, `animation` frames and `animationTicks`), `autoTiles` (rule sets: each rule a
   3x3 `mask` and the `tile` it picks), `compress` (LZ77, default on).
-- `MusicMeta`: `volume`, `loopStart` (pattern order), `fadeOnSceneChange`.
+- `MusicMeta`: `volume`, `loopStart` (pattern order), `fadeOnSceneChange`. The build reads it for every MOD / XM (the
+  defaults when the file is missing: 0.8, 0, true): `loopStart`, clamped to the module's last order, becomes the
+  module's restart order in the soundbank, so maxmod continues there when a looping song ends; `volume` (0..256) and
+  `fadeOnSceneChange` go into `agb_soundbank_music` (`agb::audio::MusicInfo` by module id). At runtime the track volume
+  multiplies the music volume, and a scene change fades the music only when the scene's own "Fade on scene change" and
+  the track's both ask for it.
 - `SoundMeta`: `rate` (11025: resampled to 11 kHz mono 8-bit), `volume`.
 
 ## Other files

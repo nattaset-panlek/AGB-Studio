@@ -492,7 +492,8 @@ void boot(const GameDef& def) {
     system::init();
     if (def.save.type != save::Type::None) save::configure(def.save);
     if (def.actionKeys) input::setActionMap(def.actionKeys, def.actionCount);
-    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8), def.audioMixKHz ? def.audioMixKHz : static_cast<u8>(21)});
+    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8), def.audioMixKHz ? def.audioMixKHz : static_cast<u8>(21),
+                 static_cast<const audio::MusicInfo*>(def.music), def.musicCount});
     if (def.dmgSfx) audio::setDmgTable(static_cast<const audio::DmgSfx*>(def.dmgSfx), def.dmgSfxCount);
     rng::seed(0xA6B5);
     text::clearLabels();  // a boot starts with no labels (a language switch would redraw a previous game's)
@@ -539,7 +540,10 @@ void frame() {
     Screen* s = g_stack[g_depth - 1];
     if (g_loadStep >= 0) {
         const u32 t0 = profile::cyclesNow();
+        // Load steps run with the picture covered (faded out, or nothing shown yet at boot): they may write VRAM at once.
+        commit::beginStagedLoad();
         const bool done = s->load(g_loadStep);
+        commit::endStagedLoad();
         const u32 spent = profile::cyclesNow() - t0;
         if (g_loadStep < 8) g_stepCycles[g_loadStep] = spent;
         if (spent > g_loadWorstCycles) {
@@ -624,7 +628,8 @@ void loadScene(u16 index, int spawnX, int spawnY, render::effects::Transition t,
     g_scene.nextY = spawnY;
     g_scene.transition = t;
     g_scene.transitionFrames = frames;
-    if (g_scene.def && g_scene.def->fadeMusicOnExit && audio::ready()) audio::fadeMusic(fixed(0), frames);
+    // Fade on scene change: the scene's setting and the playing track's MusicMeta must both ask for it.
+    if (g_scene.def && g_scene.def->fadeMusicOnExit && audio::ready() && audio::musicFadesOnSceneChange()) audio::fadeMusic(fixed(0), frames);
     render::effects::beginOut(t, frames);
 }
 

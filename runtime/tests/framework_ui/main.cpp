@@ -326,6 +326,51 @@ AGB_TEST(hud_label_comes_back_after_pause_and_options) {
     CHECK_EQ(wrong, 0);
 }
 
+// P2.04: opening, covering, resuming and closing the pause menu changes the text layer's map only through the commit
+// queue. Each change is in VRAM after the VBlank that follows it and not before, and no copyNow / fillNow ran while the
+// picture showed.
+AGB_TEST(pause_and_resume_map_text_in_vblank) {
+    setupData(false);
+    g_level.actors = &g_hudActor;
+    g_level.actorCount = 1;
+    g_game.startScene = 1;
+    game::boot(g_game);
+    waitLoaded();
+    frames(2);
+    const u32 direct = commit::directWrites();
+    const u16 label = entryAt(2, 5), under = entryAt(8, 5);
+    // Open: the pause box appears in the VBlank that ends the frame its screen entered.
+    ui::openPause();
+    CHECK(topIs("pause menu"));
+    CHECK_EQ(entryAt(8, 5), under);
+    frames(1);
+    const u16 pause = entryAt(8, 5);
+    CHECK_EQ(pause >> 12, 14);
+    // Options cover the pause box.
+    press(Key::Down);
+    press(Key::A);
+    frames(1);
+    CHECK(topIs("options"));
+    const u16 options = entryAt(8, 5);
+    CHECK(options != pause);
+    // Back to the pause menu: the options panel is unmapped and the pause box and label mapped again, at the VBlank.
+    game::pop();
+    CHECK(topIs("pause menu"));
+    CHECK_EQ(entryAt(8, 5), options);
+    CHECK(commit::queuedBytes() > 0);
+    system::waitVBlank();
+    CHECK_EQ(commit::queuedBytes(), 0u);
+    CHECK_EQ(entryAt(8, 5), pause);
+    CHECK_EQ(entryAt(2, 5), label);
+    // Close: the pause box is unmapped and the label it covered comes back, at the VBlank.
+    game::pop();
+    CHECK(topIs("Level"));
+    CHECK_EQ(entryAt(8, 5), pause);
+    system::waitVBlank();
+    CHECK_EQ(entryAt(8, 5), under);
+    CHECK_EQ(commit::directWrites(), direct);
+}
+
 AGB_TEST(key_names) {
     const char* s = ui::keyName(static_cast<u16>(Key::A) | static_cast<u16>(Key::Start));
     CHECK(s[0] == 'A' && s[1] == '+' && s[2] == 'S' && s[6] == 'T' && s[7] == 0);

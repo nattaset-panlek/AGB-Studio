@@ -90,6 +90,19 @@ public sealed class FixtureBuildTests(EmulatorFixture emu, FixtureBuild fixture)
         Assert.Equal(fixture.Clean.Report!.RomBytes, r.Report!.RomBytes);
     }
 
+    // P3.11: the game definition hands the MusicMeta table of the soundbank (MusicMetaTests) to the runtime.
+    [Fact]
+    public void GameDefinitionHandsTheMusicMetaToTheRuntime()
+    {
+        Assert.True(fixture.Clean.Success, string.Join('\n', fixture.Clean.Diagnostics));
+        var gen = Path.Combine(fixture.Project.BuildDir, "gen");
+        var game = File.ReadAllText(Path.Combine(gen, "game.cpp"));
+        var modules = fixture.Project.MusicFiles().Count();
+        Assert.Contains("extern const agb::audio::MusicInfo agb_soundbank_music[];", game);
+        Assert.Contains($"agb_soundbank_music, {modules}}};", game);
+        Assert.Contains("{205, 4, true},  // bgm_forest.xm", File.ReadAllText(Path.Combine(gen, "audio", "soundbank.cpp")));
+    }
+
     [Fact]
     public void FixtureReportMatchesTheLinkerMap()
     {

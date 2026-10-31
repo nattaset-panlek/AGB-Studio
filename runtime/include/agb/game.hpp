@@ -66,7 +66,7 @@ struct SceneDef {
     u16 actorCount;
     CameraDef camera;
     s16 music;                    // soundbank module id, -1 = none (keep current)
-    bool fadeMusicOnExit;
+    bool fadeMusicOnExit;         // Scene Settings "Fade on scene change"; the track's MusicMeta must allow it too
     const LinkDef* links;
     u8 linkCount;
     void (*onLoad)();             // map scripts (nullptr = none)
@@ -113,6 +113,8 @@ struct GameDef {
     u16 dmgSfxCount;
     const PrefabDef* prefabs;  // prefab templates by name (Scene.Spawn falls back to them), nullptr = none
     u16 prefabCount;
+    const void* music;         // agb::audio::MusicInfo by module id: MusicMeta volume, loop start, fade (nullptr = none)
+    u16 musicCount;
 };
 
 namespace game {

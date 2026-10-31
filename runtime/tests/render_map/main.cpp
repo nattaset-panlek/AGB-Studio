@@ -149,6 +149,31 @@ AGB_TEST(parallax_scroll_registers) {
     CHECK_EQ(view.scrollY(), 100);
     CHECK_EQ(commit::reg(commit::Bg1HOfs), 99);
     CHECK_EQ(commit::reg(commit::Bg1VOfs), 100);
+    view.release();
+    // x1.2 (parallax 307, the foreground layer of T-D03 / T-P03): the layer moves faster than the camera, the register
+    // takes the low 9 bits, and the window it draws is the one at the faster scroll.
+    screenArena().reset();
+    bg::reset();
+    palettes::reset();
+    g_layer.parallaxX = g_layer.parallaxY = 307;
+    MapLayerView front;
+    CHECK(front.init(g_layer));
+    front.setCamera(500, 200);
+    CHECK_EQ(front.scrollX(), 599);  // 500 * 307 / 256 = 599.6
+    CHECK_EQ(front.scrollY(), 239);  // 200 * 307 / 256 = 239.8
+    CHECK_EQ(commit::reg(commit::Bg1HOfs), 599 & 0x1FF);
+    CHECK_EQ(commit::reg(commit::Bg1VOfs), 239);
+    CHECK(front.commit());
+    system::waitVBlank();
+    const u16* vram = commit::bgMap(front.screenBlock());
+    int wrong = 0;
+    for (int ty = 239 >> 3; ty <= (239 + 159) >> 3; ++ty)
+        for (int tx = 599 >> 3; tx <= (599 + 239) >> 3; ++tx) {
+            const int x = tx & 63, y = ty & 31;
+            wrong += vram[(x >> 5) * 1024 + y * 32 + (x & 31)] != expected(tx, ty, front.placement());
+        }
+    CHECK_EQ(wrong, 0);
+    front.release();
     g_layer.parallaxX = g_layer.parallaxY = 256;
 }
 
@@ -249,5 +274,7 @@ AGB_TEST(big_camera_jump_fits_in_a_frame) {
 
 int main() {
     system::init();
+    // These tests load layers directly, without a scene's staged load: the whole run counts as one (P2.04).
+    commit::beginStagedLoad();
     test::runAll();
 }

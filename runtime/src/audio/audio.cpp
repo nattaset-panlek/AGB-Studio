@@ -52,6 +52,11 @@ AGB_EWRAM_BSS u8 g_mixChannels[kMaxChannels * MM_SIZEOF_MIXCH] AGB_ALIGN4;
 bool g_ready = false;
 u8 g_mixKHz = 0;
 bool g_musicOn = false;
+const MusicInfo* g_music = nullptr;  // MusicMeta by module id
+u16 g_musicCount = 0;
+s32 g_module = -1;     // the module playing (or played last)
+s32 g_track = 256;     // its MusicMeta volume, 0..256
+u16 g_moduleVolume = 0;
 fixed g_volume = fixed(1), g_fadeFrom, g_fadeTo;
 u16 g_fadeFrames = 0, g_fadeElapsed = 0;
 bool g_fadeStop = false;
@@ -63,12 +68,17 @@ void frameHook() {
 }
 
 void applyVolume() {
-    const int v = (g_volume.raw * 1024) >> 8;
-    mmSetModuleVolume(static_cast<mm_word>(v < 0 ? 0 : v > 1024 ? 1024 : v));
+    const int v = (g_volume.raw * g_track * 1024) >> 16;
+    g_moduleVolume = static_cast<u16>(v < 0 ? 0 : v > 1024 ? 1024 : v);
+    mmSetModuleVolume(g_moduleVolume);
 }
+
+const MusicInfo* info(s32 module) { return g_music && module >= 0 && module < g_musicCount ? &g_music[module] : nullptr; }
 }  // namespace
 
 void init(const Config& config) {
+    g_music = config.music;
+    g_musicCount = config.music ? config.musicCount : 0;
     REG_SNDSTAT = SSTAT_ENABLE;
     REG_SNDDMGCNT = SDMG_BUILD_LR(SDMG_SQR1 | SDMG_SQR2 | SDMG_WAVE | SDMG_NOISE, 7);
     REG_SNDDSCNT = SDS_DMG100;
@@ -117,6 +127,10 @@ u8 mixKHz() { return g_mixKHz; }
 
 void playMusic(u16 module, bool loop) {
     if (!g_ready) return;
+    g_module = module;
+    const MusicInfo* m = info(module);
+    g_track = m ? (m->volume > 256 ? 256 : m->volume) : 256;
+    // A looping song continues at the order the build wrote into the module (MusicMeta loop start).
     mmStart(module, loop ? MM_PLAY_LOOP : MM_PLAY_ONCE);
     g_musicOn = true;
     g_fadeFrames = 0;
@@ -146,10 +160,18 @@ void fadeMusic(fixed target, u16 frames, bool stopAtZero) {
 }
 
 fixed musicVolume() { return g_volume; }
+u16 moduleVolume() { return g_moduleVolume; }
+
+bool musicFadesOnSceneChange() {
+    const MusicInfo* m = info(g_module);
+    return !m || m->fadeOnSceneChange;
+}
 
 void setMusicPosition(u8 order) {
     if (g_ready) mmPosition(order);
 }
+
+u8 musicPosition() { return g_ready ? static_cast<u8>(mmGetPosition()) : 0; }
 
 SfxHandle playSample(u16 sample, fixed volume, s8 pan, fixed rate) {
     if (!g_ready) return 0;

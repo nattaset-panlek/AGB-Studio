@@ -230,7 +230,20 @@ public static class Program
         mod.Patterns.Add(p);
         mod.Order.AddRange([0, 0]);
         File.WriteAllBytes(Path.Combine(dir, "tune.mod"), mod.Encode());
-        Console.WriteLine($"wrote beep.wav and tune.mod to {dir}");
+        // audio_music (loop start): three short orders, each 8 rows at speed 3 (F03, then a pattern break D00 on row 7).
+        var loop = new AgbStudio.Build.Audio.ModWriter { Title = "agb loop test" };
+        loop.Samples.Add(new("square", AgbStudio.Build.Audio.ModWriter.Waveform("square"), 48, 0, 32));
+        foreach (var note in new[] { "C-2", "E-2", "G-2" })
+        {
+            var lp = loop.NewPattern();
+            lp[0, 0] = new(note, 1, 0xF, 3);
+            lp[4, 0] = new(note, 1);
+            lp[7, 1] = new(null, 0, 0xD, 0);
+            loop.Patterns.Add(lp);
+        }
+        loop.Order.AddRange([0, 1, 2]);
+        File.WriteAllBytes(Path.Combine(dir, "loop.mod"), loop.Encode());
+        Console.WriteLine($"wrote beep.wav, tune.mod and loop.mod to {dir}");
         return 0;
     }
 

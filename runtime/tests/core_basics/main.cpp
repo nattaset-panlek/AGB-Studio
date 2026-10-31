@@ -350,13 +350,86 @@ AGB_TEST(commit_queue_budget_defers) {
     static u16 src[2048];
     commit::setDmaBudget(4096);
     const u32 before = commit::deferredCount();
+    const u32 log = debug::channel().logHead;
     CHECK(commit::queueCopy(commit::objTiles(), src, 4096));
     CHECK(!commit::queueCopy(commit::objTiles(), src, 32));  // over budget -> deferred
     CHECK_EQ(commit::deferredCount(), before + 1);
+    // The Console says what happened and what to do (once per run).
+    CHECK(test::loggedSince(log, "warning: too much graphics data changed this frame, so the rest is copied next frame."));
     system::waitVBlank();
     CHECK_EQ(commit::queuedBytes(), 0u);
     CHECK(commit::queueCopy(commit::objTiles(), src, 32));
     commit::setDmaBudget(commit::kDefaultDmaBudget);
+    system::waitVBlank();
+}
+
+// Queued fills and tile sequences (text panels, the Mode 3 fill) keep their data in the queue: rows past the budget are
+// written in the next VBlank instead of being refused, and nothing reaches VRAM before VBlank.
+AGB_TEST(commit_queue_rows_past_the_budget_wait_for_the_next_vblank) {
+    u16* map = commit::bgMap(30);
+    commit::beginStagedLoad();
+    commit::fillNow(map, 0, 2048);  // VRAM test area (no layer shows it)
+    commit::endStagedLoad();
+    system::waitVBlank();
+    commit::setDmaBudget(256);
+    const u32 before = commit::deferredCount();
+    CHECK(commit::queueFill(map, 0x1234, 64, 8, 64));             // 8 rows of 64 bytes: 512 bytes
+    CHECK(commit::queueSequence(map + 8 * 32, 0x5000, 4, 2, 64));  // 2 rows of 4 entries
+    CHECK_EQ(commit::queuedBytes(), 512u + 16u);
+    CHECK_EQ(map[0], 0);  // nothing written before VBlank
+    CHECK(!commit::queueCopy(map, map, 2));  // the leftover counts against the budget: copies wait their turn
+    system::waitVBlank();
+    // The first four rows (256 bytes) landed; the rest waits.
+    CHECK_EQ(map[3 * 32 + 31], 0x1234);
+    CHECK_EQ(map[4 * 32], 0);
+    CHECK_EQ(commit::queuedBytes(), 256u + 16u);
+    CHECK(commit::deferredCount() > before);
+    system::waitVBlank();
+    CHECK_EQ(map[7 * 32 + 31], 0x1234);
+    CHECK_EQ(map[8 * 32], 0);  // the sequence did not fit the second frame either
+    system::waitVBlank();
+    CHECK_EQ(commit::queuedBytes(), 0u);
+    // Sequence: value, value + 1 ... across the rows (a text box of 4 x 2 tiles mapped in order).
+    CHECK_EQ(map[8 * 32 + 0], 0x5000);
+    CHECK_EQ(map[8 * 32 + 3], 0x5003);
+    CHECK_EQ(map[9 * 32 + 0], 0x5004);
+    CHECK_EQ(map[9 * 32 + 3], 0x5007);
+    CHECK_EQ(map[9 * 32 + 4], 0);
+    commit::setDmaBudget(commit::kDefaultDmaBudget);
+}
+
+// queueCopy leaves the last entries of the queue to fills and sequences: their callers never retry (a text panel closed
+// in the frame the camera jumped still gets its map written).
+AGB_TEST(commit_queue_keeps_room_for_fills_and_sequences) {
+    static u16 src[2];
+    u16* map = commit::bgMap(30);
+    int copies = 0;
+    while (copies < commit::kDmaQueueSize && commit::queueCopy(map, src, 4)) ++copies;
+    CHECK_EQ(copies, commit::kDmaQueueSize - commit::kQueueReserve);
+    int owned = 0;
+    for (int i = 0; i < commit::kQueueReserve; ++i) owned += commit::queueFill(map + 32 + i * 2, 0x2222, 4);
+    CHECK_EQ(owned, commit::kQueueReserve);
+    system::waitVBlank();
+    CHECK_EQ(commit::queuedBytes(), 0u);
+    CHECK_EQ(map[32 + 2 * (commit::kQueueReserve - 1) + 1], 0x2222);
+}
+
+// copyNow / fillNow are for staged loads: Debug builds count a call made while the picture shows, not one inside a
+// staged load or in VBlank.
+AGB_TEST(direct_vram_writes_outside_a_staged_load_are_counted) {
+    u16* map = commit::bgMap(30);
+    system::waitVBlank();
+    while (REG_VCOUNT >= 160) {}  // the picture is being drawn
+    CHECK_EQ(REG_DISPCNT & DCNT_BLANK, 0u);
+    const u32 before = commit::directWrites();
+    commit::beginStagedLoad();
+    commit::fillNow(map, 0, 64);
+    commit::endStagedLoad();
+    CHECK_EQ(commit::directWrites(), before);
+    const u32 log = debug::channel().logHead;
+    commit::fillNow(map, 0, 64);
+    CHECK_EQ(commit::directWrites(), before + 1);
+    CHECK(test::loggedSince(log, "warning: graphics memory was written at once while the picture was showing"));
     system::waitVBlank();
 }
 

@@ -138,7 +138,9 @@ bool ensureLayer() {
     if (sb < 0) return false;
     const auto blank = render::bg::reserveTiles(1);
     if (!blank.valid()) return false;
-    commit::fillNow(reinterpret_cast<u8*>(commit::bgTiles(blank.charBlock)) + blank.firstTile * 32, 0, 32);
+    // The layer may be made during play (the first dialogue or pause menu): its blank tile and map go through the
+    // commit queue like the panels drawn on it.
+    commit::queueFill(reinterpret_cast<u8*>(commit::bgTiles(blank.charBlock)) + blank.firstTile * 32, 0, 32);
     render::bg::Config c;
     c.charBlock = static_cast<u8>(blank.charBlock);
     c.screenBlock = static_cast<u8>(sb);
@@ -146,7 +148,7 @@ bool ensureLayer() {
     g_bg = pickBg();
     render::bg::configure(g_bg, c);
     g_blank = blank.firstTile;
-    commit::fillNow(commit::bgMap(sb), g_blank * 0x00010001u, 2048);
+    commit::queueFill(commit::bgMap(sb), g_blank, 2048);
     loadPalette();
     render::bg::setScroll(g_bg, 0, 0);
     render::bg::setVisible(g_bg, true);

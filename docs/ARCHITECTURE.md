@@ -81,6 +81,12 @@ duty, frequency, wave RAM, length in frames), the build writes them as an `agb_d
 a `.wav` of the same name in `assets/audio/sfx`, plays as a sample instead. `audio::usage()` reports which channels are
 busy (Audio page).
 
+Each module's MusicMeta (Audio page: volume, loop start, fade on scene change) is built in by `SoundbankBuilder`: the
+loop start is written into the module as maxmod's restart order (a looping song continues there when it ends), and the
+volume and fade flag go into the table `agb_soundbank_music` that `GameDef::music` hands to `audio::init`. The module
+plays at the music volume times its track volume (`audio::moduleVolume()`), and `game::loadScene` fades it only when
+the scene and the track both ask for it (`audio_music` ROM test).
+
 ## Frame order (blueprint 04)
 
 `game::frame()` reads input, then runs the top screen. While a screen loads, one load step runs per frame (scenes have
@@ -92,6 +98,20 @@ animation, then camera follow and shake, map layer streaming, animated tiles, sp
 effects and the debug-channel actor table. `system::waitVBlank()` sleeps in the BIOS until VBlank and flushes the
 commit queues, so the hardware changes of a frame land in VBlank. The profiler counts Logic and Render cycles per
 frame and frame overruns.
+
+**Commit queues (P2.04).** Runtime modules write the OAM, palette and display-register shadows and queue VRAM writes;
+`commit::flush` (VBlank only) writes the registers, OAM and palette, then the queued VRAM writes in order up to the
+per-frame DMA budget (16 KB by default). Three kinds of VRAM write are queued: `queueCopy` (a copy from the caller's
+memory; refused when the budget is used up, so the caller retries next frame: sprite frames, text tiles, map rows),
+`queueFill` (a rectangle filled with one value: closing a text panel, the text layer's blank map, the Mode 3
+`bitmap::fill`) and `queueSequence` (a rectangle of map entries value, value + 1 ...: a text panel's tiles mapped in
+order). Fills and sequences keep everything they need in the queue entry, so rows past the budget wait for the next
+VBlank instead of being refused, and `queueCopy` leaves the last 16 of the 64 queue entries to them. A deferral counts in `deferredCount()` and logs "too much graphics data changed this
+frame, so the rest is copied next frame" once. `copyNow` / `fillNow` (and LZ77 to VRAM) write at once and are only for
+staged loads: the scene loader opens `beginStagedLoad` / `endStagedLoad` around each load step, which runs while the
+picture is faded out. Debug builds count a `copyNow` / `fillNow` made while the picture shows (outside VBlank, forced
+blank and a staged load) in `directWrites()` and log it once; the pause, options and dialogue panels therefore change
+the text layer only through the queue (`framework_ui` test `pause_and_resume_map_text_in_vblank`).
 
 ## Data contract
 
@@ -146,7 +166,7 @@ converts assets first.
 |---|---|
 | Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text); OBJ VRAM of the sprite frames its actors show at once against 32 KB (16 KB in bitmap modes); sprite palettes against 16 (`GameBuilder.CheckHardwareLimits`) |
 | Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack |
-| Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
+| Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type. The `render_limits` test ROM fills background VRAM (64 KB in tile modes, none left in Mode 3) and OBJ VRAM (32 KB, 16 KB in Mode 3) past the limit and checks the refusal, the warning and that nothing already placed changed (G-HW.01) |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 
 The split of IWRAM and EWRAM into the rows of blueprint 10 is measured from the linker map (`RamBudget.cs`, report.json

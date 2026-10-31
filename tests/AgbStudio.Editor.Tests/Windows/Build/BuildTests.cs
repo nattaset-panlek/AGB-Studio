@@ -8,6 +8,7 @@ using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Support;
 using AgbStudio.Editor.Windows.Build;
+using AgbStudio.Scripting;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -313,6 +314,56 @@ public class ExportRomTests
         Assert.Equal(new BuildRequest(BuildConfiguration.Release, Path.Combine(d.Folder.Selected!, "skyhopper.gba"), true), d.Request);
         Assert.Equal(("T-D06", "ExportRom"), fx.Services.Windows.Requests[^1]);
         Assert.Equal(1024, ExportRomDialog.PadRom(new byte[1000]).Length);
+    }
+}
+
+/// <summary>
+/// Export ROM "Pad ROM to a power of two" in the emulator (P7.15, T-D05): a real Release ROM of a small game, padded by
+/// <see cref="ExportRomDialog.PadRom"/> as the export writes it, boots in the mGBA core and shows the same frames as the
+/// ROM the build made.
+/// </summary>
+[Collection(EmulatorCollection.Name)]
+public class ExportRomBootTests
+{
+    [Fact]
+    public void PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom()
+    {
+        if (!new Toolchain().IsComplete) { Assert.Fail("devkitPro toolchain not found"); return; }
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "export_padded");
+        var p = SampleProjects.CreatePlatformerMini(dir);
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new ScriptBackend() }.Build(new BuildOptions { Configuration = BuildConfiguration.Release });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics.Where(d => d.Severity == Severity.Error)));
+        var rom = File.ReadAllBytes(r.RomPath);
+        var padded = ExportRomDialog.PadRom(rom);
+        Assert.True(padded.Length > rom.Length, $"the built ROM ({rom.Length} bytes) is already a power of two, so nothing was padded");
+        Assert.Equal(0, padded.Length & (padded.Length - 1));
+        Assert.True(padded.AsSpan(0, rom.Length).SequenceEqual(rom));
+        Assert.True(padded.AsSpan(rom.Length).IndexOfAnyExcept((byte)0xFF) < 0);
+        var exported = Path.Combine(dir, "export", "padded.gba");
+        Directory.CreateDirectory(Path.GetDirectoryName(exported)!);
+        File.WriteAllBytes(exported, padded);
+
+        // the process core, shared with the other editor tests (D-06)
+        using var host = new EmulatorHost();
+        var core = host.Acquire();
+        List<uint[]> Frames(string path)
+        {
+            core.LoadRom(path);
+            var shots = new List<uint[]>();
+            for (var f = 1; f <= 360; f++)
+            {
+                core.RunFrame();
+                if (f % 120 == 0) shots.Add((uint[])core.Frame.Clone());
+            }
+            core.UnloadRom();
+            return shots;
+        }
+        var built = Frames(r.RomPath);
+        var fromExport = Frames(exported);
+        for (var i = 0; i < built.Count; i++)
+            Assert.True(built[i].AsSpan().SequenceEqual(fromExport[i]), $"frame {(i + 1) * 120}: the padded ROM shows another picture than the built ROM");
+        // the game is running at frame 360 (not a blank screen of a ROM that did not start)
+        Assert.True(built[^1].Distinct().Count() > 4, "the built ROM shows a blank screen at frame 360");
     }
 }
 

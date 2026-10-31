@@ -17,6 +17,9 @@ struct Registration {
 
 void fail(const char* file, int line, const char* expr);
 int failures();
+// True when `text` was written to the debug log since `since` (a debug::channel().logHead taken before the call under
+// test), as the Console shows it.
+bool loggedSince(u32 since, const char* text);
 // After the run, fill the screen with green (all passed) or red (a test failed), so emulators without access to the
 // debug channel (VBA-M) show the result.
 void showResultOnScreen();

@@ -97,7 +97,8 @@ public class DmgSoundTests
     /// <summary>
     /// "Preview sounds the same as EMU": the register writes of each preset are played by the mGBA core (D-06) through a
     /// small test ROM that copies (offset, value) pairs from EWRAM to the sound registers; its pitch and length are
-    /// compared with the editor's preview synthesis.
+    /// compared with the editor's preview synthesis. The four channels: Square 1 (Jump), Square 2 (Coin, Select), Noise
+    /// (Hurt) and Wave (the default triangle and a drawn 25 % pulse, whose share of time above the middle is compared too).
     /// </summary>
     [AvaloniaFact]
     public void Preview_SoundsLikeTheEmulator()
@@ -114,9 +115,14 @@ public class DmgSoundTests
         {
             core.LoadRom(DmgTestRom.Build(), "dmg-test.gba");
             for (var i = 0; i < 10; i++) core.RunFrame();
-            foreach (var name in new[] { "Coin", "Jump", "Select", "Hurt" })
+            var effects = new[] { "Coin", "Jump", "Select", "Hurt" }.Select(Preset).Concat(
+            [
+                new SfxFile { Name = "wave triangle", Channel = DmgChannelKind.Wave, StartNote = "A4", Length = 0.25, Volume = 15 },
+                new SfxFile { Name = "wave pulse", Channel = DmgChannelKind.Wave, StartNote = "E4", Length = 0.3, Volume = 8, Wave = [.. Enumerable.Range(0, 32).Select(i => i < 8 ? 15 : 0)] },
+            ]);
+            foreach (var sfx in effects)
             {
-                var sfx = Preset(name);
+                var name = sfx.Name;
                 var regs = DmgSound.Registers(sfx);
                 var ram = core.SystemRam;
                 for (var i = 0; i < regs.Count; i++)
@@ -147,6 +153,19 @@ public class DmgSoundTests
                     var a = ZeroCrossHz(emuSound, rate, 0, window);
                     var b = ZeroCrossHz(ours, rate, 0, window);
                     Assert.True(a / b is > 0.95 and < 1.05, $"{name}: emulator {a:0} Hz, preview {b:0} Hz");
+                }
+                if (sfx.Channel == DmgChannelKind.Wave)
+                {
+                    // the wave RAM's shape: the share of time the output is above its middle
+                    double High(float[] x, int count)
+                    {
+                        var seg = x.Take(count).ToArray();
+                        var mid = (seg.Max() + seg.Min()) / 2;
+                        return seg.Count(v => v > mid) / (double)seg.Length;
+                    }
+                    var window = rate / 20;
+                    var (ha, hb) = (High(emuSound, window), High(ours, window));
+                    Assert.True(Math.Abs(ha - hb) < 0.05, $"{name}: emulator {ha:0.00} of the time above the middle, preview {hb:0.00}");
                 }
                 // the end of the last 5 ms with several waveform edges (a single step when the channel is switched off does not count)
                 double Length(float[] x)
