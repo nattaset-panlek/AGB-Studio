@@ -184,6 +184,38 @@ public sealed class LogicGraphTests : IDisposable
         Assert.False(_h.Win.Overlays.IsOpen);
     }
 
+    // P10.11: the Edit menu on Logic Graph nodes: Select All, Copy / Paste, Cut, Duplicate, Delete, each undoable
+    [AvaloniaFact]
+    public void EditMenu_OnNodes_SelectAllCopyPasteCutDuplicateDelete()
+    {
+        var page = Open();
+        int Nodes() => page.Document.AllNodes.Count();
+        var n = Nodes();
+        page.Canvas.Focus();
+        _h.Key(Key.A, RawInputModifiers.Control);
+        Assert.Equal(n, page.Canvas.Selection.Count);
+        page.Canvas.Select(["n7"]);
+        _h.Key(Key.C, RawInputModifiers.Control);
+        _h.Key(Key.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Nodes());
+        var pasted = page.Canvas.Selection.Single();
+        Assert.Equal("PlaySound", page.Document.Node(pasted)!.Type);
+        _h.S.Commands.Execute("edit.duplicate");
+        Assert.Equal(n + 2, Nodes());
+        _h.S.Commands.Execute("edit.delete");
+        Assert.Equal(n + 1, Nodes());
+        // Cut removes the selected node and keeps it for Paste
+        page.Canvas.Select([pasted]);
+        _h.Key(Key.X, RawInputModifiers.Control);
+        Assert.Equal(n, Nodes());
+        Assert.Null(page.Document.Node(pasted));
+        _h.Key(Key.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Nodes());
+        Assert.Equal("PlaySound", page.Document.Node(page.Canvas.Selection.Single())!.Type);
+        _h.S.Commands.Execute("edit.undo");
+        Assert.Equal(n, Nodes());
+    }
+
     // T-P17 toolbar: the Link tool wires a node to another by dragging between their bodies
     [AvaloniaFact]
     public void LinkTool_DragsAWireFromNodeToNode()

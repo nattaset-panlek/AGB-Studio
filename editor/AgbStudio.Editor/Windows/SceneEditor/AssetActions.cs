@@ -300,8 +300,28 @@ public sealed class AssetActions
     }
 
     public AssetItem? Clipboard { get; private set; }
-    public void Copy() => Clipboard = Selected;
-    public AssetItem? Paste() => Clipboard != null && File.Exists(Clipboard.Path) ? Duplicate(Clipboard) : null;
+    // the copied files themselves, so Cut (copy, then delete) and Paste puts the asset back
+    List<(string Path, byte[] Data)> _clipboardFiles = [];
+
+    public void Copy()
+    {
+        Clipboard = Selected;
+        _clipboardFiles = Clipboard == null ? [] : WithMeta(Clipboard.Path).Select(f => (f, File.ReadAllBytes(f))).ToList();
+    }
+
+    /// <summary>Paste: a copy next to the copied asset; after Cut, the cut asset comes back under its name (one undo step).</summary>
+    public AssetItem? Paste()
+    {
+        if (Clipboard == null) return null;
+        if (File.Exists(Clipboard.Path)) return Duplicate(Clipboard);
+        if (_clipboardFiles.Count == 0) return null;
+        var set = new FileSet();
+        foreach (var (path, data) in _clipboardFiles) set.Record(path, Read(path), data);
+        Do("Paste", set);
+        _selected = Clipboard.Path;
+        Changed?.Invoke();
+        return Clipboard;
+    }
 
     /// <summary>Where an asset is used: scene actors (sprites, behaviour scripts), maps (tilesets, images), scene music, fonts.</summary>
     public List<string> Usages(AssetItem a)

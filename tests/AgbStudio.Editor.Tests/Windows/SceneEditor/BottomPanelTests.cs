@@ -182,6 +182,43 @@ public sealed class BottomPanelTests : IDisposable
         Assert.Equal(["idle"], _w.Find<StackPanel>("AnimationList").Children.OfType<ListRow>().Select(r => r.Label));
     }
 
+    // P10.11: the Edit menu on asset cards: Copy / Paste, Duplicate, Delete, Cut / Paste, each undoable
+    [AvaloniaFact]
+    public void Assets_EditMenuCopyPasteDuplicateDeleteCut()
+    {
+        var p = _w.S.Project.Current!;
+        var dir = Path.GetDirectoryName(p.SpriteFiles().First(f => Path.GetFileName(f) == "coin.png"))!;
+        int Sprites() => p.SpriteFiles().Count();
+        var n = Sprites();
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        Capture.Pump();
+        // the shortcuts go to the Assets panel that has the selection
+        _w.Key(PhysicalKey.C, RawInputModifiers.Control);
+        _w.Key(PhysicalKey.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Sprites());
+        Assert.True(File.Exists(Path.Combine(dir, "coin_copy.png")));
+        _w.S.Commands.Execute("edit.duplicate");
+        Assert.Equal(n + 2, Sprites());
+        _w.S.Commands.Execute("edit.undo");
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(n, Sprites());
+        // Cut removes the asset, Paste puts it back; Delete removes it, undo brings it back
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        _w.Key(PhysicalKey.X, RawInputModifiers.Control);
+        Assert.False(File.Exists(Path.Combine(dir, "coin.png")));
+        _w.S.Commands.Execute("edit.paste");
+        Assert.True(File.Exists(Path.Combine(dir, "coin.png")));
+        Assert.Equal(n, Sprites());
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        _w.S.Commands.Execute("edit.delete");
+        Assert.False(File.Exists(Path.Combine(dir, "coin.png")));
+        _w.S.Commands.Execute("edit.undo");
+        Assert.True(File.Exists(Path.Combine(dir, "coin.png")));
+    }
+
     // T-P06 / P11.17: speed (ticks) and frame order are edited in the panel, saved to the sprite meta, with undo
     [AvaloniaFact]
     public void Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo()
