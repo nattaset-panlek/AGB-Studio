@@ -1,1 +1,5 @@
 24d3c1d Assets panel Edit-menu test fix (P11.14, window T-P01); merged before the rule was strict, checklist Scope log row G-SCOPE.01
+cdcbc36 P5.01 primary tilesets + G-HW.04 EWRAM defaults (window T-P03); scope-log rows P5.01, G-HW.04
+14065ec P5.01 runtime + Primary field in the Tileset panel (window T-P03); scope-log row P5.01
+ccb96d2 Scope-log fixes (windows T-P07, T-S07, T-S08, T-P11, T-P06, T-D10)
+743dc03 Options block on the save chip (window T-D08); scope-log row T-D08, P4.12, P2.10
