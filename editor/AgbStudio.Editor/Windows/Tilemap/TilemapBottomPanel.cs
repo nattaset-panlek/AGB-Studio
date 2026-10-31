@@ -54,7 +54,7 @@ public sealed class TilemapBottomPanel : DockPanel
         DockPanel.SetDock(_ruleSet, Dock.Right);
         _ruleSet.Margin = new Thickness(0, 0, 8, 0);
         tabRow.Children.Add(_ruleSet);
-        tabRow.Children.Add(UI.Row(0, _tabs));
+        tabRow.Children.Add(UI.Row(2, _tabs));   // 2 px between the tabs, as the Scene Editor's bottom panel
         var tabFrame = UI.Frame(tabRow, null, "border/default", new Thickness(0, 0, 0, 1), new Thickness(6, 0, 0, 0)).Named("BottomTabs");
         SetDock(tabFrame, Dock.Top);
         Children.Add(tabFrame);
