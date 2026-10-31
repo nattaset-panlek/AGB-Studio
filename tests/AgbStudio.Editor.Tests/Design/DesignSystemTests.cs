@@ -8,6 +8,7 @@ using AgbStudio.Editor.Tests.Shot;
 using Capture = AgbStudio.Editor.Tests.Shot.Capture;
 using AgbStudio.Editor.Tests.Support;
 using AgbStudio.Editor.Theme;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -142,13 +143,95 @@ public class DesignSystemTests
     {
         // T-L04: colours come from the token files; Theme/Literals.axaml holds the raw hex Figma itself uses and
         // ThemeService derives the non-default accent tokens (Figma only defines the default accent); SvgImage reads colours from the SVG assets.
-        var rx = new Regex(@"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{8}\b|Color\.Parse|FromRgb|FromArgb");
+        // Besides hex and parsed colours the scan finds named colours (Brushes.White, Colors.Black, Foreground="White";
+        // Transparent is a hit-test background, not a colour) and colours built from a literal (Color.FromUInt32(0x...)).
+        var rx = new Regex(@"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{8}\b|Color\.Parse|FromRgb|FromArgb|FromUInt32\(\s*0x|new Color\(\s*(?:0x|\d)|SolidColorBrush\(\s*0x|"
+            + $@"(?<![\w.])(?:Avalonia\.Media\.)?(?:Brushes|Colors)\.(?:{NamedColours})\b|(?:Color|Background|Foreground|Fill|Stroke|BorderBrush)=""(?:{NamedColours})""");
         var offenders = EditorSources
             .Where(f => !f.Contains(Path.DirectorySeparatorChar + "Theme" + Path.DirectorySeparatorChar) && !f.Contains(Path.DirectorySeparatorChar + "Gallery" + Path.DirectorySeparatorChar))
             .SelectMany(f => File.ReadAllLines(f).Select((l, i) => (f, i, l)))
-            .Where(x => rx.IsMatch(x.l) && !x.l.TrimStart().StartsWith("//") && !x.f.EndsWith("ThemeService.cs") && !x.f.EndsWith("SvgImage.cs"))
+            .Where(x => rx.IsMatch(WithoutResourceFallback(x.l)) && !x.l.TrimStart().StartsWith("//") && !x.f.EndsWith("ThemeService.cs") && !x.f.EndsWith("SvgImage.cs"))
             .Select(x => $"{Path.GetFileName(x.f)}:{x.i + 1}").ToList();
         Assert.Empty(offenders);
+        // the scan finds the colours it is meant to find
+        foreach (var hit in new[] { "ctx.DrawEllipse(Brushes.White, null, r);", "var c = Avalonia.Media.Colors.Black;", "Color.FromUInt32(0xFF1E1F23)", "<Border Background=\"White\" />" })
+            Assert.Matches(rx, WithoutResourceFallback(hit));
+        foreach (var allowed in new[] { "Background = Brushes.Transparent;", "bank.Colors.Count", "Colors.Count - 1", "Token(\"lit/black\") ?? Brushes.Black", "Color.FromUInt32(ToArgb(c))" })
+            Assert.DoesNotMatch(rx, WithoutResourceFallback(allowed));
+    }
+
+    /// <summary>Avalonia's named colours (White, Black, Red ...) other than Transparent.</summary>
+    static readonly string NamedColours = string.Join("|", typeof(Colors).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        .Select(p => p.Name).Where(n => n != nameof(Colors.Transparent)));
+
+    /// <summary>
+    /// A line without the named colour that only stands in when a theme resource is not found ("Token("lit/black") ??
+    /// Brushes.Black", "TryFindResource(...) ? ... : Colors.White"): the colour on screen is the token's.
+    /// </summary>
+    static string WithoutResourceFallback(string line) =>
+        Regex.IsMatch(line, @"\b(?:Token|Res|FindResource|TryFindResource)\(")
+            ? Regex.Replace(line, $@"(?:\?\?|:)\s*(?:Avalonia\.Media\.)?(?:Brushes|Colors)\.(?:{NamedColours})\b", "")
+            : line;
+
+    // Dialog Footer (component): the buttons are laid out first and keep their size and place; a long hint wraps to a
+    // second line in the width they leave, then ends with an ellipsis. A short hint stays one line at the left.
+    [AvaloniaFact]
+    public void DialogFooter_ALongHintNeverPushesTheButtonsOut()
+    {
+        (Avalonia.Rect Cancel, Avalonia.Rect Confirm, Avalonia.Rect Hint, TextBlock HintText, Window Host) Show(string? hint)
+        {
+            var footer = new AgbStudio.Editor.Controls.DialogFooter { CancelText = "Don't Save", ConfirmText = "Save All", Hint = hint };
+            var host = Capture.Host(footer, 460, 60);
+            Avalonia.Rect In(Control c) => new(c.TranslatePoint(default, footer)!.Value, c.Bounds.Size);
+            Control Part(string name) => footer.GetVisualDescendants().OfType<Control>().Single(c => c.Name == name);
+            var text = (TextBlock)Part("PART_Hint");
+            return (In(Part("PART_Cancel")), In(Part("PART_Confirm")), In(text), text, host);
+        }
+        var plain = Show(null);
+        var longHint = string.Join(" ", Enumerable.Repeat("Flashing cancelled at 128 / 412 KB. Flash again before playing the cartridge.", 4));
+        var crowded = Show(longHint);
+        var hinted = Show("Keep the cartridge connected until it finishes.");
+        try
+        {
+            // the buttons: same size and place with or without a hint, right-aligned inside the 20 px padding
+            foreach (var f in new[] { crowded, hinted })
+            {
+                Assert.Equal(plain.Cancel, f.Cancel);
+                Assert.Equal(plain.Confirm, f.Confirm);
+            }
+            Assert.Equal(460 - 20, plain.Confirm.Right, 1);
+            Assert.Equal(plain.Confirm.X - 8, plain.Cancel.Right, 1);
+            Assert.True(plain.Cancel.Width > 60 && plain.Confirm.Width > 60);
+            // the long hint stays left of Cancel (8 px apart) and inside the footer: two lines, the rest trimmed
+            Assert.Equal(20, crowded.Hint.X, 1);
+            Assert.True(crowded.Hint.Right <= crowded.Cancel.X - 8 + 0.5, $"hint ends at {crowded.Hint.Right}, Cancel starts at {crowded.Cancel.X}");
+            Assert.True(crowded.Hint.Y >= 0 && crowded.Hint.Bottom <= 60, $"hint at {crowded.Hint}");
+            var lines = crowded.HintText.TextLayout.TextLines;
+            Assert.Equal(2, lines.Count);
+            Assert.True(lines[^1].HasCollapsed, "the second line does not end with an ellipsis");
+            // a hint that fits is one line at the left, centred in the footer
+            Assert.Single(hinted.HintText.TextLayout.TextLines);
+            Assert.Equal(20, hinted.Hint.X, 1);
+            Assert.Equal(30, hinted.Hint.Y + hinted.Hint.Height / 2, 1);
+        }
+        finally
+        {
+            foreach (var f in new[] { plain, crowded, hinted }) f.Host.Close();
+        }
+    }
+
+    // T-L04: the Slider knob is the lit/white token, as the Switch knob (Figma "Slider" / "Switch")
+    [AvaloniaFact]
+    public void Slider_KnobIsTheLitWhiteToken_AsTheSwitchKnob()
+    {
+        var slider = new AgbStudio.Editor.Controls.AgbSlider { Width = 160, Value = 40 };
+        var toggle = new AgbStudio.Editor.Controls.AgbSwitch();
+        var host = Capture.Host(new StackPanel { Children = { slider, toggle } }, 180, 40);
+        var lit = Avalonia.Application.Current!.FindResource("lit/white");
+        Assert.NotNull(lit);
+        Assert.Same(lit, slider.Knob);
+        Assert.Same(lit, toggle.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Ellipse>().Single(e => e.Name == "PART_Knob").Fill);
+        host.Close();
     }
 
     [Fact]

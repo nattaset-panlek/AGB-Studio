@@ -46,6 +46,60 @@ public sealed class PreferencesTests : IDisposable
         return Assert.IsType<PreferencesDialog>(win.Overlays.Open.Last());
     }
 
+    /// <summary>
+    /// P10.16 with fake folders (T-S08, T-P12): on first run (no devkitPro in Preferences) the DEVKITPRO variable the
+    /// installer sets, in its MSYS form "/c/...", leads to a devkitPro folder whose arm-none-eabi-gcc reports 14.2.0 (a
+    /// stub answers instead of the program). devkitARM is found with its version, shown in Preferences · Paths and the
+    /// Launcher status line. The image editor's mark says found for a program that exists and not found otherwise.
+    /// </summary>
+    [AvaloniaFact]
+    public void Paths_DevkitArmFoundWithItsVersion_OnFirstRun_AndTheImageEditorFoundOrNot()
+    {
+        var dkp = Path.GetFullPath(Path.Combine(_fx.Folder, "fake devkitPro"));
+        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe", @"libtonc\lib\libtonc.a", @"libgba\lib\libmm.a", @"tools\bin\gbafix.exe", @"tools\bin\mmutil.exe" })
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dkp, f))!);
+            File.WriteAllText(Path.Combine(dkp, f), "");
+        }
+        var ran = new System.Collections.Concurrent.ConcurrentQueue<(string Exe, string Args)>();
+        _fx.Services.Toolchain.RunTool = (exe, args) => { ran.Enqueue((exe, args)); return new AgbStudio.Build.ProcResult(0, "14.2.0\n"); };
+        var image = Path.Combine(_fx.Folder, "tools", "Aseprite.exe");
+        Directory.CreateDirectory(Path.GetDirectoryName(image)!);
+        File.WriteAllText(image, "");
+        _fx.Services.Preferences.Update(p => { p.DevkitPro = ""; p.ImageEditorPath = image; });
+        var old = Environment.GetEnvironmentVariable("DEVKITPRO");
+        try
+        {
+            Environment.SetEnvironmentVariable("DEVKITPRO", "/" + char.ToLowerInvariant(dkp[0]) + dkp[2..].Replace('\\', '/'));
+            var tools = _fx.Services.Toolchain.CheckNow();
+            Assert.Equal(dkp, tools.Single(t => t.Name == "devkitPro").Path);
+            var arm = tools.Single(t => t.Name == "devkitARM");
+            Assert.Equal((true, "devkitARM 14.2"), (arm.Found, arm.Version));
+            Assert.Equal((Path.Combine(dkp, "devkitARM", "bin", "arm-none-eabi-gcc.exe"), "-dumpversion"), Assert.Single(ran));
+            Assert.All(new[] { "devkitPro", "libtonc", "maxmod", "gbafix", "mmutil" }, n => Assert.True(_fx.Services.Toolchain.Find(n)!.Found, n));
+            Assert.EndsWith(" · devkitARM 14.2 found", AgbStudio.Editor.Windows.Launcher.LauncherService.Of(_fx.Services).StatusLine());
+
+            // Preferences · Paths
+            var win = Shell();
+            var d = Open(win);
+            win.Click(d.Find<NavItem>("Nav_T-S08"));
+            var devkit = d.Find<TextField>("DevkitPro");
+            Assert.Equal(dkp, devkit.Text);
+            Assert.Equal("devkitARM 14.2 · libtonc · maxmod found", devkit.Help);
+            Assert.Equal("check", ((Icon)d.Find<ContentControl>("DevkitPro_Status").Content!).Glyph);
+            // the image editor: found, then a program that is not there, then found again
+            Assert.Equal(image, d.Find<TextField>("ImageEditorPath").Text);
+            Assert.Equal("check", ((Icon)d.Find<ContentControl>("ImageEditorPath_Status").Content!).Glyph);
+            win.Type(d.Find<TextField>("ImageEditorPath").Box(), Path.Combine(_fx.Folder, "tools", "Photoshop.exe"));
+            Assert.Equal("warn", ((Icon)d.Find<ContentControl>("ImageEditorPath_Status").Content!).Glyph);
+            win.Type(d.Find<TextField>("ImageEditorPath").Box(), image);
+            Assert.Equal("check", ((Icon)d.Find<ContentControl>("ImageEditorPath_Status").Content!).Glyph);
+            win.Type(d.Find<TextField>("ImageEditorPath").Box(), "");
+            Assert.Equal("warn", ((Icon)d.Find<ContentControl>("ImageEditorPath_Status").Content!).Glyph);
+        }
+        finally { Environment.SetEnvironmentVariable("DEVKITPRO", old); }
+    }
+
     [AvaloniaFact]
     public void OpensAtEmulatorFromFileMenuShortcutAndStatusBar_TabsFromTheirIds()
     {

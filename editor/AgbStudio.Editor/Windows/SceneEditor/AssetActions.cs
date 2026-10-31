@@ -26,11 +26,13 @@ public sealed class AssetActions
 {
     readonly SceneEditorModel _m;
     string? _selected;
+    // Edit › Select All: every asset of the category the Assets panel shows
+    List<string>? _all;
 
     AssetActions(SceneEditorModel m)
     {
         _m = m;
-        m.Services.Project.Changed += () => { _selected = null; Changed?.Invoke(); };
+        m.Services.Project.Changed += () => { _selected = null; _all = null; Changed?.Invoke(); };
     }
 
     public static AssetActions Of(SceneEditorModel m)
@@ -171,9 +173,33 @@ public sealed class AssetActions
 
     public AssetItem? Selected => _selected != null && File.Exists(_selected) ? Find(_selected) : null;
 
+    /// <summary>The category the Assets panel shows (what Select All selects).</summary>
+    public AssetCategory ShownCategory { get; set; } = AssetCategory.Sprites;
+
+    /// <summary>True after Select All, until an asset is selected on its own.</summary>
+    public bool AllSelected => _all != null;
+
+    /// <summary>The assets the Edit menu acts on: every asset of the category after Select All, else the selected one.</summary>
+    public IReadOnlyList<AssetItem> SelectedItems => _all is { } all
+        ? all.Where(File.Exists).Select(Find).OfType<AssetItem>().ToList()
+        : Selected is { } s ? [s] : [];
+
+    public bool IsSelected(string path) => _all?.Contains(path, StringComparer.OrdinalIgnoreCase) ?? string.Equals(path, _selected, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Edit › Select All in the Assets panel: every asset of the shown category.</summary>
+    public void SelectAll(AssetCategory category)
+    {
+        var paths = List(category).Select(a => a.Path).ToList();
+        if (paths.Count == 0) return;
+        Select(paths[0]);
+        _all = paths;
+        Changed?.Invoke();
+    }
+
     public void Select(string? path)
     {
         _selected = path;
+        _all = null;
         S.System.Selection = () => _selected;
         SceneEditTarget.Of(_m).Active = SceneEditTarget.Panel.Assets;
         Changed?.Invoke();
@@ -275,55 +301,85 @@ public sealed class AssetActions
         }
     }
 
-    public AssetItem? Duplicate(AssetItem? a = null)
+    /// <summary>"name_copy" (then "name_copy2" ...) next to the asset, with its .meta.json; returns the new asset's path.</summary>
+    static string RecordCopy(FileSet set, AssetItem a, IReadOnlyCollection<string> taken)
     {
-        a ??= Selected;
-        if (a == null) return null;
         var dir = Path.GetDirectoryName(a.Path)!;
         var ext = a.Name[a.Stem.Length..];
         var stem = a.Stem + "_copy";
-        for (var i = 2; File.Exists(Path.Combine(dir, stem + ext)); i++) stem = $"{a.Stem}_copy{i}";
-        var set = new FileSet();
+        for (var i = 2; File.Exists(Path.Combine(dir, stem + ext)) || taken.Contains(Path.Combine(dir, stem + ext)); i++) stem = $"{a.Stem}_copy{i}";
         foreach (var f in WithMeta(a.Path)) set.Record(Path.Combine(dir, stem + Path.GetFileName(f)[a.Stem.Length..]), null, Read(f));
+        return Path.Combine(dir, stem + ext);
+    }
+
+    /// <summary>Duplicates the asset (or every selected one after Select All) in one undo step; the first copy is selected.</summary>
+    public AssetItem? Duplicate(AssetItem? a = null)
+    {
+        var items = a != null ? [a] : SelectedItems;
+        if (items.Count == 0) return null;
+        var set = new FileSet();
+        var made = new List<string>();
+        foreach (var item in items) made.Add(RecordCopy(set, item, made));
         Do("Duplicate", set);
-        _selected = Path.Combine(dir, stem + ext);
+        _selected = made[0];
+        _all = null;
         Changed?.Invoke();
         return Find(_selected);
     }
 
+    /// <summary>Deletes the asset (or every selected one after Select All) in one undo step.</summary>
     public void Delete(AssetItem? a = null)
     {
-        a ??= Selected;
-        if (a == null) return;
+        var items = a != null ? [a] : SelectedItems;
+        if (items.Count == 0) return;
         var set = new FileSet();
-        foreach (var f in WithMeta(a.Path)) set.Record(f, Read(f), null);
+        foreach (var item in items)
+            foreach (var f in WithMeta(item.Path)) set.Record(f, Read(f), null);
         Do("Delete", set);
         _selected = null;
+        _all = null;
         Changed?.Invoke();
     }
 
-    public AssetItem? Clipboard { get; private set; }
-    // the copied files themselves, so Cut (copy, then delete) and Paste puts the asset back
+    List<AssetItem> _clipboard = [];
+    // the copied files themselves, so Cut (copy, then delete) and Paste puts the assets back
     List<(string Path, byte[] Data)> _clipboardFiles = [];
+
+    /// <summary>The first copied asset (null when nothing is copied).</summary>
+    public AssetItem? Clipboard => _clipboard.Count > 0 ? _clipboard[0] : null;
+    public IReadOnlyList<AssetItem> ClipboardItems => _clipboard;
 
     public void Copy()
     {
-        Clipboard = Selected;
-        _clipboardFiles = Clipboard == null ? [] : WithMeta(Clipboard.Path).Select(f => (f, File.ReadAllBytes(f))).ToList();
+        _clipboard = SelectedItems.ToList();
+        _clipboardFiles = _clipboard.SelectMany(c => WithMeta(c.Path)).Select(f => (f, File.ReadAllBytes(f))).ToList();
     }
 
-    /// <summary>Paste: a copy next to the copied asset; after Cut, the cut asset comes back under its name (one undo step).</summary>
+    /// <summary>
+    /// Paste: a copy next to each copied asset; after Cut, the cut assets come back under their names (one undo step).
+    /// The first pasted asset is selected.
+    /// </summary>
     public AssetItem? Paste()
     {
-        if (Clipboard == null) return null;
-        if (File.Exists(Clipboard.Path)) return Duplicate(Clipboard);
-        if (_clipboardFiles.Count == 0) return null;
+        if (_clipboard.Count == 0) return null;
         var set = new FileSet();
-        foreach (var (path, data) in _clipboardFiles) set.Record(path, Read(path), data);
-        Do("Paste", set);
-        _selected = Clipboard.Path;
+        var made = new List<string>();
+        var restored = false;
+        foreach (var c in _clipboard)
+        {
+            if (File.Exists(c.Path)) { made.Add(RecordCopy(set, c, made)); continue; }
+            var files = _clipboardFiles.Where(x => string.Equals(x.Path, c.Path, StringComparison.OrdinalIgnoreCase) || string.Equals(x.Path, GameProject.MetaPath(c.Path), StringComparison.OrdinalIgnoreCase)).ToList();
+            if (files.Count == 0) continue;
+            foreach (var (path, data) in files) set.Record(path, Read(path), data);
+            made.Add(c.Path);
+            restored = true;
+        }
+        if (made.Count == 0) return null;
+        Do(restored ? "Paste" : "Duplicate", set);
+        _selected = made[0];
+        _all = null;
         Changed?.Invoke();
-        return Clipboard;
+        return Find(_selected);
     }
 
     /// <summary>Where an asset is used: scene actors (sprites, behaviour scripts), maps (tilesets, images), scene music, fonts.</summary>

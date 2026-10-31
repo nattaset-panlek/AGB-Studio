@@ -154,6 +154,7 @@ public class ShotTests(ITestOutputHelper log)
     {
         using var fx = new Fixture();
         fx.OpenSkyHopper();
+        fx.GameLanguage("en");   // the viewport's HUD reads "SCORE" in Figma
         var app = Application.Current!;
         var before = app.RequestedThemeVariant;
         fx.Services.Preferences.Current.Theme = theme == ThemeVariant.Light ? ThemeMode.Light : ThemeMode.Dark;

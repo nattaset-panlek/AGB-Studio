@@ -213,6 +213,102 @@ public class DatabaseWindowTests : DataE2E
         Assert.Equal(6, page.SelectedRow);
     }
 
+    /// <summary>
+    /// P10.11 on table rows with the keyboard in the grid: Copy / Paste puts a copy after the row, Cut / Paste moves the
+    /// row (it keeps its id); Select All selects every row the grid shows (after the filter) and Copy / Paste, Duplicate,
+    /// Delete and Cut / Paste then act on all of them in one undo step; a click selects one row again.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task P10_11_EditMenuOnRows_CutCopyPasteAndSelectAll()
+    {
+        var page = await OpenDatabase();
+        List<string> Ids() => Items.Rows.Select(r => r["id"]).ToList();
+        var original = Ids();
+        Assert.Equal(24, original.Count);
+        void Ctrl(PhysicalKey k) { page.Grid.Focus(); Key(k, RawInputModifiers.Control); }
+        void Undo() { S.Undo.Undo(); Capture.Pump(); }
+        bool Highlighted(int r) => page.Grid.RowControl(r)!.Children.OfType<TableCell>().All(c => c.Kind == TableCellKind.Selected);
+
+        // Copy / Paste on one row
+        Click(page.Grid.RowControl(2)!.Children[0]);
+        Ctrl(PhysicalKey.C);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(25, Items.Rows.Count);
+        Assert.Equal(original[2] + "Copy", Items.Rows[3]["id"]);
+        Assert.Equal(3, page.SelectedRow);
+        Undo();
+        Assert.Equal(original, Ids());
+        // Cut / Paste: the row leaves, then comes back after the selected row with its own id
+        Click(page.Grid.RowControl(2)!.Children[0]);
+        Ctrl(PhysicalKey.X);
+        Assert.Equal(23, Items.Rows.Count);
+        Assert.DoesNotContain(original[2], Ids());
+        Click(page.Grid.RowControl(5)!.Children[0]);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(original[2], Items.Rows[6]["id"]);
+        Assert.Equal(24, Items.Rows.Count);
+        Undo();
+        Undo();
+        Assert.Equal(original, Ids());
+
+        // Select All: every shown row
+        Click(page.Grid.RowControl(0)!.Children[0]);
+        Ctrl(PhysicalKey.A);
+        Assert.True(page.AllRowsSelected);
+        Assert.Equal(Enumerable.Range(0, 24), page.SelectedRows);
+        Assert.All(Enumerable.Range(0, 24), r => Assert.True(Highlighted(r), $"row {r + 1} is not shown selected"));
+        // Copy / Paste: a copy of every row after the last one, one undo step
+        Ctrl(PhysicalKey.C);
+        Assert.Equal(24, page.Clipboard!.Count);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(original.Concat(original.Select(id => id + "Copy")), Ids());
+        Assert.False(page.AllRowsSelected);
+        Assert.Equal(24, page.SelectedRow);
+        Undo();
+        Assert.Equal(original, Ids());
+        // Duplicate
+        Ctrl(PhysicalKey.A);
+        Ctrl(PhysicalKey.D);
+        Assert.Equal(48, Items.Rows.Count);
+        Undo();
+        Assert.Equal(original, Ids());
+        // Delete: every row, one undo step brings them all back in order
+        Ctrl(PhysicalKey.A);
+        page.Grid.Focus();
+        Key(PhysicalKey.Delete);
+        Assert.Empty(Items.Rows);
+        Undo();
+        Assert.Equal(original, Ids());
+        // Cut / Paste: all rows go, then come back with their ids
+        Ctrl(PhysicalKey.A);
+        Ctrl(PhysicalKey.X);
+        Assert.Empty(Items.Rows);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(original, Ids());
+
+        // with a filter, Select All takes the rows shown
+        page.FilterBox.Text = "Potion";
+        Capture.Pump();
+        var shown = page.Grid.VisibleRowIndices.ToList();
+        Assert.InRange(shown.Count, 1, 23);
+        Click(page.Grid.RowControl(shown[0])!.Children[0]);
+        Ctrl(PhysicalKey.A);
+        Assert.Equal(shown, page.SelectedRows);
+        page.Grid.Focus();
+        Key(PhysicalKey.Delete);
+        Assert.Equal(24 - shown.Count, Items.Rows.Count);
+        Undo();
+        page.FilterBox.Text = "";
+        Capture.Pump();
+        Assert.Equal(original, Ids());
+        // a click selects one row again
+        Ctrl(PhysicalKey.A);
+        Click(page.Grid.RowControl(4)!.Children[0]);
+        Assert.False(page.AllRowsSelected);
+        Assert.Equal(new[] { 4 }, page.SelectedRows);
+        Assert.False(Highlighted(3));
+    }
+
     [AvaloniaFact]
     public async Task P11_39_UseItInAScriptNamesTheGeneratedApi()
     {
@@ -236,7 +332,7 @@ public class DatabaseWindowTests : DataE2E
         Assert.Contains("public static short coins;", api);
         Assert.Contains("Items.Get(ItemId.Potion)", Find<TextBlock>("ScriptSampleText").Inlines!.Select(i => (i as Avalonia.Controls.Documents.Run)?.Text).Aggregate("", (a, b) => a + b));
         // a table without a script action or a price shows a typed field
-        Assert.Equal("var enemy1 = Enemies.Get(EnemyId.Enemy1);   // typed, autocompleted\nvar hp = enemy1.hp;                     // int 1",
+        Assert.Equal("var bat = Enemies.Get(EnemyId.Bat);      // typed, autocompleted\nvar hp = bat.hp;                        // int 1",
             ScriptSample.Text(page.Data.Table("Enemies")!.Table, 0, page.Data.Project.Settings));
         Assert.Equal("drop table", UsedBy.Humanize("dropTable"));
     }
@@ -266,6 +362,9 @@ public class DatabaseWindowTests : DataE2E
 
         // a name that exists is refused and the dialog stays open
         dlg = Dialog<NewTableDialog>("T-D17", page);
+        // the hint names the first row of a table of that name (Figma T-D17: Enemies.Get(EnemyId.Bat))
+        dlg.NameField.Text = "Enemies";
+        Assert.Equal("Scripts use it as Enemies.Get(EnemyId.Bat)", dlg.NameField.Help);
         dlg.NameField.Text = "Items";
         Assert.Null(dlg.Create());
         Assert.Equal("A table named Items already exists.", dlg.NameField.Help);

@@ -85,6 +85,8 @@ public sealed class ViewportRomTests(ITestOutputHelper log)
             foreach (var p in new[] { (a.X, a.Y), (live.Actors[i].X, live.Actors[i].Y) })
                 Mask(p.Item1 - camX - (sbyte)meta.OriginX, p.Item2 - camY - (sbyte)meta.OriginY, sheet.FrameWidth, sheet.FrameHeight);
         }
+        // Text Labels a script writes to (HUD.cs adds the score after "SCORE"): the editor draws the label's own text
+        foreach (var a in scene.Actors.Where(a => a.Kind == ActorKind.TextLabel && a.Components.Count > 0)) Mask(a.X, a.Y, 240 - a.X, 16);
         int compared = 0, mismatch = 0;
         var diff = new uint[240 * 160 * 3];
         for (var y = 0; y < 160; y++)

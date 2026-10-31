@@ -93,17 +93,19 @@ public class FontModelTests : IDisposable
     [AvaloniaFact]
     public void SettingsEdits_AreUndoable_AndSavedWithDrawTo()
     {
+        // the fixture's thai_vwf draws to BG 2 (Figma Font Manager)
+        Assert.Equal(2, _thai.DrawTo);
         _thai.Edit("Font size", f => f.Size = 14);
-        _thai.SetDrawTo(2);
+        _thai.SetDrawTo(3);
         Assert.Equal(14, _thai.File.Size);
         _thai.Save();
         var text = File.ReadAllText(_thai.Path);
-        Assert.Contains("\"drawTo\": 2", text);
+        Assert.Contains("\"drawTo\": 3", text);
         Assert.Equal(14, GameProject.Load<FontFile>(_thai.Path).Size);
-        Assert.Equal(2, FontEntry.Load(_thai.Project, _thai.Path, new AgbStudio.Editor.Services.UndoService(5)).DrawTo);
+        Assert.Equal(3, FontEntry.Load(_thai.Project, _thai.Path, new AgbStudio.Editor.Services.UndoService(5)).DrawTo);
         _fx.Services.Undo.Undo();
         _fx.Services.Undo.Undo();
-        Assert.Equal((12, 0), (_thai.File.Size, _thai.DrawTo));
+        Assert.Equal((12, 2), (_thai.File.Size, _thai.DrawTo));
     }
 
     [AvaloniaFact]
@@ -137,7 +139,7 @@ public class FontModelTests : IDisposable
     public void NewFont_DefaultsBuildAPreviewAndCreateTheFile()
     {
         var dlg = new NewFontDialog(_lib, _thai.Project);
-        Assert.Equal(["NotoSansThai-Regular.ttf", "NotoSans.ttf", "NotoSansThai.ttf"], dlg.Files());
+        Assert.Equal(["NotoSans.ttf", "NotoSansThai-Regular.ttf"], dlg.Files());
         Assert.Equal("NotoSansThai-Regular.ttf", dlg.File.Selected);
         var f = dlg.Settings();
         Assert.Equal(("notosansthai_regular_12", 12, true), (f.Name, f.Size, f.Variable));
@@ -248,8 +250,8 @@ public class FontE2ETests : IDisposable
         Assert.Equal(1, font.File.Bpp);
         _h.Click(_h.Find<InspectorField>("ShadowField").GetVisualDescendants().OfType<AgbSwitch>().First());
         Assert.False(font.File.DropShadow);
-        _h.Choose(_h.Find<InspectorField>("DrawToField"), "BG 2 text layer");
-        Assert.Equal(2, font.DrawTo);
+        _h.Choose(_h.Find<InspectorField>("DrawToField"), "BG 3 text layer");
+        Assert.Equal(3, font.DrawTo);
         _h.Choose(_h.Find<InspectorField>("FromField"), "NotoSans.ttf");
         Assert.Equal("NotoSans.ttf", font.File.Source);
         // a pixel of the selected glyph
@@ -262,7 +264,7 @@ public class FontE2ETests : IDisposable
         Assert.Equal((14, false, 2, false, 1, false, "NotoSans.ttf"), (saved.Size, saved.Variable, saved.Spacing, saved.PlaceLowerVowels, saved.Bpp, saved.DropShadow, saved.Source));
         Assert.Contains("Japanese kana", saved.CharacterSets);
         Assert.True(saved.Glyphs.ContainsKey("U+0E01"));
-        Assert.Contains("\"drawTo\": 2", File.ReadAllText(font.Path));
+        Assert.Contains("\"drawTo\": 3", File.ReadAllText(font.Path));
         Assert.True(_h.Find<StatusItem>("Status_Saved").IsVisible);
         _h.Key(PhysicalKey.Z, RawInputModifiers.Control);
         Assert.False(font.File.Glyphs.ContainsKey("U+0E01"));
@@ -297,6 +299,52 @@ public class FontE2ETests : IDisposable
         Assert.Contains(_h.All<TreeItem>(), t => t.Label == "notosans_8" && t.IsSelected);
     }
 
+    /// <summary>
+    /// 4.9 "Warning: missing glyphs" on T-P09: an English string of the project (English is drawn with thai_vwf) uses ½
+    /// and →, which thai_vwf has no glyph for. The status says so with the warning icon; clicking it shows the
+    /// "Missing from project text" group with two Missing glyph cells. Add Characters, scanning the project's strings,
+    /// adds them and the warning goes.
+    /// </summary>
+    [AvaloniaFact]
+    public void FontManager_FlagsTheGlyphsTheProjectTextNeeds_StatusAndMissingCells()
+    {
+        var path = Path.Combine(_h.S.Project.Current!.TextDir, "strings.en.json");
+        var en = GameProject.Load<StringTable>(path);
+        en.Strings["hud.bonus"] = "BONUS ½ → NEXT";
+        GameProject.Save(path, en);
+        var page = Open();
+        Assert.Equal("thai_vwf", page.Font!.Name);
+        var status = _h.Find<StatusItem>("Status_Glyphs");
+        Assert.Equal("196 glyphs · 2 missing", status.Content);
+        Assert.Equal("warn", status.Glyph);
+        // the grid opens on Thai consonants as before; the group menu has the missing ones last
+        Assert.Equal("Thai consonants", page.Group!.Name);
+        Assert.Equal(FontEntry.TextMissingGroup, page.Groups[^1].Name);
+        _h.Click(status);
+        Assert.Equal("Missing from project text · click a glyph to edit", ((TextBlock)_h.Find<Button>("GlyphGroupButton").Content!).Text);
+        var cells = _h.Find<WrapPanel>("GlyphGrid").Children.OfType<GlyphCell>().ToList();
+        Assert.Equal(["Glyph_00BD", "Glyph_2192"], cells.Select(c => c.Name));
+        Assert.Equal(["½", "→"], cells.Select(c => c.Char));
+        Assert.All(cells, c => Assert.Equal(GlyphCellState.Missing, c.State));
+        // as in the build: Japanese (font jp_kana, not in fonts/) is drawn with the first font, pixel8, and falls back to
+        // the English text; title_big draws no project text
+        var fonts = FontLibrary.Of(_h.S).Fonts;
+        Assert.Equal([0x00BD, 0x2192], fonts.First(f => f.Name == "pixel8").TextMissing.Order());
+        Assert.Empty(fonts.First(f => f.Name == "title_big").TextMissing);
+
+        // Add Characters › Also scan all dialogue and localization strings, as empty glyphs to draw: no warning any more
+        _h.Click(_h.Find<Button>("AddCharacters"));
+        var dlg = Assert.IsType<AddCharactersDialog>(_h.Win.Overlays.Open.Single());
+        _h.Click(dlg.Scan);
+        _h.Click(dlg.RenderFromSource);
+        Assert.Equal([0x00BD, 0x2192], dlg.Missing.Order());
+        _h.Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Assert.False(_h.Win.Overlays.IsOpen);
+        Assert.Equal("196 glyphs · 0 missing", status.Content);
+        Assert.Equal("type", status.Glyph);
+        Assert.DoesNotContain(page.Groups, g => g.Name == FontEntry.TextMissingGroup);
+    }
+
     [AvaloniaFact]
     public void AddCharacters_PasteTextAddMissingGlyphs()
     {
@@ -312,7 +360,7 @@ public class FontE2ETests : IDisposable
         Assert.Equal([0x00BD, 0x00B7], dlg.Missing);
         Assert.Equal("2 characters are not in thai_vwf yet", _h.Find<StackPanel>("MissingWarning").Children.OfType<TextBlock>().Single().Text);
         Assert.Equal(["Missing_00BD", "Missing_00B7"], _h.All<GlyphCell>().Where(c => c.Name!.StartsWith("Missing_")).Select(c => c.Name));
-        Assert.Equal("Render the new glyphs from NotoSansThai.ttf", dlg.RenderFromSource.Content);
+        Assert.Equal("Render the new glyphs from NotoSansThai-Regular.ttf", dlg.RenderFromSource.Content);
         var confirm = dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm");
         Assert.Equal("Add 2 glyphs", confirm.Content);
         _h.Click(confirm);

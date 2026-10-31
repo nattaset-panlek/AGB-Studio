@@ -11,7 +11,7 @@ Launcher.
 
 | Folder | What is there |
 |---|---|
-| `Theme/` | `Tokens.Dark.axaml` / `Tokens.Light.axaml` (generated from Figma, do not edit), `Literals.axaml` (raw hex Figma uses outside the tokens), `TextStyles.cs` (the 20 Figma text styles, `t:Fig.Style="Body/12"`), `Fonts.cs`, `Shadows.cs`, control themes (`Chrome.axaml`, `Buttons.axaml`, `Navigation.axaml`, `Panels.axaml`) |
+| `Theme/` | `Tokens.Dark.axaml` / `Tokens.Light.axaml` (generated from Figma, do not edit), `Literals.axaml` (raw hex Figma uses outside the tokens), `TextStyles.cs` (the 20 Figma text styles, `t:Fig.Style="Body/12"`), `Fonts.cs`, `Shadows.cs`, control themes (`Chrome.axaml`, `Buttons.axaml`, `Navigation.axaml`, `Panels.axaml`), `Controls.axaml` (the component library styles, which merge the files above) and `Conv.cs` (small value converters for the control themes and Figma shortcut text) |
 | `Controls/` | The 47 Figma components as Avalonia controls (`AgbButton`, `IconButton`, `TreeItem`, `DocTab`, `InspectorField`, `Toast`, `TitleBar`, `DialogHeader`, `DialogFooter`, ...) |
 | `Graphics/` | `Icon` (icon/* by name, `Glyph="play"`), `ArtImage` (art/*, thumb/*, brand/*), the SVG files exported from Figma in `Assets/Icons` and `Assets/Art` |
 | `Commands/` | `EditorCommand`, `CommandRegistry`, `Catalog` (every menu command with its Figma shortcut), `MenuModel` (T-M01..T-M10), `ShortcutService` |
@@ -24,7 +24,10 @@ Launcher.
 
 - UI text is exactly the Figma text (English). No emoji anywhere. The product name is "AGB Studio".
 - Colours only through tokens: `{DynamicResource text/primary}` in XAML, `control.Token(prop, "text/primary")` in code.
-  No hex literals outside `Theme/` (a test scans for them). Game pixels and palette data are data, not UI colours.
+  No hex literals outside `Theme/` (`DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme` scans for them; it
+  also lets through `Gallery/`, `Services/ThemeService.cs`, which holds the accent choices of Preferences · Appearance
+  as hex, and `Graphics/SvgImage.cs`, which reads colours from the SVG assets). Game pixels and palette data are data,
+  not UI colours.
 - Text only through the Figma styles: `t:Fig.Style="Body/12 Medium"` (XAML) or `UI.Text(text, "Body/12", "text/secondary")`.
 - Use the components in `Controls/` instead of building look-alikes. If Figma shows something no component covers, stop and ask (scope rule 1.1).
 - Build only what the Figma frame shows (checklist section 1).
@@ -80,7 +83,8 @@ public static void BuildRom(EditorServices s) { ... }
 
    Shortcuts are rebindable (`ShortcutService.Rebind`) and checked for conflicts; use the shortcut written in Figma.
 5. Services: `ctx.Services` exposes `Project` (`ProjectService`, the open `AgbStudio.Core.Project.GameProject`),
-   `ProjectSettings` (the project's `ProjectFile`, saved into the .agbproj), `Build` (`BuildService.BuildAsync(options,
+   `ProjectSettings` (an `IProjectSettingsStore`: `Settings` is the project's `ProjectFile`, `Save()` writes it into
+   the .agbproj and raises `Saved`), `Build` (`BuildService.BuildAsync(options,
    IBuildObserver)` runs `AgbStudio.Build.Pipeline.GameBuilder`; `LoadReport()` reads `BuildReport`), `Toolchain`
    (`Toolchain.Check()` results), `Emulator` (`EmulatorHost.Acquire()` returns the single `AgbStudio.Emu.LibretroCore`
    of the process; `Release()` frees it), `Documents` (dirty tracking, Save / Save All), `Undo`, `Toasts`,
@@ -103,12 +107,17 @@ public static void BuildRom(EditorServices s) { ... }
    - Export the Figma frame: add its id and frame name to `FRAMES` in `tests/AgbStudio.Editor.Tests/Shot/figma-export.mjs`
      and run `node tests/AgbStudio.Editor.Tests/Shot/figma-export.mjs shots` (needs the Talk To Figma relay on
      ws://localhost:3055; the script only reads). It writes `docs/evidence/figma/<T-ID>.png` and `manifest.json`.
-   - Render the app side: add the id to `ShotTests.Windows()` with a render function (`Capture.ControlToPng` for a dialog
-     or popover at the Figma size; `RenderShell`-style for a page with the fixture project).
+   - Render the app side: add a class implementing `IShotSource` (`Shot/ShotTests.cs`) to your window group's test
+     folder; its `Windows()` yields the id with a render function (`Capture.ControlToPng` for a dialog or popover at the
+     Figma size; `RenderShell`-style for a page with the fixture project). `ShotTests` finds these classes by
+     reflection, so a window group never edits `ShotTests.cs`; `ShotTests.Windows()` holds only the Phase 10 shell
+     windows.
    - Run `dotnet test tests/AgbStudio.Editor.Tests --filter ShotTests`. It writes `docs/evidence/app/<T-ID>.png`,
      `docs/evidence/diff/<T-ID>.png` (Figma | app | differing pixels in red) and `docs/evidence/shot-report.md` / `.json`
      with the diff percent and the layout offset (tolerance 2 px). Fix differences or log them in the Scope log.
-3. Light theme frames (T-L01..T-L03) are rendered with `Preferences.Theme = ThemeMode.Light`.
+3. Light theme frames (T-L01..T-L03) are rendered in the Light theme: T-L01 and T-L03 set
+   `fx.Services.Preferences.Current.Theme = ThemeMode.Light`, and T-L02 and T-L03 set
+   `Application.RequestedThemeVariant = ThemeVariant.Light` around the capture.
 4. Prototype links (T-X01..T-X03): `tests/AgbStudio.Editor.Tests/Prototype` reads `docs/evidence/figma/prototype.json`
    (exported with `figma-export.mjs prototype`) and makes one E2E case per link plus one walk per flow. A link whose
    node has no entry in `LinkControls.For` fails, so when Figma links a control of your window, give the control a
@@ -119,6 +128,7 @@ public static void BuildRom(EditorServices s) { ... }
 
 ## Regenerating design data from Figma
 
-- `node tests/AgbStudio.Editor.Tests/Shot/figma-export.mjs` (all steps: tokens, icons, art, menus, shots).
+- `node tests/AgbStudio.Editor.Tests/Shot/figma-export.mjs` runs the steps tokens, icons, art, menus and shots; the
+  steps brand, prototype, type and gameview run only when named (`figma-export.mjs brand prototype`).
 - Then `AGB_REGEN=1 dotnet test tests/AgbStudio.Editor.Tests --filter TokenTests` rewrites `Theme/Tokens.*.axaml` from
   `docs/evidence/figma/tokens.json`; without `AGB_REGEN` the test fails when they differ.

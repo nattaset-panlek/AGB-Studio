@@ -164,6 +164,14 @@ public sealed class SchemaTests
         });
         Check("palettes.schema.json", new PaletteLibraryFile { Banks = { new PaletteBankData { Kind = BankKind.Obj, Slot = 15, Colors = { "none", "#FFFFFF" } } } });
         Check("font.schema.json", new FontFile { Name = "f", SourceKind = FontSourceKind.Bdf, Glyphs = { ["U+0E01"] = new GlyphOverride { Advance = 6, Rows = { "0123" } } } });
+        // fields the editor writes (P1.04): Tilemap Editor BG size / Colours, Font Manager Draw to
+        Check("map.schema.json", new MapFile { Name = "Forest_01", BgSize = "32x64", Bpp = 8, Layers = { new MapLayerData { Name = "Ground", Cells = [0, 1] } } });
+        Check("font.schema.json", new FontFile { Name = "thai_vwf", DrawTo = 2 });
+        T RoundTrip<T>(T value) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, GameProject.Json), GameProject.Json)!;
+        var map = RoundTrip(new MapFile { BgSize = "32x64", Bpp = 8 });
+        Assert.Equal(("32x64", 8, 2), (map.BgSize, map.Bpp, RoundTrip(new FontFile { DrawTo = 2 }).DrawTo));
+        Assert.DoesNotContain("bgSize", JsonSerializer.Serialize(new MapFile(), GameProject.Json));   // left out at the defaults
+        Assert.DoesNotContain("drawTo", JsonSerializer.Serialize(new FontFile(), GameProject.Json));
         Check("scene.schema.json", new SceneFile
         {
             Name = "Title", Menu = new SceneMenu { Items = { new SceneMenuItem { Text = "ui.menu.start", Command = MenuCommand.LoadScene, Scene = "Forest_01" } } },
@@ -172,7 +180,7 @@ public sealed class SchemaTests
 
         var dialogue = DialogueFile.Parse("""
             { "format": 1, "name": "forest_intro", "textSpeed": 2, "blip": "blip",
-              "speakers": [ { "name": "Elder", "portrait": "elder", "blip": "blip_low", "textSpeed": 1 } ],
+              "speakers": [ { "name": "Elder", "portrait": "elder", "blip": "blip_low", "textSpeed": 1, "names": { "en": "Elder", "th": "ผู้เฒ่า" }, "color": "#B79CFF" } ],
               "conversations": [ { "id": "intro", "lines": [
                 { "id": "l1", "speaker": "Elder", "key": "dlg.forest.help_me", "text": { "en": "Help!", "th": "ช่วยด้วย!" },
                   "portrait": "elder_worried", "speed": 1, "blip": "blip_low", "showIf": "!Flags.MetElder", "thenSet": [ "Flags.MetElder = true" ], "next": "l2" },
@@ -191,6 +199,7 @@ public sealed class SchemaTests
         Assert.DoesNotContain("lineOf", dlgText);
         Assert.Empty(Validate("dlg.schema.json", dlgText));
         Assert.Equal(dlgText, DialogueFile.Parse(dlgText).ToJson());  // round trip
+        Assert.Equal(("ผู้เฒ่า", "#B79CFF"), (dialogue.Speakers[0].Names!["th"], dialogue.Speakers[0].Color));
 
         var graph = LogicGraph.Parse("""
             { "format": 1, "class": "PlayerLogic",
@@ -201,6 +210,14 @@ public sealed class SchemaTests
         var graphText = graph.ToJson();
         Assert.Empty(Validate("graph.schema.json", graphText));
         Assert.Equal(graphText, LogicGraph.Parse(graphText).ToJson());
+        // the Logic Graph editor adds comment boxes, collapsed nodes and a disabled part (GraphDocument.ToJson)
+        Assert.Empty(Validate("graph.schema.json", """
+            { "format": 1, "class": "PlayerLogic", "nodes": [], "links": [],
+              "comments": [ { "title": "Jump", "x": 20, "y": 30, "w": 300, "h": 160 } ],
+              "collapsed": [ "n1" ],
+              "disabled": { "format": 1, "class": "PlayerLogic", "nodes": [ { "id": "n9", "type": "PlaySound", "x": 0, "y": 0 } ], "links": [ { "from": "n1.out", "to": "n9.in" } ] } }
+            """));
+        Assert.Contains(Validate("graph.schema.json", """{ "format": 1, "disabled": { "nodes": [ { "x": 1 } ] } }"""), e => e.Contains("/disabled/nodes/0/id"));
         // A broken file is caught: a wrong type and a field the format does not have.
         Assert.Contains(Validate("music-meta.schema.json", """{ "format": 1, "volume": "loud" }"""), e => e.Contains("volume"));
         Assert.Contains(Validate("sfx.schema.json", """{ "format": 1, "chanel": "Wave" }"""), e => e.Contains("chanel"));
@@ -209,75 +226,5 @@ public sealed class SchemaTests
         Assert.Contains(Validate("palettes.schema.json", """{ "format": 1, "effects": { "fade": { "frames": "slow" } } }"""), e => e.Contains("frames"));
     }
 
-    // ---- a small JSON Schema validator for the keywords the schemas use -------------------------------
-
-    public static List<string> Validate(string schemaFile, string json)
-    {
-        var schema = JsonNode.Parse(File.ReadAllText(Path.Combine(SchemaDir, schemaFile)))!;
-        var errors = new List<string>();
-        using var doc = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
-        Check(schema, schema, doc.RootElement, "", errors);
-        return errors;
-    }
-
-    static void Check(JsonNode schema, JsonNode root, JsonElement v, string at, List<string> errors)
-    {
-        if (schema is JsonValue b && b.TryGetValue<bool>(out var allowed))
-        {
-            if (!allowed) errors.Add($"{at}: not allowed");
-            return;
-        }
-        var o = schema.AsObject();
-        if (o["$ref"] is { } r)
-        {
-            var target = root;
-            foreach (var part in r.GetValue<string>().TrimStart('#').Split('/', StringSplitOptions.RemoveEmptyEntries))
-                target = target![part.Replace("~1", "/").Replace("~0", "~")]!;
-            Check(target!, root, v, at, errors);
-            return;
-        }
-        if (o["type"] is { } t)
-        {
-            var types = t is JsonArray a ? a.Select(x => x!.GetValue<string>()).ToList() : [t.GetValue<string>()];
-            if (!types.Any(type => Is(v, type)))
-            {
-                errors.Add($"{at}: {v.ValueKind} is not {string.Join(" or ", types)}");
-                return;
-            }
-        }
-        if (o["enum"] is JsonArray e && !e.Any(x => JsonNode.DeepEquals(x, JsonNode.Parse(v.GetRawText()))))
-            errors.Add($"{at}: {v.GetRawText()} is not one of {e.ToJsonString()}");
-        if (o["anyOf"] is JsonArray any && !any.Any(s => { var sub = new List<string>(); Check(s!, root, v, at, sub); return sub.Count == 0; }))
-            errors.Add($"{at}: matches none of anyOf");
-        if (v.ValueKind == JsonValueKind.Object)
-        {
-            var props = o["properties"]?.AsObject();
-            foreach (var p in v.EnumerateObject())
-            {
-                if (props != null && props.TryGetPropertyValue(p.Name, out var ps)) Check(ps!, root, p.Value, $"{at}/{p.Name}", errors);
-                else if (o["additionalProperties"] is { } ap) Check(ap, root, p.Value, $"{at}/{p.Name}", errors);
-                else if (props != null) errors.Add($"{at}/{p.Name}: not a field of this format");
-            }
-            if (o["required"] is JsonArray req)
-                foreach (var name in req.Select(x => x!.GetValue<string>()))
-                    if (!v.TryGetProperty(name, out _)) errors.Add($"{at}/{name}: missing");
-        }
-        if (v.ValueKind == JsonValueKind.Array && o["items"] is { } items)
-        {
-            var i = 0;
-            foreach (var item in v.EnumerateArray()) Check(items, root, item, $"{at}/{i++}", errors);
-        }
-    }
-
-    static bool Is(JsonElement v, string type) => type switch
-    {
-        "object" => v.ValueKind == JsonValueKind.Object,
-        "array" => v.ValueKind == JsonValueKind.Array,
-        "string" => v.ValueKind == JsonValueKind.String,
-        "boolean" => v.ValueKind is JsonValueKind.True or JsonValueKind.False,
-        "null" => v.ValueKind == JsonValueKind.Null,
-        "integer" => v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out _),
-        "number" => v.ValueKind == JsonValueKind.Number,
-        _ => false,
-    };
+    public static List<string> Validate(string schemaFile, string json) => JsonSchemaCheck.Validate(Path.Combine(SchemaDir, schemaFile), json);
 }

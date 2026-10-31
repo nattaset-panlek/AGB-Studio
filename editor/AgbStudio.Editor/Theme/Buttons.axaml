@@ -279,6 +279,7 @@
   <!-- Slider -->
   <ControlTheme x:Key="{x:Type c:AgbSlider}" TargetType="c:AgbSlider">
     <Setter Property="Height" Value="12" />
+    <Setter Property="Knob" Value="{DynamicResource lit/white}" />
     <Setter Property="Background" Value="{DynamicResource bg/hover}" />
     <Setter Property="Fill" Value="{DynamicResource accent/default}" />
     <Setter Property="KnobRing" Value="{DynamicResource border/strong}" />
