@@ -26,7 +26,7 @@ public sealed class ScriptingApiTests : IDisposable
         // the table is generated from the reference assembly (ApiDocs): AxisX / AxisY share a row
         Assert.Equal(["Pressed(Key key)", "Held(Key key)", "Released(Key key)", "AxisX / AxisY", "AnyKey"], page.Rows.Select(r => r.Member));
         Assert.Equal(["bool", "bool", "bool", "fixed", "bool"], page.Rows.Select(r => r.Returns));
-        Assert.Equal("true on the frame the button goes down", page.Rows[0].Description);
+        Assert.Equal("true on the frame the key goes down", page.Rows[0].Description);
         Assert.Equal(["Overview", "Members", "Key enum", "Example", "See also: Actor, Scene"], page.OnThisPage);
         Assert.Contains("Input.Pressed(Key.Start)", page.Example.Text);
         Assert.Contains(page.Example.Spans, s => s.Kind == CodeKind.Method);

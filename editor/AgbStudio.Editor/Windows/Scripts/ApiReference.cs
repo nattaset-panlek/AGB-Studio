@@ -28,7 +28,7 @@ public static class ScriptingApi
         new("Actor", "user", ["Actor"], "An object of the scene: position, velocity, tag and its behaviours. Get<T>() finds a behaviour on the same actor.",
             "void Update()\n{\n    var body = actor.Get<PlatformerBody>();\n    if (actor.pos.y > 300)\n        actor.pos = new fixed2(40, 112);\n}", ["Behaviour", "Scene"]),
         new("Input", "pad", ["Input"], "Reads the GBA keypad once per frame. All members are static and free to call anywhere in Update().",
-            "void Update()\n{\n    body.vx = Input.AxisX * speed;           // walk\n    if (Input.Pressed(Key.A) && body.OnGround)\n        body.vy = -jumpPower;               // jump\n    if (Input.Pressed(Key.Start))\n        Scene.Pause();\n}",
+            "void Update()\n{\n    body.vx = Input.AxisX * speed;          // walk\n    if (Input.Pressed(Key.A) && body.OnGround)\n        body.vy = -jumpPower;               // jump\n    if (Input.Pressed(Key.Start))\n        Scene.Pause();\n}",
             ["Actor", "Scene"], Enum: "Key"),
         new("Key", "pad", ["Key"], "The ten buttons of the GBA, used with Input.Pressed, Input.Held and Input.Released.",
             "if (Input.Held(Key.B))\n    body.maxSpeed = 2.5;\nif (Input.Released(Key.B))\n    body.maxSpeed = 1.5;", ["Input"], Parent: "Input"),
@@ -96,7 +96,7 @@ public static class ScriptingApi
     }
 
     /// <summary>
-    /// Member table of a page: "Pressed(Key key) | bool | true on the frame the button goes down". Pairs named X / Y with the
+    /// Member table of a page: "Pressed(Key key) | bool | true on the frame the key goes down". Pairs named X / Y with the
     /// same type are one row ("AxisX / AxisY").
     /// </summary>
     public static IReadOnlyList<ApiRow> Rows(ApiPage page, string? projectApi = null)
