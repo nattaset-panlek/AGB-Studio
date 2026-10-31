@@ -985,9 +985,34 @@ public sealed class GameBuilder
         }
         Directory.CreateDirectory(Path.GetDirectoryName(RomPath)!);
         File.Copy(r.RomPath, RomPath, true);
+        WriteNotices(Path.Combine(Path.GetDirectoryName(RomPath)!, "THIRD_PARTY.txt"));
         _result.RomPath = RomPath;
         _result.ElfPath = Path.ChangeExtension(r.RomPath, ".elf");
         return _step == StepLink ? Path.GetFileName(RomPath) : $"{compiled} files";
+    }
+
+    /// <summary>The notices of the libraries linked into every ROM (docs/THIRD_PARTY.md): libtonc (MIT) and maxmod (ISC),
+    /// written next to the ROM so they travel with it.</summary>
+    void WriteNotices(string path)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"{_p.Settings.General.GameTitle} was made with AGB Studio and contains the following libraries.\n\n");
+        sb.Append("libtonc\n-------\nCopyright (c) J Vijn\n\n");
+        sb.Append("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\n");
+        sb.Append("documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation\n");
+        sb.Append("the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to\n");
+        sb.Append("permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\n");
+        sb.Append("The above copyright notice and this permission notice shall be included in all copies or substantial portions of\n");
+        sb.Append("the Software.\n\n");
+        sb.Append("THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO\n");
+        sb.Append("THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n");
+        sb.Append("AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\n");
+        sb.Append("TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n");
+        sb.Append("SOFTWARE.\n\n");
+        var maxmod = Path.Combine(_tc.DevkitPro, "libgba", "maxmod_license.txt");
+        sb.Append("maxmod\n------\n");
+        sb.Append(File.Exists(maxmod) ? File.ReadAllText(maxmod).Replace("\r\n", "\n").Trim() + "\n" : "Copyright (c) 2008, Mukunda Johnson. ISC licence (see maxmod_license.txt in devkitPro).\n");
+        File.WriteAllText(path, sb.ToString().Replace("\n", Environment.NewLine));
     }
 
     /// <summary>Turns "file:line:col: error: message" into a diagnostic (and maps generated C++ back via #line).</summary>

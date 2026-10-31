@@ -15,6 +15,8 @@
 | Press Start 2P | SIL OFL 1.1 | pixel labels in the editor | editor |
 | Nunito | SIL OFL 1.1 | wordmark | editor |
 | Noto Sans Thai | SIL OFL 1.1 | default Thai game font source | templates |
+| Noto Sans (`third_party/fonts/fallback-latin.ttf`) | SIL OFL 1.1 (`OFL-NotoSans.txt`) | Latin glyphs for fonts that lack them | toolchain |
+| Ninja | Apache-2.0 | runs the native build when it is on PATH; otherwise AGB Studio runs the same build itself | not shipped |
 | ICU Thai dictionary (thaidict.txt) | Unicode licence (ICU) | Thai word-break list at build time | toolchain |
 
 Reference only, no code copied: pokeemerald (pret), Butano (zlib), Poryscript.

@@ -116,6 +116,10 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.True(report.EwramBytes > 0 && report.EwramBytes < 256 * 1024);
         Assert.True(report.Scenes.ContainsKey("Forest_01"));
         Assert.True(File.Exists(Path.Combine(p.BuildDir, "report-history.json")));
+        // The library notices travel next to the ROM.
+        var notices = File.ReadAllText(Path.Combine(Path.GetDirectoryName(r.RomPath)!, "THIRD_PARTY.txt"));
+        Assert.Contains("libtonc", notices);
+        Assert.Contains("Mukunda Johnson", notices);
         // ROM header written by gbafix from Project Settings · General.
         var rom = File.ReadAllBytes(r.RomPath);
         Assert.Equal("MINIPLAT", System.Text.Encoding.ASCII.GetString(rom, 0xA0, 8));
@@ -196,6 +200,35 @@ public sealed class PipelineTests(EmulatorFixture emu)
         p.Settings.Localization.Languages.Single(l => l.Code == "th").Fallback = "en";
         p.SaveSettings();
         Assert.Equal("5", Run1(BuildConfiguration.Release));  // "SCORE" from the Thai language's own fallback
+    }
+
+    sealed class LineLog : IBuildObserver
+    {
+        public readonly List<string> Lines = new();
+        public void StepStarted(string step, string detail) { }
+        public void StepFinished(string step, TimeSpan elapsed, bool ok, string detail) { }
+        public void FileProgress(string step, int done, int total, string file) { }
+        public void Line(string text) { lock (Lines) Lines.Add(text); }
+        public void Message(Diagnostic d) { }
+    }
+
+    [Fact]
+    public void BuildsWithoutNinjaAndSkipsUpToDateObjects()
+    {
+        // A packaged editor may run where only devkitPro is installed: the same build graph runs in-process.
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_no_ninja"));
+        var tc = new Toolchain { Ninja = "no-such-ninja.exe" };
+        var first = new LineLog();
+        var r = new GameBuilder(p, tc, first).Build(new BuildOptions { Clean = true });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.True(File.Exists(r.RomPath));
+        Assert.Contains(first.Lines, l => l.Contains("] CXX ", StringComparison.Ordinal));
+        Assert.Contains(first.Lines, l => l.Contains("] LINK ", StringComparison.Ordinal));
+        Assert.Equal("MINIPLAT", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(r.RomPath), 0xA0, 8));  // gbafix ran
+        var second = new LineLog();
+        r = new GameBuilder(p, tc, second).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.DoesNotContain(second.Lines, l => l.Contains("] CXX ", StringComparison.Ordinal));
     }
 
     [Fact]

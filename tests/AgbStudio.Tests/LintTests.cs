@@ -23,5 +23,19 @@ public sealed class LintTests
     }
 
     [Fact]
+    public void PokeemeraldNamesAndWrongProductNamesAreReported()
+    {
+        var root = Directory.CreateTempSubdirectory("agblint").FullName;
+        Directory.CreateDirectory(Path.Combine(root, "tools"));
+        File.WriteAllText(Path.Combine(root, "tools", "Copied.cs"), "var s = gSaveBlock1Ptr->pos;\nint v = VAR_RESULT;\nPlay(MUS_ROUTE101);\n");
+        File.WriteAllText(Path.Combine(root, "tools", "Title.cs"), "Title = \"GBA Studio\";\nvar ok = \"AGB Studio for Game Boy Advance\";\n");
+        File.WriteAllText(Path.Combine(root, "tools", "Fine.cs"), "var main = gMainMenu; int speciesCount = 3;\n");
+        var issues = Lint.Run(root);
+        Assert.Equal(3, issues.Count(i => i.Rule == "no-pokeemerald" && i.File == "tools/Copied.cs"));
+        Assert.Contains(issues, i => i.Rule == "product-name" && i.File == "tools/Title.cs" && i.Line == 1);
+        Assert.DoesNotContain(issues, i => i.File == "tools/Fine.cs" || (i.File == "tools/Title.cs" && i.Line == 2));
+    }
+
+    [Fact]
     public void RepositoryIsClean() => Assert.Empty(Lint.Run(NativeBuild.RepoRoot));
 }

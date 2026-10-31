@@ -24,6 +24,7 @@ public static class Program
                 "build" => Build(args[1..]),
                 "sample" => Sample(args[1..]),
                 "template" => Template(args[1..]),
+                "package" => Package(args.Length > 1 ? args[1] : Path.Combine(NativeBuild.RepoRoot, "build", "package")),
                 "text-preview" => TextPreview(args[1..]),
                 "lint" => RunLint(args.Length > 1 ? args[1] : NativeBuild.RepoRoot),
                 _ => Usage($"Unknown command '{args[0]}'."),
@@ -136,6 +137,14 @@ public static class Program
         var t = AgbStudio.Build.Content.Templates.TemplateCatalog.Find(args[0]) ?? throw new ArgumentException($"Unknown template '{args[0]}'.");
         var p = t.Create(args[1], args.Length > 2 ? args[2] : t.Name);
         Console.WriteLine($"created {p.ProjectPath} ({AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p)})");
+        return 0;
+    }
+
+    // agb package [outDir]: the portable Windows zip (D-19).
+    static int Package(string outDir)
+    {
+        var zip = Packager.Package(outDir, Console.WriteLine);
+        Console.WriteLine($"package: {zip} ({new FileInfo(zip).Length / (1024 * 1024)} MB)");
         return 0;
     }
 
