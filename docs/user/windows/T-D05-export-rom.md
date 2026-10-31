@@ -37,3 +37,4 @@ Exports a `.gba` file to play in an emulator or on real hardware, together with 
 - [Build Report](T-P11-build-report.md)
 - [Project Settings · General](T-S01-project-settings-general.md)
 - [Project Settings · Build](T-S03-project-settings-build.md)
+- [The licence of your games and THIRD_PARTY.txt](../licence-for-your-games.md)

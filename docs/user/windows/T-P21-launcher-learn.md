@@ -37,6 +37,7 @@ The top bar (Open…, New Project) and the sidebar (Projects, Templates, Learn, 
 - [Launcher](T-P12-launcher.md)
 - [Launcher · Templates](T-P20-launcher-templates.md)
 - [Tutorial Steps](T-O13-tutorial-steps.md)
+- [Tutorials: the steps of each tutorial](../tutorials/README.md)
 - [Opening Project](T-D22-opening-project.md)
 - [Scripting API](T-P18-scripting-api.md)
 - [Keyboard Shortcuts](T-D10-keyboard-shortcuts.md)
