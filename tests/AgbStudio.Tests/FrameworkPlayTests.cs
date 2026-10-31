@@ -218,7 +218,7 @@ public class Arena : SceneScript
         Assert.Contains("const agb::ActorDef agbasset_prefab_Spark = {\"Spark\", agb::ActorKind::Empty, &agbasset_sprite_coin, 0, 0, 0, 2, \"spin\",", prefabs);
         Assert.Contains("extern const agb::PrefabDef agb_prefabs[] = {\n    {\"Spark\", &agbasset_prefab_Spark},\n};", prefabs.Replace("\r\n", "\n"));
         var game = File.ReadAllText(Path.Combine(gen, "game.cpp"));
-        Assert.Contains("agb_prefabs, 1};", game);
+        Assert.Contains("agb_prefabs, 1, ", game);  // then the MusicMeta table (P3.11)
         // P5.03: one map file, one copy of its layers, used by both scenes.
         Assert.Equal(["map_Arena.cpp"], Directory.GetFiles(Path.Combine(gen, "maps")).Select(Path.GetFileName));
         foreach (var scene in new[] { "Arena", "Bonus" })

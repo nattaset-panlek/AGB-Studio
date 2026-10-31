@@ -16,7 +16,7 @@ Checks:
 | Nintendo logo bitmap (the 156-byte logo every GBA header carries) | byte search of every tracked file for its first six bytes `24 FF AE 51 69 9A`, and a text search for them as hex | not found. Built ROMs get the logo from `gbafix` at build time; ROMs are written only under `build/`, which git ignores |
 | Paths to outside ROMs or BIOS images in code and tests | search for `gba_bios`, `bios.bin`, `GBA-Research`, absolute `*.gba` paths in `tools/`, `editor/`, `runtime/`, `tests/` | none. Every test ROM is built from `runtime/tests/*` or from generated projects |
 | BIOS given to the emulator | `LibretroCore` passes `%TEMP%\agb-studio-emu` as the core's system folder | the folder is empty, so no BIOS image is loaded; mGBA uses its own built-in BIOS replacement |
-| Test media | `runtime/tests/audio_basic/audio/beep.wav` and `tune.mod` | written by `agb make-test-audio` (a generated square-wave beep and a generated MOD, `tools/agb/Program.cs`) |
+| Test media | `runtime/tests/audio_basic/audio/beep.wav` and `tune.mod`; `runtime/tests/audio_music/audio/loop.mod` and its copy `plain.mod` | written by `agb make-test-audio` (a generated square-wave beep and generated MODs, `tools/agb/Program.cs`) |
 | Installer (portable package) | the package folder listed for `.gba .gb .gbc .bin .sav .srm .rom .zip` and `bios` names | none; only `runtime/include/agb/bios.hpp` and `runtime/src/core/bios.cpp` |
 
 Not checked:

@@ -81,6 +81,12 @@ duty, frequency, wave RAM, length in frames), the build writes them as an `agb_d
 a `.wav` of the same name in `assets/audio/sfx`, plays as a sample instead. `audio::usage()` reports which channels are
 busy (Audio page).
 
+Each module's MusicMeta (Audio page: volume, loop start, fade on scene change) is built in by `SoundbankBuilder`: the
+loop start is written into the module as maxmod's restart order (a looping song continues there when it ends), and the
+volume and fade flag go into the table `agb_soundbank_music` that `GameDef::music` hands to `audio::init`. The module
+plays at the music volume times its track volume (`audio::moduleVolume()`), and `game::loadScene` fades it only when
+the scene and the track both ask for it (`audio_music` ROM test).
+
 ## Frame order (blueprint 04)
 
 `game::frame()` reads input, then runs the top screen. While a screen loads, one load step runs per frame (scenes have

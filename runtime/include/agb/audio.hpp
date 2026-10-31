@@ -6,10 +6,21 @@
 
 namespace agb::audio {
 
+// A music module's MusicMeta (assets/audio/music/<file>.meta.json, Audio page T-P15), by module id. The build writes the
+// table next to the soundbank (agb_soundbank_music) and the loop start into the module itself (maxmod's restart
+// order), so a looping song continues there when it ends.
+struct MusicInfo {
+    u16 volume;              // the track's volume, 0..256 (256 = full); the music volume is multiplied by it
+    u8 loopStart;            // pattern order the song continues at when it ends
+    bool fadeOnSceneChange;  // fade out when the scene changes (with the scene's own setting)
+};
+
 struct Config {
     const void* soundbank = nullptr;  // generated soundbank (mmutil)
     u8 channels = 8;                  // maxmod mixing channels (Project Settings · Audio, Figma: 8 ch)
     u8 mixKHz = 21;                   // mixing rate (Project Settings · Audio): 8, 10, 13, 16, 18, 21, 27 or 31 kHz
+    const MusicInfo* music = nullptr; // MusicMeta by module id (nullptr = every track at full volume, fading)
+    u16 musicCount = 0;
 };
 
 // Starts maxmod with static buffers (no heap) and hooks its VBlank and frame work. The buffers are sized at compile time
@@ -26,7 +37,12 @@ void setMusicVolume(fixed volume);  // 0..1
 // Ramps the music volume to `target` over `frames` ("Fade on scene change"); stops at 0 if `stopAtZero`.
 void fadeMusic(fixed target, u16 frames, bool stopAtZero = true);
 fixed musicVolume();
+// The volume maxmod mixes the module at, 0..1024: the music volume times the track's MusicMeta volume.
+u16 moduleVolume();
+// The MusicMeta "Fade on scene change" of the module playing (true when the game has no music table).
+bool musicFadesOnSceneChange();
 void setMusicPosition(u8 order);
+u8 musicPosition();  // the pattern order playing now
 
 using SfxHandle = u16;
 SfxHandle playSample(u16 sample, fixed volume = fixed(1), s8 pan = 0, fixed rate = fixed(1));

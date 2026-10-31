@@ -39,7 +39,7 @@ After `dotnet build tools/agb/agb.csproj -c Release` it is `tools\agb\bin\Releas
 | `agb package [out folder]` | publishes the editor and writes the portable zip (default `build\package`) |
 | `agb text-preview <font.ttf> <size> <width> <out.png> <text>` | previews Thai / Latin text layout |
 | `agb lint [folder]` | checks the repository rules (default: the repository root) |
-| `agb make-test-audio <folder>` | writes the small original audio files of the `audio_basic` runtime test |
+| `agb make-test-audio <folder>` | writes the small original audio files of the `audio_basic` runtime test (`beep.wav`, `tune.mod`) and the `loop.mod` of `audio_music` (also its `plain.mod`) |
 
 ## Building a game
 

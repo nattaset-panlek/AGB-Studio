@@ -446,6 +446,13 @@ public sealed class GameBuilder
         if (files.Count > 0) _sources.Add(cpp);
     }
 
+    /// <summary>
+    /// Cache key of the soundbank: the music and sound files and the music's meta files, since MusicMeta (volume, loop
+    /// start, fade on scene change) is built into the soundbank.
+    /// </summary>
+    public static string SoundbankKey(IReadOnlyList<string> inputs) =>
+        AssetCache.HashFiles(inputs.Concat(SoundbankBuilder.MetaFiles(inputs)), ConverterVersion, "music-meta-1");
+
     void ConvertAudio()
     {
         var inputs = _p.MusicFiles().Concat(_p.SoundFiles()).ToList();
@@ -456,7 +463,7 @@ public sealed class GameBuilder
         foreach (var problem in channelProblems) Add(new Diagnostic(Severity.Error, _p.ProjectPath, 0, 0, "", problem));
         if (channelProblems.Count > 0) return;
         var outDir = Path.Combine(GenDir, "audio");
-        var hash = AssetCache.HashFiles(inputs, ConverterVersion);
+        var hash = SoundbankKey(inputs);
         var cpp = Path.Combine(outDir, "soundbank.cpp");
         var hpp = Path.Combine(outDir, "soundbank.hpp");
         if (!_cache.IsCurrent("soundbank", hash, [cpp, hpp]))
@@ -1166,6 +1173,8 @@ public sealed class GameBuilder
         sb.Append("#include \"agb/api.hpp\"\n#include \"agb/game.hpp\"\n#include \"agb_game.hpp\"\n");
         var hasAudio = _musicIds.Count + _soundIds.Count > 0;
         if (hasAudio) sb.Append("extern const unsigned char agb_soundbank[];\n");
+        // MusicMeta of each module (gen/audio/soundbank.cpp): track volume, loop start, fade on scene change.
+        if (_musicIds.Count > 0) sb.Append("#include \"agb/audio.hpp\"\nextern const agb::audio::MusicInfo agb_soundbank_music[];\n");
         if (_dmgCount > 0) sb.Append("#include \"agb/audio.hpp\"\nextern const agb::audio::DmgSfx agb_dmg_sfx[];\n");
         if (_prefabCount > 0) sb.Append("extern const agb::PrefabDef agb_prefabs[];\n");
         foreach (var f in _p.SceneFiles()) sb.Append($"extern const agb::SceneDef agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))};\n");
@@ -1207,7 +1216,7 @@ public sealed class GameBuilder
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
         sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount},\n");
-        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}}};\n");
+        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}, {(_musicIds.Count > 0 ? "agb_soundbank_music" : "nullptr")}, {_musicIds.Count}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");
