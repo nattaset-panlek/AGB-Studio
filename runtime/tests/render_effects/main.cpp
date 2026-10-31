@@ -70,6 +70,27 @@ AGB_TEST(colour_cycle_directions) {
     palettes::stopCycle(right);
     palettes::update();
     CHECK_EQ(commit::palette()[6], 2);
+    // Ping-pong over indices 5..8 (colours 1, 2, 3, 4), one step per tick: the offset goes 1 2 3 2 1 0 1 2 3 2 ...
+    // and turns at both ends without wrapping. Palette RAM is checked every frame after the VBlank commit.
+    const int ping = palettes::startCycle(false, 0, 5, 8, 1, palettes::Direction::PingPong);
+    CHECK(ping >= 0);
+    const int offsets[12] = {1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0};
+    int wrong = 0;
+    for (int f = 0; f < 12; ++f) {
+        palettes::update();
+        system::waitVBlank();
+        for (int i = 0; i < 4; ++i) {
+            const u16 want = kColors[5 + (i + offsets[f]) % 4];
+            if (pal_bg_mem[5 + i] != want && wrong++ < 3) debug::logf("  frame %d index %d: %x vs %x", f, 5 + i, pal_bg_mem[5 + i], want);
+        }
+        CHECK_EQ(pal_bg_mem[4], 0x7FFF);  // outside the range: unchanged
+        CHECK_EQ(pal_bg_mem[9], 5);
+    }
+    CHECK_EQ(wrong, 0);
+    palettes::stopCycle(ping);
+    palettes::update();
+    system::waitVBlank();
+    CHECK_EQ(pal_bg_mem[5], 1);
 }
 
 AGB_TEST(blend_mosaic_windows_registers) {

@@ -130,8 +130,17 @@ public static class ThaiText
         var starts = new List<int>();
         for (var pos = n; pos > 0; pos = prev[pos]) starts.Add(prev[pos]);
         starts.Reverse();
-        // Merge runs of unknown single clusters into one segment so names are not split letter by letter.
-        return starts;
+        // Merge runs of unknown clusters into one segment so names ("ฮอปเปอร์") are not split letter by letter.
+        var merged = new List<int>(starts.Count);
+        var prevUnknown = false;
+        for (var i = 0; i < starts.Count; i++)
+        {
+            var end = i + 1 < starts.Count ? starts[i + 1] : n;
+            var isUnknown = !InDictionary(text[starts[i]..end]);
+            if (!(isUnknown && prevUnknown)) merged.Add(starts[i]);
+            prevUnknown = isUnknown;
+        }
+        return merged;
     }
 
     public static bool InDictionary(string word)

@@ -6,6 +6,12 @@ written by a newer AGB Studio and is refused with a message instead of being mis
 `tools/AgbStudio.Core/Project` are the reference (and `tools/AgbStudio.Scripting` for `.graph` and `.dlg`); this page
 lists what lives where. There are no separate JSON schema files.
 
+JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`, `scene`, `map`, `sprite-meta`,
+`tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg` and
+`graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
+`SchemaTests.SchemasMatchTheFileModel` fails when a class changes and its schema was not regenerated (run the tests with
+`AGB_UPDATE_SCHEMAS=1` to rewrite them).
+
 ## Project folder
 
 ```
@@ -16,7 +22,7 @@ MyGame/
   maps/*.map              tile maps and layers (MapFile)
   prefabs/*.prefab        actors saved with Make Prefab (ActorData)
   assets/
-    sprites/*.png         sprite sheets + <name>.png.meta.json (SpriteMeta)
+    sprites/*.png         sprite sheets + <name>.png.meta.json (SpriteMeta); *.aseprite files: frames, layers, tags
     tilesets/*.png        16 x 16 editor tiles + .meta.json (TilesetMeta)
     images/*.png          full-screen backgrounds for image layers
     palettes/*.pal|*.gpl  imported palettes (JASC / GIMP)
@@ -136,7 +142,7 @@ copies it in any scene when the scene has no actor of that name.
 | `obj/build.ninja`, `obj/*.elf`, `obj/*.elf.map`, `obj/obj/` | NativeBuild | the build graph, the linked ELF, its map file, objects |
 | `gen/` | GameBuilder, scripting compiler | generated C++ (assets, scenes, strings, scripts, database), the soundbank, debugger maps |
 | `cache/manifest.json` | AssetCache | hashes of converted assets for incremental builds |
-| `report.json` | BuildReport | ROM size by category, largest assets, IWRAM / EWRAM use, per-scene budgets, warnings |
+| `report.json` | BuildReport | ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets, warnings |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
 
 ## Editor files (per user)

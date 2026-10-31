@@ -95,6 +95,56 @@ AGB_TEST(slots_do_not_alias) {
     CHECK_EQ(q.score, 3u);
 }
 
+AGB_TEST(checksum_off_loads_the_newest_copy_unchecked) {
+    // Project Settings · Save data "Checksum" off: the CRC is still written but not checked, so a damaged newest copy
+    // loads as it is. With the checksum on, the same damage makes the older copy load instead.
+    configure();
+    save::erase(0);
+    Payload p{10, 1, 0, 1, {}};
+    CHECK(save::write(0, &p));  // copy A, counter 1
+    p.score = 20;
+    CHECK(save::write(0, &p));  // copy B, counter 2
+    save::Config c = save::config();
+    c.checksum = false;
+    save::configure(c);
+    // Rewrite copy B whole (flash erases a sector before programming) with the low byte of the score changed.
+    const u32 copy = save::maxPayload() + 16;  // bytes per copy; copy B starts here
+    static u8 copyB[16 + sizeof(Payload)];
+    save::deviceRead(copy, copyB, sizeof copyB);
+    copyB[16] = 0x5A;
+    save::deviceWrite(copy, copyB, sizeof copyB);
+    Payload q{};
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 0x5Au);
+    CHECK(save::exists(0));
+    configure();  // checksum on
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 10u);
+    // Writes with the checksum off still verify and the next read takes the newest copy.
+    save::configure(c);
+    p.score = 30;
+    CHECK(save::write(0, &p));
+    CHECK(save::read(0, &q));
+    CHECK_EQ(q.score, 30u);
+}
+
+AGB_TEST(save_type_none_stores_nothing) {
+    // Project Settings · Save data "None": nothing is written or read and no save memory is reserved.
+    save::Config c;
+    c.type = save::Type::None;
+    c.slots = 3;
+    c.payloadSize = sizeof(Payload);
+    save::configure(c);
+    Payload p{5, 5, 0, 5, {}};
+    CHECK(!save::write(0, &p));
+    CHECK(!save::read(0, &p));
+    CHECK(!save::exists(0));
+    CHECK_EQ(save::bytesUsed(), 0u);
+    CHECK_EQ(save::maxPayload(), 0u);
+    CHECK_EQ(save::capacityBytes(save::Type::None), 0u);
+    configure();
+}
+
 AGB_TEST(capacity_and_crc) {
     configure();
     CHECK(save::bytesUsed() <= save::capacityBytes(save::Type::AGB_SAVE_TYPE));
@@ -104,5 +154,6 @@ AGB_TEST(capacity_and_crc) {
 int main() {
     AGB_SAVE_TEST_KEEP_ID();
     system::init();
+    test::showResultOnScreen();  // VBA-M runs of these ROMs show green for pass
     test::runAll();
 }

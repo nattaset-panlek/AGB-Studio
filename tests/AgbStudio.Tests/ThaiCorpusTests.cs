@@ -151,6 +151,8 @@ public sealed class ThaiCorpusTests(EmulatorFixture emu)
         ["กี่ ปั้น ฝื่น ฟ้ำ ฬี๋"],
         ["ฎุ ฏู ญุ ฐู ทำ น้ำ ค่ำ"],
         ["๑๒๓ เด็กๆ Level ๓ ok"],
+        // P8.06: wrapped by the dictionary at build time into lines the ROM draws as laid out.
+        ["เจ้าสไลม์ขโมยเหรียญทองไปซ่อนไว้ในถ้ำลึกทางทิศเหนือของหมู่บ้าน ต้องรีบตามหาก่อนพระอาทิตย์ตก"],
     ];
 
     [Theory]
@@ -172,6 +174,7 @@ public sealed class ThaiCorpusTests(EmulatorFixture emu)
         var all = string.Concat(GameProject.Load<StringTable>(Path.Combine(p.TextDir, "strings.en.json")).Strings.Values) + string.Concat(th.Strings.Values);
         var font = FontBuilder.Build(GameProject.Load<FontFile>(Path.Combine(p.FontsDir, "thai_vwf.font")), p.FontsDir, ThaiText.CodePoints(all));
         var layout = TextLayout.Layout(line, font, 224);
+        if (line.Length > 60) Assert.True(layout.Lines >= 2, $"'{line}' should wrap in a 224 px label");
         int w = 224, h = font.LineHeight * layout.Lines;
         var expected = TextRenderer.Render(layout, font, w, h, new TextRenderer.Style(1, 4, 0));
         uint? ink = null;

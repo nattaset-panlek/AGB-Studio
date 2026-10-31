@@ -100,6 +100,8 @@ void setBgRef(int bg, s32 x, s32 y) {
     g_bgRefDirty |= static_cast<u8>(1 << i);
 }
 
+s32 bgRef(int bg, int axis) { return g_bgRef[bg == 3 ? 1 : 0][axis & 1]; }
+
 ObjAttr* oam() {
     g_oamDirty = true;
     return g_oam;

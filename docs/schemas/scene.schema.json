@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio scene (scenes/<Name>.scene)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "width": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "videoMode": {
+      "type": "integer"
+    },
+    "map": {
+      "type": "string"
+    },
+    "camera": {
+      "type": "object",
+      "properties": {
+        "follow": {
+          "type": "string"
+        },
+        "deadZoneW": {
+          "type": "integer"
+        },
+        "deadZoneH": {
+          "type": "integer"
+        },
+        "clampToMap": {
+          "type": "boolean"
+        }
+      }
+    },
+    "music": {
+      "type": "object",
+      "properties": {
+        "track": {
+          "type": "string"
+        },
+        "volume": {
+          "type": "number"
+        },
+        "fadeOnSceneChange": {
+          "type": "boolean"
+        }
+      }
+    },
+    "events": {
+      "type": "object",
+      "properties": {
+        "onEnter": {
+          "type": "string"
+        },
+        "onExit": {
+          "type": "string"
+        },
+        "onLoad": {
+          "type": "string"
+        }
+      }
+    },
+    "actors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "Empty",
+              "Player",
+              "Enemy",
+              "Pickup",
+              "TriggerZone",
+              "CameraZone",
+              "TextLabel"
+            ]
+          },
+          "sprite": {
+            "type": "string"
+          },
+          "animation": {
+            "type": "string"
+          },
+          "x": {
+            "type": "integer"
+          },
+          "y": {
+            "type": "integer"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "prefab": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "collider": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "x": {
+                "type": "integer"
+              },
+              "y": {
+                "type": "integer"
+              },
+              "w": {
+                "type": "integer"
+              },
+              "h": {
+                "type": "integer"
+              }
+            }
+          },
+          "zoneW": {
+            "type": "integer"
+          },
+          "zoneH": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "OnTouch",
+              "Door",
+              "Respawn"
+            ]
+          },
+          "to": {
+            "type": "string"
+          },
+          "spawnAt": {
+            "type": "string"
+          },
+          "spawnX": {
+            "type": "integer"
+          },
+          "spawnY": {
+            "type": "integer"
+          },
+          "transition": {
+            "enum": [
+              "Cut",
+              "Fade",
+              "Slide"
+            ]
+          },
+          "duration": {
+            "type": "number"
+          },
+          "onlyIf": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "alphaBlending": {
+      "type": "boolean"
+    },
+    "mosaic": {
+      "type": "boolean"
+    },
+    "backdrop": {
+      "type": "string"
+    },
+    "menu": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "spacing": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "command": {
+                "enum": [
+                  "LoadScene",
+                  "Continue",
+                  "Options",
+                  "QuitToTitle"
+                ]
+              },
+              "scene": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "mapX": {
+      "type": "integer"
+    },
+    "mapY": {
+      "type": "integer"
+    },
+    "template": {
+      "type": "string"
+    }
+  }
+}

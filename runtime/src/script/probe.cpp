@@ -8,7 +8,7 @@
 namespace agb::dbg {
 
 namespace detail {
-AGB_EWRAM_BSS State g_state;
+AGB_EWRAM_BSS_NAMED(agb_symbols) State g_state;
 bool g_stepping = false;
 }  // namespace detail
 

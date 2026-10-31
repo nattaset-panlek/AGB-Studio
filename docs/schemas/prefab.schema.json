@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio prefab (prefabs/<Name>.prefab)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "Empty",
+        "Player",
+        "Enemy",
+        "Pickup",
+        "TriggerZone",
+        "CameraZone",
+        "TextLabel"
+      ]
+    },
+    "sprite": {
+      "type": "string"
+    },
+    "animation": {
+      "type": "string"
+    },
+    "x": {
+      "type": "integer"
+    },
+    "y": {
+      "type": "integer"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "integer"
+    },
+    "hidden": {
+      "type": "boolean"
+    },
+    "prefab": {
+      "type": "string"
+    },
+    "group": {
+      "type": "string"
+    },
+    "collider": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "w": {
+          "type": "integer"
+        },
+        "h": {
+          "type": "integer"
+        }
+      }
+    },
+    "zoneW": {
+      "type": "integer"
+    },
+    "zoneH": {
+      "type": "integer"
+    },
+    "text": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

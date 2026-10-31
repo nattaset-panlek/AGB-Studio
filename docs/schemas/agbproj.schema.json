@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio project (<Name>.agbproj)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "general": {
+      "type": "object",
+      "properties": {
+        "gameTitle": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "romTitle": {
+          "type": "string"
+        },
+        "gameCode": {
+          "type": "string"
+        },
+        "maker": {
+          "type": "string"
+        },
+        "startScene": {
+          "type": "string"
+        },
+        "defaultFont": {
+          "type": "string"
+        },
+        "defaultLanguage": {
+          "type": "string"
+        },
+        "bootSplash": {
+          "type": "boolean"
+        },
+        "splashSeconds": {
+          "type": "integer"
+        },
+        "skipSplashInDebug": {
+          "type": "boolean"
+        }
+      }
+    },
+    "input": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "button": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "keyboard": {
+            "type": "string"
+          },
+          "gamepad": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "allowRemap": {
+      "type": "boolean"
+    },
+    "save": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "None",
+            "Sram32K",
+            "Flash64K",
+            "Flash128K",
+            "Eeprom8K"
+          ]
+        },
+        "slots": {
+          "type": "integer"
+        },
+        "autosave": {
+          "type": "boolean"
+        },
+        "checksum": {
+          "type": "boolean"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "configuration": {
+          "enum": [
+            "Debug",
+            "Release"
+          ]
+        },
+        "optimise": {
+          "type": "string"
+        },
+        "compressGraphics": {
+          "type": "boolean"
+        },
+        "output": {
+          "type": "string"
+        },
+        "stripDebugLog": {
+          "type": "boolean"
+        },
+        "warnRomMegabytes": {
+          "type": "integer"
+        },
+        "keepAsserts": {
+          "type": "boolean"
+        },
+        "runAfterBuild": {
+          "type": "boolean"
+        }
+      }
+    },
+    "scripting": {
+      "type": "object",
+      "properties": {
+        "language": {
+          "type": "string"
+        },
+        "hotReload": {
+          "type": "boolean"
+        },
+        "treatWarningsAsErrors": {
+          "type": "boolean"
+        },
+        "generated": {
+          "type": "string"
+        },
+        "inlineHints": {
+          "type": "boolean"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "shopCurrency": {
+          "type": "string"
+        },
+        "analyzerRules": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "font": {
+                "type": "string"
+              },
+              "fallback": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "thaiWrap": {
+          "type": "boolean"
+        },
+        "showMissingKeys": {
+          "type": "boolean"
+        },
+        "failOnMissing": {
+          "type": "boolean"
+        }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "integer"
+        },
+        "mixKHz": {
+          "type": "integer"
+        }
+      }
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "pauseMenu": {
+          "type": "boolean"
+        },
+        "titleScene": {
+          "type": "string"
+        },
+        "font": {
+          "type": "string"
+        },
+        "ink": {
+          "type": "string"
+        },
+        "muted": {
+          "type": "string"
+        },
+        "paper": {
+          "type": "string"
+        },
+        "screen": {
+          "type": "string"
+        },
+        "screenInk": {
+          "type": "string"
+        },
+        "barTrack": {
+          "type": "string"
+        },
+        "barFill": {
+          "type": "string"
+        },
+        "dim": {
+          "type": "integer"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lastScene": {
+      "type": "string"
+    }
+  }
+}

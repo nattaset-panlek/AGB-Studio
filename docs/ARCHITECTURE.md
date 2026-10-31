@@ -52,7 +52,7 @@ An upper layer calls only lower layers. User code (translated C# behaviours and 
 |---|---|
 | Platform | libtonc, maxmod (`libmm`), `bios.hpp` (LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet), `types.hpp` (`AGB_IWRAM_CODE`, `AGB_EWRAM_BSS`; `*.iwram.cpp` files are compiled as ARM into IWRAM) |
 | Core services | `system.hpp` (VBlank frame loop, interrupts, profiler), `commit.hpp` (OAM / palette / register shadows and the DMA queue with a per-frame byte budget, flushed in VBlank), `input.hpp`, `task.hpp` (16 tasks), `memory.hpp`, `rng.hpp` (xoshiro128**, one stream per purpose), `save.hpp`, `debug.hpp`, `assert.hpp`, `format.hpp`, `fixed.hpp` (24.8) |
-| Rendering and media | `render/bg.hpp` (video modes 0-3, char / screen block allocation), `render/map.hpp` (metatile streaming), `render/affine.hpp` (affine layers, Mode 7), `render/sprite.hpp` (128 sprites, 32 affine matrices, shared frame cache), `render/palette.hpp` (fade, tint, cycle, flash), `render/text.hpp` (VWF text windows), `render/effects.hpp` (blending, mosaic, windows, scanline DMA, transitions), `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
+| Rendering and media | `render/bg.hpp` (video modes 0-3, char / screen block allocation), `render/map.hpp` (metatile streaming), `render/affine.hpp` (affine layers, Mode 7), `render/bitmap.hpp` (Mode 3 frame buffer), `render/sprite.hpp` (128 sprites, 32 affine matrices, shared frame cache), `render/palette.hpp` (fade, tint, cycle, flash), `render/text.hpp` (VWF text windows), `render/effects.hpp` (blending, mosaic, windows, scanline DMA, transitions), `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
 | Game framework | `game.hpp` (screens, scenes, links, camera), `actor.hpp` (64 actors, 6 behaviours each), `behaviours.hpp`, `script.hpp` + `script_ops.def` + `natives.hpp` (Event Script VM), `bus.hpp`, `ui.hpp` (Menu / UI kit, D-23), `api.hpp` (the C++ side of the C# API), `probe.hpp` (C# breakpoints, D-21) |
 
 The lint (`tools/AgbStudio.Build/Lint.cs`) keeps two rules of these layers: runtime code writes video hardware only
@@ -62,7 +62,8 @@ through the commit queues (a short allow-list of modules may touch registers), a
 ### Video modes, affine layers and Mode 7
 
 `render::bg::setVideoMode` takes modes 0-3 (the Video Mode popover). Modes 0-2 draw tile layers; mode 3 only sets the
-display mode bits, there is no bitmap drawing path. A map layer of type `Affine` (Add Layer "Rotate / scale layer
+display mode bits; `render/bitmap.hpp` draws the Mode 3 frame buffer (show a picture, fill, queue rows) and resets
+BG2's matrix to 1:1, and sprites use OBJ tiles 512 and up in that mode. A map layer of type `Affine` (Add Layer "Rotate / scale layer
 (Mode 1-2)") is converted at build time by `Graphics/AffineConverter.cs` to 8bpp tiles with flips and palette banks
 baked in (at most 256 tiles, map side 16 / 32 / 64 / 128). At runtime `render::affine::load` and `setTransform` rotate
 and scale it with the BG2 / BG3 matrices; `render::affine::mode7` fills a per-scanline matrix table that

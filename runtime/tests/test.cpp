@@ -1,5 +1,7 @@
 #include "test.hpp"
 
+#include "agb/commit.hpp"
+
 namespace agb::test {
 
 namespace {
@@ -7,6 +9,7 @@ Registration* g_head = nullptr;
 Registration* g_tail = nullptr;
 int g_failures = 0;
 const char* g_current = "";
+bool g_showResult = false;
 }  // namespace
 
 Registration::Registration(const char* n, TestFn f) : name(n), fn(f), next(nullptr) {
@@ -25,6 +28,8 @@ void fail(const char* file, int line, const char* expr) {
 
 int failures() { return g_failures; }
 
+void showResultOnScreen() { g_showResult = true; }
+
 void runAll() {
     int count = 0;
     for (Registration* r = g_head; r; r = r->next) {
@@ -40,6 +45,12 @@ void runAll() {
     } else {
         debug::logf("%d tests passed", count);
         debug::testPass();
+    }
+    if (g_showResult) {
+        // Mode 0 with every layer and sprite off shows only the backdrop (palette entry 0).
+        commit::setReg(commit::DispCnt, 0);
+        commit::palette()[0] = g_failures ? 0x001F : 0x03E0;
+        commit::markPaletteDirty();
     }
     for (;;) system::waitVBlank();
 }

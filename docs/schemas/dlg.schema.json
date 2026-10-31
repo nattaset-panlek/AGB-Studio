@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio dialogue (dialogue/<name>.dlg)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "textSpeed": {
+      "type": "integer"
+    },
+    "blip": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "portrait": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "blip": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "textSpeed": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "conversations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "speaker": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "portrait": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "speed": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "blip": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "showIf": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "thenSet": true,
+                "next": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "choices": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "text": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "showIf": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "thenSet": true,
+                      "goto": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "scene": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "end": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                },
+                "command": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "scene": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "flag": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "table": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "item": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "count": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sound": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "volume": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "frames": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "seconds": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "amplitude": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

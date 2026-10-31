@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio music meta (assets/audio/music/<file>.meta.json)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "volume": {
+      "type": "number"
+    },
+    "loopStart": {
+      "type": "integer"
+    },
+    "fadeOnSceneChange": {
+      "type": "boolean"
+    }
+  }
+}

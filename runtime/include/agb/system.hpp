@@ -37,5 +37,7 @@ struct Stats {
 void begin(Category c);  // switches the running category; cycles accumulate into it
 const Stats& stats();
 u32 cyclesNow();
+// Fewest VBlank cycles left after a commit since boot (0 = a commit ran past VBlank, which also logs a warning).
+u32 vblankFreeMin();
 
 }  // namespace agb::profile

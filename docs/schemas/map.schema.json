@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio map (maps/<Name>.map)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "tileset": {
+      "type": "string"
+    },
+    "width": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "bg": {
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "Tile",
+              "Image",
+              "Affine",
+              "CollisionOnly"
+            ]
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "parallaxX": {
+            "type": "number"
+          },
+          "parallaxY": {
+            "type": "number"
+          },
+          "wrap": {
+            "type": "boolean"
+          },
+          "image": {
+            "type": "string"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "collisionLayer": {
+      "type": "integer"
+    }
+  }
+}

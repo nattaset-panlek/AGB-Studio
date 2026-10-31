@@ -1,7 +1,9 @@
 // 24.8 fixed-point number: the `fixed` type of the C# scripting API (no FPU on the GBA).
 #pragma once
 #include <compare>
+#include <type_traits>
 
+#include "agb/bios.hpp"
 #include "agb/types.hpp"
 
 namespace agb {
@@ -32,8 +34,14 @@ struct fixed {
     constexpr fixed operator-(fixed o) const { return fromRaw(raw - o.raw); }
     constexpr fixed operator*(fixed o) const { return fromRaw(static_cast<s32>((static_cast<s64>(raw) * o.raw) >> kShift)); }
     constexpr fixed operator/(fixed o) const {
-        return o.raw == 0 ? fromRaw(raw >= 0 ? 0x7FFFFFFF : -0x7FFFFFFF)
-                          : fromRaw(static_cast<s32>((static_cast<s64>(raw) << kShift) / o.raw));
+        if (o.raw == 0) return fromRaw(raw >= 0 ? 0x7FFFFFFF : -0x7FFFFFFF);
+        // |value| < 32768: the shifted dividend fits 32 bits, so the BIOS divide (same truncation toward zero) does it in
+        // about a seventh of the time of the 64-bit library divide (core_basics fixed_point_cycle_budget).
+        if (raw > -0x800000 && raw < 0x800000) {
+            if (std::is_constant_evaluated()) return fromRaw((raw * kOne) / o.raw);
+            return fromRaw(bios::div(raw * kOne, o.raw));
+        }
+        return fromRaw(static_cast<s32>((static_cast<s64>(raw) << kShift) / o.raw));
     }
     constexpr fixed operator*(int i) const { return fromRaw(raw * i); }
     constexpr fixed operator/(int i) const { return i == 0 ? fixed() : fromRaw(raw / i); }

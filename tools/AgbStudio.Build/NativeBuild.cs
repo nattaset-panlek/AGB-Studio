@@ -212,7 +212,7 @@ public sealed class NativeBuild
         return h.ToString("x8");
     }
 
-    static string ObjName(string src)
+    internal static string ObjName(string src)
     {
         var rel = src.Replace(':', '_').Replace('\\', '_').Replace('/', '_');
         if (rel.Length > 90) rel = rel[^90..];

@@ -2,6 +2,7 @@
 #include <tonc.h>
 
 #include "../test.hpp"
+#include "agb/bios.hpp"
 #include "agb/commit.hpp"
 #include "agb/fixed.hpp"
 #include "agb/format.hpp"
@@ -62,9 +63,149 @@ AGB_TEST(rng_is_deterministic_per_stream) {
         const int r = rng::range(-3, 3);
         CHECK(r >= -3 && r <= 3);
     }
-    // Known first value for seed 1234 (shared with the C# reference test).
+    // 16 values of every stream for seed 1234, then 16 bounded values: RuntimeRomTests.RngMatchesHostReference
+    // compares these lines with its host copy of the generator.
+    for (int s = 0; s < static_cast<int>(rng::Stream::Count); ++s) {
+        rng::seed(1234);
+        u32 v[16];
+        for (auto& x : v) x = rng::next(static_cast<rng::Stream>(s));
+        debug::logf("rng %d a %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx", s, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+        debug::logf("rng %d b %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx", s, v[8], v[9], v[10], v[11], v[12], v[13], v[14], v[15]);
+    }
     rng::seed(1234);
-    debug::logf("rng first %lu", rng::next());
+    int b[16];
+    for (auto& x : b) x = rng::range(-3, 3);
+    debug::logf("rng range %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8],
+                b[9], b[10], b[11], b[12], b[13], b[14], b[15]);
+    system::waitVBlank();  // the host reads the log ring once per frame
+}
+
+namespace {
+// Operand pairs (raw 24.8 values) for the reference table: signs, fractions, small and large magnitudes.
+// RuntimeRomTests.FixedPointMatchesHostReference recomputes every result from exact decimal arithmetic.
+constexpr s32 kFixedPairs[][2] = {
+    {256, 256},       {384, 896},        {-384, 896},      {-384, -896},     {1, 1},           {1, -1},
+    {255, 257},       {-255, 257},       {64, 64},         {3, 85},          {-3, 85},         {100000, 300},
+    {-100000, 300},   {65536, 65536},    {-65536, 65536},  {1000000, 17},    {7, 100000},      {-7, 100000},
+    {12345, 678},     {-12345, -678},    {2560, 3},        {-2560, 3},       {80, 81},         {32767, 32767},
+    {-32768, 32767},  {500000, -999},    {8388607, 256},   {-8388608, 256},  {256, 8388607},   {512, -1},
+    {77, 1024},       {-77, 1024},
+};
+constexpr s32 kSqrtInputs[] = {0, 1, 2, 3, 4, 64, 255, 256, 257, 512, 1000, 4096, 65536, 100000, 1000000, 8388607};
+}  // namespace
+
+AGB_TEST(fixed_point_reference_table) {
+    // Each line: a b a*b a/b (raw values). The host compares them with floor(a * b / 256) and
+    // truncate(a * 256 / b) computed exactly.
+    int n = 0;
+    for (const auto& p : kFixedPairs) {
+        const fixed a = fixed::fromRaw(p[0]), b = fixed::fromRaw(p[1]);
+        debug::logf("fx %ld %ld %ld %ld", p[0], p[1], (a * b).raw, (a / b).raw);
+        if (++n % 16 == 0) system::waitVBlank();
+    }
+    // Quarter-wave sine table over all 256 angles, 16 per line, and integer square roots.
+    for (int line = 0; line < 16; ++line) {
+        s32 v[16];
+        for (int i = 0; i < 16; ++i) v[i] = math::sin(static_cast<u8>(line * 16 + i)).raw;
+        debug::logf("sin %d %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld", line * 16, v[0], v[1], v[2], v[3], v[4], v[5], v[6],
+                    v[7], v[8], v[9], v[10], v[11], v[12], v[13], v[14], v[15]);
+        if (line % 8 == 7) system::waitVBlank();
+    }
+    for (s32 in : kSqrtInputs) debug::logf("sqrt %ld %ld", in, math::sqrt(fixed::fromRaw(in)).raw);
+    for (int a = 0; a < 256; ++a) CHECK_EQ(math::cos(static_cast<u8>(a)).raw, math::sin(static_cast<u8>(a + 64)).raw);
+    // fixed2 is component-wise fixed arithmetic, so the same table covers it.
+    for (int i = 0; i + 1 < static_cast<int>(sizeof kFixedPairs / sizeof kFixedPairs[0]); ++i) {
+        const fixed2 v{fixed::fromRaw(kFixedPairs[i][0]), fixed::fromRaw(kFixedPairs[i][1])};
+        const fixed2 w{fixed::fromRaw(kFixedPairs[i + 1][0]), fixed::fromRaw(kFixedPairs[i + 1][1])};
+        const fixed s = fixed::fromRaw(kFixedPairs[i + 1][0]);
+        CHECK((v + w) == (fixed2{v.x + w.x, v.y + w.y}));
+        CHECK((v - w) == (fixed2{v.x - w.x, v.y - w.y}));
+        CHECK((v * s) == (fixed2{v.x * s, v.y * s}));
+    }
+    system::waitVBlank();
+}
+
+namespace {
+volatile s32 g_sinkRaw;
+volatile s32 g_opA = 0x12345, g_opB = 0x678;
+
+// CPU cycles for `count` runs of `op` minus the same loop with an empty body (timers 2+3 count every cycle).
+template <typename F>
+u32 cyclesPerOp(F op, int count) {
+    system::waitVBlank();  // start of a frame: no interrupt lands inside the measurement
+    u32 t0 = profile::cyclesNow();
+    for (int i = 0; i < count; ++i) g_sinkRaw = g_opA;
+    const u32 empty = profile::cyclesNow() - t0;
+    t0 = profile::cyclesNow();
+    for (int i = 0; i < count; ++i) g_sinkRaw = op();
+    const u32 full = profile::cyclesNow() - t0;
+    return full > empty ? (full - empty) / static_cast<u32>(count) : 0;
+}
+}  // namespace
+
+AGB_TEST(fixed_point_cycle_budget) {
+    // BUD: cycles per multiply / divide as the game code runs them (Thumb in ROM, wait states 3/1 + prefetch).
+    const u32 mul = cyclesPerOp([] { return (fixed::fromRaw(g_opA) * fixed::fromRaw(g_opB)).raw; }, 64);
+    const u32 div = cyclesPerOp([] { return (fixed::fromRaw(g_opA) / fixed::fromRaw(g_opB)).raw; }, 64);
+    const u32 mulInt = cyclesPerOp([] { return (fixed::fromRaw(g_opA) * static_cast<int>(g_opB)).raw; }, 64);
+    const u32 biosDiv = cyclesPerOp([] { return bios::div(g_opA, g_opB); }, 64);
+    const u32 sqrtC = cyclesPerOp([] { return math::sqrt(fixed::fromRaw(g_opA)).raw; }, 16);
+    debug::logf("fixed cycles: mul %lu, div %lu, mul by int %lu, bios div %lu, sqrt %lu", mul, div, mulInt, biosDiv, sqrtC);
+    // A frame has 280896 cycles; these bounds keep a few thousand fixed operations per frame affordable.
+    CHECK(mul > 0 && mul < 200);
+    CHECK(div > 0 && div < 400);
+    CHECK(mulInt < 60);
+    CHECK(biosDiv > 0 && biosDiv < 400);
+    CHECK(sqrtC < 2000);
+}
+
+namespace {
+// BIOS LZ77 (type 0x10) stream for 32 bytes: 8 literals "ABCDEFGH", then copies of 18 and 6 bytes from 8 back.
+alignas(4) const u8 kLz77[] = {0x10, 0x20, 0x00, 0x00, 0x00, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 0xC0, 0xF0, 0x07, 0x30, 0x07, 0x00, 0x00};
+alignas(4) u8 g_lzOut[40];
+alignas(4) u32 g_copySrc[16];
+alignas(4) u32 g_copyDst[20];
+}  // namespace
+
+AGB_TEST(bios_wrappers) {
+    // LZ77 to WRAM and to VRAM.
+    CHECK_EQ(bios::lz77Size(kLz77), 32u);
+    for (auto& b : g_lzOut) b = 0xEE;
+    bios::lz77ToWram(kLz77, g_lzOut);
+    int wrong = 0;
+    for (int i = 0; i < 32; ++i) wrong += g_lzOut[i] != 'A' + i % 8;
+    CHECK_EQ(wrong, 0);
+    CHECK_EQ(g_lzOut[32], 0xEE);  // nothing written past the decompressed size
+    u8* vram = reinterpret_cast<u8*>(commit::bgTiles(3)) + 0x3000;
+    bios::lz77ToVram(kLz77, vram);
+    wrong = 0;
+    for (int i = 0; i < 32; ++i) wrong += vram[i] != 'A' + i % 8;
+    CHECK_EQ(wrong, 0);
+    // Div / DivMod truncate toward zero like C.
+    const s32 nums[] = {7, -7, 100, -100, 2147483647, -2147483647, 0, 1};
+    const s32 dens[] = {2, 2, 7, -7, 3, 10, 5, -1};
+    for (int i = 0; i < 8; ++i) {
+        CHECK_EQ(bios::div(nums[i], dens[i]), nums[i] / dens[i]);
+        CHECK_EQ(bios::mod(nums[i], dens[i]), nums[i] % dens[i]);
+    }
+    // CpuFastSet copies whole 32-byte blocks and nothing more.
+    for (int i = 0; i < 16; ++i) g_copySrc[i] = 0xC0DE0000u + static_cast<u32>(i);
+    for (auto& w : g_copyDst) w = 0xDEADBEEFu;
+    bios::fastCopy(g_copyDst, g_copySrc, 64);
+    for (int i = 0; i < 16; ++i) CHECK_EQ(g_copyDst[i], 0xC0DE0000u + static_cast<u32>(i));
+    CHECK_EQ(g_copyDst[16], 0xDEADBEEFu);
+    // Halt sleeps until the next interrupt: with only VBlank enabled that is the start of VBlank (line 160).
+    system::waitVBlank();
+    while (REG_VCOUNT >= 160 || REG_VCOUNT < 40) {}
+    const u32 line = REG_VCOUNT;
+    const u32 t0 = profile::cyclesNow();
+    bios::halt();
+    const u32 slept = profile::cyclesNow() - t0;
+    const u32 after = REG_VCOUNT;
+    debug::logf("halt from line %lu woke at line %lu after %lu cycles", line, after, slept);
+    CHECK(after >= 160 && after <= 161);
+    CHECK(slept + 2 * 1232 >= (160 - line) * 1232);
+    system::waitVBlank();  // the halt let one VBlank pass; resynchronise the frame loop
 }
 
 namespace {
@@ -172,16 +313,37 @@ AGB_TEST(frame_loop_counts_and_profiles) {
     system::waitVBlank();  // the tests before this one ran long, so this first wait may count an overrun
     const u32 overrunsBefore = profile::stats().overruns;
     const u32 start = system::frame();
-    for (int i = 0; i < 10; ++i) system::waitVBlank();
-    CHECK_EQ(system::frame() - start, 10u);
-    const auto& s = profile::stats();
-    u32 total = 0;
-    for (u32 c : s.thisFrame) total += c;
+    // 600 frames (10 s): every frame is one VBlank apart and the CPU sleeps in the BIOS (VBlankIntrWait) for the
+    // idle part of each frame.
+    u32 minIdle = 0xFFFFFFFFu, minTotal = 0xFFFFFFFFu, maxTotal = 0, c0 = 0;
+    for (int i = 0; i < 600; ++i) {
+        system::waitVBlank();
+        const auto& s = profile::stats();
+        u32 total = 0;
+        for (u32 c : s.thisFrame) total += c;
+        if (i == 0) {  // the first frame includes the time before the loop; time the next 599 whole frames
+            c0 = profile::cyclesNow();
+            continue;
+        }
+        const u32 idle = s.thisFrame[static_cast<int>(profile::Category::Idle)];
+        if (idle < minIdle) minIdle = idle;
+        if (total < minTotal) minTotal = total;
+        if (total > maxTotal) maxTotal = total;
+    }
+    const u32 elapsed = profile::cyclesNow() - c0;
+    CHECK_EQ(system::frame() - start, 600u);
+    CHECK_EQ(debug::channel().frame, system::frame());
+    CHECK_EQ(profile::stats().overruns, overrunsBefore);
+    // 599 frames of 280896 cycles, measured between two VBlank wake-ups (the commit before each wake-up varies by a few hundred cycles).
+    CHECK(elapsed + 1232 >= 599u * profile::kCyclesPerFrame && elapsed <= 599u * profile::kCyclesPerFrame + 1232);
+    // Refresh rate from the measured cycles (16.78 MHz clock): 59.73 Hz.
+    const u32 hz1000 = static_cast<u32>((16777216ull * 1000 * 599 + elapsed / 2) / elapsed);
+    CHECK(hz1000 >= 59720 && hz1000 <= 59735);
     // A whole frame is 280896 cycles; allow timer read slack.
-    CHECK(total > 270000 && total < 290000);
-    CHECK(s.thisFrame[static_cast<int>(profile::Category::Idle)] > 200000);
-    CHECK_EQ(s.overruns, overrunsBefore);
-    debug::logf("idle cycles %lu of %lu", s.thisFrame[static_cast<int>(profile::Category::Idle)], total);
+    CHECK(minTotal > 270000 && maxTotal < 290000);
+    CHECK(minIdle > 200000);
+    debug::logf("600 frames in %lu cycles; %lu.%03lu Hz; idle (CPU halted) at least %lu of %lu cycles per frame", elapsed, hz1000 / 1000,
+                hz1000 % 1000, minIdle, maxTotal);
 }
 
 AGB_TEST(commit_queue_budget_defers) {

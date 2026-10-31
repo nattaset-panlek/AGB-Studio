@@ -30,7 +30,9 @@ public sealed class GameFont
 
     public Glyph? Get(int cp) => Glyphs.GetValueOrDefault(cp);
 
-    public int RomBytes => Glyphs.Values.Sum(g => (g.Width * Bpp + 7) / 8 * g.Height + 8);
+    /// <summary>ROM the font takes in a built game (TextCodegen.FontCpp): packed bitmaps, an 8-byte table entry per glyph,
+    /// the 128-entry ASCII index, the Font record and its name.</summary>
+    public int RomBytes => Glyphs.Values.Sum(g => (g.Width * Bpp + 7) / 8 * g.Height + 8) + 128 * 2 + 24 + System.Text.Encoding.UTF8.GetByteCount(Name) + 1;
 }
 
 /// <summary>Builds a GameFont from a .font file: TrueType, BDF or an image sheet; applies glyph edits.</summary>
