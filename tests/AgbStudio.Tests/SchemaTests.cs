@@ -6,6 +6,7 @@ using System.Text.Json.Serialization.Metadata;
 using AgbStudio.Build;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Content.Templates;
+using AgbStudio.Build.Pipeline;
 using AgbStudio.Core.Project;
 using AgbStudio.Scripting.Dialogue;
 using AgbStudio.Scripting.Graph;
@@ -47,6 +48,9 @@ public sealed class SchemaTests
         ("prefab.schema.json", typeof(ActorData), "AGB Studio prefab (prefabs/<Name>.prefab)", null),
         ("dlg.schema.json", typeof(DialogueFile), "AGB Studio dialogue (dialogue/<name>.dlg)", DialogueJson),
         ("palettes.schema.json", typeof(PaletteLibraryFile), "AGB Studio Palette Manager library (assets/palettes/palettes.json)", null),
+        // P7.12: build output read by the editor (Build Report, Budget Details) and by tools outside AGB Studio.
+        ("report.schema.json", typeof(BuildReport), "AGB Studio build report (build/report.json)", BuildReport.Json),
+        ("report-history.schema.json", typeof(List<BuildReport.HistoryEntry>), "AGB Studio build history (build/report-history.json)", BuildReport.Json),
     ];
 
     public static string Generate(Type type, string title, JsonSerializerOptions? options)
@@ -85,8 +89,8 @@ public sealed class SchemaTests
         }
         Assert.True(update || stale.Count == 0, $"Schemas differ from the file model (rewritten; review and commit them): {string.Join(", ", stale)}");
         Assert.True(File.Exists(Path.Combine(SchemaDir, "graph.schema.json")));
-        // Every format names its version.
-        foreach (var (file, type, _, _) in Generated.Where(g => g.Type != typeof(ActorData)))
+        // Every format names its version (a prefab is an actor of a scene; the build history is a list).
+        foreach (var (file, type, _, _) in Generated.Where(g => g.Type != typeof(ActorData) && g.Type != typeof(List<BuildReport.HistoryEntry>)))
             Assert.True(Schema(file)["properties"]?["format"] != null, $"{file} has no format field");
     }
 

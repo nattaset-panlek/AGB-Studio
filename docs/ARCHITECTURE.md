@@ -125,9 +125,10 @@ checklist 1.2). Links fire on any player overlap; the Door and Respawn kinds are
    `gbafix` writes the header (title, game code, maker, version, checksum). The step name switches from Compile to
    Link + gbafix when the first link line appears.
 
-After a successful build: `build/report.json` (ROM by category, largest assets, IWRAM / EWRAM from `nm`, per-scene
-budgets, warnings), `build/report-history.json` (failed builds included), and `THIRD_PARTY.txt` next to the ROM with
-the libtonc and maxmod notices. Generated files are written only when their content changes.
+After a successful build: `build/report.json` (ROM by category, per asset ROM bytes from the linker map with the VRAM,
+palette and RAM buffer bytes it takes when loaded, largest assets, IWRAM / EWRAM from the linker map, per-scene
+budgets, warnings; schema `docs/schemas/report.schema.json`), `build/report-history.json` (failed builds included;
+`report-history.schema.json`), and `THIRD_PARTY.txt` next to the ROM with the libtonc and maxmod notices. Generated files are written only when their content changes.
 
 **Native build with or without Ninja** (`NativeBuild.cs`): the build always writes `build.ninja`. When `ninja.exe` is on
 `PATH` it runs Ninja; otherwise it runs the same graph in-process: objects older than their source or any header in

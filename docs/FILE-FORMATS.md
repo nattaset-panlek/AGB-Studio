@@ -148,8 +148,21 @@ copies it in any scene when the scene has no actor of that name.
 | `obj/build.ninja`, `obj/*.elf`, `obj/*.elf.map`, `obj/obj/` | NativeBuild | the build graph, the linked ELF, its map file, objects |
 | `gen/` | GameBuilder, scripting compiler | generated C++ (assets, scenes, strings, scripts, database), the soundbank, debugger maps |
 | `cache/manifest.json` | AssetCache | hashes of converted assets for incremental builds |
-| `report.json` | BuildReport | ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets, warnings |
+| `report.json` | BuildReport | `format`, ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets (`scenes`), build time per step (`stepSeconds`), warnings. Each of `assets` (largest ROM first; `largestAssets` is the first ten) has `name`, `type`, ROM `bytes` and `share` (percent of the ROM), and what it takes when a scene loads it: `vram` (`BG`, `OBJ` or empty), `vramBytes` = `vramTileBytes` + `vramMapBytes`, `paletteBytes` (32 per 16-colour bank) and `ramBytes` (see below) |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
+
+What an asset takes when loaded (`GameBuilder` `AssetInfo`, the same numbers the scene budgets add up): a sprite one
+frame of OBJ tiles for each actor that shows it and its own OBJ palette bank (none when it shares a palette); a tileset
+or image all its tiles in BG VRAM and its palette banks (LZ77 tiles are decompressed by the BIOS straight into VRAM, so
+no RAM); a map, for each tile or image layer, a 64 x 32 screen map (4 KB) in BG VRAM and its 4 KB shadow in the screen
+arena (EWRAM), and for each rotate / scale layer a 16 KB character block for its 8bpp tiles, its map and its palette
+banks; the boot splash its tiles, palette, a 2 KB screen map and its 2 KB shadow. Music, sounds, fonts, string tables
+and Database tables are read from ROM: no VRAM and no RAM (the text layer's tiles are in the scene budget's
+`vramTextBytes`; the Maxmod mixing buffer and other runtime memory are in `ramSplit`). A script that edits map tiles
+(`Scene.SetTile`) copies that layer's cells into the screen arena once; that copy is not counted.
+
+`docs/schemas/report.schema.json` and `report-history.schema.json` are generated from `BuildReport` like the project
+format schemas; `BuildReportTests.ReportNumbersMatchTheLinkerMap` checks a real build's files against them.
 
 ## Editor files (per user)
 

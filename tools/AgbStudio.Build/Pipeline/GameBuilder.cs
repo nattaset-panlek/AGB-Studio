@@ -272,7 +272,10 @@ public sealed class GameBuilder
         _sprites[name] = s;
         var outFile = Path.Combine(GenDir, "assets", $"sprite_{id}.cpp");
         var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, shared == null ? "" : paletteOwner + ":" + string.Join(',', shared));
-        Assets.Sprites[name] = new AssetInfo(name, "Sprite", file, s.Tiles.Length + (shared == null ? 32 : 0), s.FrameCount, $"{s.SourceWidth}×{s.SourceHeight}");
+        // Loaded: one frame per actor that shows it (the runtime copies frames from ROM to OBJ VRAM), and its own OBJ
+        // palette bank unless it shares the owner's.
+        Assets.Sprites[name] = new AssetInfo(name, "Sprite", file, s.Tiles.Length + (shared == null ? 32 : 0), s.FrameCount, $"{s.SourceWidth}×{s.SourceHeight}")
+            { Vram = "OBJ", VramTileBytes = s.TilesPerFrame * 32L, PaletteBytes = shared == null ? 32 : 0 };
         if (_cache.IsCurrent("sprite:" + name, hash, [outFile]))
         {
             _sources.Add(outFile);
@@ -329,8 +332,10 @@ public sealed class GameBuilder
         var tiles = t.Tiles.ToBytes();
         var compress = meta.Compress && _p.Settings.Build.CompressGraphics;
         var stored = compress ? Lz77.Compress(tiles) : tiles;
+        // Loaded: every tile in BG VRAM (LZ77 tiles are decompressed by the BIOS straight into VRAM, no RAM buffer) and
+        // its palette banks.
         Assets.Tilesets[name] = new AssetInfo(name, "Tileset", file, stored.Length + t.Palette.Banks.Count * 32 + t.Metatiles.Count * 10, t.Tiles.Count,
-            $"{t.Tiles.Count} tiles · 4bpp");
+            $"{t.Tiles.Count} tiles · 4bpp") { Vram = "BG", VramTileBytes = t.Tiles.Count * 32L, PaletteBytes = t.Palette.Banks.Count * 32L };
         var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, compress, string.Join(',', _p.Settings.Tags));
         if (_cache.IsCurrent("tileset:" + name, hash, [outFile]))
         {
@@ -385,7 +390,9 @@ public sealed class GameBuilder
         var tiles = t.Tiles.ToBytes();
         var compress = _p.Settings.Build.CompressGraphics;
         var stored = compress ? Lz77.Compress(tiles) : tiles;
-        Assets.Tilesets[name] = new AssetInfo(name, "Image", file, stored.Length + cells.Length * 2, t.Tiles.Count, $"{w}x{h} tiles");
+        // Loaded: its tiles and palette banks; the screen blocks and map shadow belong to the map layer that shows it.
+        Assets.Tilesets[name] = new AssetInfo(name, "Image", file, stored.Length + cells.Length * 2, t.Tiles.Count, $"{w}x{h} tiles")
+            { Vram = "BG", VramTileBytes = t.Tiles.Count * 32L, PaletteBytes = t.Palette.Banks.Count * 32L };
         var hash = AssetCache.HashFiles([file], ConverterVersion, compress);
         if (_cache.IsCurrent("image:" + name, hash, [outFile]))
         {
@@ -673,6 +680,13 @@ public sealed class GameBuilder
     public const int ObjVramBitmapBytes = 16 * 1024;  // modes 3-5: the bitmap takes the lower half of OBJ VRAM
     public const int ObjBanks = 16;
     public const int DialogueBoxBytes = 28 * 5 * 32;  // text::BoxStyle default: 28 x 5 tiles
+    /// <summary>A regular (tile or image) layer: 64 x 32 screen entries (bg::Size::S64x32, two screen blocks) in BG VRAM,
+    /// and the same bytes again for its map shadow in the screen arena (EWRAM).</summary>
+    public const int LayerMapBytes = 64 * 32 * 2;
+    /// <summary>The boot splash layer: 32 x 32 screen entries (one screen block) and its shadow.</summary>
+    public const int SplashMapBytes = 32 * 32 * 2;
+    /// <summary>A rotate / scale layer needs a whole empty character block for its 8bpp tiles.</summary>
+    public const int AffineTileBlockBytes = 16 * 1024;
     public const int MaxTextLabels = 6;               // text::addLabel slots
 
     /// <summary>G-HW.01 / G-HW.03: what a scene puts in VRAM and palette RAM at once, against the hardware: background
@@ -686,33 +700,25 @@ public sealed class GameBuilder
         var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
         if (scene.Map.Length > 0 && File.Exists(mapPath))
         {
+            // The same numbers as the assets' own (report.json assets): each layer's map, the tileset's tiles once,
+            // each image layer's tiles.
             var map = GameProject.Load<MapFile>(mapPath);
-            var tilesets = new HashSet<string>(StringComparer.Ordinal);
+            var tilesetLoaded = false;
             foreach (var l in map.Layers)
             {
-                switch (l.Type)
+                var cost = LayerCost(map, l);
+                tiles += cost.Tiles + cost.Map;
+                banks += cost.Banks;
+                if (l.Type == LayerType.Image && _images.TryGetValue(l.Image, out var img))
                 {
-                    case LayerType.CollisionOnly:
-                        continue;
-                    case LayerType.Image when _images.TryGetValue(l.Image, out var img):
-                        tiles += img.Tiles * 32L;
-                        banks += img.Banks;
-                        tiles += 4096;  // screen blocks
-                        continue;
-                    case LayerType.Affine when _tilesets.TryGetValue(map.Tileset, out var ats):
-                        var side = 16;
-                        while (side < Math.Max(map.Width, map.Height) * 2 && side < 128) side *= 2;
-                        tiles += 16 * 1024 + side * side;  // a whole character block for 8bpp tiles, then the map
-                        banks += ats.Palette.Banks.Count;
-                        continue;
-                    default:
-                        if (_tilesets.TryGetValue(map.Tileset, out var ts) && tilesets.Add(map.Tileset))
-                        {
-                            tiles += ts.Tiles.Count * 32L;
-                            banks += ts.Palette.Banks.Count;
-                        }
-                        tiles += 4096;
-                        continue;
+                    tiles += img.Tiles * 32L;
+                    banks += img.Banks;
+                }
+                else if (l.Type == LayerType.Tile && !tilesetLoaded && _tilesets.TryGetValue(map.Tileset, out var ts))
+                {
+                    tilesetLoaded = true;
+                    tiles += ts.Tiles.Count * 32L;
+                    banks += ts.Palette.Banks.Count;
                 }
             }
         }
@@ -745,6 +751,33 @@ public sealed class GameBuilder
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {palettes.Count} sprite palettes; the GBA has {ObjBanks}. " +
                 "Let sprites share a palette (Sprite Editor · Palette) or use fewer different sprites in the scene."));
         Assets.Scenes[scene.Name] = new SceneLimits(tiles, text, banks, obj, palettes.Count);
+    }
+
+    /// <summary>What one layer of a map takes when a scene loads it, besides the tiles of its tileset or image: the screen
+    /// blocks of its map in BG VRAM and the map shadow in the screen arena (tile and image layers, MapLayerView::init);
+    /// for a rotate / scale layer its 8bpp tiles (a whole character block), its one-byte-per-cell map and its palette
+    /// banks (affine::load copies the map straight to VRAM, no shadow). Collision-only layers stay in ROM.</summary>
+    (long Tiles, long Map, long Ram, int Banks) LayerCost(MapFile map, MapLayerData l)
+    {
+        switch (l.Type)
+        {
+            case LayerType.CollisionOnly:
+                return default;
+            case LayerType.Affine:
+                if (!_tilesets.TryGetValue(map.Tileset, out var ts)) return default;
+                var side = AffineSide(map);
+                return (AffineTileBlockBytes, side * side, 0, ts.Palette.Banks.Count);
+            default:
+                return (0, LayerMapBytes, LayerMapBytes, 0);
+        }
+    }
+
+    /// <summary>The hardware size of a rotate / scale map in 8x8 tiles (16, 32, 64 or 128; AffineConverter pads to it).</summary>
+    static int AffineSide(MapFile map)
+    {
+        var side = 16;
+        while (side < Math.Max(map.Width, map.Height) * 2 && side < 128) side *= 2;
+        return side;
     }
 
     // Text layer tiles a scene reserves (runtime textdb.cpp / ui.cpp): the blank tile, one box per Text Label actor
@@ -794,6 +827,11 @@ public sealed class GameBuilder
         if (!g.BootSplash) return false;
         var (t, cells, w, h) = TilesetConverter.ConvertImage("splash", SplashArt.ToImage(SplashArt.Draw()));
         var tiles = t.Tiles.ToBytes();
+        // Shown as a 32 x 32 layer (game.cpp SplashScreen): its tiles, palette, screen block and map shadow.
+        Assets.Splash = new AssetInfo("Boot splash", "Image", "", tiles.Length + cells.Length * 2 + t.Palette.Banks.Count * 32, t.Tiles.Count, $"{w}x{h} tiles")
+        {
+            Vram = "BG", VramTileBytes = t.Tiles.Count * 32L, VramMapBytes = SplashMapBytes, PaletteBytes = t.Palette.Banks.Count * 32L, RamBytes = SplashMapBytes,
+        };
         var sb = new StringBuilder("// Generated by AGB Studio (boot splash). Do not edit.\n#include \"agb/data.hpp\"\n#include \"agb/ui.hpp\"\n");
         ImageTilesetCpp(sb, "agb_splash", t, cells, tiles, false);
         sb.Append($"extern const agb::data::MapLayer agbasset_splash_layer = {{0, agb::data::LayerType::Image, 0, false, 256, 256, {w}, {h}, agbasset_tileset_agb_splash_cells, &agbasset_tileset_agb_splash}};\n");
@@ -1005,6 +1043,23 @@ public sealed class GameBuilder
         Write(Path.Combine(GenDir, "maps", $"map_{id}.cpp"), sb.ToString());
         var collision = map.CollisionLayer >= 0 ? map.CollisionLayer : map.Layers.FindIndex(l => l.Type == LayerType.Tile);
         var result = new MapOut(map, symbol, map.Layers.Count, collision);
+        // P7.12: what the map itself takes when a scene loads it (its tileset and images are assets of their own).
+        long vramTiles = 0, vramMap = 0, ram = 0, rom = 20L * Math.Max(1, map.Layers.Count);  // agb::data::MapLayer: 20 bytes
+        var palettes = 0;
+        foreach (var l in map.Layers)
+        {
+            var cost = LayerCost(map, l);
+            vramTiles += cost.Tiles;
+            vramMap += cost.Map;
+            ram += cost.Ram;
+            palettes += cost.Banks;
+            if (l.Type == LayerType.Affine) rom += AffineSide(map) * AffineSide(map) + cost.Banks * 32;
+            else if (l.Type != LayerType.Image) rom += l.Cells.Count * 2;
+        }
+        Assets.Maps[name] = new AssetInfo(name, "Map", mapPath, (int)rom, map.Layers.Count, $"{map.Width}x{map.Height}, {map.Layers.Count} layers")
+        {
+            Vram = vramTiles + vramMap > 0 ? "BG" : "", VramTileBytes = vramTiles, VramMapBytes = vramMap, PaletteBytes = palettes * 32L, RamBytes = ram,
+        };
         _maps[name] = result;
         return result;
     }
@@ -1410,7 +1465,18 @@ public sealed class GameBuilder
     }
 }
 
-public sealed record AssetInfo(string Name, string Type, string File, int RomBytes, int Count, string Detail);
+/// <summary>An asset of the build: its ROM bytes as converted, and what it takes when a scene loads it (P7.12,
+/// report.json <c>assets</c>): tile and map bytes in VRAM (<see cref="Vram"/> says which half), palette RAM bytes, and
+/// RAM buffer bytes (the screen-arena shadow of a map layer). Assets the runtime reads from ROM take no RAM.</summary>
+public sealed record AssetInfo(string Name, string Type, string File, int RomBytes, int Count, string Detail)
+{
+    /// <summary>"BG", "OBJ", or "" for assets that put nothing in VRAM.</summary>
+    public string Vram { get; init; } = "";
+    public long VramTileBytes { get; init; }
+    public long VramMapBytes { get; init; }
+    public long PaletteBytes { get; init; }
+    public long RamBytes { get; init; }
+}
 
 /// <summary>What one scene puts in VRAM and palette RAM at once (GameBuilder.CheckHardwareLimits): BG bytes include the
 /// text layer bytes.</summary>
@@ -1423,6 +1489,10 @@ public sealed class BuildAssetInfo
     public Dictionary<string, AssetInfo> Audio { get; } = new();
     public Dictionary<string, AssetInfo> Fonts { get; } = new();
     public Dictionary<string, AssetInfo> Data { get; } = new();
+    /// <summary>Maps the scenes show (one entry per map, however many scenes use it).</summary>
+    public Dictionary<string, AssetInfo> Maps { get; } = new();
+    /// <summary>The boot splash image and its layer, when the project shows it.</summary>
+    public AssetInfo? Splash { get; set; }
     public Dictionary<string, SceneLimits> Scenes { get; } = new();
     public long SaveBytes { get; set; }
     public long SaveCapacity { get; set; }
