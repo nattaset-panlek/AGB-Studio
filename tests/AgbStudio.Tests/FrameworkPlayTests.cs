@@ -1,6 +1,7 @@
 using AgbStudio.Build;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Pipeline;
+using AgbStudio.Core;
 using AgbStudio.Core.Project;
 using AgbStudio.Emu;
 using AgbStudio.Scripting;
@@ -344,6 +345,14 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
     static bool GameplayOverrun(string line) =>
         line.Contains("took longer than one frame", StringComparison.Ordinal) && line.Contains(": update)", StringComparison.Ordinal);
 
+    /// <summary>EMU evidence (P4.X1, P5.X1): the mGBA core's picture, kept in build/emu-evidence/skyhopper-*.png.</summary>
+    static void Shot(PlaySession s, string name)
+    {
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "emu-evidence");
+        Directory.CreateDirectory(dir);
+        Png.WriteArgb(Path.Combine(dir, "skyhopper-" + name + ".png"), s.Core.Frame, LibretroCore.Width, LibretroCore.Height);
+    }
+
     [Fact]
     public void ForestSliceRunsAt60FpsWithPlayerSlimesCoinsAndHud()
     {
@@ -362,6 +371,7 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
         {
             s.Keys = (f / 120 % 2 == 0 ? GbaKeys.Right : GbaKeys.Left) | (f % 40 < 14 ? GbaKeys.A : 0);
             s.Step();
+            if (f is 30 or 60) Shot(s, $"forest01-slice-{f}");
             var prof = s.Profiler()!;
             worst = Math.Max(worst, prof.Logic + prof.Render + prof.Audio);
         }
@@ -394,7 +404,12 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
             log.WriteLine($"-> {name} in {n} frames");
             Assert.True(n >= minFrames, $"{name}: the transition took {n} frames");
             visited.Add(name);
-            Play.Hold(s, 0, 10);
+            // Four frames into the new scene its transition is still running; ten frames in it is (nearly) done.
+            var shot = $"{visited.Count - 2}-" + new string(name.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+            Play.Hold(s, 0, 4);
+            Shot(s, shot + "-transition");
+            Play.Hold(s, 0, 6);
+            Shot(s, shot);
             return n;
         }
 
