@@ -66,6 +66,8 @@ public sealed class AssetsPanel : DockPanel, IEditTarget
         set
         {
             _category = value;
+            // Select All covers the category it was chosen in: another category keeps the first asset only
+            if (_assets.AllSelected) _assets.Select(_assets.Selected?.Path);
             Rebuild();
         }
     }
@@ -90,9 +92,10 @@ public sealed class AssetsPanel : DockPanel, IEditTarget
             _categories.Children.Add(row);
         }
         _cards.Children.Clear();
-        // the selected asset, else the sheet of the selected actor (hero.png when the Player is selected)
+        _assets.ShownCategory = _category;
+        // the selected asset (every one after Select All), else the sheet of the selected actor (hero.png when the Player is selected)
         var selected = _assets.Selected?.Path ?? (_m.SelectedActor?.Sprite is { Length: > 0 } sp ? _m.Assets?.SpritePath(sp) : null);
-        foreach (var a in _assets.List(_category)) _cards.Children.Add(Card(a, a.Path == selected));
+        foreach (var a in _assets.List(_category)) _cards.Children.Add(Card(a, _assets.AllSelected ? _assets.IsSelected(a.Path) : a.Path == selected));
     }
 
     Control Card(AssetItem a, bool selected)

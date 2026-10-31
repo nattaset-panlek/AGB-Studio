@@ -72,7 +72,7 @@ public static class LineCards
         card.PointerPressed += (_, e) =>
         {
             if (!e.GetCurrentPoint(card).Properties.IsLeftButtonPressed) return;
-            if (page.SelectedLine != index || page.SelectedChoice >= 0) page.SelectLine(index);
+            if (page.SelectedLine != index || page.SelectedChoice >= 0 || page.AllLinesSelected) page.SelectLine(index);
             card.Focus();
             e.Handled = true;
         };

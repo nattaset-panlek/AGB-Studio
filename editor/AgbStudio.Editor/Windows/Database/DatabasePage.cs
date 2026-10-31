@@ -36,8 +36,14 @@ public sealed class DatabasePage : ToolPage
     public ProjectData? Data => _data;
     public TableDoc? Current { get; private set; }
     public int SelectedRow { get; private set; } = -1;
+    /// <summary>Edit â€º Select All: every row the grid shows (after the filter) is selected; a row click selects that row alone.</summary>
+    public bool AllRowsSelected { get; private set; }
+    /// <summary>The rows the Edit menu acts on, in table order: every shown row after Select All, else the selected row.</summary>
+    public IReadOnlyList<int> SelectedRows => AllRowsSelected && Current != null ? Grid.VisibleRowIndices.Where(r => r < Current.Table.Rows.Count).ToList()
+        : SelectedRow >= 0 ? [SelectedRow] : [];
     public string Filter => FilterBox.Text ?? "";
-    public Dictionary<string, string>? Clipboard { get; private set; }
+    /// <summary>The copied rows (Copy / Cut).</summary>
+    public IReadOnlyList<Dictionary<string, string>>? Clipboard { get; private set; }
 
     public DatabasePage(WindowContext ctx) : this(ctx.Services) { }
 
@@ -96,6 +102,7 @@ public sealed class DatabasePage : ToolPage
         if (_data != null) _data.Changed += Refresh;
         Current = null;
         SelectedRow = -1;
+        AllRowsSelected = false;
         Document = null;
         if (_data?.Tables.FirstOrDefault() is { } first) Select(first, 0, refresh: false);
     }
@@ -128,6 +135,7 @@ public sealed class DatabasePage : ToolPage
             if (old != null && old != Document && !old.IsDirty) S.Documents.Close(old);
         }
         SelectedRow = table.Table.Rows.Count == 0 ? -1 : Math.Clamp(row, 0, table.Table.Rows.Count - 1);
+        AllRowsSelected = false;
         if (refresh) Refresh();
     }
 
@@ -140,6 +148,16 @@ public sealed class DatabasePage : ToolPage
     {
         if (Current is null) return;
         SelectedRow = Math.Clamp(row, -1, Current.Table.Rows.Count - 1);
+        AllRowsSelected = false;
+        Refresh();
+    }
+
+    /// <summary>Edit â€º Select All in the grid: every row it shows.</summary>
+    public void SelectAllRows()
+    {
+        if (Current is null || Grid.VisibleRowIndices.Count == 0) return;
+        if (!Grid.VisibleRowIndices.Contains(SelectedRow)) SelectedRow = Grid.VisibleRowIndices[0];
+        AllRowsSelected = true;
         Refresh();
     }
 
@@ -285,41 +303,58 @@ public sealed class DatabasePage : ToolPage
         _data!.Edit(name, Document, () => { t.Rows.Insert(at, row); SelectedRow = at; }, () => { t.Rows.Remove(row); SelectedRow = Math.Min(before, t.Rows.Count - 1); });
     }
 
+    /// <summary>Deletes the selected row, or every selected row after Select All (one undo step).</summary>
     public void DeleteRow()
     {
-        if (_data is null || Current is null || SelectedRow < 0) return;
+        if (_data is null || Current is null || SelectedRows is not { Count: > 0 } selected) return;
         var t = Current.Table;
-        var at = SelectedRow;
-        var row = t.Rows[at];
-        _data.Edit("Delete row", Document, () => { t.Rows.RemoveAt(at); SelectedRow = Math.Min(at, t.Rows.Count - 1); }, () => { t.Rows.Insert(at, row); SelectedRow = at; });
+        var removed = selected.Select(i => (At: i, Row: t.Rows[i])).ToList();
+        var first = removed[0].At;
+        _data.Edit(removed.Count == 1 ? "Delete row" : "Delete rows", Document,
+            () => { foreach (var (_, row) in removed) t.Rows.Remove(row); SelectedRow = Math.Min(first, t.Rows.Count - 1); AllRowsSelected = false; },
+            () => { foreach (var (at, row) in removed) t.Rows.Insert(at, row); SelectedRow = first; });
     }
 
     public void DuplicateRow()
     {
-        if (Current is null || SelectedRow < 0) return;
-        PasteCopy(new Dictionary<string, string>(Current.Table.Rows[SelectedRow]), "Duplicate row");
+        if (Current is null || SelectedRows is not { Count: > 0 } selected) return;
+        PasteCopies(selected.Select(i => new Dictionary<string, string>(Current.Table.Rows[i])).ToList(), selected.Count == 1 ? "Duplicate row" : "Duplicate rows");
     }
 
     public void CopyRow()
     {
-        if (Current is null || SelectedRow < 0) return;
-        Clipboard = new Dictionary<string, string>(Current.Table.Rows[SelectedRow]);
+        if (Current is null || SelectedRows is not { Count: > 0 } selected) return;
+        Clipboard = selected.Select(i => new Dictionary<string, string>(Current.Table.Rows[i])).ToList();
     }
 
     public void PasteRow()
     {
-        if (Clipboard is null || Current is null) return;
-        PasteCopy(new Dictionary<string, string>(Clipboard.Where(kv => Current.Table.Fields.Any(f => f.Name == kv.Key)).ToDictionary()), "Paste row");
+        if (Clipboard is not { Count: > 0 } rows || Current is null) return;
+        var fields = Current.Table.Fields;
+        PasteCopies(rows.Select(r => r.Where(kv => fields.Any(f => f.Name == kv.Key)).ToDictionary()).ToList(), rows.Count == 1 ? "Paste row" : "Paste rows");
     }
 
-    void PasteCopy(Dictionary<string, string> row, string name)
+    /// <summary>
+    /// Inserts rows after the selection in one undo step; the first one is selected. A row keeps its key when no row
+    /// has it (Paste after Cut), else it becomes "&lt;id&gt;Copy", "&lt;id&gt;Copy2" ...
+    /// </summary>
+    void PasteCopies(List<Dictionary<string, string>> rows, string name)
     {
         var t = Current!.Table;
-        var id = row.GetValueOrDefault(t.KeyField) ?? "Row";
-        var copy = id + "Copy";
-        for (var i = 2; t.Rows.Any(r => r.GetValueOrDefault(t.KeyField) == copy); i++) copy = id + "Copy" + i;
-        row[t.KeyField] = copy;
-        InsertRow(row, SelectedRow < 0 ? t.Rows.Count : SelectedRow + 1, name);
+        foreach (var row in rows)
+        {
+            var taken = t.Rows.Concat(rows.TakeWhile(r => r != row)).Select(r => r.GetValueOrDefault(t.KeyField)).ToHashSet();
+            if (row.TryGetValue(t.KeyField, out var own) && !taken.Contains(own)) continue;
+            var id = own ?? "Row";
+            var copy = id + "Copy";
+            for (var i = 2; taken.Contains(copy); i++) copy = id + "Copy" + i;
+            row[t.KeyField] = copy;
+        }
+        var at = SelectedRows is [.., var last] ? last + 1 : t.Rows.Count;
+        var before = SelectedRow;
+        _data!.Edit(name, Document,
+            () => { t.Rows.InsertRange(at, rows); SelectedRow = at; AllRowsSelected = false; },
+            () => { foreach (var r in rows) t.Rows.Remove(r); SelectedRow = Math.Min(before, t.Rows.Count - 1); });
     }
 
     /// <summary>Add Field (T-D18): appends the field to the schema.</summary>

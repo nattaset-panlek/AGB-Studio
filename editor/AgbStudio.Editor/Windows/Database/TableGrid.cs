@@ -14,8 +14,8 @@ namespace AgbStudio.Editor.Windows.Database;
 /// <summary>
 /// The Database grid (T-P07): "#", the sprite column, the key and the other fields of the table as Figma "Table Cell"
 /// columns, 9 rows visible (the rest scroll). Click selects a row, double-click edits a cell in place (text box, or the
-/// value list for enum, bool, sprite, sound and reference fields). Delete / Duplicate / Copy / Paste work on the
-/// selected row through the Edit menu.
+/// value list for enum, bool, sprite, sound and reference fields). Cut / Copy / Paste / Duplicate / Delete work on the
+/// selected row through the Edit menu; Select All selects every shown row and they then work on all of them.
 /// </summary>
 public sealed class TableGrid : Border, IEditTarget
 {
@@ -131,7 +131,7 @@ public sealed class TableGrid : Border, IEditTarget
     Control BuildRow(TableFile t, int r)
     {
         var row = t.Rows[r];
-        var selected = r == _page.SelectedRow;
+        var selected = r == _page.SelectedRow || _page.AllRowsSelected;
         var g = new Grid { ColumnDefinitions = Defs(_columns), Height = RowHeight, Background = Avalonia.Media.Brushes.Transparent, Name = "Row_" + (r + 1).ToString(CultureInfo.InvariantCulture), Tag = r };
         for (var c = 0; c < _columns.Count; c++)
         {
@@ -158,7 +158,7 @@ public sealed class TableGrid : Border, IEditTarget
                 if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
                 Focus();
                 if (e.ClickCount >= 2 && field != null) BeginEdit(r, field, target);
-                else if (_page.SelectedRow != r) _page.SelectRow(r);
+                else if (_page.SelectedRow != r || _page.AllRowsSelected) _page.SelectRow(r);
                 e.Handled = true;
             };
             g.Children.Add(cell);
@@ -229,12 +229,12 @@ public sealed class TableGrid : Border, IEditTarget
     }
 
     // ---- Edit menu ----
-    public bool CanCopy => _page.SelectedRow >= 0;
-    public bool CanPaste => _page.Clipboard != null;
+    public bool CanCopy => _page.SelectedRows.Count > 0;
+    public bool CanPaste => _page.Clipboard is { Count: > 0 };
     public void Cut() { Copy(); Delete(); }
     public void Copy() => _page.CopyRow();
     public void Paste() => _page.PasteRow();
     public void Duplicate() => _page.DuplicateRow();
     public void Delete() => _page.DeleteRow();
-    public void SelectAll() { }
+    public void SelectAll() => _page.SelectAllRows();
 }

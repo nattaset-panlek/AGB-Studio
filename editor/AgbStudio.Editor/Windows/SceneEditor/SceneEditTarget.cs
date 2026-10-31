@@ -57,10 +57,11 @@ public sealed class SceneEditTarget : IEditTarget
         else Assets.Delete();
     }
 
-    /// <summary>Select All in the scene selects the scene (every actor is under it); in Assets it is not used.</summary>
+    /// <summary>Select All in the scene selects the scene (every actor is under it); in Assets, every asset of the shown category.</summary>
     public void SelectAll()
     {
-        if (Active == Panel.Scene && _m.Scene != null) _m.Selection = new SceneItem(SceneItemKind.Scene);
+        if (Active == Panel.Assets) Assets.SelectAll(Assets.ShownCategory);
+        else if (_m.Scene != null) _m.Selection = new SceneItem(SceneItemKind.Scene);
     }
 
     /// <summary>F2: rename the selected actor (inline in the Hierarchy) or the selected asset.</summary>
