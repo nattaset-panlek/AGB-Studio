@@ -122,7 +122,7 @@ public sealed class Phase11ScriptShots : IShotSource
         try
         {
             Wait(fx.Services.Windows.Open(id, args, source: "SHOT"));
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { Close(fx, win); }
@@ -157,7 +157,7 @@ public sealed class Phase11ScriptShots : IShotSource
             var issue = page.Editor.Issues.First(i => i.Id == "GAE002");
             Wait(page.ShowPopupAsync(issue));
             page.Editor.Focus();
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { Close(fx, win); }
@@ -215,7 +215,7 @@ public sealed class Phase11ScriptShots : IShotSource
             var page = (LogicGraphPage)win.CurrentPage!;
             page.Canvas.SetView(1, default);
             page.Canvas.Select(["n6"]);
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { Close(fx, win); }
@@ -264,7 +264,7 @@ public sealed class Phase11ScriptShots : IShotSource
             Wait(fx.Services.Windows.Open("T-P13", "Forest_01", source: "SHOT"));
             var page = (WorldMapPage)win.CurrentPage!;
             page.Canvas.SetView(1, default);
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { Close(fx, win); }

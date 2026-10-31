@@ -48,6 +48,15 @@ public static class Capture
         return path;
     }
 
+    /// <summary>One step to undo and one to redo: the Figma toolbars show Undo and Redo enabled.</summary>
+    public static void UndoHistory(AgbStudio.Editor.Shell.EditorServices s)
+    {
+        s.Undo.Push(new AgbStudio.Editor.Services.DelegateAction("a", () => { }, () => { }));
+        s.Undo.Push(new AgbStudio.Editor.Services.DelegateAction("b", () => { }, () => { }));
+        s.Undo.Undo();
+        Pump();
+    }
+
     public static void Save(Bitmap bmp, string path)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);

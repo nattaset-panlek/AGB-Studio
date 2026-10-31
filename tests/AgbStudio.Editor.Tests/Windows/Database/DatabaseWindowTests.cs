@@ -146,7 +146,7 @@ public class DatabaseWindowTests : DataE2E
         Assert.Equal(25, r.Fields["power"].SliderValue);   // 0 .. 8.00, the largest power of the table
         Assert.True(r.Fields["stackable"].IsOn);
         Assert.Equal("Restores 2 hearts. Tastes like strawberries.", r.Description!.Text);
-        Assert.Equal(["Shop_01 · slot2", "Chest · Cave_01", "Slime.cs · drop table"], r.UsedByRows.Select(u => u.Label));
+        Assert.Equal(["Shop_01 · slot 2", "Chest · Cave_01", "Slime.cs · drop table"], r.UsedByRows.Select(u => u.Label));
 
         // Thai typed into the record goes to the string table
         var th = r.Fields["name · TH"].GetVisualDescendants().OfType<TextBox>().First(b => b.Name == "PART_Text");

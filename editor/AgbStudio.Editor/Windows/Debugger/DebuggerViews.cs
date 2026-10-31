@@ -559,12 +559,12 @@ public sealed class ColourPanel : StackPanel
         }
         _swatch.VerticalAlignment = VerticalAlignment.Top;
         var top = UI.Row(14, _swatch, Kv());
-        var colTop = UI.Column(8, _title, top);
+        var colTop = UI.Column(6, _title, top);   // Figma T-P24: 6 px under the header, as the other sections
         Children.Add(UI.Frame(colTop, null, "border/default", new Thickness(0, 0, 0, 1), new Thickness(12, 8, 12, 10)));
-        Children.Add(DebugUI.Section("Used by", "link", _usedBy, "UsedBySection", new Thickness(12, 8, 12, 14), gap: 9));
+        Children.Add(DebugUI.Section("Used by", "link", _usedBy, "UsedBySection", new Thickness(12, 8, 12, 13), gap: 9));
         OpenPaletteManager.Click += (_, _) => _ = s.Windows.Open("T-P10", $"{(_m.SelectedColour < 256 ? "BG" : "OBJ")} {_m.SelectedColour / 16 % 16}", source: "DebuggerPalettes");
         BreakOnChange.Click += (_, _) => { _m.BreakOnColour = _m.BreakOnColour == _m.SelectedColour ? null : _m.SelectedColour; Refresh(); };
-        Children.Add(DebugUI.Section("Actions", "spark", UI.Column(6, OpenPaletteManager, BreakOnChange), "Actions", new Thickness(12, 8, 12, 11), gap: 9));
+        Children.Add(DebugUI.Section("Actions", "spark", UI.Column(6, OpenPaletteManager, BreakOnChange), "Actions", new Thickness(12, 8, 12, 11), gap: 6));
     }
 
     public void Refresh()

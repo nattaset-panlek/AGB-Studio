@@ -48,7 +48,8 @@ public static class LauncherFixture
     public static LauncherService Launcher(Fixture fx)
     {
         var l = LauncherService.Of(fx.Services);
-        l.StatusLine = () => "v0.1 · devkitARM 16.1 found";
+        // the running editor's version (Scope log: show 1.0.0, not Figma's 0.1) and the toolchain of the frames
+        l.StatusLine = () => $"{EditorVersion.Short} · devkitARM 16.1 found";
         l.DevkitPro = @"D:\devkitPro";
         l.DeleteFolder = folder => { Directory.Delete(folder, true); return true; };
         l.OpenDocument = _ => { };
@@ -160,7 +161,7 @@ public sealed class LauncherShots : IShotSource
         {
             win.Show();
             l.CompleteOpen(created.ProjectPath, ProjectCreator.StartScene);
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { win.Close(); }

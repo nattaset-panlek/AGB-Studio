@@ -82,7 +82,7 @@ public static class SceneCommands
         }
         return
         [
-            new CommandEntry("scene.addActor.empty", true), new CommandEntry("scene.addActor.player", true), new SubmenuEntry("T-M11.Enemy", "Enemy", Enemies),
+            new CommandEntry("scene.addActor.empty", true), new CommandEntry("scene.addActor.player", true), new SubmenuEntry("T-M11.Enemy", "Enemy", Enemies, "bug"),
             new CommandEntry("scene.addActor.pickup", true), new CommandEntry("scene.addActor.trigger", true), new CommandEntry("scene.addActor.camera", true),
             new CommandEntry("scene.addActor.text", true), SeparatorEntry.Instance,
             new CommandEntry("scene.addLayer", true), new CommandEntry("scene.addPrefab", true),

@@ -172,6 +172,9 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
             t.TextTrimming = TextTrimming.None;
             t.TextWrapping = TextWrapping.Wrap;
             t.MaxLines = 2;
+            // two 16 px lines are 32 px in the 30 px row: Figma lets them overflow by 1 px each side
+            t.Margin = new Thickness(0, -1, 0, -1);
+            UI.OverflowTwoLines(t);
         }
     };
 
@@ -204,10 +207,10 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
 
     Control ProjectsMain()
     {
-        var all = Bare(UI.Row(6, new Icon { Glyph = "right", Size = 12 }.Token(Icon.ForegroundProperty, "text/secondary"), UI.Text("All templates", "Body/12", "text/secondary")), "AllTemplates");
+        var all = Bare(UI.Row(6, new Icon { Glyph = "right", Size = 14 }.Token(Icon.ForegroundProperty, "text/secondary"), UI.Text("All templates", "Body/12", "text/secondary")), "AllTemplates");
         all.HorizontalAlignment = HorizontalAlignment.Right;
         all.VerticalAlignment = VerticalAlignment.Center;
-        all.Margin = new Thickness(0, 0, 9, 0);
+        all.Margin = new Thickness(0, 0, 11, 0);
         all.Click += (_, _) => _ = _s.Windows.Open("T-P20", source: "AllTemplates");
         var templates = UI.Row(16);
         templates.Name = "HomeTemplates";
@@ -497,7 +500,7 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         {
             var link = Bare(UI.Row(10, new Icon { Glyph = glyph, Size = 13, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted"), UI.Text(label, "Body/12", "text/secondary")), "Community_" + label.Replace(' ', '_'));
             link.Height = 28;
-            link.Padding = new Thickness(2, 0);
+            link.Padding = new Thickness(0);
             link.Click += (_, _) => run();
             col.Children.Add(link);
         }

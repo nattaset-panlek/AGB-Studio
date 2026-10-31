@@ -37,12 +37,13 @@ public abstract class ToolPage : DockPanel
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: name + ".VideoModeChip");
         var undo = new IconButton { Glyph = "undo", Command = s.Commands.Get("edit.undo"), Name = "UndoButton" };
         var redo = new IconButton { Glyph = "redo", Command = s.Commands.Get("edit.redo"), Name = "RedoButton" };
-        var bar = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,8,Auto,8,*,8,Auto,8,*,8,Auto,8,Auto"), VerticalAlignment = VerticalAlignment.Center };
+        // play controls centred between the left items and the video chip (the same gap on both sides, as in Figma)
+        var bar = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,8,*,8,Auto,8,*,8,Auto,8,Auto"), VerticalAlignment = VerticalAlignment.Center };
         void At(Control c, int col) { Grid.SetColumn(c, col); c.VerticalAlignment = VerticalAlignment.Center; bar.Children.Add(c); }
         At(_toolbarLeft, 0);
-        At(play, 6);
-        At(chip, 10);
-        At(ToolGroup([undo, redo]), 12);
+        At(play, 4);
+        At(chip, 8);
+        At(ToolGroup([undo, redo]), 10);
         var toolbar = UI.Frame(bar, "bg/panel", "border/default", new Thickness(0, 0, 0, 1), new Thickness(10, 0)).Named("Toolbar");
         toolbar.Height = 44;
         SetDock(toolbar, Dock.Top);

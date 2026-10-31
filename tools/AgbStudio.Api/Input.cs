@@ -30,30 +30,30 @@ public enum Key
 [Cpp("agb::api::Input")]
 public static class Input
 {
-    /// <summary>True on the frame the button goes down.</summary>
+    /// <summary>True on the frame the key goes down.</summary>
     /// <param name="key">Button to check.</param>
     [Cpp("agb::api::Input::Pressed({0})")]
     public static bool Pressed(Key key) => false;
 
-    /// <summary>True while the button is held.</summary>
+    /// <summary>True while the key is down.</summary>
     /// <param name="key">Button to check.</param>
     [Cpp("agb::api::Input::Held({0})")]
     public static bool Held(Key key) => false;
 
-    /// <summary>True on the frame the button goes up.</summary>
+    /// <summary>True on the frame the key goes up.</summary>
     /// <param name="key">Button to check.</param>
     [Cpp("agb::api::Input::Released({0})")]
     public static bool Released(Key key) => false;
 
-    /// <summary>-1, 0 or 1 from the D-pad (left / right).</summary>
+    /// <summary>D-pad as −1, 0 or 1 (left / right).</summary>
     [Cpp("agb::api::Input::AxisX()")]
     public static @fixed AxisX => default;
 
-    /// <summary>-1, 0 or 1 from the D-pad (up / down).</summary>
+    /// <summary>D-pad as −1, 0 or 1 (up / down).</summary>
     [Cpp("agb::api::Input::AxisY()")]
     public static @fixed AxisY => default;
 
-    /// <summary>True when any of the ten buttons was pressed this frame.</summary>
+    /// <summary>Any of the 10 keys pressed this frame.</summary>
     [Cpp("agb::api::Input::AnyKey()")]
     public static bool AnyKey => false;
 }

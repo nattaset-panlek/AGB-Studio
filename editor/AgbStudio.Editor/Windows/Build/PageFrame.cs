@@ -127,7 +127,17 @@ public static class PageFrame
     {
         var t = UI.Text(label, "Body/12", "text/secondary", 86);
         t.TextWrapping = TextWrapping.Wrap;
-        var row = new DockPanel { HorizontalSpacing = 8, MinHeight = height };
+        t.MaxLines = 2;
+        // Figma's Field rows keep their height: a label that needs two 16 px lines overflows the row above and below
+        var oneLine = new FormattedText(label, System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+            new Typeface(t.FontFamily, t.FontStyle, t.FontWeight), t.FontSize, null).WidthIncludingTrailingWhitespace;
+        if (oneLine > t.Width)
+        {
+            var over = (32 - height) / 2;
+            t.Margin = new Thickness(0, -over, 0, -over);
+            t.VerticalAlignment = VerticalAlignment.Stretch;
+        }
+        var row = new DockPanel { HorizontalSpacing = 8, Height = height };
         DockPanel.SetDock(t, Dock.Left);
         row.Children.AddRange([t, editor]);
         return row;

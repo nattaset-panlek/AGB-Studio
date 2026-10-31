@@ -257,6 +257,8 @@ public sealed class LocalizationPage : ToolPage
         foreach (var l in _data.Languages)
         {
             var item = new TreeItem { Label = _data.LanguageLabel(l.Code), Glyph = "globe", Meta = $"{_data.Translated(l.Code, keys)} / {keys.Count}", IsSelected = l.Code == Target, Name = "Lang_" + l.Code };
+            // Figma writes the translated count in the caption style, not the Tree Item's mono meta
+            item.TemplateApplied += (_, e) => { if (e.NameScope.Find<TextBlock>("PART_Meta") is { } meta) AgbStudio.Editor.Theme.Fig.SetStyle(meta, "Caption/10"); };
             var code = l.Code;
             item.Activated += (_, _) => SelectLanguage(code);
             _languages.Children.Add(item);
@@ -355,19 +357,19 @@ public sealed class LocalizationPage : ToolPage
         Dropdown.Attach(SpeakerField, Speakers, v => SetSpeaker(v == "—" ? "" : v));
         FontField = new InspectorField { Kind = FieldKind.Dropdown, Label = "Font", Name = "FontField" };
         Dropdown.Attach(FontField, () => _text!.FontNames(), SetFont);
-        _inspector.Children.Add(Section(key, "type", UI.Column(6, SpeakerField, FontField), new Thickness(12, 8, 12, 9)));
+        _inspector.Children.Add(Section(key, "type", UI.Column(6, SpeakerField, FontField), new Thickness(12, 8, 12, 10)));
 
         _inspector.Children.Add(Ui.Rule());
         SourceBox = TextArea("SourceText", data.Source);
         SourceMeter = new Meter { Label = "Box width", Name = "SourceMeter" };
         Live(SourceBox, () => data.Source, "Edit text");
-        _inspector.Children.Add(Section(LanguageNames.Find(data.Source)?.English ?? data.LanguageName(data.Source), "globe", UI.Column(8, SourceBox, SourceMeter), new Thickness(12, 8, 12, 9)));
+        _inspector.Children.Add(Section(LanguageNames.Find(data.Source)?.English ?? data.LanguageName(data.Source), "globe", UI.Column(8, SourceBox, SourceMeter), new Thickness(12, 8, 12, 10)));
 
         _inspector.Children.Add(Ui.Rule());
         TargetBox = TextArea("TargetText", Target);
         TargetMeter = new Meter { Label = "Box width", Name = "TargetMeter" };
         Live(TargetBox, () => Target, "Edit text");
-        _inspector.Children.Add(Section(data.LanguageName(Target), "globe", UI.Column(8, TargetBox, TargetMeter), new Thickness(12, 8, 12, 9)));
+        _inspector.Children.Add(Section(data.LanguageName(Target), "globe", UI.Column(8, TargetBox, TargetMeter), new Thickness(12, 8, 12, 10)));
 
         _inspector.Children.Add(Ui.Rule());
         NotesBox = new TextBox { Name = "NotesText", TextWrapping = TextWrapping.Wrap, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Padding = new Thickness(0), Height = double.NaN, MinHeight = 16 };
@@ -386,7 +388,7 @@ public sealed class LocalizationPage : ToolPage
             if (now == old) return;
             data.Edit("Edit notes", Document, () => data.EnsureInfo(k).Notes = now, () => data.EnsureInfo(k).Notes = old);
         };
-        _inspector.Children.Add(Section("Notes", "book", NotesBox, new Thickness(12, 8, 12, 9)));
+        _inspector.Children.Add(Section("Notes", "book", NotesBox, new Thickness(12, 8, 12, 10)));
         _inspector.Children.Add(Ui.Rule());
     }
 
@@ -394,7 +396,7 @@ public sealed class LocalizationPage : ToolPage
     static TextBox TextArea(string name, string lang)
     {
         var thai = LanguageNames.Find(lang)?.Script == "Thai";
-        var box = new TextBox { Name = name, TextWrapping = TextWrapping.Wrap, AcceptsReturn = false, Height = double.NaN, MinHeight = thai ? 41 : 37, Padding = new Thickness(11, 9) };
+        var box = new TextBox { Name = name, TextWrapping = TextWrapping.Wrap, AcceptsReturn = false, Height = double.NaN, MinHeight = thai ? 41 : 38, Padding = new Thickness(11, 9) };
         AgbStudio.Editor.Theme.Fig.SetStyle(box, thai ? "Thai/13" : "Body/12");
         return box;
     }
@@ -402,7 +404,7 @@ public sealed class LocalizationPage : ToolPage
     static StackPanel Section(string title, string glyph, Control content, Thickness margin)
     {
         var header = new SectionHeader { Title = title, Glyph = glyph, Name = "Section_" + glyph + "_" + title.Replace(" ", "") };
-        var s = UI.Column(7, header, content);
+        var s = UI.Column(6, header, content);   // Figma: 6 px under the Section Header, 10 px above the rule
         s.Margin = margin;
         header.PropertyChanged += (_, e) => { if (e.Property == SectionHeader.IsOpenProperty) content.IsVisible = header.IsOpen; };
         return s;

@@ -214,16 +214,17 @@ public sealed class EmptyProjectPage : DockPanel
         import.Click += (_, _) => _ = _s.Windows.Open("T-D04", source: "EmptySceneImport");
         var buttons = UI.Row(8, add, paint, import);
         buttons.HorizontalAlignment = HorizontalAlignment.Center;
-        buttons.Margin = new Thickness(0, 13, 0, 0);
+        buttons.Margin = new Thickness(0, 12, 0, 0);
         var hint = UI.Text("or drop PNG / Aseprite files anywhere", "Label/11", "text/muted");
         hint.HorizontalAlignment = HorizontalAlignment.Center;
         hint.Margin = new Thickness(0, 12, 0, 0);
         var icon = new Icon { Glyph = "map", Size = 24, HorizontalAlignment = HorizontalAlignment.Center }.Token(Icon.ForegroundProperty, "text/secondary");
-        var col = new StackPanel { Margin = new Thickness(20, 26, 20, 25), Children = { icon, title, text, buttons, hint } };
+        var col = new StackPanel { Margin = new Thickness(20, 26, 20, 24), Children = { icon, title, text, buttons, hint } };
         var card = UI.Frame(col, "bg/panel", "border/default", pad: default, radius: 12).Named("EmptySceneCard");
         card.Width = 420;
         card.HorizontalAlignment = HorizontalAlignment.Center;
         card.VerticalAlignment = VerticalAlignment.Center;
+        card.Margin = new Thickness(0, 6, 0, 0);   // Figma puts the 216 px card 3 px under the centre of the screen box
         return card;
     }
 

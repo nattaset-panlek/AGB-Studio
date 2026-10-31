@@ -31,6 +31,8 @@
   <SolidColorBrush x:Key="lit/code-keyword" Color="#FF7AB6" />
   <SolidColorBrush x:Key="lit/code-type" Color="#7C9CFF" />
   <SolidColorBrush x:Key="lit/code-number" Color="#FFB86B" />
+  <!-- Play Mode game view, Hitboxes overlay: velocity arrow of a moving actor (T-P02 Game View) -->
+  <SolidColorBrush x:Key="lit/velocity" Color="#FFD23F" />
   <!-- Accent colour choices of Preferences · Appearance (T-S06) -->
   <Color x:Key="lit/accent-blue">#4C8DFF</Color>
   <Color x:Key="lit/accent-violet">#B392FF</Color>

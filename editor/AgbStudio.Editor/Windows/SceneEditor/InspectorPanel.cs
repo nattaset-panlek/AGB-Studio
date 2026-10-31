@@ -76,8 +76,9 @@ public sealed class InspectorPanel : Panel
 
     // ---- layout helpers -------------------------------------------------------------------------------
 
+    // Figma: 8 px above the header, 10 px under the last row (Transform 73 px with its divider)
     static Border Section(Control child, Thickness? pad = null) =>
-        UI.Frame(child, null, "border/default", new Thickness(0, 0, 0, 1), pad ?? new Thickness(12, 8, 12, 11));
+        UI.Frame(child, null, "border/default", new Thickness(0, 0, 0, 1), pad ?? new Thickness(12, 8, 12, 10));
 
     StackPanel SectionBody(SectionHeader header, IEnumerable<Control> rows)
     {
@@ -114,7 +115,7 @@ public sealed class InspectorPanel : Panel
         }
         if (!colliderPlaced && (a.Sprite.Length > 0 || a.Collider != null))
             _content.Children.Add(Section(SectionBody(new SectionHeader { Title = "Collider", Glyph = "square" }, [ColliderField(index)])));
-        _content.Children.Add(Section(AddComponentButton(), new Thickness(12, 11, 12, 12)));
+        _content.Children.Add(Section(AddComponentButton(), new Thickness(12, 10, 12, 11)));
     }
 
     /// <summary>
@@ -208,10 +209,10 @@ public sealed class InspectorPanel : Panel
             for (var i = 0; i < frames.Count; i++)
             {
                 var frame = UI.Frame(PixelArt.Fit(PixelArt.SpriteBitmap(_m.Assets, a.Sprite, frames[i]), 26, 26), "bg/base", i == 0 ? "accent/default" : "border/default", null, null, 6);
-                frame.Width = frame.Height = 33;
+                frame.Width = frame.Height = 34;
                 strip.Children.Add(frame);
             }
-            rows.Add(Labelled("Frames", strip, 33));
+            rows.Add(Labelled("Frames", strip, 34));
             var swatches = UI.Row(1);
             swatches.Name = "PaletteSwatches";
             // the colours the sheet uses (index 0 is transparent)

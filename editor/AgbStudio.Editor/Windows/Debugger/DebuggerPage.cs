@@ -28,6 +28,7 @@ public sealed class DebuggerPage : DockPanel
     readonly DebuggerModel _m;
     readonly ListRow[] _views;
     readonly StackPanel _breakpoints = new() { Spacing = 7, Name = "BreakpointList" };
+    readonly PanelHeader _breakpointsHeader = new() { Title = "Breakpoints", Glyph = "bug", Name = "BreakpointsHeader" };
     readonly ContentControl _center = new() { Name = "DebuggerCenter" };
     readonly ContentControl _right = new() { Name = "DebuggerRight" };
     readonly PanelHeader _rightHeader = new() { Name = "RightHeader" };
@@ -122,7 +123,7 @@ public sealed class DebuggerPage : DockPanel
         var side = new StackPanel();
         side.Children.Add(new PanelHeader { Title = "Views", Glyph = "bug", Name = "ViewsHeader" });
         side.Children.Add(new StackPanel { Spacing = 1, Margin = new Thickness(6, 4, 6, 4), Children = { _views[0], _views[1], _views[2], _views[3], _views[4], _views[5] } });
-        side.Children.Add(new PanelHeader { Title = "Breakpoints", Glyph = "bug", Name = "BreakpointsHeader" });
+        side.Children.Add(_breakpointsHeader);
         _breakpoints.Margin = new Thickness(12, 8, 12, 8);
         side.Children.Add(_breakpoints);
         var leftPanel = UI.Frame(side, "bg/panel", "border/default", new Thickness(0, 0, 1, 0)).Named("ViewsPanel");
@@ -168,6 +169,8 @@ public sealed class DebuggerPage : DockPanel
     {
         View = view;
         foreach (var v in _views) v.IsSelected = (DebuggerView)v.Tag! == view;
+        // Figma's Memory (T-P23) and Palettes (T-P24) frames show the Views list alone
+        _breakpointsHeader.IsVisible = _breakpoints.IsVisible = view is not (DebuggerView.Memory or DebuggerView.Palettes);
         switch (view)
         {
             case DebuggerView.Memory:

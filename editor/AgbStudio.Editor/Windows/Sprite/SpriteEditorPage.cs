@@ -315,14 +315,17 @@ public sealed class SpriteEditorPage : DockPanel
         _step.Click += (_, _) => StepFrame();
         ToolTip.SetTip(_play, new TipContent("Play animation"));
         ToolTip.SetTip(_step, new TipContent("Next frame"));
+        // Figma: Play on a bg/hover square, Step a bare icon (as the Animation panel T-P06)
+        _play.Token(Avalonia.Controls.Primitives.TemplatedControl.BackgroundProperty, "bg/hover");
+        _play.CornerRadius = new CornerRadius(6);
         _ticks.Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("FieldBox");
         _ticks.KeyDown += (_, e) => { if (e.Key == Key.Enter) { CommitTicks(); e.Handled = true; } };
         _ticks.LostFocus += (_, _) => CommitTicks();
         _onionChip.Click += (_, _) => SetOnion(!OnionSkin);
         _pingChip.Click += (_, _) => TogglePingPong();
         var speed = UI.Text("Speed", "Body/12", "text/secondary", 132);
-        speed.Margin = new Thickness(13, 0, 8, 0);
-        var leftRow = UI.Row(0, UI.Row(2, _play, _step), speed, _ticks);
+        speed.Margin = new Thickness(8, 0, 8, 0);
+        var leftRow = UI.Row(0, UI.Row(8, _play, _step), speed, _ticks);
         var rightRow = UI.Row(8, _onionChip, _pingChip);
         var header = new DockPanel { Height = 26 };
         DockPanel.SetDock(rightRow, Dock.Right);

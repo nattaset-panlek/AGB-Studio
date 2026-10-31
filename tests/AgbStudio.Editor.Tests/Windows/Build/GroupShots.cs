@@ -23,7 +23,7 @@ public sealed class GroupShots : IShotSource
         {
             var page = (AudioPage)fx.CurrentPage;
             page.Seek(7, 20);
-        }));
+        }, report: true));   // a built project: the Audio ROM meter is the soundbank's share of the ROM
         yield return ("T-P25", (path, w, h) => Page(path, "T-P25", _ => { }, args: "jump.sfx"));
         yield return ("T-P11", (path, w, h) => Page(path, "T-P11", _ => { }, report: true));
         yield return ("T-D06", (path, w, h) => Dialog(path, w, h, fx =>

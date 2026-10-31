@@ -22,7 +22,9 @@
         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
           <DockPanel HorizontalSpacing="6">
-            <ContentPresenter DockPanel.Dock="Left" Content="{TemplateBinding InnerLeftContent}" VerticalAlignment="Center" />
+            <!-- hidden without content, so the 6 px gap is only there for the X / Y prefix (Field Text has its value at the box padding) -->
+            <ContentPresenter DockPanel.Dock="Left" Content="{TemplateBinding InnerLeftContent}" VerticalAlignment="Center"
+                              IsVisible="{TemplateBinding InnerLeftContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
             <TextPresenter Name="PART_TextPresenter" VerticalAlignment="Center" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
                            SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="NoWrap"
                            LineHeight="{TemplateBinding LineHeight}" LetterSpacing="{TemplateBinding LetterSpacing}"
@@ -226,7 +228,8 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="8">
-          <StackPanel>
+          <!-- Figma: a 150 px column at border + padding (the stroke takes layout space), running into the right padding -->
+          <StackPanel Width="150" HorizontalAlignment="Left">
             <Border Width="150" Height="100" CornerRadius="8" ClipToBounds="True">
               <g:ArtImage Source="{TemplateBinding Preview}" Width="150" Height="100" />
             </Border>
@@ -248,7 +251,8 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="6">
-          <StackPanel>
+          <!-- Figma: a 240 px column at border + padding, running into the right padding; the description is 228 px wide -->
+          <StackPanel Width="240" HorizontalAlignment="Left">
             <Border Width="240" Height="160" CornerRadius="8" ClipToBounds="True">
               <g:ArtImage Source="{TemplateBinding Preview}" Width="240" Height="160" />
             </Border>
@@ -271,8 +275,10 @@
         <Panel>
           <Rectangle Name="PART_Box" RadiusX="6" RadiusY="6" Fill="{DynamicResource bg/base}" Stroke="{DynamicResource border/default}" StrokeThickness="1" />
           <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- IBM Plex Sans Thai is 1.65 em tall (29.7 px at 18 px). Figma centres that box in the 20 px line, Avalonia
+                 keeps the baseline at the ascent when the line is smaller, so the glyph is lifted by half the difference. -->
             <TextBlock Name="PART_Char" Text="{TemplateBinding Char}" FontFamily="{x:Static t:Fonts.Thai}" FontWeight="Medium" FontSize="18" LineHeight="20"
-                       Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
+                       Margin="0,-5,0,5" Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
             <TextBlock Text="{TemplateBinding Code}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" HorizontalAlignment="Center" />
           </StackPanel>
         </Panel>

@@ -146,13 +146,13 @@ public sealed class BuildReportPage : DockPanel
         root.Children.Add(cards);
 
         // ROM breakdown
-        root.Children.Add(Overline("ROM breakdown", 19));
+        root.Children.Add(Overline("ROM breakdown", 16));
         var parts = new[] { ("Graphics", "accent/default"), ("Code", "kind/script"), ("Audio", "kind/audio"), ("Data", "kind/data") };
         var total = Math.Max(1, parts.Sum(x => r.Breakdown.GetValueOrDefault(x.Item1)));
-        var bar = new Grid { Height = 22, Width = 960, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 13, 0, 0), ClipToBounds = true, Name = "Breakdown" };
+        var bar = new Grid { Height = 22, Width = 960, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 16, 0, 0), ClipToBounds = true, Name = "Breakdown" };
         var barBorder = new Border { CornerRadius = new CornerRadius(4), ClipToBounds = true, Child = bar, HorizontalAlignment = HorizontalAlignment.Left };
         var legend = UI.Row(18);
-        legend.Margin = new Thickness(0, 18, 0, 0);
+        legend.Margin = new Thickness(0, 16, 0, 0);
         legend.Name = "BreakdownLegend";
         foreach (var (name, token) in parts)
         {
@@ -170,7 +170,7 @@ public sealed class BuildReportPage : DockPanel
 
         // largest assets
         root.Children.Add(Overline("Largest assets", 16));
-        var table = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("300,140,120,260"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 14, 0, 0), Name = "LargestAssets" };
+        var table = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("300,140,120,260"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 16, 0, 0), Name = "LargestAssets" };
         table.RowDefinitions.Add(new RowDefinition(28, GridUnitType.Pixel));
         string[] heads = ["Asset", "Type", "Size", "Share"];
         for (var c = 0; c < 4; c++) Put(table, new TableCell { Kind = TableCellKind.Header, Text = heads[c] }, 0, c);
@@ -190,7 +190,7 @@ public sealed class BuildReportPage : DockPanel
         root.Children.Add(table);
 
         // history
-        root.Children.Add(Overline("History", 18));
+        root.Children.Add(Overline("History", 16));
         var history = UI.Column(6);
         history.Margin = new Thickness(0, 4, 0, 0);
         history.Name = "History";

@@ -25,6 +25,22 @@ public static class UI
         return t;
     }
 
+    /// <summary>
+    /// A wrapping text that may need two lines in a row lower than those lines (Figma lets them overflow the row; give
+    /// the text negative vertical margins for the room). Avalonia arranges a centred text in exactly its measured height
+    /// and its layout then drops the second line, so a text that wraps gets the two lines as its minimum height.
+    /// </summary>
+    public static void OverflowTwoLines(TextBlock t, double lineHeight = 16)
+    {
+        t.LayoutUpdated += (_, _) =>
+        {
+            var lines = t.MinHeight > 0 ? t.TextLayout.TextLines.Count
+                : t.DesiredSize.Height - t.Margin.Top - t.Margin.Bottom > lineHeight * 1.5 ? 2 : 1;
+            var min = lines > 1 ? 2 * lineHeight : 0;
+            if (t.MinHeight != min) t.MinHeight = min;
+        };
+    }
+
     /// <summary>A Figma auto-layout frame: horizontal or vertical stack with gap and padding.</summary>
     public static StackPanel Row(double gap, params Control[] children)
     {

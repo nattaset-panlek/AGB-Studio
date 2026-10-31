@@ -6,7 +6,7 @@ using AgbStudio.Core.Project;
 namespace AgbStudio.Editor.Windows.Database;
 
 /// <summary>
-/// "Used by" of a table row (P9.05, T-P07): reference fields of other tables ("Shop_01 · slot2"), scene actors whose
+/// "Used by" of a table row (P9.05, T-P07): reference fields of other tables ("Shop_01 · slot 2"), scene actors whose
 /// component fields name the row ("Chest · Cave_01"), scripts that use <c>ItemId.Potion</c> ("Slime.cs · drop table")
 /// and dialogue "Give item" commands ("forest_intro.dlg · Give item").
 /// </summary>
@@ -26,7 +26,7 @@ public static partial class UsedBy
         foreach (var other in data.Tables)
             foreach (var f in other.Table.Fields.Where(f => f.Type == "reference" && f.Reference == table.Name))
                 foreach (var row in other.Table.Rows.Where(r => r.GetValueOrDefault(f.Name) == id))
-                    list.Add(new Reference($"{row.GetValueOrDefault(other.Table.KeyField)} · {f.Name}", Kind.Table, other.Path, row.GetValueOrDefault(other.Table.KeyField)));
+                    list.Add(new Reference($"{row.GetValueOrDefault(other.Table.KeyField)} · {Humanize(f.Name)}", Kind.Table, other.Path, row.GetValueOrDefault(other.Table.KeyField)));
 
         var qualified = DatabaseCodegen.IdEnum(table.Name) + "." + id;
         foreach (var path in data.Project.SceneFiles())
@@ -70,6 +70,7 @@ public static partial class UsedBy
             var c = name[i];
             if (c == '_') { sb.Append(' '); continue; }
             if (char.IsUpper(c) && i > 0 && !char.IsUpper(name[i - 1])) sb.Append(' ');
+            else if (char.IsDigit(c) && i > 0 && char.IsLetter(name[i - 1])) sb.Append(' ');   // "slot2" -> "slot 2"
             sb.Append(char.ToLowerInvariant(c));
         }
         return sb.ToString().Trim();

@@ -127,8 +127,8 @@ public static class PageParts
         return UI.Frame(row, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
     }
 
-    /// <summary>A side panel section (Inspector style): Section Header and content, a border below.</summary>
-    public static Border Section(SectionHeader header, Control content, Thickness? pad = null, double gap = 8)
+    /// <summary>A side panel section (Inspector style): Section Header, 6 px, content, a border below (Figma T-P10).</summary>
+    public static Border Section(SectionHeader header, Control content, Thickness? pad = null, double gap = 6)
     {
         var body = new StackPanel { Spacing = gap };
         body.Children.Add(header);

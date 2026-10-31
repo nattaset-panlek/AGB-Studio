@@ -98,13 +98,32 @@ public sealed class GameScreen : Control
             var y = Math.Floor(a.Actor.Y) + a.ColliderY - w.CameraY;
             var box = new Rect(r.X + x * k + 0.5, r.Y + y * k + 0.5, a.ColliderW * k - 1, a.ColliderH * k - 1);
             ctx.DrawRectangle(null, new Pen(Token(token), 1), box);
-            if (a.Name == _play.SelectedActor && (Math.Abs(a.Actor.Vx) > 0.01 || Math.Abs(a.Actor.Vy) > 0.01))
-            {
-                var from = new Point(box.Center.X, box.Y);
-                var to = new Point(from.X + a.Actor.Vx * 8 * k, from.Y + a.Actor.Vy * 8 * k);
-                ctx.DrawLine(new Pen(Token("status/warning"), 2), from, to);
-            }
+            if (Math.Abs(a.Actor.Vx) > 0.01 || Math.Abs(a.Actor.Vy) > 0.01)
+                DrawVelocity(ctx, new Point(box.Center.X, box.Y), new Vector(a.Actor.Vx, a.Actor.Vy) * 8 * k, k);
         }
+    }
+
+    /// <summary>Velocity arrow of a moving actor (Figma T-P02 Game View): from the top of its hitbox, 8 frames of travel long.</summary>
+    void DrawVelocity(DrawingContext ctx, Point from, Vector v, int k)
+    {
+        var brush = Token("lit/velocity");
+        var len = v.Length;
+        if (brush is null || len < 1) return;
+        var dir = v / len;
+        var head = Math.Min(len, 4.0 * k);
+        var tip = from + v;
+        var baseCentre = tip - dir * head;
+        var side = new Vector(-dir.Y, dir.X) * (head * 0.6);
+        ctx.DrawLine(new Pen(brush, k, lineCap: PenLineCap.Round), from, baseCentre);
+        var arrow = new StreamGeometry();
+        using (var g = arrow.Open())
+        {
+            g.BeginFigure(tip, true);
+            g.LineTo(baseCentre + side);
+            g.LineTo(baseCentre - side);
+            g.EndFigure(true);
+        }
+        ctx.DrawGeometry(brush, null, arrow);
     }
 
     void DrawCollision(DrawingContext ctx, Rect r, LiveWorld w)

@@ -28,7 +28,8 @@ public sealed class WaveformBox : Control
         var h = Bounds.Height;
         ctx.DrawRectangle(Draw.Brush(this, "bg/panel"), new Pen(Draw.Brush(this, "border/default")), new Rect(0.5, 0.5, w - 1, h - 1), 8, 8);
         var pen = new Pen(Draw.Brush(this, "accent/default"), 2);
-        double top = 20, bottom = h - 18, left = 2, right = w - 2 - 74;
+        // Figma: the line from 2 px in to 25 px before the right edge, 20 px under the top and above the bottom
+        double top = 20, bottom = h - 20, left = 2, right = w - 2 - 25;
         var geo = new StreamGeometry();
         using (var g = geo.Open())
         {
@@ -63,11 +64,11 @@ public sealed class WaveformBox : Control
                     break;
                 default:
                     var duty = DmgSound.Duties.MinBy(d => Math.Abs(d - _sfx.Duty));
-                    const int periods = 11;
-                    var pw = (right - left - 28) / periods;
+                    const int periods = 11, lead = 15;
+                    var pw = (right - left - lead) / periods;
                     var x = left;
                     g.BeginFigure(new Point(x, top), false);
-                    x += 28;
+                    x += lead;
                     g.LineTo(new Point(x, top));
                     for (var i = 0; i < periods; i++)
                     {
@@ -112,7 +113,7 @@ public sealed class WaveformBox : Control
     /// <summary>Sets the wave sample under a point (pencil tool).</summary>
     public void DrawAt(Point p)
     {
-        double top = 20, bottom = Bounds.Height - 18, left = 2, right = Bounds.Width - 2 - 74;
+        double top = 20, bottom = Bounds.Height - 20, left = 2, right = Bounds.Width - 2 - 25;
         var i = (int)Math.Clamp((p.X - left) / ((right - left) / 32), 0, 31);
         var v = (int)Math.Clamp(Math.Round((bottom - p.Y) / (bottom - top) * 15), 0, 15);
         WaveDrawn?.Invoke(i, v);

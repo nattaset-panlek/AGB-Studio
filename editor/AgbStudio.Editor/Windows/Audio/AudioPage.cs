@@ -501,7 +501,7 @@ public sealed class AudioPage : DockPanel
                 if (v == Meta.FadeOnSceneChange) return;
                 _s.Undo.Do(new DelegateAction("Fade on scene change", () => SetFade(!v, fade), () => SetFade(v, fade)));
             };
-            var fields = UI.Column(6, format, volume, loop, PageFrame.FieldRow("Fade on scene change", fade, 32));
+            var fields = UI.Column(6, format, volume, loop, PageFrame.FieldRow("Fade on scene change", fade));
             _inspector.Children.Add(PageFrame.Section(header, fields));
         }
 

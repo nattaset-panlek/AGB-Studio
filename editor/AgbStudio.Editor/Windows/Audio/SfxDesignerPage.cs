@@ -46,7 +46,7 @@ public sealed class SfxDesignerPage : DockPanel
     readonly TextBlock _outputNote = UI.Text("", "Label/11", "text/muted");
     readonly SelectableTextBlock _snippet = new() { Name = "Snippet" };
     readonly StackPanel _registers = new() { Spacing = 0, Margin = new Thickness(0, -3, 0, 0), Name = "Registers" };
-    readonly AgbButton _loop = new() { Kind = ButtonKind.Secondary, Size = ButtonSize.LG, Glyph = "refresh", Content = "Loop", Name = "LoopButton" };
+    readonly AgbButton _loop = new() { Kind = ButtonKind.Secondary, Size = ButtonSize.SM, Glyph = "refresh", Content = "Loop", Name = "LoopButton" };
     readonly IconButton[] _tools;
     readonly Chip _channelChip = new() { Glyph = "sound", Name = "ChannelChip" };
     readonly StatusItem _statusFile = PageFrame.Status("Status_Sfx", "sound", null), _statusSaved = PageFrame.Status("Status_Saved", "check", "Saved");
@@ -154,7 +154,7 @@ public sealed class SfxDesignerPage : DockPanel
         // right: output
         var outHeader = new PanelHeader { Title = "Output", Glyph = "upload", Name = "OutputHeader" };
         _outputNote.TextWrapping = TextWrapping.Wrap;
-        _outputNote.Margin = new Thickness(0, 4, 0, 0);
+        _outputNote.Margin = new Thickness(0, -1, 0, 0);   // Figma: the note starts 5 px under the switch
         var outputGroup = Group(_outputs);
         outputGroup.HorizontalAlignment = HorizontalAlignment.Left;
         var how = PageFrame.Section(new SectionHeader { Title = "How it plays", Glyph = "sound" }, UI.Column(6, outputGroup, _outputNote));
@@ -192,7 +192,7 @@ public sealed class SfxDesignerPage : DockPanel
     {
         var name = segs[0].GroupName;
         foreach (var s in segs) s.GroupName = name;
-        return UI.Frame(UI.Row(2, segs), "bg/base", "border/default", new Thickness(1), new Thickness(3), 7);
+        return UI.Frame(UI.Row(2, segs), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);   // 30 px, as in Figma
     }
 
     static TextBlock Overline(string text)

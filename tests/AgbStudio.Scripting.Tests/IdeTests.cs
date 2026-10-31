@@ -148,7 +148,7 @@ public sealed partial class IdeTests
         Assert.Contains("GAE002", File.ReadAllText(Path.Combine(dir, "subset.html")));
         var input = File.ReadAllText(Path.Combine(dir, "Input.html"));
         Assert.Contains("Pressed(Key key)", input);
-        Assert.Contains("True on the frame the button goes down.", input);
+        Assert.Contains("True on the frame the key goes down.", input);
     }
 
     [Fact]
