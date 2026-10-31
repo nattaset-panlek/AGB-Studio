@@ -144,8 +144,9 @@ public static class BehaviourLayout
 /// </summary>
 public sealed class LiveWorldReader
 {
-    // agb::Actor (runtime/include/agb/actor.hpp)
-    const uint ActorPos = 12, ActorCollider = 28, ActorBehaviours = 56, ActorBehaviourCount = 80;
+    // agb::Actor (runtime/include/agb/actor.hpp): blocking (after solid) and textLabel (after label) moved the behaviour
+    // table by 4 bytes. A layout change shows as missing script fields in Play Mode E2E P12.06 and Debugger P13.05.
+    const uint ActorPos = 12, ActorCollider = 28, ActorBehaviours = 60, ActorBehaviourCount = 84;
 
     readonly GameProject _project;
     readonly ElfSymbols? _elf;
