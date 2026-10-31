@@ -26,7 +26,7 @@ public sealed class AssetActions
 {
     readonly SceneEditorModel _m;
     string? _selected;
-    // Edit â€º Select All: every asset of the category the Assets panel shows
+    // Edit › Select All: every asset of the category the Assets panel shows
     List<string>? _all;
 
     AssetActions(SceneEditorModel m)
@@ -186,7 +186,7 @@ public sealed class AssetActions
 
     public bool IsSelected(string path) => _all?.Contains(path, StringComparer.OrdinalIgnoreCase) ?? string.Equals(path, _selected, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Edit â€º Select All in the Assets panel: every asset of the shown category.</summary>
+    /// <summary>Edit › Select All in the Assets panel: every asset of the shown category.</summary>
     public void SelectAll(AssetCategory category)
     {
         var paths = List(category).Select(a => a.Path).ToList();
