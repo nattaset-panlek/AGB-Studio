@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio Database table (data/<Table>.db)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "keyField": {
+      "type": "string"
+    },
+    "keepInRom": {
+      "type": "boolean"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "enumValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {
+            "type": "string"
+          },
+          "localized": {
+            "type": "boolean"
+          },
+          "showInInspector": {
+            "type": "boolean"
+          },
+          "reference": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

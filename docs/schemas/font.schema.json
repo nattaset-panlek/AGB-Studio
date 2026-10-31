@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio game font (fonts/<name>.font)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "sourceKind": {
+      "enum": [
+        "Ttf",
+        "Bdf",
+        "Image"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "size": {
+      "type": "integer"
+    },
+    "variable": {
+      "type": "boolean"
+    },
+    "fixedWidth": {
+      "type": "integer"
+    },
+    "cellHeight": {
+      "type": "integer"
+    },
+    "characterSets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extraCharacters": {
+      "type": "string"
+    },
+    "lineHeight": {
+      "type": "integer"
+    },
+    "baseline": {
+      "type": "integer"
+    },
+    "spacing": {
+      "type": "integer"
+    },
+    "bpp": {
+      "type": "integer"
+    },
+    "dropShadow": {
+      "type": "boolean"
+    },
+    "stackUpperMarks": {
+      "type": "boolean"
+    },
+    "placeLowerVowels": {
+      "type": "boolean"
+    },
+    "thaiWordWrap": {
+      "type": "boolean"
+    },
+    "glyphs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "advance": {
+            "type": "integer"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

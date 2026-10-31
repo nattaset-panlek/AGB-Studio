@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio SFX Designer effect (audio/sfx/<name>.sfx)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "channel": {
+      "enum": [
+        "Square1",
+        "Square2",
+        "Wave",
+        "Noise"
+      ]
+    },
+    "bake": {
+      "type": "boolean"
+    },
+    "volume": {
+      "type": "integer"
+    },
+    "duty": {
+      "type": "number"
+    },
+    "envelopeStep": {
+      "type": "integer"
+    },
+    "envelopeUp": {
+      "type": "boolean"
+    },
+    "startNote": {
+      "type": "string"
+    },
+    "sweepTime": {
+      "type": "integer"
+    },
+    "sweepShift": {
+      "type": "integer"
+    },
+    "sweepUp": {
+      "type": "boolean"
+    },
+    "length": {
+      "type": "number"
+    },
+    "wave": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "noiseDivider": {
+      "type": "integer"
+    },
+    "noiseShort": {
+      "type": "boolean"
+    }
+  }
+}

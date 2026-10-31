@@ -16,6 +16,7 @@ public sealed class ConvertedSprite
     public int TilesPerFrame { get; init; }
     public int FrameCount { get; init; }
     public int ColorsUsed { get; init; }
+    public int[] SourceFrames { get; init; } = [];   // sheet frame (row-major) of each converted frame; trimmed frames are left out
     public List<ImportProblem> Problems { get; } = new();
 }
 
@@ -91,6 +92,7 @@ public static class SpriteConverter
             TilesPerFrame = tilesW * tilesH,
             FrameCount = frames.Count,
             ColorsUsed = Math.Min(hist.Count, 15),
+            SourceFrames = frames.Select(f => f.Y / fh * cols + f.X / fw).ToArray(),
         };
         result.Problems.AddRange(problems);
         return result;

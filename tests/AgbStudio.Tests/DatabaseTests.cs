@@ -58,8 +58,16 @@ public sealed class DatabaseTests
         Assert.Contains("enum class ItemType : unsigned char { Currency, Consumable, Key_item, Equip, Power_up, Material, Treasure };", o.Header);
         Assert.Contains("static const Item& Get(ItemId id)", o.Header);
         var src = Assert.Single(o.Sources).Text;
-        Assert.Contains("{3, ItemType::Currency, 1, agb::fixed(), true, nullptr, nullptr}", src);
-        Assert.Contains("{4, ItemType::Consumable, 30, agb::fixed::fromRaw(512), false, &agbasset_sprite_heart, nullptr}", src);
+        // Fields are stored 4-byte first, then 2-byte, then 1-byte: price, power, icon, effect, name, type, stackable.
+        Assert.Contains("{1, agb::fixed(), nullptr, nullptr, 3, ItemType::Currency, true}", src);
+        Assert.Contains("{30, agb::fixed::fromRaw(512), &agbasset_sprite_heart, nullptr, 4, ItemType::Consumable, false}", src);
+        Assert.Contains("struct Item {\n    int price;\n    agb::fixed power;\n    const agb::data::SpriteSheet* icon;\n    void (*effect)();\n    unsigned short name;\n    ItemType type;\n    bool stackable;\n};", o.Header);
+        // 4 + 4 + 4 + 4 + 2 + 1 + 1 = 20 bytes, no padding; the Add Field "per row" bytes add up to the same.
+        Assert.Equal(20, DatabaseCodegen.RowBytes(Items()));
+        Assert.Equal(Items().Fields.Skip(1).Sum(DatabaseCodegen.FieldBytes), DatabaseCodegen.RowBytes(Items()));
+        Assert.Equal(40, o.RomBytes);
+        // A row whose fields do not add up to its alignment is padded at the end: 4 + 1 = 5 -> 8.
+        Assert.Equal(8, DatabaseCodegen.RowBytes(new TableFile { Fields = { new FieldDef { Name = "id", Type = "enum" }, new FieldDef { Name = "hp", Type = "int" }, new FieldDef { Name = "boss", Type = "bool" } } }));
         Assert.Empty(diags);
     }
 
@@ -107,5 +115,53 @@ public sealed class DatabaseBuildTests
         var report = BuildReport.Load(p.BuildDir)!;
         Assert.True(report.Breakdown["Data"] >= 9 * 12);
         Assert.Contains("struct Enemy {", File.ReadAllText(Path.Combine(p.BuildDir, "gen", "agb_db.hpp")));
+    }
+
+    sealed class CompileLog : IBuildObserver
+    {
+        public readonly List<string> Lines = new();
+        public void StepStarted(string step, string detail) { }
+        public void StepFinished(string step, TimeSpan elapsed, bool ok, string detail) { }
+        public void FileProgress(string step, int done, int total, string file) { }
+        public void Line(string text) { lock (Lines) Lines.Add(text); }
+        public void Message(Diagnostic d) { }
+        public List<string> Compiled => Lines.Where(l => l.Contains("] CXX ", StringComparison.Ordinal)).Select(l => Path.GetFileName(l[(l.IndexOf("] CXX ", StringComparison.Ordinal) + 6)..].Trim())).ToList();
+    }
+
+    [Fact]
+    public void ChangingOneRowRebuildsOnlyThatTable()
+    {
+        // P6.19: one generated unit per table, written only when its text changes, so the compiler sees one changed file.
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "mini_db_incremental"));
+        TableFile Table(string name, int rows)
+        {
+            var t = new TableFile { Name = name, Fields = { new FieldDef { Name = "id", Type = "enum" }, new FieldDef { Name = "hp", Type = "int" }, new FieldDef { Name = "rare", Type = "bool" } } };
+            for (var i = 0; i < rows; i++) t.Rows.Add(new() { ["id"] = $"{name[0]}{i}", ["hp"] = (i * 5).ToString(), ["rare"] = "false" });
+            return t;
+        }
+        GameProject.Save(Path.Combine(p.DataDir, "Enemies.db"), Table("Enemies", 6));
+        GameProject.Save(Path.Combine(p.DataDir, "Items.db"), Table("Items", 4));
+        var r = new GameBuilder(p, new Toolchain()).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var gen = Path.Combine(p.BuildDir, "gen");
+        var header = File.GetLastWriteTimeUtc(Path.Combine(gen, "agb_db.hpp"));
+        var items = File.GetLastWriteTimeUtc(Path.Combine(gen, "data", "db_Items.cpp"));
+
+        var enemies = GameProject.Load<TableFile>(Path.Combine(p.DataDir, "Enemies.db"));
+        enemies.Rows[2]["hp"] = "99";
+        GameProject.Save(Path.Combine(p.DataDir, "Enemies.db"), enemies);
+        var log = new CompileLog();
+        r = new GameBuilder(p, new Toolchain(), log).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.Equal(["db_Enemies.cpp"], log.Compiled);
+        Assert.Contains("99", File.ReadAllText(Path.Combine(gen, "data", "db_Enemies.cpp")));
+        Assert.Equal(header, File.GetLastWriteTimeUtc(Path.Combine(gen, "agb_db.hpp")));
+        Assert.Equal(items, File.GetLastWriteTimeUtc(Path.Combine(gen, "data", "db_Items.cpp")));
+        // A new row adds an id to the enum: the header changes, so the units that include it compile again.
+        enemies.Rows.Add(new() { ["id"] = "E9", ["hp"] = "1", ["rare"] = "true" });
+        GameProject.Save(Path.Combine(p.DataDir, "Enemies.db"), enemies);
+        log = new CompileLog();
+        Assert.True(new GameBuilder(p, new Toolchain(), log).Build().Success);
+        Assert.Contains(log.Compiled, f => f.EndsWith("db_Items.cpp", StringComparison.Ordinal));
     }
 }

@@ -32,7 +32,8 @@ public sealed class ColorImage
         return img;
     }
 
-    public static ColorImage Load(string path) => FromPng(Png.Read(path));
+    /// <summary>A PNG, or an Aseprite file with its frames side by side (AsepriteFile.ToSheet).</summary>
+    public static ColorImage Load(string path) => AsepriteFile.IsAseprite(path) ? AsepriteFile.Read(path).ToSheet() : FromPng(Png.Read(path));
 
     public Dictionary<ushort, int> Histogram(int x0 = 0, int y0 = 0, int w = -1, int h = -1)
     {
