@@ -103,7 +103,9 @@ attribute ROM bytes per asset.
 
 Not built from blueprint 08: primary / secondary tilesets (a map has one tileset), two-layer metatiles, a separate
 layout file shared between maps (layers live in `maps/<Name>.map`), and seamless map streaming (out of scope,
-checklist 1.2). Links fire on any player overlap; the Door and Respawn kinds are stored but behave like On touch.
+checklist 1.2). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on that overlap
+while Up is pressed; Respawn fires on the overlap or when the player is lost (destroyed, out of hearts or fallen below
+the map) (`game.cpp` `checkLinks`).
 
 ## Build pipeline (blueprint 11)
 
@@ -141,8 +143,8 @@ converts assets first.
 
 | Where | What is checked |
 |---|---|
-| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text) (`GameBuilder.CheckHardwareLimits`) |
-| Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack; per scene: OBJ tiles over 32 KB, more than 16 OBJ palettes |
+| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text); OBJ VRAM of the sprite frames its actors show at once against 32 KB (16 KB in bitmap modes); sprite palettes against 16 (`GameBuilder.CheckHardwareLimits`) |
+| Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack |
 | Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 

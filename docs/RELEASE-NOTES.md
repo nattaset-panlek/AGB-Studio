@@ -1,5 +1,7 @@
 # AGB Studio release notes
 
+![AGB Studio](brand/banner-hero-1600-560.png)
+
 ## 1.0.0
 
 2026-10-31
@@ -14,7 +16,7 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 ### Editor
 - Launcher with recent projects, eight genre templates, five tutorials, four sample projects and links to the documentation.
 - Scene Editor with Hierarchy, Inspector, Assets, Console and Animation panels, GBA budget meters, undo and autosave.
-- Tilemap Editor (tile, image, rotate / scale and collision-only layers, auto-tile rules), Sprite Editor, Palette Manager and Font Manager.
+- Tilemap Editor (tile, image, rotate / scale and collision-only layers, auto-tile rules), Sprite Editor (PNG and Aseprite files), Palette Manager and Font Manager.
 - Database, Localization (fit check against the GBA text box), Dialogue Editor and World Map.
 - Audio page with a tracker view and preview, and the SFX Designer for effects on the GBA's DMG sound channels.
 - Script Editor with the GAE001-GAE006 rules and quick fixes, the offline Scripting API, and opening scripts in VS Code, Rider or Visual Studio.
@@ -27,9 +29,11 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 
 ### Engine
 - Tile, image and rotate / scale layers, including the Mode 7 floor of the Racing template; maps stream as the camera moves.
+- Video Mode 3 bitmap scenes: full-screen pictures and filled rectangles.
 - Slopes, one-way platforms, ladders, hazards and water tiles; built-in behaviours from the Component Picker.
 - Up to 64 actors with up to 6 behaviours each, spawning and touches; up to 128 sprites with animation and 32 affine matrices.
 - Event Script VM for cutscenes and dialogue: waits, choices, commands and saved flags.
+- World Map links of kind On touch, Door (overlap and Up) and Respawn (overlap, or when the player is lost).
 - Text in Thai and English (and Japanese kana fonts) with dictionary word wrap, dialogue boxes, choices and HUD labels.
 - Menu / UI kit: boot splash, title menus, pause overlay and options (volume, language, button remap).
 - Save data on SRAM, Flash or EEPROM with two copies per slot, checksums and autosave.
@@ -43,14 +47,11 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 
 ### Licence
 - AGB Studio and the runtime inside your games are under the MIT licence; games made with AGB Studio can be sold.
-- Every build writes THIRD_PARTY.txt next to the ROM with the libtonc and maxmod notices; ship it with your game (see docs/user/licence-for-your-games.md).
+- Every build writes THIRD_PARTY.txt next to the ROM with the notices of the AGB Studio runtime, libtonc and maxmod; ship it with your game (see docs/user/licence-for-your-games.md).
 
 ### Known limits
 - Windows 10 and 11 (x64) only; devkitPro must be installed separately (the editor finds it or explains how).
 - Builds are not code-signed (D-19): Windows SmartScreen may ask before the first start.
 - Check for Updates and Report a Bug use the addresses in editor.json; with none set they say so (D-13).
 - Writing to a GBxCart RW cartridge is turned off until it has been verified on hardware.
-- Video Mode 3 sets the display mode only; there is no bitmap drawing yet.
-- Scene links of kind Door and Respawn behave like On touch.
-- Aseprite files are not decoded yet: export sprites as PNG. OpenType (CFF) fonts are refused by the build: use TrueType, BDF or an image sheet.
-- THIRD_PARTY.txt does not yet include the AGB Studio runtime's own MIT notice; the licence page in the user docs gives the text to add.
+- OpenType (CFF) fonts are refused by the build: use TrueType, BDF or an image sheet.

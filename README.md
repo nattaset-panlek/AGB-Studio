@@ -1,5 +1,7 @@
 # AGB Studio
 
+![AGB Studio](docs/brand/banner-github-1280-320.png)
+
 AGB Studio is a desktop editor and toolchain for making games for the Game Boy Advance. You lay out scenes, draw
 sprites and tile maps, write game logic in a C# subset (or with the Logic Graph), write dialogue and translations
 (Thai and English included), and build a `.gba` ROM that runs in an emulator or on a flash cart. The editor runs the

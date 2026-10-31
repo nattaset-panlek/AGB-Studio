@@ -19,6 +19,8 @@ public sealed class PackagingTests
                      Packager.RootMarker, "README.txt", "bin/editor.json", "bin/release-notes.md", "runtime/include/agb/game.hpp", "runtime/src/framework/game.cpp",
                      "third_party/mgba/mgba_libretro.dll", "third_party/mgba/LICENSE-mgba.txt", "third_party/fonts/NotoSansThai-Regular.ttf",
                      "third_party/icu/thaidict.txt", "docs/THIRD_PARTY.md", "docs/RELEASE-NOTES.md", "docs/user/gba-hardware-guide.md",
+                     "docs/brand/banner-hero-1600-560.png", "docs/brand/banner-github-1280-320.png", "docs/brand/banner-itch-io-630-500.png",
+                     "docs/brand/banner-social-1280-640.png", "docs/brand/agb-studio.ico",
                  })
             Assert.True(File.Exists(Path.Combine(stage, f)), f + " is missing");
         // Every runtime source a game build compiles is in the package.

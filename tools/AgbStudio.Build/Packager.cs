@@ -40,6 +40,8 @@ public static class Packager
         foreach (var d in new[] { "fonts", "icu", "mgba" })
             CopyTree(Path.Combine(root, "third_party", d), Path.Combine(stage, "third_party", d));
         CopyTree(Path.Combine(root, "docs", "user"), Path.Combine(stage, "docs", "user"));
+        // T-R03: the banners and icons for the release page (the release notes show the hero banner).
+        CopyTree(Path.Combine(root, "docs", "brand"), Path.Combine(stage, "docs", "brand"));
         foreach (var f in new[] { "THIRD_PARTY.md", "RELEASE-NOTES.md" })
             File.Copy(Path.Combine(root, "docs", f), Path.Combine(stage, "docs", f), true);
         File.WriteAllText(Path.Combine(stage, RootMarker), Version + "\n");
