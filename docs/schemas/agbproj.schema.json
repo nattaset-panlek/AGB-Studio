@@ -104,6 +104,12 @@
               }
             }
           }
+        },
+        "flagIds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
         }
       }
     },
