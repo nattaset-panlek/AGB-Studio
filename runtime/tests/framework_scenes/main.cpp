@@ -1,10 +1,16 @@
 // Screens and scenes: the screen stack (push / pop / resume / replace), staged-load budgets and the step named in
 // overrun warnings, World Map links (on touch, door, respawn, "Only if", condition only), map scripts OnLoad /
-// OnEnter / OnExit, Scene.Pause, the camera (dead zone, shake, Camera Zone actors) and prefab templates.
+// OnEnter / OnExit, Scene.Pause, the camera (dead zone, shake, Camera Zone actors), prefab templates and the Video
+// Mode toggles (alpha blending, mosaic).
+#include <tonc.h>
+
 #include "../test.hpp"
 #include "agb/api.hpp"
 #include "agb/behaviours.hpp"
+#include "agb/commit.hpp"
 #include "agb/game.hpp"
+#include "agb/render/bg.hpp"
+#include "agb/text.hpp"
 
 using namespace agb;
 
@@ -487,6 +493,65 @@ AGB_TEST(prefab_templates_spawn_from_rom) {
     const u32 head = debug::channel().logHead;
     CHECK(scene::spawn("Nothing", 0, 0) == nullptr);
     CHECK(loggedSince(head, "no actor or prefab named Nothing"));
+}
+
+namespace {
+data::MapLayer g_fxLayers[3];
+int oamWithMosaic() {
+    const commit::ObjAttr* oam = commit::oam();
+    int n = 0;
+    for (int i = 0; i < 128; ++i)
+        if ((oam[i].attr0 & ATTR0_MODE_MASK) != ATTR0_HIDE && (oam[i].attr0 & ATTR0_MOSAIC)) ++n;
+    return n;
+}
+}  // namespace
+
+AGB_TEST(video_mode_alpha_blending_and_mosaic) {
+    // T-O02: a fog layer in front of the ground (collision) layer, a back layer behind it; both toggles on.
+    setupData();
+    g_fxLayers[0] = {1, data::LayerType::Tile, 1, false, 256, 256, kW, kH, g_cells, &g_tileset};  // ground (BG1)
+    g_fxLayers[1] = {0, data::LayerType::Tile, 0, false, 256, 256, kW, kH, g_cells, &g_tileset};  // fog (BG0, in front)
+    g_fxLayers[2] = {2, data::LayerType::Tile, 2, false, 128, 128, kW, kH, g_cells, &g_tileset};  // back (BG2)
+    g_hub.layers = g_fxLayers;
+    g_hub.layerCount = 3;
+    g_hub.collisionLayer = 0;
+    g_hub.alphaBlend = g_hub.mosaic = true;
+    game::boot(g_game);
+    for (int n = 0; game::loading() && n < 90; ++n) frames(1);
+    CHECK(commit::reg(commit::Mosaic) != 0);  // the fade in starts with big blocks
+    CHECK_EQ(commit::reg(commit::BldCnt) & 0xC0, BLD_BLACK);
+    frames(20);
+    CHECK(render::effects::transitionDone());
+    // Fog (BG0) 8/16 over the ground, the back layer, the sprites and the backdrop; the fade gave the blend back.
+    CHECK_EQ(commit::reg(commit::BldCnt), BLD_STD | 0x01 | ((0x02 | 0x04 | 0x10 | 0x20) << 8));
+    CHECK_EQ(commit::reg(commit::BldAlpha), 0x0808);
+    CHECK_EQ(commit::reg(commit::Mosaic), 0);  // 1 px blocks once the scene is in
+    for (int bg = 0; bg < 3; ++bg) CHECK_EQ(commit::reg(static_cast<commit::Reg>(commit::Bg0Cnt + bg)) & BG_MOSAIC, BG_MOSAIC);
+    CHECK(oamWithMosaic() > 0);
+    // The text layer (HUD, dialogue) takes no part.
+    const int textBg = text::layer();
+    CHECK_EQ(textBg, 3);
+    CHECK_EQ(commit::reg(commit::Bg3Cnt) & BG_MOSAIC, 0);
+    CHECK_EQ(commit::reg(commit::BldCnt) & (0x08 | 0x0800), 0);
+    // Leaving grows the blocks again; the next scene has neither toggle.
+    game::loadScene(1);
+    frames(4);
+    CHECK(commit::reg(commit::Mosaic) != 0);
+    waitForScene(1);
+    frames(20);
+    CHECK_EQ(commit::reg(commit::BldCnt), 0);
+    CHECK_EQ(commit::reg(commit::Mosaic), 0);
+    CHECK_EQ(commit::reg(commit::Bg0Cnt) & BG_MOSAIC, 0);
+    CHECK_EQ(oamWithMosaic(), 0);
+    // Only the layers in front of the collision layer are fog: with the ground in front, nothing is (shadows only).
+    g_hub.layers = g_layers;
+    g_hub.layerCount = 1;
+    g_hub.mosaic = false;
+    game::loadScene(0);
+    waitForScene(0);
+    frames(20);
+    CHECK_EQ(commit::reg(commit::BldCnt), BLD_STD | ((0x01 | 0x10 | 0x20) << 8));
+    g_hub.alphaBlend = false;
 }
 
 int main() {

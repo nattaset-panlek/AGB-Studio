@@ -152,6 +152,101 @@ AGB_TEST(parallax_scroll_registers) {
     g_layer.parallaxX = g_layer.parallaxY = 256;
 }
 
+namespace {
+// ---- three layers like Sky Hopper's Forest_01, data in ROM: sky and hills are wrapping image layers (x0.2, x0.5), the
+// ground is a metatile layer (x1) ----------------------------------------------------------------------------------
+constexpr int kGW = 120, kGH = 40;     // ground, metatiles (1920 x 640 px)
+constexpr int kImgW = 64, kImgH = 32;  // sky and hills, screen entries
+struct RomMaps {
+    u16 ground[kGW * kGH];
+    u16 image[kImgW * kImgH];
+};
+constexpr RomMaps makeRomMaps() {
+    RomMaps m{};
+    for (int i = 0; i < kGW * kGH; ++i) m.ground[i] = static_cast<u16>((i * 7 + i / kGW) % 6);
+    for (int i = 0; i < kImgW * kImgH; ++i) m.image[i] = static_cast<u16>(((i * 5 + i / kImgW) % 8) | ((i & 1) ? data::kSeHFlip : 0));
+    return m;
+}
+constexpr RomMaps kRomMaps = makeRomMaps();
+data::MapLayer g_forest[3];
+MapLayerView g_forestViews[3];
+
+u16 forestExpected(int layer, int tx, int ty) {
+    const MapLayerView& v = g_forestViews[layer];
+    const auto& p = v.placement();
+    u16 se;
+    if (layer < 2) {
+        se = kRomMaps.image[((ty % kImgH + kImgH) % kImgH) * kImgW + (tx % kImgW + kImgW) % kImgW];
+    } else {
+        if (tx < 0 || ty < 0 || tx >= kGW * 2 || ty >= kGH * 2) return 0;
+        se = kMeta[kRomMaps.ground[(ty / 2) * kGW + tx / 2]].se[(tx & 1) + (ty & 1) * 2];
+    }
+    return static_cast<u16>(((data::seTile(se) + p.firstTile) & 0x3FF) | (se & 0x0C00) | (((data::sePal(se) + p.paletteBank) & 15) << 12));
+}
+
+// Cells on screen that do not show what the map has at the layer's scroll registers (what the player sees).
+int wrongOnScreen() {
+    int wrong = 0;
+    for (int i = 0; i < 3; ++i) {
+        const u16* vram = commit::bgMap(g_forestViews[i].screenBlock());
+        // The scroll the view shows (in map space); the registers hold its low 9 bits.
+        const int px = g_forestViews[i].scrollX(), py = g_forestViews[i].scrollY();
+        if (commit::reg(static_cast<commit::Reg>(commit::Bg0HOfs + i * 2)) != (px & 0x1FF) ||
+            commit::reg(static_cast<commit::Reg>(commit::Bg0VOfs + i * 2)) != (py & 0x1FF))
+            ++wrong;
+        for (int ty = py >> 3; ty <= (py + 159) >> 3; ++ty)
+            for (int tx = px >> 3; tx <= (px + 239) >> 3; ++tx) {
+                const u16 got = vram[((tx & 63) >> 5) * 1024 + (ty & 31) * 32 + (tx & 31)];
+                if (got != forestExpected(i, tx, ty) && wrong++ < 2) debug::logf("  layer %d cell %d,%d: %x vs %x", i, tx, ty, got, forestExpected(i, tx, ty));
+            }
+    }
+    return wrong;
+}
+}  // namespace
+
+AGB_TEST(big_camera_jump_fits_in_a_frame) {
+    screenArena().reset();
+    bg::reset();
+    palettes::reset();
+    bg::setVideoMode(0);
+    setup();
+    g_forest[0] = {0, data::LayerType::Image, 3, true, 51, 51, kImgW, kImgH, kRomMaps.image, &g_tileset};
+    g_forest[1] = {1, data::LayerType::Image, 2, true, 128, 128, kImgW, kImgH, kRomMaps.image, &g_tileset};
+    g_forest[2] = {2, data::LayerType::Tile, 1, false, 256, 256, kGW, kGH, kRomMaps.ground, &g_tileset};
+    for (int i = 0; i < 3; ++i) {
+        CHECK(g_forestViews[i].init(g_forest[i]));
+        g_forestViews[i].setCamera(0, 0);
+        g_forestViews[i].drawAll();
+    }
+    system::waitVBlank();
+    CHECK_EQ(wrongOnScreen(), 0);
+    // Camera.SetPosition / a respawn / a teleport: across the map in one frame, then a few frames of small moves.
+    const int jumps[][2] = {{1500, 400}, {40, 30}, {900, 200}, {1680, 480}};
+    u32 worst = 0;
+    int wrong = 0, lagging = 0;
+    for (const auto& j : jumps) {
+        for (int f = 0; f < 8; ++f) {
+            const int cx = j[0] + f * 2, cy = j[1] + f;
+            const u32 t0 = profile::cyclesNow();
+            for (auto& v : g_forestViews) {
+                v.setCamera(cx, cy);
+                v.commit();
+            }
+            const u32 spent = profile::cyclesNow() - t0;
+            if (spent > worst) worst = spent;
+            system::waitVBlank();
+            wrong += wrongOnScreen();
+            for (int i = 0; i < 3; ++i)
+                if (g_forestViews[i].scrollX() != (cx * g_forest[i].parallaxX) >> 8 && f + 1 > lagging) lagging = f + 1;
+        }
+    }
+    debug::logf("camera jump, 3 layers: worst frame %lu cycles (%lu%% of a frame); every layer at the camera after %d frames", worst,
+                worst * 100 / profile::kCyclesPerFrame, lagging + 1);
+    CHECK_EQ(wrong, 0);  // never a wrong cell on screen, also while a layer waits for its redraw
+    CHECK(worst < profile::kCyclesPerFrame / 4);  // two whole-window redraws a frame (measured 54k cycles, 19%)
+    CHECK(lagging <= 1);  // the third layer follows one frame later
+}
+
 int main() {
     system::init();
     test::runAll();

@@ -10,6 +10,17 @@ public static class AudioChannels
 {
     public const int MaxMixingChannels = 16;
 
+    /// <summary>The rates Maxmod mixes at (kHz, mm_mixmode); Project Settings · Audio <c>mixKHz</c> must be one of them.</summary>
+    public static readonly int[] MixRates = [8, 10, 13, 16, 18, 21, 27, 31];
+
+    /// <summary>The Maxmod rate nearest to <paramref name="khz"/> (a tie takes the lower one), as the runtime picks it.</summary>
+    public static int NearestMixRate(int khz) => MixRates.OrderBy(r => Math.Abs(r - khz)).ThenBy(r => r).First();
+
+    /// <summary>A problem with the mixing rate setting, or null.</summary>
+    public static string? MixRateProblem(int khz) => MixRates.Contains(khz) ? null :
+        $"The project mixes audio at {khz} kHz (audio.mixKHz in the project file); Maxmod mixes at {string.Join(", ", MixRates[..^1])} or {MixRates[^1]} kHz. " +
+        $"Choose one of them ({NearestMixRate(khz)} kHz is the nearest).";
+
     /// <summary>Pattern channels of a MOD or XM file, or null when the format is not recognised.</summary>
     public static int? ModuleChannels(ReadOnlySpan<byte> file, string extension)
     {

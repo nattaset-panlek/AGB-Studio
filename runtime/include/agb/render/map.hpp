@@ -27,6 +27,8 @@ public:
     int screenBlock() const { return screenBlock_; }
     const bg::TilesetPlacement& placement() const { return placement_; }
     u16 cell(int tileX, int tileY) const;  // shadow screen entry at hardware tile coordinates (tests)
+    // The scroll the layer shows (map pixels). After a big camera move it can stay at the old position for a frame or
+    // two: setCamera() redraws at most two whole windows per frame, the others wait (never a half-drawn window).
     int scrollX() const { return scrollX_; }
     int scrollY() const { return scrollY_; }
 
@@ -42,6 +44,7 @@ private:
     bg::Size size_ = bg::Size::S64x32;
     int screenBlock_ = -1;
     int widthMask_ = 63, heightMask_ = 31;
+    bool placeByAdd_ = false;  // map entries + first tile / palette bank cannot carry out of their fields (drawRow)
     u16* shadow_ = nullptr;  // in the screen arena
     u32 dirtyRows_[4] = {};  // per screen block: bit per row that changed
     int scrollX_ = 0, scrollY_ = 0, cameraX_ = 0, cameraY_ = 0;

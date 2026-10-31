@@ -20,7 +20,8 @@ u32 g_regDirty = 0;
 s32 g_bgRef[2][2];
 u8 g_bgRefDirty = 0;
 bool g_oamDirty = false, g_palDirty = false;
-Copy g_queue[kDmaQueueSize];
+// Read once per entry in VBlank: EWRAM is fast enough, and IWRAM is kept for the stack and hot data (G-HW.04).
+AGB_EWRAM_BSS Copy g_queue[kDmaQueueSize];
 int g_queueLen = 0;
 u32 g_queueBytes = 0, g_budget = kDefaultDmaBudget, g_deferred = 0;
 

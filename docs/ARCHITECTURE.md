@@ -72,8 +72,9 @@ and scale it with the BG2 / BG3 matrices; `render::affine::mode7` fills a per-sc
 ### Audio and DMG sound effects
 
 Music (MOD / XM) and sampled effects (WAV) go through maxmod on the two Direct Sound channels: the build runs mmutil
-over every music and sound file into one soundbank (`Audio/SoundbankBuilder.cs`), maxmod mixes at 21 kHz with 8
-channels by default (D-14). SFX Designer effects (`audio/sfx/*.sfx` without "Bake to .wav") play on the four DMG
+over every music and sound file into one soundbank (`Audio/SoundbankBuilder.cs`), maxmod mixes at the rate and with
+the channel count of Project Settings · Audio (21 kHz and 8 channels by default, D-14; the build sizes maxmod's buffers
+for them with `AGB_AUDIO_MIX_KHZ` and `AGB_AUDIO_CHANNELS`, the mixer CPU per rate is in D-26). SFX Designer effects (`audio/sfx/*.sfx` without "Bake to .wav") play on the four DMG
 channels with no sample data: `Audio/DmgRegisters.cs` encodes each effect into register values (sweep, envelope and
 duty, frequency, wave RAM, length in frames), the build writes them as an `agb_dmg_sfx` table, and
 `audio::playDmgId` writes the registers when `Sound.Play` gets an id with bit 15 set. An effect with "Bake to .wav", or
@@ -145,7 +146,9 @@ converts assets first.
 | Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 
-The default split of IWRAM and EWRAM shown in blueprint 10 is not encoded or checked.
+The split of IWRAM and EWRAM into the rows of blueprint 10 is measured from the linker map (`RamBudget.cs`, report.json
+`ramSplit`, G-HW.04): code in IWRAM (Maxmod's `.iwram` sections and the `*.iwram.cpp` files) is "Hot ARM code"; the
+rows the runtime controls are held to their defaults by `RamBudgetTests`, the others are reported when over.
 
 ## Debug channel and logs
 

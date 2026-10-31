@@ -73,6 +73,9 @@ struct SceneDef {
     void (*onEnter)();
     void (*onExit)();
     u16 backdrop;                 // BGR555
+    // Video Mode popover (T-O02). Alpha blending (fog, shadows): map layers in front of the collision layer are blended
+    // half see-through over everything behind them, and semi-transparent sprites over the layers. Mosaic effect: the
+    // scene's layers and sprites take part in the mosaic, which the scene's transitions grow (up to 9 px blocks).
     bool alphaBlend, mosaic;
     const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
 };
@@ -96,6 +99,7 @@ struct GameDef {
     u8 actionCount;
     const void* soundbank;
     u8 audioChannels;
+    u8 audioMixKHz;         // Project Settings · Audio mixing rate (0 = 21 kHz)
     void (*init)();         // generated per-game setup (script natives, fonts, strings)
     bool skipSplash;        // Debug builds start without the boot splash
     const void* const* textTables;  // agb::text::Table per language

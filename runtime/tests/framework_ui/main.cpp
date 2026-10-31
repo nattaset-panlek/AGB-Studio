@@ -56,6 +56,11 @@ SceneDef g_title, g_level;
 const SceneDef* g_scenes[2];
 GameDef g_game;
 
+// A HUD Text Label "HUD" (three blocks) across the top-left of the level, under the pause box and the options panel.
+const data::PlacedGlyph kHudGlyphs[] = {{0, 0, 0, 0, 0}, {0, 6, 0, 0, 1}, {0, 12, 0, 0, 2}};
+data::TextRun g_hudRun;
+ActorDef g_hudActor;
+
 void setupData(bool splash) {
     for (auto& a : g_ascii) a = 0xFFFF;
     for (int c = 33; c < 127; ++c) g_ascii[c] = 0;
@@ -105,6 +110,8 @@ void setupData(bool splash) {
                nullptr, nullptr, nullptr, 0x7DE7, false, false, &kTitleMenu};
     g_level = {"Level", 16, 10, 0, g_layers, 1, 0, nullptr, 0, {-1, 0, 0, true, 0, 0}, -1, false, nullptr, 0,
                nullptr, nullptr, nullptr, 0x7E10, false, false, nullptr};
+    g_hudRun = {&g_font, kHudGlyphs, 3, 1, 3};
+    g_hudActor = {"HUD", ActorKind::TextLabel, nullptr, 16, 40, 0, 0, nullptr, {0, 0, 0, 0}, nullptr, 0, &g_hudRun, false, -1};
     g_scenes[0] = &g_title;
     g_scenes[1] = &g_level;
     g_game = {};
@@ -142,11 +149,12 @@ void waitLoaded() {
     for (int i = 0; i < 60 && (game::loading() || !render::effects::transitionDone()); ++i) frames(1);
 }
 // The text layer's map entry at a tile: the palette bank tells whose tiles are shown there.
-int bankAt(int tileX, int tileY) {
+u16 entryAt(int tileX, int tileY) {
     const int bg = text::layer();
     const u16* map = commit::bgMap(render::bg::config(bg).screenBlock);
-    return map[tileY * 32 + tileX] >> 12;
+    return map[tileY * 32 + tileX];
 }
+int bankAt(int tileX, int tileY) { return entryAt(tileX, tileY) >> 12; }
 }  // namespace
 
 AGB_TEST(boot_splash_then_title_menu) {
@@ -197,6 +205,7 @@ AGB_TEST(title_options_and_start) {
     CHECK(topIs("Title"));
     CHECK(render::bg::visible(1));
     CHECK_EQ(render::palettes::baseColor(0), 0x7DE7);
+    CHECK_EQ(bankAt(11, 9), 14);  // the title menu the options panel covered is shown again
     CHECK_EQ(render::bg::tileBytesUsed(), tilesBefore);  // the options screen gave its tiles back
     press(Key::Up);
     press(Key::A);  // Start
@@ -282,6 +291,39 @@ AGB_TEST(options_remap_swaps_buttons_and_sets_volume) {
     press(Key::B);
     CHECK(topIs("Level"));
     CHECK_EQ(commit::reg(commit::BldCnt), 0);
+}
+
+AGB_TEST(hud_label_comes_back_after_pause_and_options) {
+    setupData(false);
+    g_level.actors = &g_hudActor;
+    g_level.actorCount = 1;
+    g_game.startScene = 1;
+    game::boot(g_game);
+    waitLoaded();
+    frames(2);
+    // The label's row on the text layer: tiles 2..29 of row 5, in the text palette, none of them the blank tile.
+    u16 label[28];
+    for (int x = 0; x < 28; ++x) label[x] = entryAt(2 + x, 5);
+    CHECK_EQ(bankAt(2, 5), 15);
+    CHECK((label[0] & 0x3FF) != text::blankEntry());
+    press(Key::Start);
+    frames(1);
+    CHECK(topIs("pause menu"));
+    CHECK_EQ(bankAt(8, 5), 14);  // the pause box covers the middle of the label
+    press(Key::Down);
+    press(Key::A);  // Options: its panel covers the whole label
+    frames(1);
+    CHECK(topIs("options"));
+    CHECK(entryAt(2, 5) != label[0]);
+    press(Key::B);
+    CHECK(topIs("pause menu"));
+    CHECK_EQ(entryAt(2, 5), label[0]);  // left of the pause box: the label again
+    CHECK_EQ(bankAt(8, 5), 14);         // the pause box on top
+    press(Key::B);
+    CHECK(topIs("Level"));
+    int wrong = 0;
+    for (int x = 0; x < 28; ++x) wrong += entryAt(2 + x, 5) != label[x];
+    CHECK_EQ(wrong, 0);
 }
 
 AGB_TEST(key_names) {
