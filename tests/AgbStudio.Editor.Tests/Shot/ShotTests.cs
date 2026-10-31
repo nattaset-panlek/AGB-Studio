@@ -153,8 +153,7 @@ public class ShotTests(ITestOutputHelper log)
     static void RenderShell(string path, int w, int h, ThemeVariant theme)
     {
         using var fx = new Fixture();
-        fx.OpenSkyHopper(paletteFiles: false);   // T-P01 lists 12 sprites: the empty player.png is T-O07's alone
-        fx.GameLanguage("en");   // the viewport's HUD reads "SCORE" in Figma
+        fx.OpenSkyHopper(paletteFiles: false, language: "en");   // no empty player.png (T-O07's alone); the viewport's HUD reads "SCORE" in Figma
         var app = Application.Current!;
         var before = app.RequestedThemeVariant;
         fx.Services.Preferences.Current.Theme = theme == ThemeVariant.Light ? ThemeMode.Light : ThemeMode.Dark;

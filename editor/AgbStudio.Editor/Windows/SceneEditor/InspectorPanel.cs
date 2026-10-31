@@ -203,7 +203,7 @@ public sealed class InspectorPanel : Panel
         {
             var meta = _m.Assets!.SpriteMeta(a.Sprite);
             var anim = meta.Animations.FirstOrDefault(x => x.Name == a.Animation);
-            var frames = (anim?.Frames.Where(f => f < sheet.FrameCount).ToList() is { Count: > 0 } fs ? fs : Enumerable.Range(0, sheet.FrameCount).ToList()).Take(6).ToList();
+            var frames = (anim?.Frames.Where(f => f < sheet.FrameCount).ToList() is { Count: > 0 } fs ? fs : Enumerable.Range(0, sheet.FrameCount).ToList()).Take(4).ToList();
             var strip = UI.Row(5);
             strip.Name = "FrameStrip";
             for (var i = 0; i < frames.Count; i++)

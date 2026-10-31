@@ -311,10 +311,10 @@ public static class AssetImporter
 
     public static int SplitCount(ImportItem item) => Math.Max(1, (item.Colors + 14) / 15);
 
-    /// <summary>The OBJ palette slot a sprite owns (sprites with their own palette, by name), or -1.</summary>
+    /// <summary>The OBJ palette slot a sprite owns (sprites with their own palette, in creation order as the Palette Manager numbers them), or -1.</summary>
     public static int ObjPaletteSlot(GameProject p, string sprite)
     {
-        var owners = p.SpriteFiles().Where(f => p.LoadMeta<SpriteMeta>(f).Palette.Length == 0).Select(GameProject.AssetName).Order(StringComparer.Ordinal).ToList();
+        var owners = AgbStudio.Editor.Services.CreationOrder.Of(p.SpriteFiles().Where(f => p.LoadMeta<SpriteMeta>(f).Palette.Length == 0)).Select(GameProject.AssetName).ToList();
         return owners.IndexOf(sprite);
     }
 
