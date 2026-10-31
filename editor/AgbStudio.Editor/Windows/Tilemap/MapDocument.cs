@@ -81,8 +81,8 @@ public sealed class MapDocument
             foreach (var (k, v) in o)
                 if (!known.ContainsKey(k)) doc._extras[k] = v?.DeepClone();
         }
-        doc.BgSize = doc._extras["bgSize"]?.GetValue<string>() switch { "32x32" => BgSize.S32x32, "32x64" => BgSize.S32x64, "64x64" => BgSize.S64x64, _ => BgSize.S64x32 };
-        doc.Bpp = doc._extras["bpp"]?.GetValue<int>() == 8 ? 8 : 4;
+        doc.BgSize = map.BgSize switch { "32x32" => BgSize.S32x32, "32x64" => BgSize.S32x64, "64x64" => BgSize.S64x64, _ => BgSize.S64x32 };
+        doc.Bpp = map.Bpp == 8 ? 8 : 4;
         doc.LoadTileset();
         return doc;
     }
@@ -108,11 +108,11 @@ public sealed class MapDocument
 
     public string Serialize()
     {
+        // "bgSize" and "bpp" are fields of the .map (MapFile, docs/schemas/map.schema.json), left out at their defaults
+        Map.BgSize = BgSize == BgSize.S64x32 ? null : SizeKey(BgSize);
+        Map.Bpp = Bpp == 4 ? null : Bpp;
         var node = JsonSerializer.SerializeToNode(Map, GameProject.Json)!.AsObject();
-        foreach (var (k, v) in _extras)
-            if (k is not ("bgSize" or "bpp")) node[k] = v?.DeepClone();
-        if (BgSize != BgSize.S64x32) node["bgSize"] = SizeKey(BgSize);
-        if (Bpp != 4) node["bpp"] = Bpp;
+        foreach (var (k, v) in _extras) node[k] = v?.DeepClone();
         return node.ToJsonString(GameProject.Json) + "\n";
     }
 

@@ -12,12 +12,22 @@
     "nodes": {
       "type": "array",
       "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    },
+    "comments": {
+      "type": "array",
+      "description": "Comment boxes of the Logic Graph editor",
+      "items": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
+          "title": {
             "type": "string"
           },
           "x": {
@@ -26,40 +36,99 @@
           "y": {
             "type": "number"
           },
-          "props": {
-            "type": "object",
-            "additionalProperties": {
-              "type": [
-                "string",
-                "number",
-                "boolean"
-              ]
-            }
+          "w": {
+            "type": "number"
+          },
+          "h": {
+            "type": "number"
           }
         },
         "required": [
-          "id",
-          "type"
+          "x",
+          "y",
+          "w",
+          "h"
         ]
       }
     },
-    "links": {
+    "collapsed": {
       "type": "array",
+      "description": "Ids of the nodes drawn collapsed",
       "items": {
-        "type": "object",
-        "properties": {
-          "from": {
-            "type": "string"
-          },
-          "to": {
-            "type": "string"
+        "type": "string"
+      }
+    },
+    "disabled": {
+      "type": "object",
+      "description": "Nodes and links switched off: a graph of the same shape that the code generator skips",
+      "properties": {
+        "format": {
+          "type": "integer"
+        },
+        "class": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
           }
         },
-        "required": [
-          "from",
-          "to"
-        ]
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        }
       }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ]
+    },
+    "link": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ]
     }
   }
 }

@@ -51,7 +51,7 @@ public sealed class FontEntry
             foreach (var (k, v) in o)
                 if (!known.ContainsKey(k)) e._extras[k] = v?.DeepClone();
         }
-        e.DrawTo = e._extras["drawTo"] is JsonValue d && d.TryGetValue<int>(out var bg) ? Math.Clamp(bg, 0, 3) : 0;
+        e.DrawTo = file.DrawTo is { } bg ? Math.Clamp(bg, 0, 3) : 0;
         return e;
     }
 
@@ -72,9 +72,10 @@ public sealed class FontEntry
 
     public string Serialize()
     {
+        // "drawTo" is a field of the .font (FontFile, docs/schemas/font.schema.json), left out at BG 0
+        File.DrawTo = DrawTo == 0 ? null : DrawTo;
         var node = JsonSerializer.SerializeToNode(File, GameProject.Json)!.AsObject();
-        foreach (var (k, v) in _extras) if (k != "drawTo") node[k] = v?.DeepClone();
-        if (DrawTo != 0) node["drawTo"] = DrawTo;
+        foreach (var (k, v) in _extras) node[k] = v?.DeepClone();
         return node.ToJsonString(GameProject.Json) + "\n";
     }
 

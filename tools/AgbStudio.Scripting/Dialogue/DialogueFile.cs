@@ -93,6 +93,10 @@ public sealed class DialogueSpeaker
     public string? Portrait { get; set; }
     public string? Blip { get; set; }
     public int TextSpeed { get; set; } = -1;
+    /// <summary>New Speaker "Name · EN" / "Name · TH": the speaker's name per language (the name is the id).</summary>
+    public Dictionary<string, string>? Names { get; set; }
+    /// <summary>New Speaker "Name tag colour", "#RRGGBB".</summary>
+    public string? Color { get; set; }
 }
 
 public sealed class Conversation

@@ -92,7 +92,8 @@ layer (`MapLayerData`) has a `name`, hardware `bg` (0-3), `type` (`Tile`, `Image
 `priority`, `parallaxX` / `parallaxY` (1 = moves with the camera), `wrap`, `cells` (one metatile index per cell,
 row-major) or, for image layers, the `image` name. Affine layers are converted at build time to 8bpp tiles with flips
 and palettes baked in (at most 256 tiles). A map is the layout of a scene (blueprint "Layout"): several scenes can
-show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`).
+show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`). The Tilemap Editor also writes
+`bgSize` ("32x32", "64x32", "32x64" or "64x64"; left out = 64x32) and `bpp` (4 or 8; left out = 4).
 
 ## `prefabs/<Name>.prefab` (ActorData)
 
@@ -130,7 +131,8 @@ copies it in any scene when the scene has no actor of that name.
   character sets, extra characters, line height, baseline, spacing, bits per pixel, drop shadow, Thai mark stacking
   and lower-vowel placement, glyph overrides (edited pixels by code point). `Ttf` takes a `.ttf` or an `.otf` file:
   TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed. Font collections (`.ttc`), web fonts
-  (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
+  (`.woff`) and variable fonts with CFF2 outlines are refused with a message. `drawTo` is the BG (0-3) of the text
+  layer chosen in Font Manager · Draw to (left out = BG 0).
 - `data/<Table>.db` (`TableFile`): key field, keep in ROM, `fields` (name, type `int` / `fixed` / `bool` / `text` /
   `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized) and `rows`.
 - `text/strings.<lang>.json` (`StringTable`): `language` and a sorted `strings` map from key to text.
@@ -140,9 +142,11 @@ copies it in any scene when the scene has no actor of that name.
   `noiseShort`. The build turns every effect that is not baked into DMG register values in the ROM.
 - `scripts/<Name>.graph` (`LogicGraph`): `class` (the generated C# class), `nodes` (each `id`, `type` from the node
   catalog, `x`, `y`, `props`) and `links` (`from` / `to` as "node.pin", from an output pin to an input pin). The
-  generated `<Name>.cs` next to it carries a header and is read-only in the editor (D-11).
+  generated `<Name>.cs` next to it carries a header and is read-only in the editor (D-11). The Logic Graph editor
+  adds `comments` (`title`, `x`, `y`, `w`, `h`), `collapsed` (node ids) and `disabled` (nodes and links switched off,
+  a graph of the same shape that is not compiled).
 - `dialogue/<name>.dlg` (`DialogueFile`): `name`, `textSpeed`, `blip`, `speakers` (`name`, `portrait`, `blip`,
-  `textSpeed`) and `conversations` (`id`, `lines`). A line has an optional `id`, `speaker`, a string `key` or inline
+  `textSpeed`, and from New Speaker `names` per language and the name tag `color`) and `conversations` (`id`, `lines`). A line has an optional `id`, `speaker`, a string `key` or inline
   `text` per language, `portrait`, `speed`, `blip`, `showIf`, `thenSet`, `next`, `choices` (each `key` or `text`,
   `showIf`, `thenSet`, `goto`, `scene`, `end`), or a `command` with its arguments (`scene`, `flag` / `value`,
   `table` / `item` / `count`, `sound` / `volume`, `frames` / `seconds`, `amplitude`).
