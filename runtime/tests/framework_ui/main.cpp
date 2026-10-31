@@ -222,10 +222,19 @@ AGB_TEST(pause_overlay_dims_and_restores) {
     CHECK_EQ(commit::reg(commit::BldCnt) & 0xC0, BLD_BLACK);
     CHECK_EQ(commit::reg(commit::BldY), 9);
     CHECK_EQ(bankAt(8, 5), 14);
+    CHECK(api::Scene::Paused());
     press(Key::Start);  // the pause action closes it again
     CHECK(topIs("Level"));
+    CHECK(!api::Scene::Paused());
     CHECK_EQ(commit::reg(commit::BldCnt), bldBefore);
     CHECK_EQ(render::bg::tileBytesUsed(), tilesBefore);
+    // Scene.Pause from a script opens the same pause menu in a game that has one.
+    api::Scene::Pause();
+    frames(1);
+    CHECK(topIs("pause menu"));
+    CHECK(api::Scene::Paused());
+    press(Key::Start);
+    CHECK(topIs("Level"));
     // Quit to title.
     press(Key::Start);
     frames(1);

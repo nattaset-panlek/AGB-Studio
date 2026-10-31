@@ -86,6 +86,9 @@ public sealed class SaveSettings
     public bool Autosave { get; set; } = true;   // on every scene change
     public bool Checksum { get; set; } = true;
     public List<SaveField> Fields { get; set; } = new();
+    // Saved Event Script flags that dialogues declare: name -> flag id, written by the build. A flag keeps its id and
+    // a new flag never reuses one, so adding a flag does not change what existing save data means.
+    public Dictionary<string, int> FlagIds { get; set; } = new();
 }
 
 public sealed class SaveField

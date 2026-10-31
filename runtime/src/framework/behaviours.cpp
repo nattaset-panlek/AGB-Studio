@@ -322,25 +322,31 @@ void ChasePlayer::update() {
 
 // ---- SoundOnEvent -----------------------------------------------------------------------------------
 
+// Sound ids as Sound.Play takes them: soundbank samples, or SFX Designer effects on the DMG channels (high bit).
+void SoundOnEvent::play() {
+    if (sample & audio::kDmgSfxFlag) audio::playDmgId(static_cast<u16>(sample & ~audio::kDmgSfxFlag));
+    else audio::playSample(sample, volume);
+}
+
 void SoundOnEvent::start() {
-    if (event == SoundEvent::Spawn) audio::playSample(sample, volume);
+    if (event == SoundEvent::Spawn) play();
 }
 
 void SoundOnEvent::update() {
     if (event != SoundEvent::Jump) return;
     PlatformerBody* body = actor->get<PlatformerBody>();
     if (!body) return;
-    if (wasGround_ && !body->onGround && body->vy.raw < 0) audio::playSample(sample, volume);
+    if (wasGround_ && !body->onGround && body->vy.raw < 0) play();
     wasGround_ = body->onGround;
 }
 
 void SoundOnEvent::onTouch(Actor& other) {
     AGB_UNUSED(other);
-    if (event == SoundEvent::Touch) audio::playSample(sample, volume);
+    if (event == SoundEvent::Touch) play();
 }
 
 void SoundOnEvent::onDestroy() {
-    if (event == SoundEvent::Destroy) audio::playSample(sample, volume);
+    if (event == SoundEvent::Destroy) play();
 }
 
 }  // namespace agb

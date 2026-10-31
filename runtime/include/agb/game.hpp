@@ -32,10 +32,14 @@ public:
 
 // ---- scene data written by the build ---------------------------------------------------------------
 
+// World Map link kinds (T-P13, T-O09). On touch: the player overlaps the From actor. Door: the player stands in
+// the From actor and presses Up. Respawn: the player overlaps the From actor (a pit, spikes) or loses their last
+// heart in this scene. A link without a From actor ("Condition only") fires once its "Only if" condition holds; a
+// Respawn link without one fires when the player is lost.
 enum class LinkKind : u8 { OnTouch, Door, Respawn };
 
 struct LinkDef {
-    s16 fromActor;      // trigger / goal actor index in the scene's ActorDef list
+    s16 fromActor;      // trigger / goal actor index in the scene's ActorDef list, -1 = none (condition only)
     LinkKind kind;
     u16 targetScene;
     s16 spawnX, spawnY; // spawn point in the target scene (pixels)
@@ -73,6 +77,12 @@ struct SceneDef {
     const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
 };
 
+// A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.
+struct PrefabDef {
+    const char* name;
+    const ActorDef* actor;
+};
+
 // Input actions from Project Settings · Input (name -> keys) are part of the game definition.
 struct GameDef {
     const char* title;
@@ -97,6 +107,8 @@ struct GameDef {
     bool autosave;             // Project Settings · Save data · Autosave: save::lastSlot() after each scene loads
     const void* dmgSfx;        // agb::audio::DmgSfx table of the SFX Designer effects (nullptr = none)
     u16 dmgSfxCount;
+    const PrefabDef* prefabs;  // prefab templates by name (Scene.Spawn falls back to them), nullptr = none
+    u16 prefabCount;
 };
 
 namespace game {
@@ -122,9 +134,13 @@ void loadScene(u16 index, int spawnX = -1, int spawnY = -1,
 bool loadSceneByName(const char* name);
 u16 currentScene();
 bool loading();
-void setPaused(bool paused);
-bool paused();
+// Scene.Pause: opens the pause menu when the game has one (Menu / UI kit), else freezes the scene (actors, physics,
+// scripts, tasks, sprite animation) until Scene.Resume or the Start button.
+void pause();
+void setPaused(bool paused);  // the freeze alone (Scene.Resume clears it)
+bool paused();                // frozen, or the pause menu is open
 void* state();
+const ActorDef* prefab(const char* name);  // nullptr = no prefab with that name
 
 }  // namespace game
 
@@ -147,8 +163,11 @@ bool solidAt(int x, int y);
 void setTile(int layer, int tileX, int tileY, u16 metatile);
 int tile(int layer, int tileX, int tileY);
 // A copy of an actor of this scene, by Hierarchy name, at a position (C# Scene.Spawn): bullets, enemies and items
-// are hidden template actors in the scene. The copy is visible.
+// are hidden template actors in the scene, or prefabs (the scene's actors are searched first). The copy is visible.
 Actor* spawn(const char* name, int x, int y);
+// Camera Zone actors (Add Actor › Camera Zone): while the followed actor is inside one, the view stays inside the
+// zone's box (a zone the size of the screen holds the camera still). Returns the zone's actor index, -1 = none.
+int cameraZone();
 // Mode 7 floor (C# Scene.Mode7): the scene's affine layer on BG2 seen from a camera at (x, y), heading `angle`
 // (0..255), `height` pixels above it, horizon on screen line `horizon`. Called every frame while it shows.
 void mode7(fixed x, fixed y, int angle, int height, int horizon);

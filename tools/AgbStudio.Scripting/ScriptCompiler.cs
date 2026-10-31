@@ -50,6 +50,11 @@ public sealed class ScriptCompileResult
     public Dictionary<string, string> GeneratedCSharp { get; } = new();
     /// <summary>Flags created by dialogue "Set flag" commands that were not declared (name to id).</summary>
     public Dictionary<string, int> AutoFlags { get; } = new();
+    /// <summary>
+    /// Saved flag ids to keep in the project (ScriptCompileContext.FlagIds plus the new AutoFlags; flags no dialogue
+    /// uses any more keep their id, so it is never given to another flag).
+    /// </summary>
+    public Dictionary<string, int> FlagIds { get; } = new();
     public int ScriptFileCount { get; set; }
 
     /// <summary>
@@ -148,6 +153,8 @@ public sealed class ScriptCompiler
             result.GeneratedCSharp[src.Path] = code;
             csharp.Add((src.Path + ".cs", code, true));
         }
+        foreach (var (name, id) in ctx.FlagIds) result.FlagIds[name] = id;
+        foreach (var (name, id) in result.AutoFlags) result.FlagIds[name] = id;
         var events = SceneEventsSource(ctx);
         if (events != null) csharp.Add((Path.Combine(outDir, "SceneEvents.g.cs"), events, true));
         var dbScripts = DbScripts.Source(ctx, DbScripts.ActionClasses(csharp.Select(c => c.Text)));

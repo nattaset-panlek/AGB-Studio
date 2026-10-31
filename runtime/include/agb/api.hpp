@@ -61,7 +61,7 @@ struct Camera {
 struct Scene {
     static void Load(u16 index) { game::loadScene(index); }
     static void Load(const char* name) { game::loadSceneByName(name); }
-    static void Pause() { game::setPaused(true); }
+    static void Pause() { game::pause(); }
     static void Resume() { game::setPaused(false); }
     static bool Paused() { return game::paused(); }
     static int Current() { return game::currentScene(); }

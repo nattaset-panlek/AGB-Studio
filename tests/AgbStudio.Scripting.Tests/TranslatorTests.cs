@@ -236,8 +236,16 @@ public sealed class TranslatorTests
         items.Fields.Add(new AgbStudio.Core.Project.FieldDef { Name = "use", Type = "script" });
         items.Rows[0]["use"] = "Heal(power)";
         items.Rows[1]["use"] = "score += price";
-        var r = TestSupport.Compile("translator-events", ctx, TestSupport.Script("Forest.cs"));
+        // P9.06: a script cell is callable from C# on its row (Items.Get(id).use()).
+        var drinker = TestSupport.Inline("Drinker.cs", "using GBA;\n\npublic class Drinker : Behaviour\n{\n    void Start() { Items.Get(ItemId.Potion).use(); }\n}\n");
+        var r = TestSupport.Compile("translator-events", ctx, TestSupport.Script("Forest.cs"), drinker);
         Assert.True(r.Success, TestSupport.Errors(r));
+        Assert.Contains("agb_db::Run(agb_db::Items::Get(agb_db::ItemId::Potion).use);", File.ReadAllText(Path.Combine(r.IncludeDir, "Drinker.cpp")));
+        // The table points at the compiled cells.
+        var table = File.ReadAllText(Path.Combine(r.IncludeDir, "db_Items.cpp"));
+        Assert.Contains("void agb_dbscript_Items_Potion_use();", table);
+        Assert.Contains("&agb_dbscript_Items_Potion_use", table);
+        Assert.Contains("&agb_dbscript_Items_Ether_use", table);
         var hpp = File.ReadAllText(Path.Combine(r.IncludeDir, "agb_scripts.hpp"));
         Assert.Contains("void agb_scene_Forest_01_onEnter();", hpp);
         Assert.Contains("bool agb_link_Forest_01_0();", hpp);

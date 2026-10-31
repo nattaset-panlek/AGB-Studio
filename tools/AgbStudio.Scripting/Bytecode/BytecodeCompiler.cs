@@ -655,6 +655,11 @@ internal sealed class BytecodeCompiler
             _a.Native(_tables.NativeId("LockAll"), 0);
             return true;
         }
+        if (map == "waituntil")
+        {
+            WaitUntil(inv);
+            return false;
+        }
         var parts = map.Split(':');
         if (parts[0] == "op")
         {
@@ -677,6 +682,33 @@ internal sealed class BytecodeCompiler
         Error(inv, $"'{m.Name}' cannot be called from a cutscene.");
         _a.Push(0);
         return true;
+    }
+
+    /// <summary>
+    /// <c>await WaitUntil(() =&gt; cond)</c>: the lambda body is compiled in place (it is never a delegate at run time),
+    /// followed by WaitUntil, which jumps back to the condition and yields until the next frame while it is false.
+    /// </summary>
+    void WaitUntil(IInvocationOperation inv)
+    {
+        IOperation? arg = inv.Arguments.Length == 1 ? inv.Arguments[0].Value : null;
+        while (arg is IConversionOperation c) arg = c.Operand;
+        if (arg is IDelegateCreationOperation dc) arg = dc.Target;
+        if (arg is not IAnonymousFunctionOperation fn)
+        {
+            Error(inv, "WaitUntil takes a lambda written in place: await WaitUntil(() => Story.metOwl);");
+            return;
+        }
+        var body = fn.Body.Operations;
+        var ret = body.Length == 1 ? body[0] as IReturnOperation : null;
+        if (ret?.ReturnedValue == null)
+        {
+            Error(fn, "The WaitUntil condition must be one expression: () => Game.coins >= 10.");
+            return;
+        }
+        var check = _a.NewLabel();
+        _a.Mark(check);
+        Value(ret.ReturnedValue);
+        _a.Jump("WaitUntil", check);
     }
 
     static IEnumerable<IArgumentOperation> Ordered(IMethodSymbol m, IEnumerable<IArgumentOperation> args) =>

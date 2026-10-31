@@ -161,8 +161,18 @@ public sealed class GbaSubsetAnalyzer : DiagnosticAnalyzer
 
     // ---- GAE006: capturing lambdas ------------------------------------------------------------------------
 
+    // The condition of a cutscene's WaitUntil is compiled into the bytecode in place: it never becomes a delegate.
+    static bool IsWaitUntilCondition(IOperation op)
+    {
+        var p = op.Parent;
+        while (p is IDelegateCreationOperation or IConversionOperation or IArgumentOperation) p = p.Parent;
+        return p is IInvocationOperation inv && inv.TargetMethod.Name == "WaitUntil" &&
+               inv.TargetMethod.ContainingType?.ToDisplayString() == "GBA.ScriptBase";
+    }
+
     static void Lambda(OperationAnalysisContext c)
     {
+        if (IsWaitUntilCondition(c.Operation)) return;
         SyntaxNode? body;
         Location location;
         switch (c.Operation.Syntax)
