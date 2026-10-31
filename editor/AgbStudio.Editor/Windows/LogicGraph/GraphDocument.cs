@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using AgbStudio.Editor.Controls;
@@ -229,22 +229,31 @@ public sealed class GraphDocument
         _ => "Value",
     };
 
-    /// <summary>The body rows of a node (Figma node layout): exec row, inputs and properties, outputs.</summary>
-    public static IReadOnlyList<NodeRow> Rows(NodeDef def)
+    /// <summary>
+    /// The body rows of a node (Figma node layout): exec row, inputs and properties, outputs. As the Figma graph (T-P17)
+    /// draws them: a choice property (Set Velocity Y "Mode") is edited in the Inspector only; an actor input (Target)
+    /// that is not wired is "Self" and gets a row only when the node has no other input (Is On Ground "Target  Self");
+    /// an event with inputs draws its exec output under them (On Touch "Tag  Coin", then the exec row, then "Other").
+    /// <paramref name="wired"/> tells which inputs have a wire (none when null).
+    /// </summary>
+    public static IReadOnlyList<NodeRow> Rows(NodeDef def, Func<string, bool>? wired = null)
     {
         var rows = new List<NodeRow>();
         var execIn = def.Pins.FirstOrDefault(p => p.Kind == PinKind.Exec && !p.Output);
         var execOuts = def.Pins.Where(p => p.Kind == PinKind.Exec && p.Output).ToList();
-        if (execIn != null || execOuts.Count > 0) rows.Add(new NodeRow(null, null, execIn, execOuts.FirstOrDefault()));
-        var extraOuts = new Queue<PinDef>(execOuts.Skip(1));
         var dataOuts = def.Pins.Where(p => p.Kind != PinKind.Exec && p.Output).ToList();
         var label = OutputLabel(def);
         var inputs = new List<(string Name, PinDef? Pin, string? Prop)>();
         // properties in catalog order (with their input pin when they have one: "Amount [+10]"), then pins without a property
-        foreach (var prop in def.Props)
+        foreach (var prop in def.Props.Where(p => p.Kind != PropKind.Choice))
             inputs.Add((prop.Name, def.Pins.FirstOrDefault(p => p.Name == prop.Name && !p.Output && p.Kind != PinKind.Exec), prop.Name));
+        var others = inputs.Count + def.Pins.Count(p => p.Kind is not (PinKind.Exec or PinKind.Actor) && !p.Output && def.Props.All(x => x.Name != p.Name));
         foreach (var p in def.Pins.Where(p => p.Kind != PinKind.Exec && !p.Output && def.Props.All(x => x.Name != p.Name)))
-            inputs.Add((p.Name, p, null));
+            if (p.Kind != PinKind.Actor || others == 0 || wired?.Invoke(p.Name) == true) inputs.Add((p.Name, p, null));
+        // an event with inputs draws them above its exec output (On Touch: Tag, then the exec row, then Other)
+        var execAfterInputs = execIn == null && execOuts.Count > 0 && inputs.Count > 0;
+        if ((execIn != null || execOuts.Count > 0) && !execAfterInputs) rows.Add(new NodeRow(null, null, execIn, execOuts.FirstOrDefault()));
+        var extraOuts = new Queue<PinDef>(execOuts.Skip(1));
         for (var i = 0; i < inputs.Count; i++)
         {
             var (name, pin, prop) = inputs[i];
@@ -252,6 +261,7 @@ public sealed class GraphDocument
             if (right is null && label is null && i == inputs.Count - 1 && dataOuts.Count > 0) right = dataOuts[0];
             rows.Add(new NodeRow(Label(name), prop, pin, right));
         }
+        if (execAfterInputs) rows.Add(new NodeRow(null, null, null, execOuts[0]));
         foreach (var o in dataOuts)
         {
             if (label is null && inputs.Count > 0) continue;
@@ -264,8 +274,13 @@ public sealed class GraphDocument
     public double Height(GraphNode n)
     {
         if (Collapsed.Contains(n.Id) || NodeCatalog.Find(n.Type) is not { } def) return HeaderHeight;
-        return HeaderHeight + BodyPad * 2 + Rows(def).Count * RowHeight;
+        return HeaderHeight + BodyPad * 2 + Rows(def, Wired(n)).Count * RowHeight;
     }
+
+    /// <summary>The body rows of a node with its wires (see <see cref="Rows(NodeDef, Func{string, bool}?)"/>).</summary>
+    public IReadOnlyList<NodeRow> RowsOf(GraphNode n) => NodeCatalog.Find(n.Type) is { } def ? Rows(def, Wired(n)) : [];
+
+    Func<string, bool> Wired(GraphNode n) => pin => AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == pin);
 
     public Rect Bounds(GraphNode n) => new(n.X, n.Y, WidthOf(n.Type), Height(n));
 
@@ -290,7 +305,7 @@ public sealed class GraphDocument
             foreach (var p in def.Pins) list.Add(new PinGeometry(n.Id, p.Name, p.Kind, p.Output, new Point(p.Output ? WidthOf(n.Type) : 0, HeaderHeight / 2)));
             return list;
         }
-        var rows = Rows(def);
+        var rows = Rows(def, Wired(n));
         for (var i = 0; i < rows.Count; i++)
         {
             var y = HeaderHeight + BodyPad + i * RowHeight + RowHeight / 2;
@@ -363,24 +378,28 @@ public sealed class GraphDocument
     };
 
     /// <summary>Short phrase for the Add Node list ("jump or fall").</summary>
-    public static string Hint(string type) => type switch
+    public static string Hint(string type) => CuratedHints.TryGetValue(type, out var h) ? h
+        : Description(type).TrimEnd('.') is var d && d.Length > 28 ? d[..28].TrimEnd() + "…" : Description(type).TrimEnd('.').ToLowerInvariant();
+
+    /// <summary>The short hints the Figma Add Node popover (T-O08) gives its nodes; Add Node ranks these nodes first.</summary>
+    static readonly Dictionary<string, string> CuratedHints = new(StringComparer.Ordinal)
     {
-        "SetVelocityX" => "move left / right at a speed",
-        "SetVelocityY" => "jump or fall",
-        "VelocityX" => "read vx",
-        "VelocityY" => "read vy",
-        "GetVelocity" => "read vx, vy",
-        "VectorFromVelocity" => "vx, vy → direction",
-        "OnUpdate" => "every frame",
-        "OnStart" => "once at start",
-        "OnTouch" => "when actors touch",
-        "ButtonPressed" => "button goes down",
-        "Branch" => "if / else",
-        "PlaySound" => "sound effect",
-        "AddToVariable" => "score += amount",
-        "Destroy" => "remove an actor",
-        _ => Description(type).TrimEnd('.') is var d && d.Length > 28 ? d[..28].TrimEnd() + "…" : Description(type).TrimEnd('.').ToLowerInvariant(),
+        ["SetVelocityX"] = "move left / right at a speed",
+        ["SetVelocityY"] = "jump or fall",
+        ["GetVelocity"] = "read vx, vy",
+        ["VectorFromVelocity"] = "vx, vy → direction",
+        ["OnUpdate"] = "every frame",
+        ["OnStart"] = "once at start",
+        ["OnTouch"] = "when actors touch",
+        ["ButtonPressed"] = "button goes down",
+        ["Branch"] = "if / else",
+        ["PlaySound"] = "sound effect",
+        ["AddToVariable"] = "score += amount",
+        ["Destroy"] = "remove an actor",
     };
+
+    /// <summary>True for the nodes with a hint of their own (the ones the Figma Add Node lists).</summary>
+    public static bool HasCuratedHint(string type) => CuratedHints.ContainsKey(type);
 
     // ---- Generated C# panel -----------------------------------------------------------------------------------
 

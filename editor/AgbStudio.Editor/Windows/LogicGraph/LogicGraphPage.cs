@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Commands;
+﻿using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
@@ -110,7 +110,7 @@ public sealed class LogicGraphPage : DockPanel
         var codeSection = UI.Column(0, new Border { Padding = new Thickness(13, 0), Child = _codeHeader }, codeBox, PageChrome.Divider());
         _codeHeader.PropertyChanged += (_, e) => { if (e.Property == SectionHeader.IsOpenProperty) codeBox.IsVisible = _codeHeader.IsOpen; };
         var right = new DockPanel();
-        PageChrome.DockTo(right, new PanelHeader { Title = "Preview", Glyph = "eye", Name = "PreviewHeader" }, Dock.Top);
+        PageChrome.DockTo(right, new PanelHeader { Title = "Preview", Glyph = "pad", Name = "PreviewHeader" }, Dock.Top);
         PageChrome.DockTo(right, preview, Dock.Top);
         PageChrome.DockTo(right, PageChrome.Divider(), Dock.Top);
         right.Children.Add(new ScrollViewer { Content = UI.Column(0, _inspector, codeSection) });
@@ -442,7 +442,9 @@ public sealed class LogicGraphPage : DockPanel
             }
             rows.Add(field);
         }
-        // actor inputs (Target): Self, or the actor output wired to it; choosing one rewires the input
+        // actor inputs (Target): Self, or the actor output wired to it; choosing one rewires the input. Figma T-P17 lists
+        // Target first, then the values (Value, then the Mode segments)
+        var targetAt = 1;
         foreach (var pin in def.Pins.Where(p => !p.Output && p.Kind == PinKind.Actor && def.Props.All(x => x.Name != p.Name)))
         {
             var input = pin.Name;
@@ -451,7 +453,7 @@ public sealed class LogicGraphPage : DockPanel
             var current = wired is null ? "Self" : sources.FirstOrDefault(s => s.Node == wired.FromNode && s.Pin == wired.FromPin).Text ?? "(wired)";
             var field = new InspectorField { Label = GraphDocument.Label(input), Kind = FieldKind.Dropdown, Value = current, Name = "Pin_" + input };
             field.Choices(() => ["Self", .. ActorSources(n.Id).Select(s => s.Text)], x => SetTarget(n.Id, input, x));
-            rows.Add(field);
+            rows.Insert(targetAt++, field);
         }
         var content = UI.Column(8, [.. rows]);
         content.Margin = new Thickness(0, 0, 0, 10);

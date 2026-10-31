@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
@@ -408,7 +408,7 @@ public sealed class WatchPanel : StackPanel
         _m = m;
         Name = "WatchPanel";
         Margin = new Thickness(12, 12, 12, 12);
-        Spacing = 8;
+        Spacing = 4;   // Figma T-P23: Add watch 4 px under the last watch card
         Children.Add(_list);
         Children.Add(_add);
         Children.Add(AddButton);

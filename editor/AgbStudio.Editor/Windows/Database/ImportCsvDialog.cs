@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using AgbStudio.Build.Data;
 using AgbStudio.Core.Project;
@@ -205,7 +205,9 @@ public sealed class ImportCsvDialog : FigmaDialog
         _warnings.Children.Clear();
         foreach (var w in warnings)
         {
-            var tb = UI.Text(w, "Body/12", "text/secondary");
+            // Figma T-D19: 11 px text on the 16 px line of the warning box
+            var tb = UI.Text(w, "Label/11", "text/secondary");
+            tb.LineHeight = 16;
             tb.TextWrapping = TextWrapping.Wrap;
             tb.MaxWidth = 660;
             _warnings.Children.Add(tb);

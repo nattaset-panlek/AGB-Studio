@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
@@ -92,7 +92,8 @@ public sealed class LocalizationPage : ToolPage
         SearchBox.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) RefreshRows(); };
 
         _rows = new ItemsControl { ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel()), ItemTemplate = new FuncDataTemplate<Row>((r, _) => r is null ? new Panel() : RowView(r)), Name = "StringRows" };
-        _rowScroll = new ScrollViewer { Content = _rows };
+        // Figma T-P14 draws no scrollbar: the rows scroll with the wheel
+        _rowScroll = new ScrollViewer { Content = _rows, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden };
         var header = new Grid { ColumnDefinitions = Columns(), Name = "StringHeader" };
         var table = new DockPanel { Width = 770, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(16, 0, 0, 0), Children = { header, _rowScroll } };
         DockPanel.SetDock(header, Dock.Top);

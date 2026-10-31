@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Windows.Scripts;
 using AgbStudio.Editor.Windows.LogicGraph;
@@ -353,9 +353,12 @@ public sealed class LogicGraphTests : IDisposable
     public void Inspector_TagModeTarget_AndVectorPins()
     {
         var page = Open();
-        // On Touch: Tag "Coin"
+        // On Touch: Tag "Coin" on the first row, the exec output under it, then Other (Figma T-P17)
         page.Canvas.Select(["n8"]);
         Capture.Pump();
+        var touchRows = page.Document.RowsOf(page.Document.Node("n8")!);
+        Assert.Equal(new string?[] { "tag", null, null }, touchRows.Select(r => r.Prop).ToArray());
+        Assert.Equal(new string?[] { "out", "other" }, touchRows.Skip(1).Select(r => r.Right?.Name).ToArray());
         Assert.Equal("Coin", _h.Find<InspectorField>("Prop_tag").Value);
         Assert.Equal("Coin", ((TextBlock)((Border)page.Canvas.GetVisualDescendants().OfType<Panel>().First(p => p.Name == "Node_n8")
             .GetVisualDescendants().OfType<Border>().First(b => b.Name == "Prop_tag")).Child!).Text);
@@ -377,9 +380,15 @@ public sealed class LogicGraphTests : IDisposable
         page.Canvas.Select(["n6"]);
         Capture.Pump();
         Assert.Equal("Self", _h.Find<InspectorField>("Pin_target").Value);
-        Assert.NotNull(page.Canvas.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "Pin_target"));   // "Target  Self" on the node
+        // Figma T-P17 draws Set Velocity Y with its Value row only: no Mode row, and no Target row while it is Self
+        Panel Node6() => page.Canvas.GetVisualDescendants().OfType<Panel>().First(p => p.Name == "Node_n6");
+        Assert.Null(Node6().GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "Pin_target"));
+        Assert.Equal(GraphDocument.HeaderHeight + GraphDocument.BodyPad * 2 + 2 * GraphDocument.RowHeight, page.Document.Height(page.Document.Node("n6")!));
+        // Is On Ground has no other input: "Target  Self" on the node
+        Assert.Contains(page.Document.RowsOf(page.Document.AllNodes.First(x => x.Type == "IsOnGround")), r => r.Left?.Name == "target");
         Assert.True(page.SetTarget("n6", "target", "On Touch · Other"));
         Assert.Contains(page.Document.Graph.Links, l => l.From == "n8.other" && l.To == "n6.target");
+        Assert.Contains(page.Document.RowsOf(page.Document.Node("n6")!), r => r.Left?.Name == "target");   // wired: the pin gets its row
         page.Canvas.Select(["n6"]);
         Capture.Pump();
         Assert.Equal("On Touch · Other", _h.Find<InspectorField>("Pin_target").Value);
