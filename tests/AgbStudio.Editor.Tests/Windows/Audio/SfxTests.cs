@@ -296,7 +296,7 @@ public class SfxDesignerTests : IDisposable
     public void OpensTheEffectWithItsFieldsRegistersAndScriptLine()
     {
         var page = Open();
-        Assert.Equal(["blip.sfx", "coin.sfx", "hurt.sfx", "jump.sfx", "laser.sfx"], page.Files.Select(Path.GetFileName));
+        Assert.Equal(["jump.sfx", "coin.sfx", "hurt.sfx", "blip.sfx", "laser.sfx"], page.Files.Select(Path.GetFileName));
         Assert.Equal("Square 1", Find<TreeItem>("Sfx_jump.sfx").Meta);
         Assert.Equal("Noise", Find<TreeItem>("Sfx_hurt.sfx").Meta);
         Assert.True(Find<Segment>("Seg_Square 1 (sweep)").IsChecked);

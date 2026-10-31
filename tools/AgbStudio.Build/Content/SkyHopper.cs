@@ -441,6 +441,9 @@ public static class SkyHopper
         File.WriteAllBytes(Path.Combine(music, "bgm_title.xm"), XmWriter.Tune("bgm title", 120, 6, 12, "G"));          // 6 x 64 rows at 120 BPM: 0:48
         File.WriteAllBytes(Path.Combine(music, "bgm_cave.mod"), Chiptune.SimpleTune("bgm cave", 93, 13, orders: 6));   // 6 x 64 rows at 93 BPM: 1:02
         File.WriteAllBytes(Path.Combine(music, "jingle_win.mod"), Chiptune.SimpleTune("jingle win", 150, 14, orders: 1));  // 64 rows at 150 BPM: 0:06
+        // the Audio lists are in creation order (T-P15): forest, cave, title, jingle
+        var order = new CreationOrder();
+        foreach (var f in new[] { "bgm_forest.xm", "bgm_cave.mod", "bgm_title.xm", "jingle_win.mod" }) order.Stamp(Path.Combine(music, f));
         GameProject.Save(GameProject.MetaPath(Path.Combine(music, "bgm_forest.xm")), new MusicMeta { Volume = 0.8, LoopStart = 4, FadeOnSceneChange = true });
         var sfx = Path.Combine(p.AssetsDir, "audio", "sfx");
         File.WriteAllBytes(Path.Combine(sfx, "jump.wav"), WavWriter.Encode(Sweep(400, 900, 0.21), 11025));
@@ -448,6 +451,7 @@ public static class SkyHopper
         File.WriteAllBytes(Path.Combine(sfx, "hurt.wav"), WavWriter.Encode(Sweep(300, 120, 0.30), 11025));
         File.WriteAllBytes(Path.Combine(sfx, "explode.wav"), WavWriter.Encode(ModWriter.Noise(7056, 5), 11025));
         File.WriteAllBytes(Path.Combine(sfx, "blip.wav"), WavWriter.Encode(WavWriter.Tone(1200, 0.03, 11025, true), 11025));
+        foreach (var f in new[] { "jump.wav", "coin.wav", "hurt.wav", "explode.wav", "blip.wav" }) order.Stamp(Path.Combine(sfx, f));   // T-P15 / T-P25 list order
         foreach (var (name, ch, note, sweepUp, len) in new[] { ("jump", DmgChannelKind.Square1, "C5", true, 0.21), ("coin", DmgChannelKind.Square2, "B5", false, 0.12),
                      ("hurt", DmgChannelKind.Noise, "C3", false, 0.30), ("blip", DmgChannelKind.Square2, "C6", false, 0.03), ("laser", DmgChannelKind.Square1, "C6", false, 0.25) })
             GameProject.Save(Path.Combine(p.SfxDir, name + ".sfx"), new SfxFile
@@ -458,6 +462,7 @@ public static class SkyHopper
                 // blip is baked: blip.wav is the sample that plays (Audio · GBA channels: Square 2 "SFX coin")
                 Bake = name == "blip",
             });
+        foreach (var f in new[] { "jump.sfx", "coin.sfx", "hurt.sfx", "blip.sfx", "laser.sfx" }) order.Stamp(Path.Combine(p.SfxDir, f));   // T-P25 list order
     }
 
     // The loudness of bgm_forest from start to end as the Audio page's overview draws it (T-P15): 160 bars of 0..56 px.

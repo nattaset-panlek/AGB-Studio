@@ -163,12 +163,12 @@ public class AudioPageTests : IDisposable
     public void ToolsAudio_ListsTheProjectsMusicAndSoundsWithLengths()
     {
         var page = OpenAudio();
-        Assert.Equal(["bgm_cave.mod", "bgm_forest.xm", "bgm_title.xm", "jingle_win.mod"], page.MusicFiles.Select(Path.GetFileName));
-        Assert.Equal(["blip.wav", "coin.wav", "explode.wav", "hurt.wav", "jump.wav"], page.SoundFiles.Select(Path.GetFileName));
+        Assert.Equal(["bgm_forest.xm", "bgm_cave.mod", "bgm_title.xm", "jingle_win.mod"], page.MusicFiles.Select(Path.GetFileName));
+        Assert.Equal(["jump.wav", "coin.wav", "hurt.wav", "explode.wav", "blip.wav"], page.SoundFiles.Select(Path.GetFileName));
         Assert.Equal("0.21 s", Find<TreeItem>("Sound_jump.wav").Meta);
         Assert.Equal("0.64 s", Find<TreeItem>("Sound_explode.wav").Meta);
         // Figma Audio: bgm_forest 1:24, bgm_cave 1:02, bgm_title 0:48, jingle_win 0:06
-        Assert.Equal(["1:02", "1:24", "0:48", "0:06"], page.MusicFiles.Select(f => Find<TreeItem>("Music_" + Path.GetFileName(f)).Meta));
+        Assert.Equal(["1:24", "1:02", "0:48", "0:06"], page.MusicFiles.Select(f => Find<TreeItem>("Music_" + Path.GetFileName(f)).Meta));
         // the last scene (Forest_01) plays bgm_forest, so it is selected and is the active document
         Assert.Equal("bgm_forest.xm", Path.GetFileName(page.Track));
         Assert.True(Find<TreeItem>("Music_bgm_forest.xm").IsSelected);

@@ -416,8 +416,9 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
                 var right = b.X > a.X;
                 var gap = dashed ? 24 : 35;
                 x = right ? a.X + gap : a.X - gap - cw;
-                var at = AtX(a, c1, c2, b, x + cw / 2);
-                y = at.Y - ch / 2;
+                // beside the line at 37 % (starts) or 55 % of the way down; a nearly flat link carries its chip just below it
+                var f = dashed ? 0.37 : 0.55;
+                y = Math.Abs(b.Y - a.Y) < 40 ? Math.Min(a.Y, b.Y) + Math.Abs(b.Y - a.Y) * f + 6 : a.Y + (b.Y - a.Y) * f - ch / 2;
             }
             Avalonia.Controls.Canvas.SetLeft(chip, x);
             Avalonia.Controls.Canvas.SetTop(chip, y);
@@ -438,7 +439,7 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
         if (Math.Abs(dx) >= Math.Abs(dy) * 1.2)
         {
             var right = dx > 0;
-            a = new Point(right ? ra.Right : ra.Left, ra.Y + 73);
+            a = new Point(right ? ra.Right : ra.Left, ra.Y + FanOut(from, to, right));
             b = new Point(right ? rb.Left : rb.Right, rb.Y + 73);
             var k = Math.Abs(b.X - a.X) * 0.5;
             c1 = new Point(a.X + (right ? k : -k), a.Y);
@@ -464,6 +465,14 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
             c2 = new Point(b.X, b.Y - (b.Y - a.Y) * 0.6);
         }
         return (a, b, c1, c2);
+    }
+
+    /// <summary>Height below the card top where a side link leaves: 73 for one, 60 and 120 (top target first) for several.</summary>
+    double FanOut(MapScene from, MapScene to, bool right)
+    {
+        var side = Model.Connections().Where(c => c.From == from && c.To.Data.MapX != from.Data.MapX && (c.To.Data.MapX > from.Data.MapX) == right
+            && Math.Abs(c.To.Data.MapX - from.Data.MapX) >= Math.Abs(c.To.Data.MapY - from.Data.MapY) * 1.2).OrderBy(c => c.To.Data.MapY).Select(c => c.To).ToList();
+        return side.Count < 2 ? 73 : 60 * (side.IndexOf(to) + 1);
     }
 
     static Point Bezier(Point a, Point c1, Point c2, Point b, double t)

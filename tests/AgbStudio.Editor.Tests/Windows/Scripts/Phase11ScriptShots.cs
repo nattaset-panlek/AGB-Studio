@@ -215,6 +215,7 @@ public sealed class Phase11ScriptShots : IShotSource
             var page = (LogicGraphPage)win.CurrentPage!;
             page.Canvas.SetView(1, default);
             page.Canvas.Select(["n6"]);
+            page.HighlightPalette("OnTouch");   // Figma: On Touch is the last node picked in the palette (T-P17)
             Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }

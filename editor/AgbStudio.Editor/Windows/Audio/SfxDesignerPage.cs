@@ -241,7 +241,7 @@ public sealed class SfxDesignerPage : DockPanel
     {
         var p = _s.Project.Current;
         if (open == NewEffect) { CreateEffect(); return; }
-        Files = p?.SfxFiles().ToList() ?? [];
+        Files = AgbStudio.Editor.Services.CreationOrder.Of(p?.SfxFiles() ?? [], StringComparer.Ordinal).ToList();
         var pick = open != null ? Files.FirstOrDefault(f => string.Equals(f, open, StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f) == open || GameProject.AssetName(f) == open) : null;
         BuildList();
         Select(pick ?? Files.FirstOrDefault());
@@ -311,7 +311,7 @@ public sealed class SfxDesignerPage : DockPanel
         var sfx = new SfxFile { Name = $"sfx_{n}" };
         SfxPresets.Apply("Select", sfx);
         GameProject.Save(path, sfx);
-        Files = p.SfxFiles().ToList();
+        Files = AgbStudio.Editor.Services.CreationOrder.Of(p.SfxFiles(), StringComparer.Ordinal).ToList();
         BuildList();
         Select(path);
         return path;

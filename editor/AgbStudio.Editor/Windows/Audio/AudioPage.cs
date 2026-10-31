@@ -113,8 +113,8 @@ public sealed class AudioPage : DockPanel
     public void Reload(string? select = null)
     {
         var p = _s.Project.Current;
-        MusicFiles = p?.MusicFiles().ToList() ?? [];
-        SoundFiles = p?.SoundFiles().ToList() ?? [];
+        MusicFiles = AgbStudio.Editor.Services.CreationOrder.Of(p?.MusicFiles() ?? [], StringComparer.Ordinal).ToList() ?? [];
+        SoundFiles = AgbStudio.Editor.Services.CreationOrder.Of(p?.SoundFiles() ?? [], StringComparer.Ordinal).ToList() ?? [];
         var pick = select is null ? null : MusicFiles.FirstOrDefault(f => string.Equals(f, select, StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f) == select);
         pick ??= Track != null && MusicFiles.Contains(Track) ? Track : SceneTrack(p) ?? MusicFiles.FirstOrDefault();
         BuildLists();

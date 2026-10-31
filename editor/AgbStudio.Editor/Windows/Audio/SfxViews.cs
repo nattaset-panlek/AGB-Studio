@@ -145,30 +145,40 @@ public sealed class PitchVolumeGraph : Control
             var hi = pitches.Max();
             var range = hi - lo < 1e-6 ? 1 : hi - lo;
             var flat = hi - lo < 1e-6;
+            // the hardware steps drawn as the smooth curve of the Figma frame: each point averaged with its neighbours
+            var ys = new double[t.Time.Length];
+            for (var i = 0; i < ys.Length; i++)
+                ys[i] = double.IsNaN(t.Pitch[i]) || t.Pitch[i] <= 0 ? double.NaN : flat ? (top + bottom) / 2 : bottom - (bottom - top) * (Math.Log2(t.Pitch[i]) - lo) / range;
+            var radius = Math.Max(1, ys.Length / 8);
             var geo = new StreamGeometry();
             using (var g = geo.Open())
             {
                 var open = false;
-                for (var i = 0; i < t.Time.Length; i++)
+                for (var i = 0; i < ys.Length; i++)
                 {
-                    if (double.IsNaN(t.Pitch[i]) || t.Pitch[i] <= 0) { if (open) { g.EndFigure(false); open = false; } continue; }
-                    var y = flat ? (top + bottom) / 2 : bottom - (bottom - top) * (Math.Log2(t.Pitch[i]) - lo) / range;
-                    if (!open) { g.BeginFigure(new Point(X(t.Time[i]), y), false); open = true; }
-                    else g.LineTo(new Point(X(t.Time[i]), y));
+                    if (double.IsNaN(ys[i])) { if (open) { g.EndFigure(false); open = false; } continue; }
+                    double sum = 0; var n = 0;
+                    for (var j = Math.Max(0, i - radius); j <= Math.Min(ys.Length - 1, i + radius); j++) if (!double.IsNaN(ys[j])) { sum += ys[j]; n++; }
+                    var p = new Point(X(t.Time[i]), sum / n);
+                    if (!open) { g.BeginFigure(p, false); open = true; }
+                    else g.LineTo(p);
                 }
                 if (open) g.EndFigure(false);
             }
             ctx.DrawGeometry(null, new Pen(Draw.Brush(this, "status/success"), 2, lineCap: PenLineCap.Round), geo);
         }
+        // the envelope as one straight fall from the first level to the last, then flat
         var vg = new StreamGeometry();
         using (var g = vg.Open())
         {
-            for (var i = 0; i < t.Time.Length; i++)
-            {
-                var y = bottom - (bottom - top) * t.Volume[i] / 15.0;
-                if (i == 0) g.BeginFigure(new Point(X(t.Time[i]), y), false);
-                else g.LineTo(new Point(X(t.Time[i]), y));
-            }
+            var first = t.Volume[0];
+            var last = t.Volume[^1];
+            var settled = t.Volume.Length - 1;
+            while (settled > 0 && Math.Abs(t.Volume[settled - 1] - last) < 1e-9) settled--;
+            double Y(double v) => bottom - (bottom - top) * v / 15.0;
+            g.BeginFigure(new Point(X(t.Time[0]), Y(first)), false);
+            g.LineTo(new Point(X(t.Time[settled]), Y(last)));
+            g.LineTo(new Point(X(t.Time[^1]), Y(last)));
             g.EndFigure(false);
         }
         ctx.DrawGeometry(null, new Pen(Draw.Brush(this, "status/warning"), 2, new DashStyle([2.5, 2], 0)), vg);
