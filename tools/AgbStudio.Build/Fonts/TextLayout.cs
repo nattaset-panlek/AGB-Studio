@@ -130,24 +130,22 @@ public static class TextLayout
         var pen = x + c.Width;
         // Sara am carries a nikhahit over this consonant, so a tone mark here stacks as over an upper vowel.
         var hasUpper = c.Cps.Skip(1).Any(ThaiText.IsUpperVowel) || nextIsSaraAm;
+        // The upper vowel a tone mark stacks on: this cluster's own, or the ring of the sara am that follows.
+        var upperCp = c.Cps.Skip(1).FirstOrDefault(ThaiText.IsUpperVowel);
+        var upperGlyph = upperCp != 0 ? font.Get(upperCp) : nextIsSaraAm ? font.Get(ThaiText.SaraAm) : null;
+        var upperTop = upperGlyph?.Top ?? font.UpperVowelTop;
         var baseGlyph = font.Get(baseCp);
-        var ascShift = ThaiText.IsAscender(baseCp) ? -Math.Max(1, font.Settings.Size / 7) : 0;
         foreach (var m in c.Cps.Skip(1))
         {
             var g = font.Get(m);
             if (g == null) { r.Missing.Add(m); continue; }
             var dx = 0;
             var dy = 0;
-            if (ThaiText.IsUpperVowel(m))
+            if (ThaiText.IsToneMark(m) && font.Settings.StackUpperMarks)
             {
-                if (font.Settings.StackUpperMarks) dx = ascShift;
-            }
-            else if (ThaiText.IsToneMark(m) && font.Settings.StackUpperMarks)
-            {
-                dx = ascShift;
                 // Tone marks sit above an upper vowel; without one they drop to the upper-vowel height.
                 var upperBottom = font.Get(0x0E34) is { } uv ? uv.Top + uv.Height : g.Top;
-                if (hasUpper && g.Top + g.Height > font.UpperVowelTop - 1) dy = font.UpperVowelTop - 1 - (g.Top + g.Height);
+                if (hasUpper && g.Top + g.Height > upperTop - 1) dy = upperTop - 1 - (g.Top + g.Height);
                 else if (!hasUpper && g.Top + g.Height < upperBottom - 1) dy = upperBottom - (g.Top + g.Height);
             }
             else if (ThaiText.IsLowerVowel(m) && font.Settings.PlaceLowerVowels && baseGlyph != null && ThaiText.IsDescender(baseCp))
@@ -156,8 +154,24 @@ public static class TextLayout
                 var baseBottom = baseGlyph.Top + baseGlyph.Height;
                 if (baseBottom > font.Baseline) dy = baseBottom - g.Top + 1 - (font.Baseline - g.Top);
             }
+            // Upper marks move left until they clear the tall stem of ป ฝ ฟ ฬ.
+            if (font.Settings.StackUpperMarks && baseGlyph != null && ThaiText.IsAscender(baseCp) && !ThaiText.IsLowerVowel(m))
+                while (dx > -8 && Touches(baseGlyph, x, 0, g, pen + dx, dy)) dx--;
             r.Glyphs.Add(new Placed(m, pen + dx, dy, line, step));
         }
+    }
+
+    // True when two glyphs drawn at these pens and vertical offsets share a pixel.
+    static bool Touches(GameFont.Glyph a, int ax, int ay, GameFont.Glyph b, int bx, int by)
+    {
+        for (var y = 0; y < b.Height; y++)
+            for (var x = 0; x < b.Width; x++)
+            {
+                if (b.Shades[y * b.Width + x] == 0) continue;
+                int px = bx + b.Left + x - (ax + a.Left), py = by + b.Top + y - (ay + a.Top);
+                if (px >= 0 && py >= 0 && px < a.Width && py < a.Height && a.Shades[py * a.Width + px] != 0) return true;
+            }
+        return false;
     }
 
     /// <summary>The Localization fit check: lines used and the widest line against the box.</summary>

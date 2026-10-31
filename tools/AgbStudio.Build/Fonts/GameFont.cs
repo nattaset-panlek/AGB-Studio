@@ -56,9 +56,19 @@ public static class FontBuilder
         // Stacked Thai marks rise above the ascender: lower the baseline so nothing is drawn above the
         // line top, and grow the line so descenders still fit.
         var above = raw.Glyphs.Values.Where(g => g.Height > 0).Select(g => g.Top).DefaultIfEmpty(0).Min();
-        var stack = raw.Glyphs.ContainsKey(0x0E34) ? Math.Max(0, raw.UpperVowelTop - raw.ToneTop) : 0;
-        var baseline = f.Baseline + Math.Max(0, -above) + (f.StackUpperMarks ? stack : 0);
+        // A tone mark stacked on the tallest upper vowel (TextLayout: its bottom one pixel above the vowel's top).
+        var stacked = 0;
+        if (f.StackUpperMarks)
+            foreach (var u in raw.Glyphs.Values.Where(g => g.Height > 0 && (ThaiText.IsUpperVowel(g.CodePoint) || g.CodePoint == ThaiText.SaraAm)))
+                foreach (var t in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsToneMark(g.CodePoint)))
+                    stacked = Math.Min(stacked, u.Top - 1 - t.Height);
+        var baseline = f.Baseline + Math.Max(0, Math.Max(-above, -stacked));
         var below = raw.Glyphs.Values.Where(g => g.Height > 0).Select(g => g.Top + g.Height).DefaultIfEmpty(f.LineHeight).Max() - f.Baseline;
+        // A lower vowel moved under the tail of ฎ ฏ ฐ ญ (TextLayout) reaches further down.
+        if (f.PlaceLowerVowels)
+            foreach (var d in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsDescender(g.CodePoint) && g.Top + g.Height > f.Baseline))
+                foreach (var l in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsLowerVowel(g.CodePoint)))
+                    below = Math.Max(below, d.Top + d.Height + 1 - f.Baseline + l.Top + l.Height - f.Baseline);
         var line = Math.Max(f.LineHeight, baseline + below);
         return baseline == f.Baseline && line == f.LineHeight ? raw : BuildGlyphs(f, fontsDir, extra, fallbackTtf, baseline, line);
     }
