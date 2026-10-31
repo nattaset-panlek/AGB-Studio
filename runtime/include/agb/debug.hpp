@@ -69,4 +69,17 @@ void setFrame(u32 frame);
 void testPass();
 void testFail(const char* reason);
 
+// Frame phases in blueprint 04 order. Debug builds record each phase as a frame runs it (frame-order trace, P2.03);
+// Release builds record nothing.
+enum class Phase : u8 { Input, ScreenUpdate, Behaviours, ScriptVm, Tasks, Physics, Animation, BuildOam, PaletteFade, Tilemaps, VBlankCommit };
+#if defined(AGB_DEBUG)
+void tracePhase(Phase phase);
+#else
+inline void tracePhase(Phase) {}
+#endif
+// Copies the recorded phases (oldest first, at most the last 32) and returns how many were copied.
+int phaseTrace(Phase* out, int max);
+void clearPhaseTrace();
+const char* phaseName(Phase phase);
+
 }  // namespace agb::debug

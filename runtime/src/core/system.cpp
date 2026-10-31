@@ -107,6 +107,7 @@ void waitVBlank() {
     VBlankIntrWait();
     g_lastVBlank = g_vblankCount;
     profile::begin(profile::Category::Render);
+    debug::tracePhase(debug::Phase::VBlankCommit);
     commit::flush();
     // VBlank lasts 68 lines of 1232 cycles from line 160; report how much of it is left.
     const u32 line = REG_VCOUNT;

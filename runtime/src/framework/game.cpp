@@ -213,13 +213,19 @@ public:
             ui::openPause();
             return;
         }
+        // Frame order of blueprint 04 (debug::Phase); framework_platformer frame_phases_follow_blueprint_order checks it.
+        debug::tracePhase(debug::Phase::ScreenUpdate);
         if (!g_paused) {
             profile::begin(profile::Category::Logic);
             if (ui::sceneMenuOpen()) ui::updateSceneMenu();
             actors::startNew();
+            debug::tracePhase(debug::Phase::Behaviours);
             if (!script::natives::locked()) actors::updateBehaviours();  // LockAll freezes actor scripts
+            debug::tracePhase(debug::Phase::ScriptVm);
             script::run();
+            debug::tracePhase(debug::Phase::Tasks);
             task::runAll();
+            debug::tracePhase(debug::Phase::Physics);
             actors::lateUpdate();  // bodies move here (physics and tile collision)
             text::update();
             // A finished conversation (or Text.Show the player dismissed) takes the box off the screen.
@@ -227,6 +233,7 @@ public:
             actors::touches();
             checkLinks();
             actors::removeDead();
+            debug::tracePhase(debug::Phase::Animation);
             render::sprites::update();
         }
         profile::begin(profile::Category::Render);
@@ -237,14 +244,19 @@ public:
             cx += (g_scene.shakeFrames & 1) ? g_scene.shakeAmp : -g_scene.shakeAmp;
             cy += (g_scene.shakeFrames & 2) ? g_scene.shakeAmp / 2 : -(g_scene.shakeAmp / 2);
         }
+        actors::syncSprites(cx, cy);
+        debug::tracePhase(debug::Phase::BuildOam);
+        render::sprites::build();
+        debug::tracePhase(debug::Phase::PaletteFade);
+        render::palettes::update();
+        // Map rows and columns that came into view are drawn into the shadow maps and queued for VBlank. A row the
+        // DMA budget cannot take this frame stays dirty and goes next frame (commit::queueCopy).
+        debug::tracePhase(debug::Phase::Tilemaps);
         for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
             g_scene.views[i].setCamera(cx, cy);
             g_scene.views[i].commit();
         }
         render::bg::animateTiles();
-        actors::syncSprites(cx, cy);
-        render::sprites::build();
-        render::palettes::update();
         actors::publishDebug();
         publishGameInfo();
     }
@@ -419,6 +431,7 @@ void frame() {
     const u32 overruns = profile::stats().overruns;
     const int stepBefore = g_loadStep;
     input::update();
+    debug::tracePhase(debug::Phase::Input);
     if (g_depth == 0) {
         system::waitVBlank();
         return;

@@ -57,6 +57,32 @@ void warnOnce(u32 id, const char* text) {
 
 void setFrame(u32 frame) { g_channel.frame = frame; }
 
+namespace {
+constexpr int kTraceSize = 32;
+Phase g_trace[kTraceSize];
+u32 g_traceCount = 0;
+}  // namespace
+
+#if defined(AGB_DEBUG)
+void tracePhase(Phase phase) { g_trace[g_traceCount++ % kTraceSize] = phase; }
+#endif
+
+int phaseTrace(Phase* out, int max) {
+    const u32 n = g_traceCount < kTraceSize ? g_traceCount : kTraceSize;
+    int copied = 0;
+    for (u32 i = g_traceCount - n; i < g_traceCount && copied < max; ++i) out[copied++] = g_trace[i % kTraceSize];
+    return copied;
+}
+
+void clearPhaseTrace() { g_traceCount = 0; }
+
+const char* phaseName(Phase phase) {
+    static const char* const kNames[] = {"input",   "Screen.Update", "behaviours",   "Event Script VM", "tasks",          "physics",
+                                         "animate", "build OAM",     "palette fade", "dirty tilemaps",  "VBlank commit"};
+    const u32 i = static_cast<u32>(phase);
+    return i < sizeof kNames / sizeof kNames[0] ? kNames[i] : "?";
+}
+
 void testPass() {
     log("TEST PASS");
     g_channel.testStatus = static_cast<u32>(TestStatus::Pass);
