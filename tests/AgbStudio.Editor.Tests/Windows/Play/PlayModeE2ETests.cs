@@ -254,6 +254,31 @@ public class PlayModeE2ETests : EditorDriver
     }
 
     [AvaloniaFact]
+    public void P12_05_Hitboxes_VelocityArrowOnEveryMovingActor()
+    {
+        var page = OpenPlayMode();
+        var screen = page.Game.Screen;
+        screen.Focus();
+        KeyDown(PhysicalKey.ArrowRight);
+        Play.RunFrames(20);
+        // not only the selected actor: every moving actor gets its arrow (Figma T-P02 Game View)
+        Play.SelectedActor = null;
+        Play.Publish();
+        Capture.Pump();
+        var player = Play.World.Find("Player")!;
+        Assert.True(player.Actor.Vx > 0.01);
+        var origin = screen.TranslatePoint(screen.ImageRect.TopLeft, Win)!.Value;
+        // half way along the arrow: from the top centre of the hitbox, 8 frames of travel to the right
+        var x = origin.X + (Math.Floor(player.Actor.X) + player.ColliderX + player.ColliderW / 2.0 - Play.World.CameraX) * 3 + player.Actor.Vx * 8 * 3 / 2;
+        var y = origin.Y + (Math.Floor(player.Actor.Y) + player.ColliderY - Play.World.CameraY) * 3 + player.Actor.Vy * 8 * 3 / 2;
+        var arrow = ((ISolidColorBrush)AgbStudio.Editor.Services.ThemeService.Token(Win, "lit/velocity")!).Color.ToUInt32();
+        Assert.Equal(arrow, PixelAt(x, y));
+        KeyUp(PhysicalKey.ArrowRight);
+        Click(page.HitboxesChip);
+        Assert.NotEqual(arrow, PixelAt(x, y));
+    }
+
+    [AvaloniaFact]
     public void P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning()
     {
         var page = OpenPlayMode();

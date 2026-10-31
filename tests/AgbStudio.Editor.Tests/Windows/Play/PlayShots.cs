@@ -25,7 +25,7 @@ public sealed class PlayShots : IShotSource, IShotSpecimen
             int Get(string k) => (int)Math.Round(json.RootElement.GetProperty(k).GetDouble());
             var full = Path.Combine(Path.GetDirectoryName(path)!, "T-P02-overlays-full.png");
             // both overlays on, as the toolbar chips of the Figma frame show them
-            RenderPage(full, 1440, 900, "T-P02", m => { m.Play.Hitboxes = true; m.Play.TileCollision = true; });
+            RenderPage(full, 1440, 900, "T-P02", m => { m.Play.Hitboxes = true; m.Play.TileCollision = true; Jump(m.Play); });
             using (var src = SkiaSharp.SKBitmap.Decode(full))
             using (var crop = new SkiaSharp.SKBitmap(Get("w"), Get("h")))
             {
@@ -40,7 +40,7 @@ public sealed class PlayShots : IShotSource, IShotSpecimen
 
     public IEnumerable<(string Id, Action<string, int, int> Render)> Windows()
     {
-        yield return ("T-P02", (path, w, h) => RenderPage(path, w, h, "T-P02", null));
+        yield return ("T-P02", (path, w, h) => RenderPage(path, w, h, "T-P02", m => Jump(m.Play)));
         yield return ("T-M18", (path, w, h) =>
         {
             // the speed chip's menu while the game runs (Frame step is enabled then)
@@ -58,9 +58,30 @@ public sealed class PlayShots : IShotSource, IShotSpecimen
         yield return ("T-P24", (path, w, h) => RenderPage(path, w, h, "T-P24", m => { PauseAtBreakpoint(m); m.SelectedColour = 16 + 7; }));
     }
 
-    /// <summary>The Figma breakpoints; the player jumps so the game stops at PlayerController.cs:19.</summary>
+    /// <summary>
+    /// The game frame of the Figma frames (T-P02 "Frame 2841", T-P19 / T-P23 / T-P24 "Paused at frame 2841"). The toolbar
+    /// centres the play controls between its chips, so a shorter frame number would move them.
+    /// </summary>
+    const long FigmaFrame = 2841;
+
+    static void RunToFrame(PlayController play, long frame)
+    {
+        for (var left = frame - play.Frame; left > 0; left = frame - play.Frame) play.RunFrames((int)left);
+    }
+
+    /// <summary>The player a few frames into a jump to the right at the Figma frame ("Player · state Jump", velocity arrow).</summary>
+    static void Jump(PlayController play)
+    {
+        RunToFrame(play, FigmaFrame - 6);
+        play.KeyDown(Avalonia.Input.Key.Right);
+        play.KeyDown(Avalonia.Input.Key.Z);
+        RunToFrame(play, FigmaFrame);
+    }
+
+    /// <summary>The Figma breakpoints; the player jumps so the game stops at PlayerController.cs:19 at the Figma frame.</summary>
     static void PauseAtBreakpoint(DebuggerModel m)
     {
+        RunToFrame(m.Play, FigmaFrame - 3);
         m.AddBreakpoint("PlayerController.cs", 19);
         m.AddBreakpoint("Slime.cs", 42, enabled: false);
         m.AddSceneLoad(enabled: false);
