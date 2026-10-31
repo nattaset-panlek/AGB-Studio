@@ -196,7 +196,8 @@ public static class GalleryCatalog
         // Logic graph
         foreach (var c in Enum.GetValues<NodeCategory>())
             yield return I("Node Header", c.ToString(), 200, 30, () => new NodeHeader { Category = c, Title = "On Update" });
-        foreach (var t in Enum.GetValues<PinType>())
+        // the Figma pin variants (Vector pins came later and have no Figma frame)
+        foreach (var t in Enum.GetValues<PinType>().Where(t => t != PinType.Vector))
             foreach (var d in Enum.GetValues<PinDir>())
                 yield return I("Node Pin", $"{t} {d}", t == PinType.Exec ? 12 : 10, t == PinType.Exec ? 12 : 10, () => new NodePin { Type = t, Dir = d });
 

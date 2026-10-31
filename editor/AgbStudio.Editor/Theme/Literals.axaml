@@ -24,6 +24,8 @@
   <SolidColorBrush x:Key="lit/pin-fixed" Color="#4DA3FF" />
   <SolidColorBrush x:Key="lit/pin-actor" Color="#2EE6D6" />
   <SolidColorBrush x:Key="lit/pin-text" Color="#FFC145" />
+  <!-- Vector pins (Get Velocity, Vector from Velocity): not a Figma pin variant; violet, apart from the other pin colours -->
+  <SolidColorBrush x:Key="lit/pin-vector" Color="#B392FF" />
   <SolidColorBrush x:Key="lit/pin-hollow" Color="#202229" />
   <!-- Code colours of the Script Editor, Scripting API example and Generated C# panel (methods use status/success, comments text/muted) -->
   <SolidColorBrush x:Key="lit/code-keyword" Color="#FF7AB6" />

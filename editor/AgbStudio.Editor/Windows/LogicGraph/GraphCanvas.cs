@@ -206,11 +206,13 @@ public sealed class GraphCanvas : Panel, IEditTarget
                     inner.Children.Add(label);
                 }
                 var connected = row.Left is { } lp && Doc.AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == lp.Name);
-                if (row.Prop != null && !connected)
+                // an actor input that is not wired acts on the graph's own actor (Figma "Target  Self")
+                var self = row.Prop is null && row.Left is { Kind: PinKind.Actor } && !connected;
+                if ((row.Prop != null || self) && !connected)
                 {
-                    var box = UI.Frame(UI.Text(GraphDocument.PropText(n, row.Prop), "Mono/10", "text/primary"), "bg/base", "border/default", new Thickness(1), new Thickness(6, 0), 4);
+                    var box = UI.Frame(UI.Text(self ? "Self" : GraphDocument.PropText(n, row.Prop!), "Mono/10", "text/primary"), "bg/base", "border/default", new Thickness(1), new Thickness(6, 0), 4);
                     box.Height = 20;
-                    box.Name = "Prop_" + row.Prop;
+                    box.Name = self ? "Pin_" + row.Left!.Name : "Prop_" + row.Prop;
                     box.Measure(Size.Infinity);
                     Canvas.SetLeft(box, w - 2 - 15 - box.DesiredSize.Width);
                     Canvas.SetTop(box, y + 3);
@@ -561,7 +563,8 @@ public sealed class GraphCanvas : Panel, IEditTarget
 
         IBrush? Brush(PinKind k) => ThemeService.Token(this, k switch
         {
-            PinKind.Bool => "lit/pin-bool", PinKind.Fixed => "lit/pin-fixed", PinKind.Actor => "lit/pin-actor", PinKind.Text => "lit/pin-text", _ => "lit/pin-exec",
+            PinKind.Bool => "lit/pin-bool", PinKind.Fixed => "lit/pin-fixed", PinKind.Actor => "lit/pin-actor", PinKind.Text => "lit/pin-text",
+            PinKind.Vector => "lit/pin-vector", _ => "lit/pin-exec",
         });
 
         static void Curve(DrawingContext ctx, Point a, Point b, IBrush? brush, double opacity, bool exec)

@@ -385,8 +385,21 @@ public sealed class LogicGraphPage : DockPanel
         {
             var connected = Document.AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == prop.Name);
             var value = n.Props.TryGetValue(prop.Name, out var v) ? v : prop.Default;
-            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : value, Name = "Prop_" + prop.Name, IsEnabled = !connected };
             var name = prop.Name;
+            if (prop.Kind == PropKind.Choice && prop.Options is { Count: > 0 } options)
+            {
+                // a segmented control, as Figma draws Set Velocity Y "Mode  Set | Add | Clamp"
+                var label = UI.Text(GraphDocument.Label(name), "Body/12", "text/secondary");
+                label.Width = 86;
+                label.VerticalAlignment = VerticalAlignment.Center;
+                var segments = Settings.SettingsUi.Segments(options, Math.Max(0, options.ToList().IndexOf(value)), i => SetProp(n.Id, name, options[i]), "PropSegments_" + name);
+                var choice = new DockPanel { HorizontalSpacing = 8, Name = "PropRow_" + name };
+                DockPanel.SetDock(label, Dock.Left);
+                choice.Children.AddRange([label, segments]);
+                rows.Add(choice);
+                continue;
+            }
+            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : value, Name = "Prop_" + prop.Name, IsEnabled = !connected };
             switch (prop.Kind)
             {
                 case PropKind.Key:
@@ -414,6 +427,17 @@ public sealed class LogicGraphPage : DockPanel
             }
             rows.Add(field);
         }
+        // actor inputs (Target): Self, or the actor output wired to it; choosing one rewires the input
+        foreach (var pin in def.Pins.Where(p => !p.Output && p.Kind == PinKind.Actor && def.Props.All(x => x.Name != p.Name)))
+        {
+            var input = pin.Name;
+            var sources = ActorSources(n.Id);
+            var wired = Document.AllLinks.FirstOrDefault(l => l.ToNode == n.Id && l.ToPin == input);
+            var current = wired is null ? "Self" : sources.FirstOrDefault(s => s.Node == wired.FromNode && s.Pin == wired.FromPin).Text ?? "(wired)";
+            var field = new InspectorField { Label = GraphDocument.Label(input), Kind = FieldKind.Dropdown, Value = current, Name = "Pin_" + input };
+            field.Choices(() => ["Self", .. ActorSources(n.Id).Select(s => s.Text)], x => SetTarget(n.Id, input, x));
+            rows.Add(field);
+        }
         var content = UI.Column(8, [.. rows]);
         content.Margin = new Thickness(0, 0, 0, 10);
         header.PropertyChanged += (_, e) => { if (e.Property == SectionHeader.IsOpenProperty) content.IsVisible = header.IsOpen; };
@@ -436,6 +460,23 @@ public sealed class LogicGraphPage : DockPanel
         var current = n.Props.TryGetValue(prop, out var c) ? c : def.Default;
         if (current == value) return false;
         return Edit("Change " + GraphDocument.Label(prop), () => { n.Props[prop] = value; return true; });
+    }
+
+    /// <summary>The actor outputs of the other nodes that can feed an actor input ("On Touch · Other").</summary>
+    public IReadOnlyList<(string Node, string Pin, string Text)> ActorSources(string exceptNode) =>
+        Document.Graph.Nodes.Where(x => x.Id != exceptNode)
+            .SelectMany(x => NodeCatalog.Find(x.Type) is { } d ? d.Pins.Where(p => p.Output && p.Kind == PinKind.Actor).Select(p => (x.Id, p.Name, $"{d.Title} · {GraphDocument.Label(p.Name)}")) : [])
+            .ToList();
+
+    /// <summary>Target of an actor input (inspector): "Self" removes its wire, an actor output ("On Touch · Other") wires it.</summary>
+    public bool SetTarget(string id, string input, string choice)
+    {
+        var wired = Document.Graph.Links.FirstOrDefault(l => l.ToNode == id && l.ToPin == input);
+        if (choice == "Self")
+            return wired != null && Edit("Change " + GraphDocument.Label(input), () => Document.Graph.Links.Remove(wired));
+        if (ActorSources(id).FirstOrDefault(s => s.Text == choice) is not { Node.Length: > 0 } src) return false;
+        if (wired is { } w && w.FromNode == src.Node && w.FromPin == src.Pin) return false;
+        return Edit("Change " + GraphDocument.Label(input), () => Document.Connect(src.Node, src.Pin, id, input));
     }
 
     // ---- tools and menu actions --------------------------------------------------------------------------------

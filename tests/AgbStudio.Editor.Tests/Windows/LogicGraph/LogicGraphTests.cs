@@ -238,6 +238,51 @@ public sealed class LogicGraphTests : IDisposable
         Assert.Contains(back.Graph.Links, l => l.From == "n1.out" && l.To == "n2.in");
         Assert.Equal("XLogic", back.Graph.Class);
     }
+
+    /// <summary>The node fields Figma shows: On Touch Tag, Set Velocity Y Mode (Set | Add | Clamp) and Target (Self or a wired actor); Vector pins.</summary>
+    [AvaloniaFact]
+    public void Inspector_TagModeTarget_AndVectorPins()
+    {
+        var page = Open();
+        // On Touch: Tag "Coin"
+        page.Canvas.Select(["n8"]);
+        Capture.Pump();
+        Assert.Equal("Coin", _h.Find<InspectorField>("Prop_tag").Value);
+        Assert.Equal("Coin", ((TextBlock)((Border)page.Canvas.GetVisualDescendants().OfType<Panel>().First(p => p.Name == "Node_n8")
+            .GetVisualDescendants().OfType<Border>().First(b => b.Name == "Prop_tag")).Child!).Text);
+
+        // Set Velocity Y: Mode is a segmented control; Add changes the generated code
+        page.Canvas.Select(["n6"]);
+        Capture.Pump();
+        var segments = _h.Find<Border>("PropSegments_mode").GetVisualDescendants().OfType<Segment>().ToList();
+        Assert.Equal(["Set", "Add", "Clamp"], segments.Select(s => (string?)s.Content));
+        Assert.True(segments[0].IsChecked);
+        var set = page.Code.Text;
+        _h.Click(segments[1]);
+        Assert.Equal("Add", page.Document.Node("n6")!.Props["mode"]);
+        Assert.NotEqual(set, page.Code.Text);
+        _h.S.Undo.Undo();
+        Assert.Equal(set, page.Code.Text);
+
+        // Target: Self until an actor is wired; choosing On Touch · Other wires it, Self removes the wire
+        page.Canvas.Select(["n6"]);
+        Capture.Pump();
+        Assert.Equal("Self", _h.Find<InspectorField>("Pin_target").Value);
+        Assert.NotNull(page.Canvas.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => b.Name == "Pin_target"));   // "Target  Self" on the node
+        Assert.True(page.SetTarget("n6", "target", "On Touch · Other"));
+        Assert.Contains(page.Document.Graph.Links, l => l.From == "n8.other" && l.To == "n6.target");
+        page.Canvas.Select(["n6"]);
+        Capture.Pump();
+        Assert.Equal("On Touch · Other", _h.Find<InspectorField>("Pin_target").Value);
+        Assert.True(page.SetTarget("n6", "target", "Self"));
+        Assert.DoesNotContain(page.Document.Graph.Links, l => l.To == "n6.target");
+
+        // Vector pins (Get Velocity) have their own colour
+        page.AddNode("GetVelocity", new Point(900, 300), null);
+        Capture.Pump();
+        var vector = page.Canvas.GetVisualDescendants().OfType<NodePin>().First(p => p.Type == PinType.Vector);
+        Assert.Equal(Avalonia.Media.Color.Parse("#B392FF"), ((Avalonia.Media.ISolidColorBrush)vector.Foreground!).Color);
+    }
 }
 
 /// <summary>The Logic Graph without an open project: an empty graph that can still be edited.</summary>

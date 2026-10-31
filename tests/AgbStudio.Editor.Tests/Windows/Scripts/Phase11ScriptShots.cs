@@ -163,7 +163,8 @@ public sealed class Phase11ScriptShots : IShotSource
         finally { Close(fx, win); }
     }
 
-    /// <summary>The Figma Player · Logic graph: ten nodes at the Figma positions (canvas origin 248, 80), nine wires, "Collect coin".</summary>
+    /// <summary>The Figma Player · Logic graph: ten nodes at the Figma positions (canvas origin 248, 80), nine wires, "Collect coin"
+    /// (On Touch with Tag "Coin").</summary>
     public static string FigmaGraph(Fixture fx)
     {
         var path = Path.Combine(fx.Services.Project.Current!.ScriptsDir, "PlayerLogic.graph");
@@ -179,7 +180,7 @@ public sealed class Phase11ScriptShots : IShotSource
                 { "id": "n5", "type": "Branch", "x": 420, "y": 70 },
                 { "id": "n6", "type": "SetVelocityY", "x": 651, "y": 57, "props": { "value": -3.50 } },
                 { "id": "n7", "type": "PlaySound", "x": 651, "y": 196, "props": { "sound": "jump.wav", "volume": 0.8 } },
-                { "id": "n8", "type": "OnTouch", "x": 48, "y": 420 },
+                { "id": "n8", "type": "OnTouch", "x": 48, "y": 420, "props": { "tag": "Coin" } },
                 { "id": "n9", "type": "AddToVariable", "x": 318, "y": 410, "props": { "variable": "score", "amount": 10 } },
                 { "id": "n10", "type": "Destroy", "x": 610, "y": 436 }
               ],
