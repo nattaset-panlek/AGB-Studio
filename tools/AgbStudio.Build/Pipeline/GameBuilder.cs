@@ -1084,7 +1084,10 @@ public sealed class GameBuilder
     {
         var sb = new StringBuilder();
         sb.Append($"{_p.Settings.General.GameTitle} was made with AGB Studio and contains the following libraries.\n\n");
+        // D-05: the AGB Studio runtime inside the ROM is MIT; the same permission text covers it and libtonc.
+        sb.Append("AGB Studio runtime\n------------------\nCopyright (c) 2026 AGB Studio contributors\n\n");
         sb.Append("libtonc\n-------\nCopyright (c) J Vijn\n\n");
+        sb.Append("Both are under the MIT licence:\n\n");
         sb.Append("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\n");
         sb.Append("documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation\n");
         sb.Append("the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to\n");

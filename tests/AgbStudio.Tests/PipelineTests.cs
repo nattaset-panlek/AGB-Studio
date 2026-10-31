@@ -147,6 +147,7 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.True(File.Exists(Path.Combine(p.BuildDir, "report-history.json")));
         // The library notices travel next to the ROM.
         var notices = File.ReadAllText(Path.Combine(Path.GetDirectoryName(r.RomPath)!, "THIRD_PARTY.txt"));
+        Assert.Contains("AGB Studio runtime", notices);  // D-05: MIT, like libtonc
         Assert.Contains("libtonc", notices);
         Assert.Contains("Mukunda Johnson", notices);
         // ROM header written by gbafix from Project Settings · General.
