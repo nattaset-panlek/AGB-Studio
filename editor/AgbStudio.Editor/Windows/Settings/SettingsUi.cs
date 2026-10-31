@@ -132,8 +132,6 @@ public static class SettingsUi
     public static InspectorField TextRow(string label, string value, Action<string> changed, string? name = null, double width = double.NaN)
     {
         var f = new InspectorField { Kind = FieldKind.Text, Label = label, Value = value, Name = name, Width = width, HorizontalAlignment = double.IsNaN(width) ? HorizontalAlignment.Stretch : HorizontalAlignment.Left };
-        // the Field box keeps 6 px for an inner label it does not have here; Figma starts the text 8 px in, like the Dropdown
-        f.TemplateApplied += (_, e) => { if (e.NameScope.Find<TextBox>("PART_Text") is { } t) t.Padding = new Thickness(2, 0, 8, 0); };
         f.PropertyChanged += (_, e) => { if (e.Property == InspectorField.ValueProperty) changed(f.Value ?? ""); };
         return f;
     }

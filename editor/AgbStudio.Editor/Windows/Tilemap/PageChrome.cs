@@ -199,9 +199,7 @@ public static class PageChrome
         var f = new InspectorField { Label = label, Kind = kind, Value = value, Name = name ?? "Field_" + label.Replace(" ", "").Replace("·", "") };
         f.TemplateApplied += (_, e) =>
         {
-            // The Field template's text box keeps a 6 px gap for an empty left label (only XY has one): Figma puts the
-            // text 8 px in, as in the Dropdown. Its switch sets IsChecked locally, which hides the IsOn binding.
-            if (kind == FieldKind.Text && e.NameScope.Find<TextBox>("PART_Text") is { } box) box.Padding = new Thickness(2, 0, 8, 0);
+            // The Field's switch sets IsChecked locally, which hides the IsOn binding.
             if (e.NameScope.Find<AgbSwitch>("PART_Toggle") is { } sw)
             {
                 sw.ClearValue(ToggleButton.IsCheckedProperty);

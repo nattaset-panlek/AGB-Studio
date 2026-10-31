@@ -22,7 +22,9 @@
         <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
           <DockPanel HorizontalSpacing="6">
-            <ContentPresenter DockPanel.Dock="Left" Content="{TemplateBinding InnerLeftContent}" VerticalAlignment="Center" />
+            <!-- hidden without content, so the 6 px gap is only there for the X / Y prefix (Field Text has its value at the box padding) -->
+            <ContentPresenter DockPanel.Dock="Left" Content="{TemplateBinding InnerLeftContent}" VerticalAlignment="Center"
+                              IsVisible="{TemplateBinding InnerLeftContent, Converter={x:Static ObjectConverters.IsNotNull}}" />
             <TextPresenter Name="PART_TextPresenter" VerticalAlignment="Center" Text="{TemplateBinding Text, Mode=TwoWay}" CaretIndex="{TemplateBinding CaretIndex}"
                            SelectionStart="{TemplateBinding SelectionStart}" SelectionEnd="{TemplateBinding SelectionEnd}" TextWrapping="NoWrap"
                            LineHeight="{TemplateBinding LineHeight}" LetterSpacing="{TemplateBinding LetterSpacing}"
