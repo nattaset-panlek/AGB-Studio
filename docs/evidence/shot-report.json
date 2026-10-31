@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 04:40:20Z",
+  "generated": "2026-10-31 05:28:11Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3608,15 +3608,15 @@
       "set": "frame Import CSV",
       "figma": "780x478",
       "app": "780x478",
-      "DiffPercent": 2.3,
-      "BestShiftDiffPercent": 2.3,
+      "DiffPercent": 2.69,
+      "BestShiftDiffPercent": 2.69,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.55,
-      "ColourDiffPercent": 8.53
+      "MeanChannelError": 4.23,
+      "ColourDiffPercent": 11.73
     },
     {
       "Id": "T-P14",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.7,
-      "BestShiftDiffPercent": 2.7,
+      "DiffPercent": 2.75,
+      "BestShiftDiffPercent": 2.75,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.17,
-      "ColourDiffPercent": 4.93
+      "MeanChannelError": 3.26,
+      "ColourDiffPercent": 4.98
     },
     {
       "Id": "T-D14",
@@ -4403,15 +4403,15 @@
       "set": "frame Project Settings \u00B7 Scripting",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.87,
-      "BestShiftDiffPercent": 1.87,
+      "DiffPercent": 2.07,
+      "BestShiftDiffPercent": 2.07,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.16,
-      "ColourDiffPercent": 3.56
+      "MeanChannelError": 2.46,
+      "ColourDiffPercent": 3.76
     },
     {
       "Id": "T-S05",
@@ -4486,7 +4486,7 @@
       ],
       "LayoutOffset": 0,
       "MeanChannelError": 1.79,
-      "ColourDiffPercent": 3.02
+      "ColourDiffPercent": 3.03
     },
     {
       "Id": "T-S09",
@@ -4553,15 +4553,15 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.7,
-      "BestShiftDiffPercent": 1.7,
+      "DiffPercent": 1.67,
+      "BestShiftDiffPercent": 1.67,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.43,
-      "ColourDiffPercent": 5.09
+      "MeanChannelError": 2.39,
+      "ColourDiffPercent": 5.06
     },
     {
       "Id": "T-P10",

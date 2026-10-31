@@ -246,7 +246,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P07 | frame Database | 1440x900 | 1440x900 | 1.75 | 1.75 | 0,0 | 0 | 2.07 |
 | T-D17 | frame New Table | 520x440 | 520x440 | 1.80 | 1.80 | 0,0 | 0 | 2.10 |
 | T-D18 | frame Add Field | 520x516 | 520x516 | 1.32 | 1.32 | 0,0 | 0 | 1.38 |
-| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.30 | 2.30 | 0,0 | 0 | 3.55 |
+| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.69 | 2.69 | 0,0 | 0 | 4.23 |
 | T-P14 | frame Localization | 1440x900 | 1440x900 | 3.74 | 3.74 | 0,0 | 0 | 5.47 |
 | T-D20 | frame Add Language | 520x416 | 520x416 | 1.82 | 1.82 | 0,0 | 0 | 1.89 |
 | T-P16 | frame Dialogue Editor | 1440x900 | 1440x900 | 2.09 | 2.09 | 0,0 | 0 | 2.76 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.70 | 2.70 | 0,0 | 0 | 3.17 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.75 | 2.75 | 0,0 | 0 | 3.26 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 3.01 | 3.01 | 0,0 | 0 | 3.57 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 5.47 | 5.47 | 0,0 | 0 | 7.36 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.34 | 1.34 | 0,0 | 0 | 1.60 |
@@ -299,7 +299,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-S01 | frame Project Settings · General | 900x620 | 900x620 | 0.92 | 0.92 | 0,0 | 0 | 1.05 |
 | T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.26 | 1.26 | 0,0 | 0 | 1.48 |
 | T-S03 | frame Project Settings · Build | 900x620 | 900x620 | 1.03 | 1.03 | 0,0 | 0 | 1.30 |
-| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 1.87 | 1.87 | 0,0 | 0 | 2.16 |
+| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 2.07 | 2.07 | 0,0 | 0 | 2.46 |
 | T-S05 | frame Project Settings · Localization | 900x620 | 900x620 | 0.80 | 0.80 | 0,0 | 0 | 0.97 |
 | T-D09 | frame Preferences | 900x620 | 900x620 | 0.67 | 0.67 | 0,0 | 0 | 0.78 |
 | T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.87 | 0.87 | 0,0 | 0 | 1.52 |
@@ -309,7 +309,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.84 | 0.84 | 0,0 | 0 | 1.53 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.42 |
 | T-O12 | frame Record Shortcut | 340x264 | 340x264 | 1.95 | 1.95 | 0,0 | 0 | 2.17 |
-| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 1.70 | 1.70 | 0,0 | 0 | 2.43 |
+| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 1.67 | 1.67 | 0,0 | 0 | 2.39 |
 | T-P10 | frame Palette Manager | 1440x900 | 1440x900 | 2.41 | 2.41 | 0,0 | 0 | 3.31 |
 | T-D13 | frame New Sprite | 520x506 | 520x506 | 1.55 | 1.55 | 0,0 | 0 | 1.65 |
 | T-M19 | menu OAM Size | 264x175 | 264x175 | 3.70 | 3.70 | 0,0 | 0 | 4.30 |
