@@ -21,7 +21,7 @@ public static class GaeRules
     public static readonly DiagnosticDescriptor FloatType = new(
         "GAE002",
         "float or double — the GBA has no FPU, use fixed",
-        "{0} is very slow on GBA (no floating-point hardware)",
+        "{0} is not supported on GBA",  // Figma T-P04 text; the description says why and what to use
         Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
         description: "The GBA has no FPU, so floats are emulated and very slow. Use the 24.8 fixed-point type instead — same syntax, runs at full speed.",
         helpLinkUri: HelpBase + "GAE002");
@@ -65,7 +65,7 @@ public static class GaeRules
     static readonly Dictionary<string, string> s_short = new()
     {
         ["GAE001"] = "class allocated in {1} is never freed → allocate in Start",
-        ["GAE002"] = "{0} is slow on GBA → use fixed",
+        ["GAE002"] = "{0} → use fixed",  // the Figma Build log line
         ["GAE003"] = "new inside {1} fills memory every frame → allocate in Start or use a pool",
         ["GAE004"] = "{0} (no exceptions on GBA) → return a bool or an error value",
         ["GAE005"] = "string concatenation in a loop makes a new string every pass → use string keys, or log outside the loop",

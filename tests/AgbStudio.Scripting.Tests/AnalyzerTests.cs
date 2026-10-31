@@ -38,8 +38,8 @@ public sealed class AnalyzerTests
         var d = Assert.Single(Gae(r, "GAE002"));
         Assert.Equal(ScriptSeverity.Warning, d.Severity);
         Assert.Equal((8, 5), (d.Line, d.Column));
-        Assert.Equal("float is very slow on GBA (no floating-point hardware)", d.Message);
-        Assert.Equal("PlayerController.cs(8,5): GAE002 float is slow on GBA → use fixed", d.ToLogLine());
+        Assert.Equal("float is not supported on GBA", d.Message);
+        Assert.Equal("PlayerController.cs(8,5): GAE002 float → use fixed", d.ToLogLine());
         Assert.Single(Gae(Run(Head + "    void Update() { double d = 2; var x = 1.5; }\n}\n"), "GAE002").Where(x => x.Message.StartsWith("double")).Take(1));
     }
 
