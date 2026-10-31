@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 00:58:09Z",
+  "generated": "2026-10-31 01:10:56Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -4253,30 +4253,30 @@
       "set": "frame Logic Graph",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.85,
-      "BestShiftDiffPercent": 3.85,
+      "DiffPercent": 4.01,
+      "BestShiftDiffPercent": 4.01,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 7.15,
-      "ColourDiffPercent": 11.96
+      "MeanChannelError": 7.11,
+      "ColourDiffPercent": 9.87
     },
     {
       "Id": "T-O08",
       "set": "frame Add Node",
       "figma": "380x269",
       "app": "380x269",
-      "DiffPercent": 6.06,
-      "BestShiftDiffPercent": 6.06,
+      "DiffPercent": 5.85,
+      "BestShiftDiffPercent": 5.85,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 6.99,
-      "ColourDiffPercent": 13.71
+      "MeanChannelError": 6.73,
+      "ColourDiffPercent": 11.71
     },
     {
       "Id": "T-M21",

@@ -289,8 +289,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D14 | frame New Script | 560x564 | 560x564 | 3.01 | 3.01 | 0,0 | 0 | 3.57 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 5.47 | 5.47 | 0,0 | 0 | 7.36 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.34 | 1.34 | 0,0 | 0 | 1.60 |
-| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 3.85 | 3.85 | 0,0 | 0 | 7.15 |
-| T-O08 | frame Add Node | 380x269 | 380x269 | 6.06 | 6.06 | 0,0 | 0 | 6.99 |
+| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 4.01 | 4.01 | 0,0 | 0 | 7.11 |
+| T-O08 | frame Add Node | 380x269 | 380x269 | 5.85 | 5.85 | 0,0 | 0 | 6.73 |
 | T-M21 | menu Node Context Menu | 264x175 | 264x175 | 2.68 | 2.68 | 0,0 | 0 | 2.80 |
 | T-P13 | frame World Map | 1440x900 | 1440x900 | 1.64 | 1.64 | 0,0 | 0 | 2.16 |
 | T-O09 | frame Link Settings | 360x330 | 360x330 | 2.73 | 2.73 | 0,0 | 0 | 4.56 |
