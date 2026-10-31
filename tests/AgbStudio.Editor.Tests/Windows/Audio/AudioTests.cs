@@ -167,7 +167,8 @@ public class AudioPageTests : IDisposable
         Assert.Equal(["blip.wav", "coin.wav", "explode.wav", "hurt.wav", "jump.wav"], page.SoundFiles.Select(Path.GetFileName));
         Assert.Equal("0.21 s", Find<TreeItem>("Sound_jump.wav").Meta);
         Assert.Equal("0.64 s", Find<TreeItem>("Sound_explode.wav").Meta);
-        Assert.Equal("0:20", Find<TreeItem>("Music_bgm_cave.mod").Meta);
+        // Figma Audio: bgm_forest 1:24, bgm_cave 1:02, bgm_title 0:48, jingle_win 0:06
+        Assert.Equal(["1:02", "1:24", "0:48", "0:06"], page.MusicFiles.Select(f => Find<TreeItem>("Music_" + Path.GetFileName(f)).Meta));
         // the last scene (Forest_01) plays bgm_forest, so it is selected and is the active document
         Assert.Equal("bgm_forest.xm", Path.GetFileName(page.Track));
         Assert.True(Find<TreeItem>("Music_bgm_forest.xm").IsSelected);
@@ -186,13 +187,13 @@ public class AudioPageTests : IDisposable
         var a = page.Analysis!;
         Assert.Equal(128, a.Bpm);
         Assert.Equal(6, a.Speed);
-        Assert.Equal(21, a.PatternCount);
-        Assert.InRange(a.Seconds, 157, 158);  // 21 x 64 rows x 6 ticks at 51.2 Hz
+        Assert.Equal(12, a.PatternCount);
+        Assert.InRange(a.Seconds, 84.3, 84.45);  // (11 x 64 + 16) rows x 6 ticks at 51.2 Hz
         string Stat(string n) => Find<StackPanel>("Stat_" + n).Children.OfType<TextBlock>().Last().Text!;
         Assert.Equal("128", Stat("BPM"));
-        Assert.Equal("21", Stat("Patterns"));
-        Assert.Equal("2:38", Stat("Length"));
-        Assert.Equal("Loop · pattern 4–20", Find<Chip>("LoopChip").Content);
+        Assert.Equal("12", Stat("Patterns"));
+        Assert.Equal("1:24", Stat("Length"));
+        Assert.Equal("Loop · pattern 4–11", Find<Chip>("LoopChip").Content);
         Assert.Equal("XM → Maxmod bank", Find<InspectorField>("FormatField").Value);
         Assert.Equal("0.8", Find<InspectorField>("VolumeField").Value);
         Assert.Equal("pattern 4", Find<InspectorField>("LoopStartField").Value);
@@ -200,7 +201,7 @@ public class AudioPageTests : IDisposable
         // selecting another track reads its module
         Click(Find<TreeItem>("Music_bgm_cave.mod"));
         Assert.Equal("MOD", page.Module!.Format);
-        Assert.Equal(96, page.Analysis!.Bpm);
+        Assert.Equal(93, page.Analysis!.Bpm);
         Assert.Equal("bgm_cave.mod", _win.TitleBar.Document);
     }
 
@@ -208,12 +209,17 @@ public class AudioPageTests : IDisposable
     public void Tracker_ShowsThePatternAndFollowsSeek()
     {
         var page = OpenAudio();
-        page.Seek(7, 20);
+        page.Seek(4, 20);
         Capture.Pump();
         var grid = Find<TrackerGrid>("Tracker");
-        Assert.Equal(page.Module!.Order[7], grid.PatternIndex);
+        Assert.Equal(page.Module!.Order[4], grid.PatternIndex);
         Assert.Equal(20, grid.CurrentRow);
         Assert.Equal(16, grid.FirstRow);
+        // the rows of the Figma frame: row 16 is "C-4 01 v40 | ... | C-5 03 v48 | ... | E-4 05 v56 | ...", row 17 the odd channels
+        var pattern = page.Module.Patterns[grid.PatternIndex];
+        Assert.Equal(["C-4 01 v40", "... .. ...", "C-5 03 v48", "... .. ...", "E-4 05 v56", "... .. ..."], Enumerable.Range(0, 6).Select(c => TrackerGrid.CellText(page.Module, pattern.Cells[16, c])));
+        Assert.Equal(["... .. ...", "G-4 02 v44", "... .. ...", "G-4 04 v52", "... .. ...", "E-4 06 v60"], Enumerable.Range(0, 6).Select(c => TrackerGrid.CellText(page.Module, pattern.Cells[17, c])));
+        Assert.Equal("E-4 01 v40", TrackerGrid.CellText(page.Module, pattern.Cells[28, 0]));
         var overview = Find<WaveformOverview>("Overview");
         Assert.InRange(overview.Playhead, 0.3, 0.4);
         // the loop chip jumps to the loop start
@@ -253,7 +259,7 @@ public class AudioPageTests : IDisposable
         Assert.Equal("0.5", volume.Value);
         Find<InspectorField>("LoopStartField").Value = "pattern 2";
         Assert.Equal(2, page.Meta.LoopStart);
-        Assert.Equal("Loop · pattern 2–20", Find<Chip>("LoopChip").Content);
+        Assert.Equal("Loop · pattern 2–11", Find<Chip>("LoopChip").Content);
         Find<AgbSwitch>("FadeSwitch").IsChecked = false;
         Assert.False(page.Meta.FadeOnSceneChange);
         Assert.True(page.Document!.IsDirty);
@@ -299,11 +305,14 @@ public class AudioPageTests : IDisposable
         Assert.Equal(("music L", 100.0), (ch["DSound A"].Value, ch["DSound A"].Percent));
         Assert.Equal("SFX jump +1", ch["Square 1"].Value);   // jump.sfx and laser.sfx
         Assert.InRange(ch["Square 1"].Percent, 45, 47);    // 0.21 s + 0.25 s of the channel per second
-        Assert.Equal("SFX blip +1", ch["Square 2"].Value);
+        Assert.Equal("SFX coin", ch["Square 2"].Value);      // coin.sfx; blip.sfx is baked into blip.wav
         Assert.Equal("free", ch["Wave"].Value);
         Assert.Equal("SFX hurt", ch["Noise"].Value);
-        Assert.Equal(["Lead", "Bass", "Drums", "Pad", "Arp"], page.MixerLevels.Select(m => m.Name));
+        Assert.Equal(["Lead", "Bass", "Drums", "Pad", "Arp", "FX"], page.MixerLevels.Select(m => m.Name));
         Assert.InRange(page.MixerLevels[0].Db, -6.5, -5.5);  // pulse at 100/128, volume 40/64
+        // the Figma mixer: Lead -6 dB, Bass -4, Drums -3, Pad -12 (each within 0.25 dB, so the bars match too)
+        Assert.Equal(["-6 dB", "-4 dB", "-3 dB", "-12 dB"], page.MixerLevels.Take(4).Select(m => AudioPage.DbText(m.Db)));
+        Assert.All(page.MixerLevels.Take(4), m => Assert.InRange(m.Db - Math.Round(m.Db), -0.25, 0.25));
         // Project Settings · Audio defaults, 8 channels at 21 kHz: 14.49 % measured on the runtime (D-26)
         Assert.Equal(14, page.MixerCpuPercent);
         Assert.Equal("14 %", Find<Meter>("MixerCpuMeter").ValueText);

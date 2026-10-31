@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using AgbStudio.Build.Audio;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Pipeline;
@@ -59,7 +61,8 @@ public static class GroupFixture
         return r;
     }
 
-    /// <summary>hero_run.png (6 frames of the hero), forest2.tmx (a Tiled map) and jump2.wav, as in the Figma Import Asset.</summary>
+    /// <summary>hero_run.png (6 frames of the hero), forest2.tmx (a Tiled map) and jump2.wav, as in the Figma Import Asset
+    /// (2.1 KB, 14 KB and 9 KB).</summary>
     public static string[] ImportFiles(Fixture fx, GameProject p)
     {
         var dir = Directory.CreateDirectory(Path.Combine(fx.Folder, "incoming")).FullName;
@@ -68,26 +71,78 @@ public static class GroupFixture
         for (var y = 0; y < 16; y++)
             for (var x = 0; x < 96; x++) run[y * 96 + x] = hero.Pixels[y * hero.Width + 32 + x];
         var heroRun = Path.Combine(dir, "hero_run.png");
-        Png.WriteArgb(heroRun, run, 96, 16);
+        File.WriteAllBytes(heroRun, WithXmp(Png.EncodeArgb(run, 96, 16), 2150));
         var tiles = Path.Combine(dir, "forest2_tiles.png");
         File.Copy(Path.Combine(p.AssetsDir, "tilesets", "forest_tiles.png"), tiles);
-        var csv = string.Join(",\n", Enumerable.Range(0, 20).Select(r => string.Join(",", Enumerable.Range(0, 40).Select(c => r > 14 ? 3 : r == 14 ? 2 : 0))));
         var tmx = Path.Combine(dir, "forest2.tmx");
-        File.WriteAllText(tmx, $"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <map version="1.10" orientation="orthogonal" width="40" height="20" tilewidth="16" tileheight="16">
-             <tileset firstgid="1" name="forest2" tilewidth="16" tileheight="16"><image source="forest2_tiles.png" width="128" height="64"/></tileset>
-             <layer id="1" name="Ground" width="40" height="20"><data encoding="csv">
-            {csv}
-            </data></layer>
-             <layer id="2" name="Decor" width="40" height="20"><data encoding="csv">
-            {csv}
-            </data></layer>
-            </map>
-            """);
+        File.WriteAllText(tmx, TiledMap(), new UTF8Encoding(false));
         var wav = Path.Combine(dir, "jump2.wav");
         File.WriteAllBytes(wav, WavWriter.Encode(WavWriter.Tone(660, 9170 / 11025.0, 11025, true), 11025));
         return [heroRun, tmx, wav];
+    }
+
+    /// <summary>The PNG with an XMP metadata packet (an iTXt chunk before IEND) whose whitespace padding, as art programs
+    /// write it, makes the file <paramref name="size"/> bytes long.</summary>
+    static byte[] WithXmp(byte[] png, int size)
+    {
+        const string head = "<?xpacket begin=\"﻿\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n  <rdf:Description rdf:about=\"\" xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" xmp:CreatorTool=\"Sky Hopper art\"/>\n </rdf:RDF>\n</x:xmpmeta>\n";
+        const string tail = "<?xpacket end=\"w\"?>";
+        // keyword, then compression flag and method, then an empty language tag and translated keyword
+        byte[] prefix = [.. Encoding.ASCII.GetBytes("XML:com.adobe.xmp"), 0, 0, 0, 0, 0];
+        var padding = Math.Max(0, size - png.Length - 12 - prefix.Length - Encoding.UTF8.GetByteCount(head + tail));
+        byte[] chunk = [.. "iTXt"u8, .. prefix, .. Encoding.UTF8.GetBytes(head + new string(' ', padding) + tail)];
+        var length = new byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(length, chunk.Length - 4);
+        var crc = new byte[4];
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(crc, Crc32(chunk));
+        var iend = png.Length - 12;
+        return [.. png.AsSpan(0, iend), .. length, .. chunk, .. crc, .. png.AsSpan(iend)];
+    }
+
+    static uint Crc32(ReadOnlySpan<byte> data)
+    {
+        var c = 0xFFFFFFFFu;
+        foreach (var b in data)
+        {
+            c ^= b;
+            for (var k = 0; k < 8; k++) c = (c & 1) != 0 ? 0xEDB88320u ^ (c >> 1) : c >> 1;
+        }
+        return ~c;
+    }
+
+    /// <summary>forest2.tmx as Tiled saves it: the forest2 tileset with a collision property per tile, a Ground and a Decor
+    /// layer (base64), and an Actors object layer (the player, 18 coins, two slimes and the exit): 40 x 20 tiles, 14 KB.</summary>
+    static string TiledMap()
+    {
+        static string Layer(Func<int, int, int> gid)
+        {
+            var bytes = new byte[40 * 20 * 4];
+            for (var r = 0; r < 20; r++)
+                for (var c = 0; c < 40; c++) System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan((r * 40 + c) * 4), (uint)gid(r, c));
+            return Convert.ToBase64String(bytes);
+        }
+        (string Name, string Collision)[] tiles = [("grass_top", "solid"), ("dirt", "solid"), ("bricks", "one-way"), ("bush", "none"), ("leaves", "none"), ("stone", "solid"),
+            ("water", "water"), ("spikes", "hazard"), ("bricks_left", "one-way"), ("bricks_right", "one-way")];
+        const int coins = 18;
+        var s = new StringBuilder();
+        s.Append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        s.Append(CultureInfo.InvariantCulture, $"<map version=\"1.10\" tiledversion=\"1.10.2\" orientation=\"orthogonal\" renderorder=\"right-down\" width=\"40\" height=\"20\" tilewidth=\"16\" tileheight=\"16\" infinite=\"0\" nextlayerid=\"4\" nextobjectid=\"{coins + 5}\">\n");
+        s.Append(" <tileset firstgid=\"1\" name=\"forest2\" tilewidth=\"16\" tileheight=\"16\" tilecount=\"32\" columns=\"8\">\n  <image source=\"forest2_tiles.png\" width=\"128\" height=\"64\"/>\n");
+        for (var i = 0; i < tiles.Length; i++)
+            s.Append(CultureInfo.InvariantCulture, $"  <tile id=\"{i + 1}\">\n   <properties>\n    <property name=\"collision\" value=\"{tiles[i].Collision}\"/>\n    <property name=\"name\" value=\"{tiles[i].Name}\"/>\n   </properties>\n  </tile>\n");
+        s.Append(" </tileset>\n");
+        (string Name, string Data)[] layers = [("Ground", Layer((r, _) => r > 14 ? 3 : r == 14 ? 2 : 0)), ("Decor", Layer((r, c) => r == 13 && c % 7 == 2 ? 5 : 0))];
+        for (var i = 0; i < layers.Length; i++)
+            s.Append(CultureInfo.InvariantCulture, $" <layer id=\"{i + 1}\" name=\"{layers[i].Name}\" width=\"40\" height=\"20\">\n  <data encoding=\"base64\">\n   {layers[i].Data}\n  </data>\n </layer>\n");
+        s.Append(" <objectgroup id=\"3\" name=\"Actors\">\n");
+        s.Append("  <object id=\"1\" name=\"Player\" type=\"spawn\" x=\"32\" y=\"208\" width=\"16\" height=\"16\"/>\n");
+        for (var k = 0; k < coins; k++)
+            s.Append(CultureInfo.InvariantCulture, $"  <object id=\"{k + 2}\" name=\"Coin\" type=\"pickup\" x=\"{48 + k * 16}\" y=\"{176 - k % 3 * 16}\" width=\"8\" height=\"8\">\n   <properties>\n    <property name=\"value\" type=\"int\" value=\"10\"/>\n   </properties>\n  </object>\n");
+        s.Append(CultureInfo.InvariantCulture, $"  <object id=\"{coins + 2}\" name=\"Slime\" type=\"enemy\" x=\"200\" y=\"208\" width=\"16\" height=\"12\"/>\n");
+        s.Append(CultureInfo.InvariantCulture, $"  <object id=\"{coins + 3}\" name=\"Slime\" type=\"enemy\" x=\"420\" y=\"208\" width=\"16\" height=\"12\"/>\n");
+        s.Append(CultureInfo.InvariantCulture, $"  <object id=\"{coins + 4}\" name=\"Exit\" type=\"door\" x=\"608\" y=\"192\" width=\"16\" height=\"32\"/>\n");
+        s.Append(" </objectgroup>\n</map>\n");
+        return s.ToString();
     }
 
     /// <summary>hero_big.png (48 colours), theme.mp3 and jump2.wav, as in the Figma Import Asset · Errors.</summary>

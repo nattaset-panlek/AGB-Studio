@@ -36,8 +36,9 @@ public static class SkyHopperArt
     public static readonly uint Pole = Canvas.Rgb(0xE9, 0xED, 0xF2);
     public static readonly uint Knob = Canvas.Rgb(0xFF, 0xD2, 0x3F);
 
-    // Forest tileset metatiles (forest_tiles.png, left to right in the order of the Figma tileset art; 0 is empty).
-    public const int TGrass = 1, TDirt = 2, TBricks = 3, TBush = 4, TLeaves = 5, TStone = 6, TWater = 7, TSpikes = 8;
+    // Forest tileset metatiles (forest_tiles.png, left to right in the order of the Figma tileset art; 0 is empty), then
+    // the two half-tile ends of a brick platform.
+    public const int TGrass = 1, TDirt = 2, TBricks = 3, TBush = 4, TLeaves = 5, TStone = 6, TWater = 7, TSpikes = 8, TBricksLeft = 9, TBricksRight = 10;
 
     static Canvas Grid(string[] rows, IReadOnlyDictionary<char, uint> colours)
     {
@@ -287,13 +288,29 @@ public static class SkyHopperArt
         "ccccccccmccccccc", "ccccccccmccccccc", "ccccccccmccccccc", "mmmmmmmmmmmmmmmm",
     ];
 
-    /// <summary>forest_tiles.png: grass top, dirt, bricks, bush, leaves, stone, water and spikes (16x16, after the empty tile).</summary>
+    /// <summary>The ends of a brick platform that starts and stops half a tile into a cell (art-scene-day draws its bricks
+    /// from x 88 to 136): the left end keeps the right half of the brick tile, the right end the left half, so the mortar
+    /// joints line up with the full tiles between them and no joint is drawn at the platform's edges.</summary>
+    static string[] BrickEnd(bool left) =>
+    [
+        .. BrickTile.Select((row, y) =>
+        {
+            var half = left ? "........" + row[8..] : row[..8] + "........";
+            // the lower brick row has a joint at x 8 of every tile: at the left edge of the platform it is brick
+            return left && y is >= 11 and <= 14 ? half[..8] + "c" + half[9..] : half;
+        }),
+    ];
+
+    /// <summary>forest_tiles.png: grass top, dirt, bricks, bush, leaves, stone, water and spikes (16x16, after the empty
+    /// tile), then the left and right ends of a brick platform.</summary>
     public static Canvas ForestTiles()
     {
-        var c = new Canvas(16 * 9, 16);
+        var c = new Canvas(16 * 11, 16);
         c.Blit(Grid(GrassTile, GroundColours), TGrass * 16, 0);
         c.Blit(Grid(DirtTile, GroundColours), TDirt * 16, 0);
         c.Blit(Grid(BrickTile, GroundColours), TBricks * 16, 0);
+        c.Blit(Grid(BrickEnd(left: true), GroundColours), TBricksLeft * 16, 0);
+        c.Blit(Grid(BrickEnd(left: false), GroundColours), TBricksRight * 16, 0);
         // the other tiles reuse those colours and Figma's, 15 in all: the tileset fits one BG palette (T-P03 "BG palettes 3 / 16")
         int x;
         x = TBush * 16; c.Rect(x, 0, 16, 16, HillNear); c.Rect(x + 4, 6, 2, 2, HillFar); c.Rect(x + 10, 11, 2, 2, HillFar);

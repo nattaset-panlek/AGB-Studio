@@ -32,9 +32,15 @@ public sealed class FixtureTests
         Assert.Equal(340, en.Strings.Count);                                                                                // 340 keys
         Assert.Equal(326, th.Strings.Count);                                                                                // ไทย 326 / 340
         Assert.Empty(ja.Strings);                                                                                           // 日本語 0 / 340
-        var items = GameProject.Load<TableFile>(Path.Combine(p.DataDir, "Items.db"));
+        var meta = GameProject.Load<StringMeta>(Path.Combine(p.TextDir, "strings.meta.json"));
+        Assert.Equal(112, meta.Keys.Values.Count(i => i.Group == "Dialogue"));                                              // Groups: Dialogue 112
+        Assert.DoesNotContain("shop.welcome", th.Strings.Keys);                                                             // missing in ไทย
+        Assert.DoesNotContain("boss.summit.intro", th.Strings.Keys);
+        Assert.Equal("items.db", Path.GetFileName(p.TableFiles().Single(f => GameProject.AssetName(f) == "items")));       // Database tab "items.db"
+        var items = GameProject.Load<TableFile>(Path.Combine(p.DataDir, "items.db"));
         Assert.Equal(24, items.Rows.Count);                                                                                 // Items 24 rows
         Assert.Equal(9, items.Fields.Count);                                                                                // 9 fields
+        Assert.Equal("0", items.Rows.Single(r => r["id"] == "Heart")["price"]);                                             // Heart · price 0
         Assert.Equal(9, GameProject.Load<TableFile>(Path.Combine(p.DataDir, "Enemies.db")).Rows.Count);
         Assert.Equal(112, GameProject.Load<TableFile>(Path.Combine(p.DataDir, "Dialogue.db")).Rows.Count);
         Assert.Equal(6, p.TableFiles().Count());
@@ -66,9 +72,21 @@ public sealed class FixtureTests
         Assert.Equal(3, forest.Actors.Count(a => a.Sprite == "heart" && a.Group == "HUD"));
         Assert.Equal("HUD", forest.Actors.Single(a => a.Name == "HUD · Score").Components.Single().Type);
         Assert.Equal(3, forest.Actors.Count(a => a.Sprite == "coin" && a.Y - 160 < 160 && a.X < 240));           // on the start screen
+        // the bricks under the coins run from x 88 to 136 (art-scene-day): a left end, two bricks, a right end
+        Assert.Equal([SkyHopperArt.TBricksLeft, SkyHopperArt.TBricks, SkyHopperArt.TBricks, SkyHopperArt.TBricksRight], map.Layers[2].Cells.Skip(15 * map.Width + 5).Take(4));
+        var tileArt = Png.Read(Path.Combine(p.AssetsDir, "tilesets", "forest_tiles.png"));
+        bool Brick(int worldX) => worldX / 16 - 5 is var i and >= 0 and < 4
+            && (tileArt.Pixels[8 * tileArt.Width + map.Layers[2].Cells[15 * map.Width + 5 + i] * 16 + worldX % 16] >> 24) != 0;
+        Assert.Equal((false, true, true, false), (Brick(87), Brick(88), Brick(135), Brick(136)));
         // T-P03 Collision · One-way 9; T-P26 "Grass edges": Top edge, Left edge, Right edge, Corner, Inner, no "any" cell
         var tiles = p.LoadMeta<TilesetMeta>(Path.Combine(p.AssetsDir, "tilesets", "forest_tiles.png"));
         Assert.Equal(9, map.Layers[2].Cells.Count(c => tiles.Tiles.GetValueOrDefault(c)?.Collision == CollisionType.OneWay));
+        // T-P08 Sprites list (creation order): hero, slime, coin, block, heart, cloud
+        Assert.Equal(["hero", "slime", "coin", "block", "heart", "cloud"],
+            p.SpriteFiles().OrderBy(File.GetCreationTimeUtc).Take(6).Select(GameProject.AssetName));
+        Assert.Equal(12, p.SpriteFiles().Select(File.GetCreationTimeUtc).Distinct().Count());
+        // T-P25 jump.sfx: Sweep up 2 (shift 6)
+        Assert.Equal(6, GameProject.Load<SfxFile>(Path.Combine(p.SfxDir, "jump.sfx")).SweepShift);
         var rules = tiles.AutoTiles.Single(s => s.Name == "Grass edges").Rules;
         Assert.Equal(["Top edge", "Left edge", "Right edge", "Corner", "Inner"], rules.Select(r => r.Name));
         Assert.DoesNotContain(rules, r => r.Mask.Contains(2));

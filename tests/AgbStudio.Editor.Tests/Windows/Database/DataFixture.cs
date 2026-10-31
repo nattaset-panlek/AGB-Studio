@@ -48,7 +48,7 @@ public static class DataFixture
     static void Patch(GameProject p)
     {
         // Items: the Figma schema order (id, name, icon, type, price, power, stackable, effect) and row data
-        var itemsPath = Path.Combine(p.DataDir, "Items.db");
+        var itemsPath = Path.Combine(p.DataDir, "items.db");
         var items = GameProject.Load<TableFile>(itemsPath);
         string[] order = ["id", "name", "icon", "type", "price", "power", "stackable", "effect", "description"];
         items.Fields = [.. items.Fields.OrderBy(f => Array.IndexOf(order, f.Name))];

@@ -31,20 +31,25 @@ public sealed class Fixture : IDisposable
     }
 
     /// <summary>Creates and opens the Sky Hopper project with the documents, status and files of the Figma Scene Editor.</summary>
-    public string OpenSkyHopper()
+    /// <param name="paletteFiles">Also adds the files the Figma Command Palette (T-O07) finds for "pla" (an empty
+    /// player.png and Platform_tiles.png) and its recent-file order; the Scene Editor frame (T-P01) has neither file.</param>
+    public string OpenSkyHopper(bool paletteFiles = true)
     {
         var root = Path.Combine(Folder, "SkyHopper");
         // the Sky Hopper content (AgbStudio.Build.Content.SkyHopper: scenes, maps, sprites, scripts ...) the Scene Editor frames show
         AgbStudio.Build.Content.SkyHopper.Create(root);
         Services.Project.Open(root);
-        // the files of the Figma Command Palette, in the folders AgbStudio.Core creates
-        foreach (var file in new[] { @"assets\sprites\player.png", @"scripts\PlayerController.cs", @"assets\tilesets\Platform_tiles.png" })
-            if (!File.Exists(Path.Combine(root, file))) File.WriteAllText(Path.Combine(root, file), "");
-        // files opened most recently first, as the Figma Command Palette lists them
-        var history = new PaletteHistory();
-        foreach (var f in new[] { "Platform_tiles.png", "PlayerController.cs", "player.png" })
-            history.Touch(Directory.EnumerateFiles(root, f, SearchOption.AllDirectories).Single());
-        Services.Set(history);
+        if (paletteFiles)
+        {
+            // the files of the Figma Command Palette, in the folders AgbStudio.Core creates
+            foreach (var file in new[] { @"assets\sprites\player.png", @"scripts\PlayerController.cs", @"assets\tilesets\Platform_tiles.png" })
+                if (!File.Exists(Path.Combine(root, file))) File.WriteAllText(Path.Combine(root, file), "");
+            // files opened most recently first, as the Figma Command Palette lists them
+            var history = new PaletteHistory();
+            foreach (var f in new[] { "Platform_tiles.png", "PlayerController.cs", "player.png" })
+                history.Touch(Directory.EnumerateFiles(root, f, SearchOption.AllDirectories).Single());
+            Services.Set(history);
+        }
         var d = Services.Documents;
         d.Add(new EditorDocument { Name = "Scene", Glyph = "map", Path = Path.Combine(root, "scenes", "Forest_01.scene") }, activate: true);
         d.Add(new EditorDocument { Name = "Game", Glyph = "pad" });

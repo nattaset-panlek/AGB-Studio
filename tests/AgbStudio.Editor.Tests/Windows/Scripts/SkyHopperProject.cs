@@ -54,6 +54,6 @@ public static class SkyHopperProject
         d.Add(new EditorDocument { Name = "Scene", Glyph = "map", Path = Path.Combine(p.ScenesDir, "Forest_01.scene") });
         d.Add(new EditorDocument { Name = "PlayerController.cs", Glyph = "code", Path = Script(fx, "PlayerController") });
         d.Add(new EditorDocument { Name = "Slime.cs", Glyph = "code", Path = Script(fx, "Slime") });
-        d.Add(new EditorDocument { Name = "items.db", Glyph = "db", Path = Path.Combine(p.DataDir, "Items.db") });
+        d.Add(new EditorDocument { Name = "items.db", Glyph = "db", Path = Path.Combine(p.DataDir, "items.db") });
     }
 }

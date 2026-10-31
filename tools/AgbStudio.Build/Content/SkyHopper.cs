@@ -57,10 +57,25 @@ public static class SkyHopper
 
     // ---- art -----------------------------------------------------------------------------------------
 
-    static void Sprite(GameProject p, string name, Canvas img, SpriteMeta meta)
+    /// <summary>Gives files distinct creation times one second apart, in the order they are stamped: the editor lists
+    /// sprites (Sprite Editor) and tables (Database) in creation order, and files written within one clock tick would
+    /// tie and fall back to name order. The times start an hour back, so files the user adds later come after them.</summary>
+    sealed class CreationOrder
+    {
+        DateTime _next = DateTime.UtcNow.AddHours(-1);
+
+        public void Stamp(string path)
+        {
+            File.SetCreationTimeUtc(path, _next);
+            _next = _next.AddSeconds(1);
+        }
+    }
+
+    static void Sprite(GameProject p, CreationOrder order, string name, Canvas img, SpriteMeta meta)
     {
         var path = Path.Combine(p.AssetsDir, "sprites", name + ".png");
         img.Save(path);
+        order.Stamp(path);
         GameProject.Save(GameProject.MetaPath(path), meta);
     }
 
@@ -73,8 +88,10 @@ public static class SkyHopper
 
     static void WriteArt(GameProject p)
     {
+        // Created in the order of the Figma Sprite Editor list (hero, slime, coin, block, heart, cloud), then the rest.
+        var order = new CreationOrder();
         // The Figma art (T-P08 hero, the Asset Card art, art-scene-day): SkyHopperArt.
-        Sprite(p, "hero", SkyHopperArt.Hero8(), new SpriteMeta
+        Sprite(p, order, "hero", SkyHopperArt.Hero8(), new SpriteMeta
         {
             FrameWidth = 16, FrameHeight = 16, OriginX = 8, OriginY = 16, Collider = new ColliderData { X = 2, Y = 2, W = 12, H = 14 },
             // Figma Animation panel: idle 8f · loop at 6 ticks (≈ 10 fps), run 6f · loop, jump 3f, hurt 2f; they share the 8 frames
@@ -86,27 +103,27 @@ public static class SkyHopper
                 new AnimationData { Name = "hurt", Frames = { 6, 7 }, Ticks = 6, Loop = false },
             },
         });
-        Sprite(p, "slime", SkyHopperArt.Slime4(), new SpriteMeta
+        Sprite(p, order, "slime", SkyHopperArt.Slime4(), new SpriteMeta
         {
             FrameWidth = 16, FrameHeight = 12, OriginX = 8, OriginY = 12, Collider = new ColliderData { X = 2, Y = 2, W = 12, H = 10 },
             Animations = { new AnimationData { Name = "idle", Frames = { 0, 1, 2, 3 }, Ticks = 8 } },
         });
-        Sprite(p, "coin", SkyHopperArt.Coin6(), new SpriteMeta
+        Sprite(p, order, "coin", SkyHopperArt.Coin6(), new SpriteMeta
         {
             FrameWidth = 8, FrameHeight = 8, OriginX = 4, OriginY = 8, Collider = new ColliderData { X = 0, Y = 0, W = 8, H = 8 },
             Animations = { new AnimationData { Name = "spin", Frames = { 0, 1, 2, 3, 4, 5 }, Ticks = 5 } },
         });
-        // the flag stands on its zone: origin at the bottom-left corner, so X is also the left of the Goal Flag trigger
-        Sprite(p, "flag", SkyHopperArt.Flag(), new SpriteMeta { FrameWidth = 16, FrameHeight = 64, OriginX = 0, OriginY = 64, Collider = new ColliderData { X = 2, Y = 14, W = 12, H = 50 } });
-        Sprite(p, "block", SkyHopperArt.Block(), Meta(16, 16));
+        Sprite(p, order, "block", SkyHopperArt.Block(), Meta(16, 16));
         // HUD hearts are placed by their top-left corner (see HUD.cs)
-        Sprite(p, "heart", SkyHopperArt.Heart(), new SpriteMeta { FrameWidth = 8, FrameHeight = 8, OriginX = 0, OriginY = 0, Collider = new ColliderData { X = 0, Y = 0, W = 7, H = 6 } });
-        Sprite(p, "cloud", SkyHopperArt.Cloud(), Meta(16, 8));
-        Sprite(p, "owl", Creature(PixelArt.Wood, PixelArt.Gold, 16, 4), Meta(16, 16, new AnimationData { Name = "idle", Frames = { 0, 1, 2, 3 }, Ticks = 12 }));
-        Sprite(p, "bat", Creature(PixelArt.StoneDark, PixelArt.Red, 16, 2), Meta(16, 16, new AnimationData { Name = "fly", Frames = { 0, 1 }, Ticks = 6 }));
-        Sprite(p, "slime_king", Creature(PixelArt.SlimeDark, PixelArt.Gold, 32, 2), Meta(32, 32, new AnimationData { Name = "idle", Frames = { 0, 1 }, Ticks = 16 }));
-        Sprite(p, "star", Gem(PixelArt.Gold, 4), Meta(8, 8, new AnimationData { Name = "spin", Frames = { 0, 1, 2, 3 }, Ticks = 4 }));
-        Sprite(p, "gem", Gem(PixelArt.Water, 4), Meta(8, 8, new AnimationData { Name = "shine", Frames = { 0, 1, 2, 3 }, Ticks = 8 }));
+        Sprite(p, order, "heart", SkyHopperArt.Heart(), new SpriteMeta { FrameWidth = 8, FrameHeight = 8, OriginX = 0, OriginY = 0, Collider = new ColliderData { X = 0, Y = 0, W = 7, H = 6 } });
+        Sprite(p, order, "cloud", SkyHopperArt.Cloud(), Meta(16, 8));
+        // the flag stands on its zone: origin at the bottom-left corner, so X is also the left of the Goal Flag trigger
+        Sprite(p, order, "flag", SkyHopperArt.Flag(), new SpriteMeta { FrameWidth = 16, FrameHeight = 64, OriginX = 0, OriginY = 64, Collider = new ColliderData { X = 2, Y = 14, W = 12, H = 50 } });
+        Sprite(p, order, "owl", Creature(PixelArt.Wood, PixelArt.Gold, 16, 4), Meta(16, 16, new AnimationData { Name = "idle", Frames = { 0, 1, 2, 3 }, Ticks = 12 }));
+        Sprite(p, order, "bat", Creature(PixelArt.StoneDark, PixelArt.Red, 16, 2), Meta(16, 16, new AnimationData { Name = "fly", Frames = { 0, 1 }, Ticks = 6 }));
+        Sprite(p, order, "slime_king", Creature(PixelArt.SlimeDark, PixelArt.Gold, 32, 2), Meta(32, 32, new AnimationData { Name = "idle", Frames = { 0, 1 }, Ticks = 16 }));
+        Sprite(p, order, "star", Gem(PixelArt.Gold, 4), Meta(8, 8, new AnimationData { Name = "spin", Frames = { 0, 1, 2, 3 }, Ticks = 4 }));
+        Sprite(p, order, "gem", Gem(PixelArt.Water, 4), Meta(8, 8, new AnimationData { Name = "shine", Frames = { 0, 1, 2, 3 }, Ticks = 8 }));
         var tiles = Path.Combine(p.AssetsDir, "tilesets");
         SkyHopperArt.ForestTiles().Save(Path.Combine(tiles, "forest_tiles.png"));
         GameProject.Save(GameProject.MetaPath(Path.Combine(tiles, "forest_tiles.png")), ForestTilesetMeta());
@@ -145,6 +162,8 @@ public static class SkyHopper
             [SkyHopperArt.TStone] = new TileProperties { Name = "stone", Collision = CollisionType.Solid },
             [SkyHopperArt.TWater] = new TileProperties { Name = "water", Collision = CollisionType.Water },
             [SkyHopperArt.TSpikes] = new TileProperties { Name = "spikes", Collision = CollisionType.Hazard },
+            [SkyHopperArt.TBricksLeft] = new TileProperties { Name = "bricks_left", Collision = CollisionType.OneWay },
+            [SkyHopperArt.TBricksRight] = new TileProperties { Name = "bricks_right", Collision = CollisionType.OneWay },
         },
         AutoTiles =
         {
@@ -246,9 +265,12 @@ public static class SkyHopper
             Set(x, 18, SkyHopperArt.TGrass);
             Set(x, 19, SkyHopperArt.TDirt);
         }
-        // one-way bricks: 3 under the coins and 6 further right, the 9 of the Tilemap Editor's Collision section
-        for (var x = 5; x <= 7; x++) Set(x, 15, SkyHopperArt.TBricks);
-        for (var x = 15; x <= 20; x++) Set(x, 14, SkyHopperArt.TBricks);
+        // one-way bricks, the 9 of the Tilemap Editor's Collision section: under the coins art-scene-day draws them from
+        // x 88 to 136, half a tile off the grid, so a left end, two bricks and a right end; 5 further right
+        Set(5, 15, SkyHopperArt.TBricksLeft);
+        for (var x = 6; x <= 7; x++) Set(x, 15, SkyHopperArt.TBricks);
+        Set(8, 15, SkyHopperArt.TBricksRight);
+        for (var x = 15; x <= 19; x++) Set(x, 14, SkyHopperArt.TBricks);
         Set(24, 17, SkyHopperArt.TStone);
         Set(24, 16, SkyHopperArt.TStone);
         return new MapFile
@@ -368,11 +390,11 @@ public static class SkyHopper
     static void WriteAudio(GameProject p)
     {
         var music = Path.Combine(p.AssetsDir, "audio", "music");
-        // 128 BPM at speed 6 plays 16 rows per bar: 21 patterns x 64 rows is about 1:24.
-        File.WriteAllBytes(Path.Combine(music, "bgm_forest.xm"), XmWriter.Tune("bgm forest", 128, 21, 11, "C"));
-        File.WriteAllBytes(Path.Combine(music, "bgm_title.xm"), XmWriter.Tune("bgm title", 120, 12, 12, "G"));
-        File.WriteAllBytes(Path.Combine(music, "bgm_cave.mod"), Chiptune.SimpleTune("bgm cave", 96, 13));
-        File.WriteAllBytes(Path.Combine(music, "jingle_win.mod"), Chiptune.SimpleTune("jingle win", 150, 14));
+        // Figma Audio lengths: bgm_forest 1:24, bgm_cave 1:02, bgm_title 0:48, jingle_win 0:06
+        File.WriteAllBytes(Path.Combine(music, "bgm_forest.xm"), ForestTheme());
+        File.WriteAllBytes(Path.Combine(music, "bgm_title.xm"), XmWriter.Tune("bgm title", 120, 6, 12, "G"));          // 6 x 64 rows at 120 BPM: 0:48
+        File.WriteAllBytes(Path.Combine(music, "bgm_cave.mod"), Chiptune.SimpleTune("bgm cave", 93, 13, orders: 6));   // 6 x 64 rows at 93 BPM: 1:02
+        File.WriteAllBytes(Path.Combine(music, "jingle_win.mod"), Chiptune.SimpleTune("jingle win", 150, 14, orders: 1));  // 64 rows at 150 BPM: 0:06
         GameProject.Save(GameProject.MetaPath(Path.Combine(music, "bgm_forest.xm")), new MusicMeta { Volume = 0.8, LoopStart = 4, FadeOnSceneChange = true });
         var sfx = Path.Combine(p.AssetsDir, "audio", "sfx");
         File.WriteAllBytes(Path.Combine(sfx, "jump.wav"), WavWriter.Encode(Sweep(400, 900, 0.21), 11025));
@@ -382,7 +404,67 @@ public static class SkyHopper
         File.WriteAllBytes(Path.Combine(sfx, "blip.wav"), WavWriter.Encode(WavWriter.Tone(1200, 0.03, 11025, true), 11025));
         foreach (var (name, ch, note, sweepUp, len) in new[] { ("jump", DmgChannelKind.Square1, "C5", true, 0.21), ("coin", DmgChannelKind.Square2, "B5", false, 0.12),
                      ("hurt", DmgChannelKind.Noise, "C3", false, 0.30), ("blip", DmgChannelKind.Square2, "C6", false, 0.03), ("laser", DmgChannelKind.Square1, "C6", false, 0.25) })
-            GameProject.Save(Path.Combine(p.SfxDir, name + ".sfx"), new SfxFile { Name = name, Channel = ch, StartNote = note, SweepUp = sweepUp, Length = len, Duty = name == "laser" ? 0.125 : 0.5 });
+            GameProject.Save(Path.Combine(p.SfxDir, name + ".sfx"), new SfxFile
+            {
+                Name = name, Channel = ch, StartNote = note, SweepUp = sweepUp, Length = len, Duty = name == "laser" ? 0.125 : 0.5,
+                // SFX Designer (T-P25): jump.sfx "Sweep up 2" (shift 6)
+                SweepShift = name == "jump" ? 6 : 3,
+                // blip is baked: blip.wav is the sample that plays (Audio · GBA channels: Square 2 "SFX coin")
+                Bake = name == "blip",
+            });
+    }
+
+    // The loudness of bgm_forest from start to end as the Audio page's overview draws it (T-P15): 160 bars of 0..56 px.
+    static readonly int[] ForestLoudness =
+    [
+        55, 56, 51, 41, 28, 15, 27, 35, 39, 38, 33, 27, 20, 16, 15, 17, 21, 27, 31, 33, 31, 25, 15, 28, 40, 50, 55, 54, 48, 36, 22, 23, 36, 45, 48, 46, 40, 31, 22, 15,
+        20, 21, 18, 16, 20, 23, 22, 18, 20, 29, 39, 46, 50, 48, 41, 28, 16, 31, 44, 52, 54, 51, 43, 32, 20, 21, 28, 31, 30, 26, 21, 16, 16, 15, 20, 26, 33, 39, 41, 39,
+        32, 20, 23, 37, 49, 55, 56, 51, 41, 27, 17, 29, 37, 41, 40, 35, 28, 21, 16, 16, 15, 19, 24, 28, 31, 29, 23, 16, 28, 40, 49, 54, 53, 47, 35, 20, 25, 38, 47, 50,
+        48, 42, 32, 22, 16, 21, 23, 21, 17, 17, 20, 20, 17, 20, 29, 38, 45, 48, 46, 39, 27, 18, 32, 45, 53, 55, 52, 43, 31, 19, 22, 30, 33, 33, 29, 23, 18, 15, 15, 19,
+    ];
+
+    /// <summary>
+    /// bgm_forest.xm as the Figma Audio page shows it (T-P15): 128 BPM at speed 6, 12 patterns (eleven of 64 rows and a
+    /// 16-row turnaround, 1:24), looping from pattern 4. Six instruments walk one arpeggio (C E G C' B G E) a few steps
+    /// apart, Lead / Drums / Arp on the even rows and Bass / Pad / FX on the odd rows, over the chords C C F G; the
+    /// sample peaks and volumes give the mixer levels of the frame (Lead -6 dB, Bass -4, Drums -3, Pad -12), and the
+    /// global volume (Gxx on the FX column) the swells of its overview.
+    /// </summary>
+    static byte[] ForestTheme()
+    {
+        var xm = new XmWriter { Title = "bgm forest", Bpm = 128, Tempo = 6, Channels = 6, Restart = 4 };
+        static sbyte[] Peak(sbyte[] wave, int peak) => [.. wave.Select(v => (sbyte)Math.Round(v * peak / 100.0))];
+        xm.Instruments.Add(new("Lead", ModWriter.Waveform("pulse25"), 40, true, 12));
+        xm.Instruments.Add(new("Bass", Peak(ModWriter.Waveform("triangle"), 118), 44, true, -12));
+        // each noise value is held for 4 samples, so every note (steps under 3) plays its loudest value (90, scaled to
+        // 121) as it is: 121 / 128 x 48 / 64 is -2.99 dB
+        xm.Instruments.Add(new("Drums", Peak([.. ModWriter.Noise(200, 11).SelectMany(v => Enumerable.Repeat(v, 4))], 134), 48, false));
+        xm.Instruments.Add(new("Pad", Peak(ModWriter.Waveform("sine"), 40), 52, true, 0));
+        xm.Instruments.Add(new("Arp", Peak(ModWriter.Waveform("square"), 50), 56, true, 24));
+        xm.Instruments.Add(new("FX", Peak(ModWriter.Waveform("saw"), 50), 60, true, 12));
+        int[] arpeggio = [.. new[] { "C-4", "E-4", "G-4", "C-5", "B-4", "G-4", "E-4" }.Select(XmWriter.Note)];
+        int[] offset = [0, 2, 3, 5, 6, 1];   // Lead, Bass, Drums, Pad, Arp, FX
+        int[] chord = [0, 0, 5, 7];
+        const int patterns = 12, songRows = (patterns - 1) * 64 + 16;
+        var start = 0;
+        for (var pi = 0; pi < patterns; pi++)
+        {
+            var rows = pi < patterns - 1 ? 64 : 16;
+            var pattern = xm.NewPattern(rows);
+            for (var r = 0; r < rows; r++)
+            {
+                var step = r / 2 + 6;   // row 16: the Lead starts the arpeggio (step 14, a multiple of 7)
+                for (var c = 0; c < 6; c++)
+                    if (r % 2 == (c is 1 or 3 or 5 ? 1 : 0))
+                        pattern[r, c] = new(arpeggio[(step + offset[c]) % 7] + chord[pi % 4], c + 1);
+                var loud = ForestLoudness[(start + r) * ForestLoudness.Length / songRows];
+                pattern[r, 5] = pattern[r, 5] with { Effect = 0x10, Param = Math.Clamp((int)Math.Round(64.0 * loud / 56), 1, 64) };
+            }
+            xm.Patterns.Add(pattern);
+            xm.Order.Add(pi);
+            start += rows;
+        }
+        return xm.Encode();
     }
 
     static sbyte[] Sweep(double from, double to, double seconds)
@@ -445,11 +527,12 @@ public static class SkyHopper
         Add("item.potion.name", "Potion", "ยาฟื้นพลัง", "Items");
         Add("item.potion.desc", "Restores 2 hearts. Tastes like strawberries.", "ฟื้นพลัง 2 หัวใจ รสสตรอว์เบอร์รี", "Items");
         Add("shop.welcome", "Welcome! Take a look around.", null, "Dialogue", "Shopkeeper");
-        Add("boss.summit.intro", "You made it all the way up here?", "มาถึงยอดเขาจนได้นะ", "Dialogue", "Slime King");
+        // Figma Localization lists shop.welcome and boss.summit.intro as missing in ไทย
+        Add("boss.summit.intro", "You made it all the way up here?", null, "Dialogue", "Slime King");
         string[] thaiWords = ["ป่า", "ถ้ำ", "ภูเขา", "เหรียญ", "หัวใจ", "ดาว", "อัญมณี", "สไลม์", "นกฮูก", "ค้างคาว", "สะพาน", "แม่น้ำ", "ประตู", "กุญแจ", "หีบ", "ร้านค้า"];
         string[] enWords = ["forest", "cave", "mountain", "coin", "heart", "star", "gem", "slime", "owl", "bat", "bridge", "river", "door", "key", "chest", "shop"];
-        var groups = new (string Prefix, string Group, int Count)[] { ("dlg.extra", "Dialogue", 112 - 8), ("ui.extra", "UI & menus", 86 - 5), ("item.extra", "Items", 48 - 2), ("misc", "", 95) };
-        var missingTh = 14 - 1;  // shop.welcome is already missing
+        var groups = new (string Prefix, string Group, int Count)[] { ("dlg.extra", "Dialogue", 112 - 7), ("ui.extra", "UI & menus", 86 - 5), ("item.extra", "Items", 48 - 2), ("misc", "", 95) };
+        var missingTh = 14 - 2;  // shop.welcome and boss.summit.intro are already missing
         foreach (var (prefix, group, count) in groups)
             for (var i = 0; i < count && en.Strings.Count < 340; i++)
             {
@@ -483,7 +566,7 @@ public static class SkyHopper
         };
         (string Id, string Type, string Price, string Icon, string Power, string Stack, string Effect)[] rows =
         [
-            ("Coin", "Currency", "1", "coin", "", "yes", "score += 10"), ("Heart", "Consumable", "30", "heart", "1.00", "yes", "lives += 1"),
+            ("Coin", "Currency", "1", "coin", "", "yes", "score += 10"), ("Heart", "Consumable", "0", "heart", "1.00", "yes", "lives += 1"),
             ("Potion", "Consumable", "30", "heart", "2.00", "yes", "Heal(power)"), ("Key", "Key item", "0", "", "", "no", "Unlock(door)"),
             ("Feather", "Equip", "120", "", "0.50", "no", "doubleJump = true"), ("Bomb", "Consumable", "45", "", "3.00", "yes", "Explode(16)"),
             ("Star", "Power-up", "0", "star", "8.00", "no", "Invincible(8s)"), ("SlimeGel", "Material", "8", "", "", "yes", ""),
@@ -494,7 +577,10 @@ public static class SkyHopper
                 ["icon"] = r.Icon, ["power"] = r.Power, ["stackable"] = r.Stack, ["effect"] = r.Effect, ["description"] = r.Id == "Potion" ? "item.potion.desc" : "" });
         for (var i = items.Rows.Count; i < 24; i++)
             items.Rows.Add(new() { ["id"] = $"Item{i + 1}", ["name"] = $"item.extra.{i:D3}", ["type"] = "Material", ["price"] = $"{i * 5}", ["stackable"] = "yes" });
-        GameProject.Save(Path.Combine(p.DataDir, "Items.db"), items);
+        // the file is items.db (Figma Database tab and Build Report); the table and its script class are Items
+        var order = new CreationOrder();
+        GameProject.Save(Path.Combine(p.DataDir, "items.db"), items);
+        order.Stamp(Path.Combine(p.DataDir, "items.db"));
         void Simple(string name, int count, params (string Field, string Type)[] fields)
         {
             var t = new TableFile { Name = name, Fields = { new FieldDef { Name = "id", Type = "enum" } } };
@@ -506,6 +592,7 @@ public static class SkyHopper
                 t.Rows.Add(row);
             }
             GameProject.Save(Path.Combine(p.DataDir, name + ".db"), t);
+            order.Stamp(Path.Combine(p.DataDir, name + ".db"));
         }
         Simple("Enemies", 9, ("hp", "int"), ("speed", "fixed"), ("damage", "int"));
         Simple("Shops", 3, ("slots", "int"), ("discount", "fixed"));
@@ -556,7 +643,7 @@ public class PlayerController : Behaviour
 """);
         Script("Coin", "public class Coin : Behaviour\n{\n    void OnTouch(Actor other)\n    {\n        if (other.tag == \"Player\") Sound.Play(\"coin\");\n    }\n}");
         Script("Slime", "public class Slime : Behaviour\n{\n    public fixed speed = 0.5;\n    public int damage = 1;\n}");
-        // GameState.cs also holds the Items.db effect actions (Figma Database Editor, Effect column): Figma's
+        // GameState.cs also holds the items.db effect actions (Figma Database Editor, Effect column): Figma's
         // Build ROM dialog counts 12 scripts.
         Script("GameState", """
 public class GameState : Behaviour
@@ -567,7 +654,7 @@ public class GameState : Behaviour
     }
 }
 
-// Items.db effect cells call these by name.
+// items.db effect cells call these by name.
 [DatabaseActions]
 public static class ItemEffects
 {
