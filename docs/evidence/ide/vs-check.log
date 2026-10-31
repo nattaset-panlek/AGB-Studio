@@ -1,0 +1,26 @@
+﻿
+19:52:48 start devenv: /Edit "D:\agb-studio-tmp\vscheck\proj\scripts\PlayerController.cs" /Command "Edit.GoTo 20"
+19:52:48 VS already running: send the same /Edit /Command through its DTE
+19:52:48 DTE found
+19:52:48 P14.03 active document: D:\agb-studio-tmp\vscheck\proj\scripts\PlayerController.cs caret line 20
+19:52:48 P14.03 PASS: VS opened the file at line 20
+19:52:48 shot P14.03-vs-open-at-line saved (1936 x 1048)
+19:52:48 open the generated project
+19:52:48 projects loaded: 2
+19:52:59 build done, LastBuildInfo (failed projects) = 1
+19:53:07 no Build output pane
+19:53:07 P14.07 GAE001: MISSING
+19:53:07 P14.07 GAE002: MISSING
+19:53:07 P14.07 GAE003: MISSING
+19:53:07 P14.07 GAE004: MISSING
+19:53:07 P14.07 GAE005: MISSING
+19:53:07 P14.07 GAE006: MISSING
+19:53:07 shot P14.07-vs-error-list saved (1936 x 1048)
+19:53:07 quick action on line 8 (float coyoteTime)
+19:53:15 shot P14.07-vs-quick-actions saved (1936 x 1048)
+19:53:15 Enter sent to VS (it was the foreground window)
+19:53:19 line 8 after the quick action: Fixed coyoteTime = 0.1;
+19:53:19 P14.07 code fix PASS: Change to fixed applied inside VS
+19:53:19 shot P14.07-vs-after-fix saved (1936 x 1048)
+19:53:19 close without saving
+19:53:19 done

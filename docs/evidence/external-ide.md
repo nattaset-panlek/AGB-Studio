@@ -54,3 +54,11 @@ for this record.
 
 Both Visual Studio checks need someone to open the IDE (the user, or a session allowed to start it); until then
 P14.03 and P14.07 stay open.
+
+## In-IDE check in Visual Studio 18 (2026-10-31, owner approved opening VS)
+
+Driven through VS DTE automation (`docs/evidence/ide/vs-check.ps1`, log `vs-check.log`):
+
+- P14.03: the `/Edit file /Command "Edit.GoTo 20"` line AGB Studio uses opened PlayerController.cs with the caret on line 20 (`P14.03-vs-open-at-line.png`).
+- P14.07: building the generated project in VS shows 1 error and 7 warnings in the Error List, the same GAE001-GAE006 set `dotnet build` reports (`P14.07-vs-error-list.png`); Quick Actions on the `float` field applied "Change to fixed" (line 8 became `Fixed coyoteTime = 0.1;`, `P14.07-vs-after-fix.png`). Nothing was saved.
+- VS Code and Rider: n/a until installed.
