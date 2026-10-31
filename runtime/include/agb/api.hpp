@@ -33,7 +33,11 @@ struct Input {
 };
 
 struct Sound {
-    static void Play(u16 sample, fixed volume = fixed(1)) { audio::playSample(sample, volume); }
+    // Sample ids come from the soundbank; ids with kDmgSfxFlag are SFX Designer effects on the DMG channels.
+    static void Play(u16 sample, fixed volume = fixed(1)) {
+        if (sample & audio::kDmgSfxFlag) audio::playDmgId(static_cast<u16>(sample & ~audio::kDmgSfxFlag));
+        else audio::playSample(sample, volume);
+    }
     static void PlayDmg(const audio::DmgSfx& sfx) { audio::playDmg(sfx); }
     static void SetVolume(fixed v) { audio::setEffectsVolume(v); }
 };

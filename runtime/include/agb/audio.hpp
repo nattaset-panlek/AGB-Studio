@@ -43,6 +43,10 @@ struct DmgSfx {
 };
 
 void playDmg(const DmgSfx& sfx);
+// The game's SFX Designer effects (generated table); Sound.Play ids with the high bit set index it.
+void setDmgTable(const DmgSfx* table, u16 count);
+void playDmgId(u16 index);
+constexpr u16 kDmgSfxFlag = 0x8000;
 void stopDmg(DmgChannel channel);
 bool dmgActive(DmgChannel channel);  // SOUNDCNT_X channel status bit
 

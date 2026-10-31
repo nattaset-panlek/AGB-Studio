@@ -259,7 +259,9 @@ public static class ProjectApi
         // C# debugging (D-21): AGB_SCOPE at method entry, AGB_PROBE before each statement; nothing in Release.
         sb.Append("#include \"agb/probe.hpp\"\n");
         sb.Append("#include \"agb_game.hpp\"\n");
-        if (ctx.Sounds.Count + ctx.Music.Count > 0) sb.Append("#include \"soundbank.hpp\"\n");
+        if (ctx.Sounds.Count + ctx.Music.Count > 0) sb.Append("#if __has_include(\"soundbank.hpp\")\n#include \"soundbank.hpp\"\n#endif\n");
+        // SFX Designer effects on the DMG channels (GameBuilder writes their ids next to the soundbank's).
+        sb.Append("#if __has_include(\"agb_dmg.hpp\")\n#include \"agb_dmg.hpp\"\n#endif\n");
         if (ctx.Tables.Count > 0) sb.Append("#include \"agb_db.hpp\"\n");
         sb.Append("""
 

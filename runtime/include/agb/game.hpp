@@ -95,6 +95,8 @@ struct GameDef {
     const ui::Kit* ui;         // menus, pause overlay and options screen (nullptr = none)
     u8 textLanguage;           // Project Settings · General · Default language (index into textTables)
     bool autosave;             // Project Settings · Save data · Autosave: save::lastSlot() after each scene loads
+    const void* dmgSfx;        // agb::audio::DmgSfx table of the SFX Designer effects (nullptr = none)
+    u16 dmgSfxCount;
 };
 
 namespace game {

@@ -314,6 +314,38 @@ public sealed class PipelineTests(EmulatorFixture emu)
     }
 
     [Fact]
+    public void SfxDesignerEffectsPlayOnTheDmgChannels()
+    {
+        // T-P25: an effect that is not baked to .wav is a register image in the ROM; Sound.Play starts it on its channel.
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_dmg"));
+        Directory.CreateDirectory(p.SfxDir);
+        GameProject.Save(Path.Combine(p.SfxDir, "beep.sfx"), new SfxFile { Name = "beep", Channel = DmgChannelKind.Square2, StartNote = "A5", Length = 0.6, EnvelopeStep = 0 });
+        GameProject.Save(Path.Combine(p.SfxDir, "hum.sfx"), new SfxFile { Name = "hum", Channel = DmgChannelKind.Wave, StartNote = "C4", Length = 0.6, Volume = 15 });
+        File.WriteAllText(Path.Combine(p.ScriptsDir, "Beeper.cs"),
+            "using GBA;\n\npublic class Beeper : Behaviour\n{\n    int t;\n\n    void Update()\n    {\n        t += 1;\n        if (t == 10) Sound.Play(\"beep\");\n        if (t == 12) Sound.Play(\"hum\");\n    }\n}\n");
+        var scenePath = Path.Combine(p.ScenesDir, "Forest_01.scene");
+        var scene = GameProject.Load<SceneFile>(scenePath);
+        scene.Actors[0].Components.Add(new ComponentData { Type = "Beeper" });
+        GameProject.Save(scenePath, scene);
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var core = emu.Core;
+        core.LoadRom(r.RomPath);
+        var square2 = false;
+        var wave = false;
+        for (var f = 0; f < 240; f++)
+        {
+            core.RunFrame();
+            var status = core.ReadU16(0x04000084);  // SOUNDCNT_X: channel on bits
+            square2 |= (status & 2) != 0;
+            wave |= (status & 4) != 0;
+        }
+        core.UnloadRom();
+        Assert.True(square2, "the square 2 effect never sounded");
+        Assert.True(wave, "the wave effect never sounded");
+    }
+
+    [Fact]
     public void GccErrorsBecomeClickableDiagnostics()
     {
         var d = GameBuilder.ParseGccLine(@"D:\proj\scripts\PlayerController.cs:22:9: error: expected ';' before '}' token");

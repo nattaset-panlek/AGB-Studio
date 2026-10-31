@@ -121,6 +121,21 @@ void setEffectsVolume(fixed v) {
     mmSetEffectsVolume(static_cast<mm_word>(x < 0 ? 0 : x > 1024 ? 1024 : x));
 }
 
+namespace {
+const DmgSfx* g_dmgTable = nullptr;
+u16 g_dmgCount = 0;
+}  // namespace
+
+void setDmgTable(const DmgSfx* table, u16 count) {
+    g_dmgTable = table;
+    g_dmgCount = count;
+}
+
+void playDmgId(u16 index) {
+    if (g_dmgTable && index < g_dmgCount) playDmg(g_dmgTable[index]);
+    else debug::logf("warning: no DMG sound effect %u", index);
+}
+
 void playDmg(const DmgSfx& s) {
     const int c = static_cast<int>(s.channel);
     switch (s.channel) {

@@ -7,7 +7,12 @@
 #include "agb/script.hpp"
 #include "agb/probe.hpp"
 #include "agb_game.hpp"
+#if __has_include("soundbank.hpp")
 #include "soundbank.hpp"
+#endif
+#if __has_include("agb_dmg.hpp")
+#include "agb_dmg.hpp"
+#endif
 #include "agb_db.hpp"
 
 // C# array.Length

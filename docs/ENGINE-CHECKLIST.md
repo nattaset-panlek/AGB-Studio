@@ -1439,3 +1439,9 @@ Exit gate:
 | Date | Who | Item / window | What was found | Proposed action | User decision |
 |---|---|---|---|---|---|
 | 2026-10-31 | checklist session | 1.4 items 1-9 | Design issues found while reading Figma | Settle in Phase 1 (P1.02) | pending |
+| 2026-10-31 | build session | 1.4 item 6, D-20, D-23 | In-game screens (boot splash, title, pause, options) were missing from Figma | Four frames were added to "AGB Studio · Screens" (new row at y 24880) and built to match; the brief said Figma is read-only | pending: keep or remove the frames |
+| 2026-10-31 | build session | T-P01, T-P05, T-P06, T-P08, T-P19, T-P22, T-P24, T-D04, T-D07, T-D09, T-D10, T-S02, T-S04, T-S06, T-S07, T-S08, T-O01, T-O04, T-O07, T-O08 | Code differs from Figma captions (list in docs/evidence/editor-gaps.md) | Fix in the editor before ticking those windows | pending |
+| 2026-10-31 | build session | G-SCOPE.01 | Commits before 2026-10-31 do not all name a T-id or infra: reason | Name T-ids from now on; history is not rewritten | pending |
+| 2026-10-31 | build session | P15.11 | Cave Quest, Snow Run and Dusk Story are built from the RPG, Racing and Visual Novel templates with their own colours (and a new story for Dusk Story) | Accept as samples, or ask for larger original samples | pending |
+| 2026-10-31 | build session | T-P20 Racing card | Figma lists "Opponent cars"; the Racing template has two computer karts that follow the centre line (no overtaking AI) | Accept | pending |
+| 2026-10-31 | build session | T-P17 On Touch Tag | Figma's code panel shows the tag as an if around the body; the generator writes a guard (if tag differs, return) so it can be told apart from a Compare Tag node | Accept | pending |
