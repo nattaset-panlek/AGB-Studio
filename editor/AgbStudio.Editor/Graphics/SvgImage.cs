@@ -2,6 +2,7 @@
 using System.Xml.Linq;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Avalonia.Platform;
 
@@ -9,7 +10,9 @@ namespace AgbStudio.Editor.Graphics;
 
 /// <summary>
 /// Minimal renderer for the SVG files exported from Figma (icons, art, brand): path, rect, g with clip-path,
-/// clipPath of rects and translate transforms. Nothing else appears in those exports.
+/// clipPath of rects and translate transforms. Nothing else appears in those exports. Paths fill with the SVG fill
+/// rule (nonzero unless <c>fill-rule="evenodd"</c>): Avalonia's path markup defaults to even-odd, which would leave the
+/// overlap of two sub-paths empty (the path cross of art/genre/topdown).
 /// </summary>
 public sealed class SvgImage
 {
@@ -55,7 +58,9 @@ public sealed class SvgImage
                     Walk(c, inner, clips);
                     break;
                 case "path":
-                    Add(Geometry.Parse((string)c.Attribute("d")!), c, clip);
+                    // "F1" = nonzero, "F0" = even-odd (Avalonia path markup); SVG's default is nonzero
+                    var rule = (string?)c.Attribute("fill-rule") == "evenodd" ? "F0 " : "F1 ";
+                    Add(Geometry.Parse(rule + (string)c.Attribute("d")!), c, clip);
                     break;
                 case "rect":
                     var rect = RectOf(c);
@@ -74,12 +79,89 @@ public sealed class SvgImage
             (string?)e.Attribute("stroke-linejoin") == "round" ? PenLineJoin.Round : PenLineJoin.Miter, clip));
     }
 
-    /// <summary>Draws the image scaled to <paramref name="size"/>; strokes scale with it (art, brand).</summary>
-    public void Render(DrawingContext ctx, Size size)
+    /// <summary>
+    /// Draws the image scaled to <paramref name="size"/>; strokes scale with it (art, brand). At a whole-number scale
+    /// the shapes are drawn as vectors (pixel edges stay on pixel edges). At any other scale each shape anti-aliased on
+    /// its own would let the background through where two shapes meet inside a pixel (a dark 1 px seam between colour
+    /// bands), so the image is rasterised instead: drawn without anti-aliasing at several samples per pixel and averaged
+    /// down, which blends the two colours of a shared edge by their area as Figma's export does. <paramref name="scaling"/>
+    /// is the screen's render scaling, so the raster has one pixel per device pixel.
+    /// </summary>
+    public void Render(DrawingContext ctx, Size size, double scaling = 1)
     {
-        if (Width <= 0 || Height <= 0) return;
-        using var _ = ctx.PushTransform(Matrix.CreateScale(size.Width / Width, size.Height / Height));
+        if (Width <= 0 || Height <= 0 || size.Width <= 0 || size.Height <= 0) return;
+        double sx = size.Width / Width, sy = size.Height / Height;
+        if (scaling <= 0) scaling = 1;
+        if (!(IsWhole(sx * scaling) && IsWhole(sy * scaling)))
+        {
+            var px = new PixelSize((int)Math.Ceiling(size.Width * scaling - 1e-6), (int)Math.Ceiling(size.Height * scaling - 1e-6));
+            if (Raster(px, sx * scaling, sy * scaling) is { } bmp)
+            {
+                ctx.DrawImage(bmp, new Rect(0, 0, px.Width / scaling, px.Height / scaling));
+                return;
+            }
+        }
+        using var _ = ctx.PushTransform(Matrix.CreateScale(sx, sy));
+        DrawShapes(ctx);
+    }
+
+    void DrawShapes(DrawingContext ctx)
+    {
         foreach (var s in _shapes) Draw(ctx, s, s.Geometry, s.Fill is { } f ? new ImmutableSolidColorBrush(f) : null, s.Stroke is { } k ? new ImmutableSolidColorBrush(k) : null, s.StrokeWidth);
+    }
+
+    static bool IsWhole(double v) => Math.Abs(v - Math.Round(v)) < 1e-6 && v >= 1;
+
+    readonly Dictionary<(int W, int H, double Sx, double Sy), Bitmap?> _rasters = [];
+
+    /// <summary>Samples per pixel per axis: up to 8, fewer for large images (at most about 4 M samples).</summary>
+    const double MaxSamples = 4_000_000;
+
+    Bitmap? Raster(PixelSize px, double sx, double sy)
+    {
+        var key = (px.Width, px.Height, sx, sy);
+        if (_rasters.TryGetValue(key, out var cached)) return cached;
+        Bitmap? result = null;
+        try
+        {
+            var k = (int)Math.Clamp(Math.Floor(Math.Sqrt(MaxSamples / ((double)px.Width * px.Height))), 2, 8);
+            using var big = new RenderTargetBitmap(new PixelSize(px.Width * k, px.Height * k), new Vector(96, 96));
+            using (var dc = big.CreateDrawingContext(true))
+            using (dc.PushRenderOptions(new RenderOptions { EdgeMode = EdgeMode.Aliased }))
+            using (dc.PushTransform(Matrix.CreateScale(sx * k, sy * k)))
+                DrawShapes(dc);
+            int bw = big.PixelSize.Width, bh = big.PixelSize.Height;
+            var src = new byte[bw * bh * 4];
+            var handle = System.Runtime.InteropServices.GCHandle.Alloc(src, System.Runtime.InteropServices.GCHandleType.Pinned);
+            try { big.CopyPixels(new PixelRect(0, 0, bw, bh), handle.AddrOfPinnedObject(), src.Length, bw * 4); }
+            finally { handle.Free(); }
+            // box filter in premultiplied space: every channel is the mean of its k x k samples
+            var dst = new byte[px.Width * px.Height * 4];
+            var n = k * k;
+            for (var y = 0; y < px.Height; y++)
+                for (var x = 0; x < px.Width; x++)
+                    for (var c = 0; c < 4; c++)
+                    {
+                        var sum = 0;
+                        for (var j = 0; j < k; j++)
+                        {
+                            var row = ((y * k + j) * bw + x * k) * 4 + c;
+                            for (var i = 0; i < k; i++) sum += src[row + i * 4];
+                        }
+                        dst[(y * px.Width + x) * 4 + c] = (byte)((sum + n / 2) / n);
+                    }
+            var wb = new WriteableBitmap(px, new Vector(96, 96), big.Format ?? PixelFormat.Bgra8888, big.AlphaFormat ?? AlphaFormat.Premul);
+            using (var fb = wb.Lock())
+                for (var y = 0; y < px.Height; y++)
+                    System.Runtime.InteropServices.Marshal.Copy(dst, y * px.Width * 4, fb.Address + y * fb.RowBytes, px.Width * 4);
+            result = wb;
+        }
+        catch (Exception e) when (e is InvalidOperationException or NotSupportedException or PlatformNotSupportedException)
+        {
+            // no render backend for bitmaps (headless drawing only): the vectors are drawn instead
+        }
+        _rasters[key] = result;
+        return result;
     }
 
     readonly Dictionary<double, Geometry[]> _scaled = [];

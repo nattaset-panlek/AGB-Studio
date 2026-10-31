@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
@@ -57,6 +57,6 @@ public sealed class ArtImage : Control
 
     public override void Render(DrawingContext context)
     {
-        if (!string.IsNullOrEmpty(Source)) IconCatalog.Art(Source).Render(context, Bounds.Size);
+        if (!string.IsNullOrEmpty(Source)) IconCatalog.Art(Source).Render(context, Bounds.Size, TopLevel.GetTopLevel(this)?.RenderScaling ?? 1);
     }
 }
