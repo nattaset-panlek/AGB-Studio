@@ -37,6 +37,8 @@ public sealed class GroupShots : IShotSource
         {
             var d = new ExportRomDialog(fx.Services);
             d.Folder.Selected = @"D:\GBAProjects\SkyHopper\build";
+            // Figma shows the File name field focused (blue ring, no caret)
+            AgbStudio.Editor.Gallery.GalleryCatalog.Force(d.FileName, ":focus", "PART_Box");
             return d;
         }, report: true, romKb: 398));
         yield return ("T-D07", (path, w, h) =>

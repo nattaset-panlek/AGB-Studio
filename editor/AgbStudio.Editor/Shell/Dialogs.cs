@@ -74,8 +74,12 @@ public sealed class KeyboardShortcutsDialog : FigmaDialog
         EditButton.Margin = new Thickness(14, 0, 0, 0);
         EditButton.IsVisible = commands != null;
         var foot = new Panel { Children = { footer, EditButton } };
-        // the Figma rows fill the first view; the rest scroll under them
-        var scroll = new ScrollViewer { Content = _columns, MaxHeight = 202, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Name = "ShortcutScroll" };
+        // the Figma rows fill the first view; the rest scroll under them (wheel, search), with no bar over the keycaps as in Figma
+        var scroll = new ScrollViewer
+        {
+            Content = _columns, MaxHeight = 202, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden, Name = "ShortcutScroll",
+        };
         var content = UI.Column(14, Search, scroll);
         content.Margin = new Thickness(20);
         Build("Keyboard Shortcuts", "type", content, foot, 760);

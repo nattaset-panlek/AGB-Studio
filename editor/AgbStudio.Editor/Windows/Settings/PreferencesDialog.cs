@@ -149,15 +149,7 @@ public sealed class PreferencesDialog : SettingsDialog
     {
         var selected = Draft.Theme == mode;
         var preview = new Panel { Width = 160, Height = 100 };
-        if (mode == ThemeMode.System)
-        {
-            var dark = Miniature(ThemeVariant.Dark);
-            dark.Clip = new RectangleGeometry(new Rect(0, 0, 80, 100));
-            var light = Miniature(ThemeVariant.Light);
-            light.Clip = new RectangleGeometry(new Rect(80, 0, 80, 100));
-            preview.Children.AddRange([dark, light]);
-        }
-        else preview.Children.Add(Miniature(mode == ThemeMode.Dark ? ThemeVariant.Dark : ThemeVariant.Light));
+        preview.Children.Add(Miniature(mode));
         var frame = UI.Frame(null, stroke: selected ? "accent/default" : "border/default", strokes: new Thickness(selected ? 2 : 1), radius: 8);
         preview.Children.Add(frame);
         var clip = new Border { CornerRadius = new CornerRadius(8), ClipToBounds = true, Child = preview };
@@ -170,28 +162,40 @@ public sealed class PreferencesDialog : SettingsDialog
         return b;
     }
 
-    /// <summary>The miniature drawn with the tokens of <paramref name="variant"/>; the accent pill and the viewport keep the dark accent, as in Figma.</summary>
-    static Control Miniature(ThemeVariant variant)
+    /// <summary>The sky of the Figma game art (art-scene-day.svg), which the miniature's viewport shows in every theme.</summary>
+    const uint MiniatureSky = 0xFF58B4FF;
+
+    /// <summary>
+    /// The miniature of a theme card, drawn with the tokens of its theme; the accent pill keeps the dark accent and the
+    /// viewport shows the game sky, as in Figma. System is Figma's half-and-half: the title bar and left panel dark, the
+    /// right panel and the bottom block light, the window background split down the middle.
+    /// </summary>
+    static Control Miniature(ThemeMode mode)
     {
+        var main = mode == ThemeMode.Light ? ThemeVariant.Light : ThemeVariant.Dark;
+        var other = mode == ThemeMode.Dark ? ThemeVariant.Dark : ThemeVariant.Light;
         var c = new Canvas { Width = 160, Height = 100 };
-        void Rect(double x, double y, double w, double h, string token, double r = 3, bool darkAccent = false)
+        void Add(Control item, double x, double y)
         {
-            var rect = new Rectangle { Width = w, Height = h, RadiusX = r, RadiusY = r };
-            Control item = rect;
-            if (darkAccent) item = new ThemeVariantScope { RequestedThemeVariant = ThemeVariant.Dark, Child = rect };
-            rect.Bind(Shape.FillProperty, rect.GetResourceObservable(token));
             Canvas.SetLeft(item, x);
             Canvas.SetTop(item, y);
             c.Children.Add(item);
         }
-        Rect(0, 0, 160, 100, "bg/base", 0);
-        Rect(0, 0, 160, 12, "bg/panel", 0);
-        Rect(52, 3, 22, 6, "accent/default", 3, darkAccent: true);
-        Rect(6, 18, 34, 76, "bg/panel");
-        Rect(46, 18, 68, 46, "accent/hover", 3, darkAccent: true);
-        Rect(46, 70, 68, 24, "bg/panel");
-        Rect(120, 18, 34, 76, "bg/panel");
-        return new ThemeVariantScope { RequestedThemeVariant = variant, Child = c };
+        void Rect(double x, double y, double w, double h, string token, ThemeVariant variant, double r = 3)
+        {
+            var rect = new Rectangle { Width = w, Height = h, RadiusX = r, RadiusY = r };
+            rect.Bind(Shape.FillProperty, rect.GetResourceObservable(token));
+            Add(new ThemeVariantScope { RequestedThemeVariant = variant, Child = rect }, x, y);
+        }
+        Rect(0, 0, 160, 100, "bg/base", main, 0);
+        if (mode == ThemeMode.System) Rect(80, 0, 80, 100, "bg/base", ThemeVariant.Light, 0);
+        Rect(0, 0, 160, 12, "bg/panel", main, 0);
+        Rect(52, 3, 22, 6, "accent/default", ThemeVariant.Dark);
+        Rect(6, 18, 34, 76, "bg/panel", main);
+        Add(new Rectangle { Width = 68, Height = 46, RadiusX = 3, RadiusY = 3, Fill = new SolidColorBrush(Color.FromUInt32(MiniatureSky)) }, 46, 18);
+        Rect(46, 70, 68, 24, "bg/panel", other);
+        Rect(120, 18, 34, 76, "bg/panel", other);
+        return c;
     }
 
     // ---- Editor (T-S07) ------------------------------------------------------------------------------
@@ -352,7 +356,8 @@ public sealed class PreferencesDialog : SettingsDialog
             _s.Toasts.Show("Build cache cleared · the next build converts every asset again");
         };
         var icon = new Icon { Glyph = "chip", Size = 16, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "text/primary");
-        var row = new DockPanel { HorizontalSpacing = 14, Height = 54 };
+        // Figma: title and path at x 259, 10 px after the icon
+        var row = new DockPanel { HorizontalSpacing = 10, Height = 54 };
         DockPanel.SetDock(icon, Dock.Left);
         DockPanel.SetDock(clear, Dock.Right);
         row.Children.AddRange([icon, clear, text]);
@@ -487,10 +492,10 @@ public sealed class PreferencesDialog : SettingsDialog
                 foreach (var part in KeyboardShortcutsDialog.KeyParts(Fmt.Format(g))) keys.Children.Add(new Keycap { Label = part, VerticalAlignment = VerticalAlignment.Center });
             foreach (var c in Shortcuts.ConflictsOf(id).Take(1))
                 keys.Children.Add(new Chip { Style = ChipStyle.Warning, Glyph = "warn", Content = "conflicts with " + c.Command.Title.TrimEnd('…'), Margin = new Thickness(2, 0, 0, 0), IsHitTestVisible = false, Name = "Conflict_" + id });
-            var edit = new IconButton { Glyph = "pencil", Name = "Edit_" + id, HorizontalAlignment = HorizontalAlignment.Center };
+            // Figma: the pencil sits at the cell's 10 px inset like the other columns (ink x 809-819), not centred
+            var edit = new IconButton { Glyph = "pencil", Name = "Edit_" + id, HorizontalAlignment = HorizontalAlignment.Left };
             edit.Click += async (_, _) => await Record(command, label, edit);
             var row = TableRow(ShortcutColumns, 30, Cell(label), keys, edit);
-            edit.Margin = default;
             row.Name = "Shortcut_" + id;
             _shortcutRows.Children.Add(row);
         }

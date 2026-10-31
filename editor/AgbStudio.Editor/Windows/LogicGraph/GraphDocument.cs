@@ -369,6 +369,8 @@ public sealed class GraphDocument
         "SetVelocityY" => "jump or fall",
         "VelocityX" => "read vx",
         "VelocityY" => "read vy",
+        "GetVelocity" => "read vx, vy",
+        "VectorFromVelocity" => "vx, vy → direction",
         "OnUpdate" => "every frame",
         "OnStart" => "once at start",
         "OnTouch" => "when actors touch",

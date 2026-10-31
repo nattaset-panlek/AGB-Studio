@@ -67,7 +67,14 @@ public sealed class SceneEditorShots : IShotSource
             p.Highlight = p.Items.ToList().FindIndex(b => b.Name == "Patrol");
             Capture.ControlToPng(p, w, h, path, Brushes.Black);
         }));
-        yield return ("T-O06", (path, w, h) => WithScene(fx => Capture.ControlToPng(new BudgetDetails(fx.Services), w, h, path, Brushes.Black)));
+        yield return ("T-O06", (path, w, h) => WithScene(fx =>
+        {
+            // Figma shows the popover after a build: the last build's report gives EWRAM, IWRAM and ROM
+            var p = fx.Services.Project.Current!;
+            Directory.CreateDirectory(p.BuildDir);
+            new AgbStudio.Build.Pipeline.BuildReport { RomBytes = 412 * 1024, EwramBytes = 41 * 1024, IwramBytes = 9 * 1024 }.Save(p.BuildDir);
+            Capture.ControlToPng(new BudgetDetails(fx.Services), w, h, path, Brushes.Black);
+        }));
         foreach (var id in new[] { "T-M09", "T-M10", "T-M11", "T-M12", "T-M13", "T-M14", "T-M15", "T-M16" })
         {
             var menu = id;

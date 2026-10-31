@@ -53,6 +53,8 @@ public sealed class ImportCsvDialog : FigmaDialog
             if (await FileChooser.For(ctx.Services).Open("Import CSV", "csv") is { } p) Load(p);
         };
         var fileRow = new DockPanel { Height = 20 };
+        // Figma: "Choose another…" ends at x 747, 13 px inside the content edge
+        another.Margin = new Thickness(0, 0, 9, 0);
         DockPanel.SetDock(another, Dock.Right);
         fileRow.Children.AddRange([another, UI.Row(8, fileIcon, _file)]);
 

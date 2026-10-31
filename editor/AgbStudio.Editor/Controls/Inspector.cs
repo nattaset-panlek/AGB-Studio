@@ -35,7 +35,9 @@ public class AgbProgress : RangeBase
 
 /// <summary>
 /// Figma "Slider": 4 px track, accent fill, 12 px white knob (lit/white, as the Switch knob) with a border/strong ring.
-/// The knob sits at width * value / 100 - 6, clamped to the track, exactly as the Figma variants place it.
+/// The knob sits at width * value / 100 - 6, clamped to the track, exactly as the 160 px Figma variants place it; a wider
+/// slider scales that clamp the way the Figma frames stretch the component (T-D03: at 1.0 the knob centre is 16 px from
+/// the end).
 /// </summary>
 public class AgbSlider : RangeBase
 {
@@ -57,6 +59,9 @@ public class AgbSlider : RangeBase
 
     double Ratio => Maximum > Minimum ? Math.Clamp((Value - Minimum) / (Maximum - Minimum), 0, 1) : 0;
 
+    /// <summary>Width of the Figma Slider component; frames stretch it, scaling the knob position with it.</summary>
+    const double DesignWidth = 160;
+
     protected override Size MeasureOverride(Size availableSize) => new(double.IsInfinity(availableSize.Width) ? 160 : 0, 12);
 
     public override void Render(DrawingContext ctx)
@@ -64,7 +69,7 @@ public class AgbSlider : RangeBase
         var w = Bounds.Width;
         ctx.DrawRectangle(Background, null, new Rect(0, 4, w, 4), 2, 2);
         if (Ratio > 0) ctx.DrawRectangle(Fill, null, new Rect(0, 4, w * Ratio, 4), 2, 2);
-        var x = Math.Clamp(w * Ratio - 6, 0, Math.Max(0, w - 12));
+        var x = Math.Clamp((Math.Clamp(DesignWidth * Ratio - 6, 0, DesignWidth - 12) + 6) * (w / DesignWidth) - 6, 0, Math.Max(0, w - 12));
         ctx.DrawEllipse(Knob, KnobRing is null ? null : new Pen(KnobRing, 1), new Rect(x + 0.5, 0.5, 11, 11));
     }
 

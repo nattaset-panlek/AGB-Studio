@@ -17,7 +17,8 @@ namespace AgbStudio.Editor.Windows.Import;
 public sealed class ImportErrorsDialog : FigmaDialog
 {
     readonly EditorServices _s;
-    readonly StackPanel _cards = new() { Spacing = 15, Name = "ProblemCards" };
+    // Figma: cards 14 px apart (73-162, 177-280, 295-354), so three cards fit the 322 px list without a scroll bar
+    readonly StackPanel _cards = new() { Spacing = 14, Name = "ProblemCards" };
     readonly DialogFooter _footer;
     readonly DialogHeader _header;
     readonly ImportRun _run;
@@ -65,7 +66,7 @@ public sealed class ImportErrorsDialog : FigmaDialog
         var icon = new Icon { Glyph = glyph, Size = 16, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 0, 0, 0) }.Token(Icon.ForegroundProperty, token);
         var title = UI.Text($"{item.FileName}  ·  {item.Detected}", "Body/12 Semibold", "text/primary");
         var message = UI.Text(item.Error ?? (item.HasProblem ? item.Warning : item.Ready), "Label/11", "text/secondary").Wrap();
-        message.Margin = new Thickness(0, 5, 0, 0);
+        message.Margin = new Thickness(0, 4, 0, 0);
         message.MaxWidth = 420;
         message.HorizontalAlignment = HorizontalAlignment.Left;
         var col = UI.Column(0, title, message);

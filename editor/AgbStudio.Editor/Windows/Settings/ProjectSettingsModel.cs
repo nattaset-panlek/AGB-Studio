@@ -79,10 +79,18 @@ public sealed partial class ProjectSettingsModel
 
     /// <summary>
     /// The analyzer rules of Project Settings · Scripting: id and what each one catches, the titles of the analyzer itself
-    /// (AgbStudio.Analyzers <see cref="AgbStudio.Analyzers.GaeRules"/>), so the dialog and the Problems list say the same.
+    /// (AgbStudio.Analyzers <see cref="AgbStudio.Analyzers.GaeRules"/>), so the dialog and the Problems list say the same,
+    /// except where the Figma frame (T-S04) words a rule shorter: there Figma's text is shown.
     /// </summary>
     public static readonly IReadOnlyList<(string Id, string Catches)> AnalyzerRules =
-        AgbStudio.Analyzers.GaeRules.All.Select(d => (d.Id, d.Title.ToString(CultureInfo.InvariantCulture))).ToList();
+        AgbStudio.Analyzers.GaeRules.All.Select(d => (d.Id, FigmaCatches.TryGetValue(d.Id, out var f) ? f : d.Title.ToString(CultureInfo.InvariantCulture))).ToList();
+
+    /// <summary>The Catches texts Figma T-S04 gives without the analyzer title's reason in parentheses.</summary>
+    static IReadOnlyDictionary<string, string> FigmaCatches => new Dictionary<string, string>
+    {
+        ["GAE005"] = "string concatenation in a loop",
+        ["GAE006"] = "lambda that captures variables",
+    };
 
     public string Severity(string rule) => Draft.Scripting.AnalyzerRules.TryGetValue(rule, out var s) ? s : rule is "GAE001" or "GAE004" ? "Error" : "Warning";
 

@@ -126,11 +126,12 @@ public sealed class FindReplacePopover : Border, IOverlayContent
         Name = "FindReplace";
         Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("PopoverSurface");
         Width = 540;
-        Padding = new Thickness(10);
+        // Figma: 8 px inside the border (10 at the bottom); 30 px fields, 26 px buttons, rows 6 and 8 px apart
+        Padding = new Thickness(8, 8, 8, 10);
 
         foreach (var box in new[] { Query, Replacement })
         {
-            box.Height = 28;
+            box.Height = box == Query ? 28 : 30;
             box.Padding = new Thickness(8, 0, 8, 0);
             AgbStudio.Editor.Theme.Fig.SetStyle(box, "Mono/11");
         }
@@ -150,7 +151,7 @@ public sealed class FindReplacePopover : Border, IOverlayContent
         DockPanel.SetDock(inBox, Dock.Right);
         queryDock.Children.AddRange([inBox, Query]);
         var queryFrame = UI.Frame(queryDock, "bg/base", "border/default", new Thickness(1), new Thickness(9, 0, 2, 0), 6).Named("FindQueryFrame");
-        queryFrame.Height = 28;
+        queryFrame.Height = 30;
         Query.GotFocus += (_, _) => queryFrame.Token(Border.BorderBrushProperty, "accent/default");
         Query.LostFocus += (_, _) => queryFrame.Token(Border.BorderBrushProperty, "border/default");
         var prev = new IconButton { Glyph = "undo", Name = "FindPrevious" };
@@ -163,17 +164,16 @@ public sealed class FindReplacePopover : Border, IOverlayContent
         close.Click += (_, _) => Closed?.Invoke(null);
         var row1 = new DockPanel { HorizontalSpacing = 6 };
         var icons = UI.Row(6, prev, next, close);
-        icons.Margin = new Thickness(6, 0, 0, 0);
         PageChrome.DockTo(row1, icons, Dock.Right);
         row1.Children.Add(queryFrame);
 
-        var replace = new AgbButton { Content = "Replace", Kind = ButtonKind.Secondary, Height = 28, Name = "ReplaceOne" };
+        var replace = new AgbButton { Content = "Replace", Kind = ButtonKind.Secondary, Height = 26, VerticalAlignment = VerticalAlignment.Center, Name = "ReplaceOne" };
         replace.Click += (_, _) => ReplaceCurrent();
-        var replaceAll = new AgbButton { Content = "Replace all", Kind = ButtonKind.Primary, Height = 28, Name = "ReplaceAll" };
+        var replaceAll = new AgbButton { Content = "Replace all", Kind = ButtonKind.Primary, Height = 26, VerticalAlignment = VerticalAlignment.Center, Name = "ReplaceAll" };
         replaceAll.Click += (_, _) => ReplaceEverything();
         var row2 = new DockPanel { HorizontalSpacing = 6 };
         var buttons = UI.Row(6, replace, replaceAll);
-        buttons.Margin = new Thickness(6, 0, 0, 0);
+        buttons.VerticalAlignment = VerticalAlignment.Center;
         PageChrome.DockTo(row2, buttons, Dock.Right);
         row2.Children.Add(Replacement);
 
@@ -189,8 +189,12 @@ public sealed class FindReplacePopover : Border, IOverlayContent
             _scopes[i].IsCheckedChanged += (_, _) => { if (_scopes[(int)scope].IsChecked == true) { Scope = scope; Refresh(keepPosition: false); } };
         }
         var scopeGroup = UI.Frame(UI.Row(2, _scopes), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);
-        var row3 = UI.Row(10, UI.Text("Search in", "Label/11", "text/muted"), scopeGroup);
-        Child = UI.Column(8, row1, row2, row3);
+        var searchIn = UI.Text("Search in", "Label/11", "text/muted");
+        searchIn.Margin = new Thickness(2, 0, 0, 0);
+        var row3 = UI.Row(8, searchIn, scopeGroup);
+        row2.Margin = new Thickness(0, 6, 0, 0);
+        row3.Margin = new Thickness(0, 8, 0, 0);
+        Child = UI.Column(0, row1, row2, row3);
 
         Query.Text = context?.Query ?? WordAtCaret();
         Query.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) Refresh(keepPosition: false); };

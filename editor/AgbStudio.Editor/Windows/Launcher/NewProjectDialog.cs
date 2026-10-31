@@ -108,8 +108,14 @@ public sealed class NewProjectDialog : FigmaDialog
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        // the project name has the focus, as in Figma
-        Avalonia.Threading.Dispatcher.UIThread.Post(() => { _nameBox?.Focus(); _nameBox?.SelectAll(); });
+        // the project name has the focus, as in Figma: the caret at the end, the name not selected
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (_nameBox is null) return;
+            _nameBox.Focus();
+            _nameBox.ClearSelection();
+            _nameBox.CaretIndex = _nameBox.Text?.Length ?? 0;
+        });
     }
 
     // ---- fields ---------------------------------------------------------------------------------------

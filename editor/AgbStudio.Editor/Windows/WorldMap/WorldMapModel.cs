@@ -106,8 +106,11 @@ public sealed partial class WorldMapModel
     /// <summary>Chip icon: trigger flag (on touch), door, respawn, or a star for condition-only links.</summary>
     public static string LinkGlyph(LinkData l) => l.From.Trim().Length == 0 ? "star" : l.Kind switch { LinkKind.OnTouch => "flag", LinkKind.Door => "link", _ => "refresh" };
 
-    /// <summary>"Only if" as shown (≥ ≤ ≠) and as stored (C#).</summary>
-    public static string ShowCondition(string c) => c.Replace(">=", "≥").Replace("<=", "≤").Replace("!=", "≠");
+    /// <summary>
+    /// "Only if" as shown and as stored: shown in C# (">="), which JetBrains Mono draws as its two-cell ligature like Figma;
+    /// a typed ≥ ≤ ≠ is stored as C#.
+    /// </summary>
+    public static string ShowCondition(string c) => c.Replace("≥", ">=").Replace("≤", "<=").Replace("≠", "!=");
     public static string StoreCondition(string c) => c.Replace("≥", ">=").Replace("≤", "<=").Replace("≠", "!=").Trim();
 
     /// <summary>Lines between scenes: one per pair of scenes, labelled with the first link; menu items that load a scene are dashed.</summary>

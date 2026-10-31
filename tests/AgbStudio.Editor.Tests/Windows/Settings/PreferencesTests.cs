@@ -326,9 +326,14 @@ public sealed class PreferencesTests : IDisposable
         var win = Shell();
         var d = Open(win);
         win.Click(d.Find<NavItem>("Nav_T-S06"));
-        var light = d.Find<Button>("Theme_Light").GetVisualDescendants().OfType<ThemeVariantScope>().First(s => s.RequestedThemeVariant == ThemeVariant.Light);
-        var panel = light.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Rectangle>().Skip(1).First();
-        Assert.Equal(Colors.White, ((ISolidColorBrush)panel.Fill!).Color);
+        // each part of a miniature is drawn in the tokens of its theme: base, title bar, pill, left panel, bottom block, right panel
+        Color[] Parts(string card) => d.Find<Button>(card).GetVisualDescendants().OfType<ThemeVariantScope>()
+            .Select(s => ((ISolidColorBrush)s.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Rectangle>().First().Fill!).Color).ToArray();
+        Assert.Equal(Colors.White, Parts("Theme_Light")[1]);
+        // System as Figma draws it: the title bar dark, the bottom block and right panel light
+        var system = Parts("Theme_System");
+        Assert.NotEqual(Colors.White, system[2]);
+        Assert.Equal(new[] { Colors.White, Colors.White }, system[^2..]);
         Assert.Equal("check", d.Find<Button>("Theme_Dark").GetVisualDescendants().OfType<Icon>().First().Glyph);
         win.Click(d.Find<Button>("Theme_System"));
         Assert.Equal(ThemeMode.System, d.Draft.Theme);

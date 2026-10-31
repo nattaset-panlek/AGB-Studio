@@ -110,7 +110,7 @@ public sealed class WorldMapTests : IDisposable
         Assert.Equal("Goal Flag · Forest_01", LinkSettingsPopover.TextOf(link.From));
         Assert.Equal("Forest_02", LinkSettingsPopover.TextOf(link.To));
         Assert.Equal("Start (left edge)", LinkSettingsPopover.TextOf(link.SpawnAt));
-        Assert.Equal("Game.coins ≥ 10", link.OnlyIf.Text);
+        Assert.Equal("Game.coins >= 10", link.OnlyIf.Text);
         link.SetTransition(Transition.Slide);
         Assert.Equal(Transition.Slide, Scene("Forest_01").Links[0].Transition);
         link.OnlyIf.Text = "Game.coins ≥ 20";

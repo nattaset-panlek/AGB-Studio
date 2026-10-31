@@ -11,6 +11,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace AgbStudio.Editor.Windows.SceneEditor;
 
@@ -89,7 +90,8 @@ public sealed class SceneSwitcher : ScenePopover
         var meta = UI.Text(scene.Menu != null ? "menu" : WorldMap.WorldMapModel.IsBossScene(scene) ? "boss" : $"{map?.Width ?? scene.Width}×{map?.Height ?? scene.Height}",
             "Mono/10", current ? "text/on-selected" : "text/muted");
         meta.Name = "SceneMeta_" + name;
-        var label = UI.Text(name, "Body/12", current ? "text/on-selected" : "text/primary");
+        // Figma: the current scene's name stays text/primary; only its size turns text/on-selected
+        var label = UI.Text(name, "Body/12", "text/primary");
         var dock = new DockPanel { HorizontalSpacing = 11 };
         DockPanel.SetDock(thumb, Dock.Left);
         DockPanel.SetDock(meta, Dock.Right);
@@ -166,7 +168,8 @@ public sealed class VideoModePopover : ScenePopover
         {
             var sel = i == Selected;
             var icon = new Icon { Glyph = sel ? "check" : "dots", Size = 14, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, sel ? "accent/default" : "text/muted");
-            var text = UI.Column(2, UI.Text(Modes[i].Title, "Body/12 Semibold", "text/primary"), UI.Text(Modes[i].Description, "Label/11", "text/secondary"));
+            // Figma: the mode descriptions in text/muted
+            var text = UI.Column(2, UI.Text(Modes[i].Title, "Body/12 Semibold", "text/primary"), UI.Text(Modes[i].Description, "Label/11", "text/muted"));
             text.VerticalAlignment = VerticalAlignment.Center;
             var row = UI.Row(10, icon, text);
             var card = new Button
@@ -243,8 +246,9 @@ public sealed class GridSnapPopover : ScenePopover
         for (var i = 0; i < 3; i++)
         {
             var k = i;
-            var fill = new Border { Width = 18, Height = 18, CornerRadius = new CornerRadius(4) }.Token(Border.BackgroundProperty, tokens[i]);
-            var ring = new Border { Width = 22, Height = 22, CornerRadius = new CornerRadius(5), BorderThickness = new Thickness(2), Child = fill, Name = "GridColour_" + i };
+            // Figma: 22 px swatches with a 1 px ring, black when not chosen and white when chosen
+            var fill = new Border { Width = 20, Height = 20, CornerRadius = new CornerRadius(4) }.Token(Border.BackgroundProperty, tokens[i]);
+            var ring = new Border { Width = 22, Height = 22, CornerRadius = new CornerRadius(5), BorderThickness = new Thickness(1), Child = fill, Name = "GridColour_" + i };
             _colours[i] = ring;
             var b = new Button { Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareButton"), Content = ring };
             b.Click += (_, _) => { g.Colour = k; _m.GridChanged(); Rings(); };
@@ -261,7 +265,7 @@ public sealed class GridSnapPopover : ScenePopover
 
     void Rings()
     {
-        for (var i = 0; i < 3; i++) _colours[i].Token(Border.BorderBrushProperty, i == _m.Grid.Colour ? "lit/white" : "bg/panel");
+        for (var i = 0; i < 3; i++) _colours[i].Token(Border.BorderBrushProperty, i == _m.Grid.Colour ? "lit/white" : "lit/black");
     }
 
     public void SelectSize(int size)
@@ -273,6 +277,12 @@ public sealed class GridSnapPopover : ScenePopover
     {
         var dock = new DockPanel { HorizontalSpacing = 8, Height = 24 };
         var t = UI.Text(label, "Body/12", "text/secondary", 86);
+        // a two-line label ("Camera bounds") overflows the 24 px row evenly, as in Figma, instead of losing its second line
+        if (label.Contains('\n'))
+        {
+            t.Height = (label.Count(c => c == '\n') + 1) * 16;
+            t.Margin = new Thickness(0, -(t.Height - 24) / 2, 0, -(t.Height - 24) / 2);
+        }
         DockPanel.SetDock(t, Dock.Left);
         value.HorizontalAlignment = HorizontalAlignment.Left;
         value.VerticalAlignment = VerticalAlignment.Center;
@@ -311,7 +321,8 @@ public sealed class AssetPicker : ScenePopover
         var top = UI.Column(14, Search, _tabs);
         top.IsVisible = true;
         _tabs.IsVisible = !_prefabs;
-        var body = UI.Column(14, top, new ScrollViewer { Content = _cards, MaxHeight = 228 });
+        // more cards than fit scroll with the wheel; Figma draws no scroll bar over the cards
+        var body = UI.Column(14, top, new ScrollViewer { Content = _cards, MaxHeight = 228, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden });
         body.Margin = new Thickness(20, 20, 20, 12);
         Build(_prefabs ? "Choose prefab" : Tabs.First(t => t.Tab == _tab).Title, body, 440);
         FocusOnShow(Search);
@@ -463,7 +474,8 @@ public sealed class ComponentPicker : ScenePopover
             var header = UI.Row(6, new Icon { Glyph = Behaviours.CategoryGlyph(g.Key), Size = 12, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted"),
                 UI.Text(g.Key, "Overline/11", "text/muted"));
             header.VerticalAlignment = VerticalAlignment.Top;
-            _list.Children.Add(new Border { Height = 26, Padding = new Thickness(10, 10, 10, 0), Child = header });
+            // Figma: the category icon at x 18 and its label at 36, 1 px higher than the rows' 10 px inset
+            _list.Children.Add(new Border { Height = 26, Padding = new Thickness(7, 9, 10, 0), Child = header });
             foreach (var b in g)
             {
                 // the description in the Figma row is Label/11, not the shortcut style of the Menu Item
@@ -519,22 +531,46 @@ public sealed class BudgetDetails : ScenePopover
         var rows = UI.Column(8);
         rows.Name = "BudgetRows";
         foreach (var b in Budget.Meters)
-            rows.Children.Add(new Meter { Label = b.Label, ValueText = b.Text, Percent = b.Percent, Status = b.Status, Name = "Meter_" + b.Label.Replace(' ', '_') });
-        var col = UI.Column(10, rows);
+        {
+            // a fill thinner than the 6 px bar would only draw a dot: Figma shows ROM 412 KB of 32 MB as an empty track
+            var meter = new Meter { Label = b.Label, ValueText = b.Text, Percent = b.Percent < 2 ? 0 : b.Percent, Status = b.Status, Name = "Meter_" + b.Label.Replace(' ', '_') };
+            meter.TemplateApplied += (_, _) => WrapValue(meter);
+            rows.Children.Add(meter);
+        }
+        // Figma: rows, tip and button 8 px apart; the tip in Label/11 (two lines make a 48 px box) beside a 16 px bulb
+        var col = UI.Column(8, rows);
         if (Budget.Hint is { } hint)
         {
-            var text = UI.Text(hint, "Body/12", "text/secondary");
+            var text = UI.Text(hint, "Label/11", "text/secondary");
             text.TextWrapping = TextWrapping.Wrap;
-            var bulb = new Icon { Glyph = "bulb", Size = 15, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 1, 0, 0) }.Token(Icon.ForegroundProperty, "status/warning");
+            var bulb = new Icon { Glyph = "bulb", Size = 16, VerticalAlignment = VerticalAlignment.Top }.Token(Icon.ForegroundProperty, "status/warning");
             var dock = new DockPanel { HorizontalSpacing = 10 };
             DockPanel.SetDock(bulb, Dock.Left);
             dock.Children.AddRange([bulb, text]);
-            col.Children.Add(UI.Frame(dock, "bg/base", null, null, new Thickness(12, 10), 8).Named("PaletteHint"));
+            col.Children.Add(UI.Frame(dock, "bg/base", null, null, new Thickness(11, 10, 12, 10), 8).Named("PaletteHint"));
         }
         var open = new AgbButton { Content = "Open Build Report", Glyph = "chip", HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left, Name = "OpenBuildReport" };
         open.Click += (_, _) => { Close(null); _ = s.Windows.Open("T-P11", source: "BudgetDetails"); };
         col.Children.Add(open);
         col.Margin = new Thickness(20, 20, 20, 20);
         Build($"GBA budget · {m.SceneName}", col, 420);
+    }
+
+    /// <summary>
+    /// Figma wraps a long value ("15 / 16 colours", "412 KB / 32 MB") onto two lines that overflow the 18 px meter row
+    /// evenly, instead of cutting it at the 78 px value column.
+    /// </summary>
+    static void WrapValue(Meter meter)
+    {
+        if (meter.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => DockPanel.GetDock(t) == Dock.Right) is not { } value) return;
+        var text = meter.ValueText ?? "";
+        var layout = new Avalonia.Media.TextFormatting.TextLayout(text, new Typeface(value.FontFamily, value.FontStyle, value.FontWeight), value.FontSize, null,
+            TextAlignment.Right, TextWrapping.Wrap, maxWidth: value.Width, lineHeight: value.LineHeight, letterSpacing: value.LetterSpacing);
+        if (layout.TextLines.Count < 2) return;
+        // each line without the space it broke at, so both end at the right edge; the text may draw outside the row
+        value.Text = string.Join("\n", layout.TextLines.Select(l => text.Substring(l.FirstTextSourceIndex, Math.Min(l.Length, text.Length - l.FirstTextSourceIndex)).Trim()));
+        value.Height = layout.Height;
+        value.Margin = new Thickness(0, -(layout.Height - meter.Height) / 2, 0, -(layout.Height - meter.Height) / 2);
+        value.ClipToBounds = meter.ClipToBounds = false;
     }
 }

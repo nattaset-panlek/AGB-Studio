@@ -20,7 +20,9 @@ namespace AgbStudio.Editor.Windows.LogicGraph;
 [EditorWindow("T-O08")]
 public sealed class AddNodePopover : Border, IOverlayContent
 {
-    const int MaxRows = 6;
+    // Figma: at most six lines under the search (category headers count), so the footer stays in the 269 px popover,
+    // and at most three nodes of a category, so the next category shows too ("veloc": PHYSICS, then MATH)
+    const int MaxLines = 6, PerCategory = 3;
     readonly AddNodeRequest? _request;
     readonly StackPanel _results = new() { Spacing = 0, Name = "Results" };
     readonly List<(MenuRow Row, NodeDef Def)> _rows = [];
@@ -50,11 +52,13 @@ public sealed class AddNodePopover : Border, IOverlayContent
         DockPanel.SetDock(esc, Dock.Right);
         queryRow.Children.AddRange([icon, esc, Query]);
         var footer = UI.Row(14, Hint("Enter", "add here"), Hint("Shift+Enter", "add and connect"));
+        // Figma: a 50 px search row with the icon and Esc 3 px under its middle, Esc 18 px from the edge; the footer 9 px
+        // under the last result
         Child = UI.Column(0,
-            new Border { Height = 51, Padding = new Thickness(18, 0, 14, 0), Child = queryRow },
+            new Border { Height = 50, Padding = new Thickness(18, 6, 18, 0), Child = queryRow },
             PageChrome.Divider(),
-            new Border { Padding = new Thickness(8, 0, 8, 0), Child = _results },
-            new Border { Padding = new Thickness(18, 4, 18, 12), Child = footer });
+            new Border { Padding = new Thickness(8, 1, 8, 0), Child = _results },
+            new Border { Padding = new Thickness(18, 9, 18, 12), Child = footer });
         Query.Text = query ?? "";
         Query.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) Refresh(); };
         Query.AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel);
@@ -73,7 +77,16 @@ public sealed class AddNodePopover : Border, IOverlayContent
             .Where(x => x.s >= 0).OrderByDescending(x => Math.Min(x.s, 800)).ThenBy(x => x.n.Role == NodeRole.Value ? 1 : 0).ThenByDescending(x => x.s).ThenBy(x => x.i)
             .Select(x => x.n).ToList();
         // categories in the order their best match appears
-        return scored.GroupBy(n => n.Category).SelectMany(g => g).Take(MaxRows).ToList();
+        var shown = new List<NodeDef>();
+        var lines = 0;
+        foreach (var g in scored.GroupBy(n => n.Category))
+        {
+            if (lines + 2 > MaxLines) break;
+            var take = g.Take(Math.Min(PerCategory, MaxLines - lines - 1)).ToList();
+            shown.AddRange(take);
+            lines += take.Count + 1;
+        }
+        return shown;
     }
 
     void Refresh()
@@ -90,11 +103,17 @@ public sealed class AddNodePopover : Border, IOverlayContent
                 if (Application.Current?.FindResource(GraphDocument.CategoryColor(cat)) is Color c) square.Background = new SolidColorBrush(c);
                 _results.Children.Add(new Border { Height = 26, Padding = new Thickness(10, 8, 10, 2), Child = UI.Row(8, square, UI.Text(cat, "Overline/11", "text/muted")) });
             }
-            var row = new MenuRow { Label = def.Title, RightText = GraphDocument.Hint(def.Type), Height = 30, Name = "Node_" + def.Type };
+            var row = new MenuRow { Label = def.Title, Height = 30, Name = "Node_" + def.Type };
+            // the hint in the Figma row is Label/11, not the mono shortcut style of the Menu Item
+            var hint = UI.Text(GraphDocument.Hint(def.Type), "Label/11", "text/muted");
+            hint.HorizontalAlignment = HorizontalAlignment.Right;
+            hint.Margin = new Thickness(0, 0, 10, 0);
+            hint.IsHitTestVisible = false;
+            row.PropertyChanged += (_, e) => { if (e.Property == SelectableRow.IsSelectedProperty) hint.Token(TextBlock.ForegroundProperty, row.IsSelected ? "text/on-selected" : "text/muted"); };
             var d = def;
             row.Activated += (_, _) => Add(d, connect: false);
             _rows.Add((row, def));
-            _results.Children.Add(row);
+            _results.Children.Add(new Panel { Children = { row, hint } });
         }
         if (_rows.Count == 0) _results.Children.Add(new Border { Height = 30, Padding = new Thickness(10, 8), Child = UI.Text("No node matches.", "Label/11", "text/muted") });
         Highlight(0);

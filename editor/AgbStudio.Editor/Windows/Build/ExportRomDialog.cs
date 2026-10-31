@@ -61,7 +61,8 @@ public sealed class ExportRomDialog : FigmaDialog
         var label = UI.Text("Estimated size", "Label/11", "text/secondary").Wrap(70);
         _estimate.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
         _estimate.TextAlignment = Avalonia.Media.TextAlignment.Right;
-        var size = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("70,12,*,20,66") };
+        // Figma: the Estimated size row starts 10 px under the last option (y 384), not a full column gap
+        var size = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("70,12,*,20,66"), Margin = new Thickness(0, -4, 0, 0) };
         Grid.SetColumn(_estimateBar, 2);
         Grid.SetColumn(_estimate, 4);
         size.Children.AddRange([label, _estimateBar, _estimate]);
@@ -95,7 +96,9 @@ public sealed class ExportRomDialog : FigmaDialog
         var bytes = EstimatedBytes();
         const long capacity = 32L * 1024 * 1024;
         _estimate.Text = bytes > 0 ? $"{Math.Round(bytes / 1024.0).ToString(CultureInfo.InvariantCulture)} KB / 32 MB" : "— / 32 MB";
-        _estimateBar.Value = 100.0 * bytes / capacity;
+        // a fill thinner than the 6 px bar would only draw a dot; Figma shows 398 KB of 32 MB as an empty track
+        var pct = 100.0 * bytes / capacity;
+        _estimateBar.Value = pct < 2 ? 0 : pct;
     }
 
     public static long NextPowerOfTwo(long n)

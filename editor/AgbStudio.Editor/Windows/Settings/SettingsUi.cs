@@ -214,8 +214,8 @@ public static class SettingsUi
         return b;
     }
 
-    /// <summary>A small rounded card (bg/base) used for the Toolchain and Build cache rows.</summary>
-    public static Border Card(Control child) => UI.Frame(child, "bg/base", pad: new Thickness(14, 0, 12, 0), radius: 8);
+    /// <summary>A small rounded card (bg/base) used for the Toolchain and Build cache rows; Figma puts the icon 12 px in.</summary>
+    public static Border Card(Control child) => UI.Frame(child, "bg/base", pad: new Thickness(12, 0, 12, 0), radius: 8);
 
     /// <summary>Header row of a settings table: Figma "Table Cell" Header per column.</summary>
     public static Grid TableHeader(IReadOnlyList<string> titles, string columns)
