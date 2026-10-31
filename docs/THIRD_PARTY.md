@@ -6,9 +6,19 @@
 | libtonc (Tonc library) | MIT | linked into every game ROM | games |
 | maxmod (libmm) | ISC-style (`D:\devkitPro\libgba\maxmod_license.txt`) | linked into every game ROM | games |
 | devkitARM / newlib | GPL toolchain with runtime exception; newlib BSD-style | compiler and C library; not redistributed by AGB Studio | user install |
-| Roslyn (Microsoft.CodeAnalysis) | MIT | parses, analyses and translates C# scripts | editor |
-| Avalonia | MIT | editor UI | editor |
-| SkiaSharp | MIT | font rasterising and image I/O in the editor and toolchain | editor |
+| Roslyn (Microsoft.CodeAnalysis 4.14, incl. its localized resource folders `cs` ... `zh-Hant`) | MIT | parses, analyses and translates C# scripts | editor |
+| System.Composition 9.0 | MIT | dependency of Roslyn Workspaces | editor |
+| Humanizer (Humanizer.Core 2.14.1) | MIT | dependency of Roslyn Workspaces | editor |
+| Avalonia 11.3 (incl. Avalonia.DesignerSupport) | MIT | editor UI | editor |
+| MicroCom.Runtime 0.11 | MIT | COM interop used by Avalonia on Windows | editor |
+| ANGLE (`av_libglesv2.dll`, package Avalonia.Angle.Windows.Natives) | BSD 3-clause (licence file in the package) | OpenGL ES on Direct3D for Avalonia rendering | editor |
+| SkiaSharp 3.119 | MIT | font rasterising and image I/O in the editor and toolchain | editor |
+| Skia (`libSkiaSharp.dll`) | BSD 3-clause; bundled parts (etc1, gif and others) listed in the package's THIRD-PARTY-NOTICES.txt | native 2D graphics behind SkiaSharp | editor |
+| HarfBuzzSharp 8.3 | MIT | text shaping binding used by Avalonia | editor |
+| HarfBuzz (`libHarfBuzzSharp.dll`) | "Old MIT" | native text shaping | editor |
+| .NET runtime 10.0 (self-contained: `coreclr.dll`, `hostfxr.dll`, `System.*.dll`, `createdump.exe`, ...) | MIT; notices in the runtime pack's THIRD-PARTY-NOTICES.TXT | runs the editor | editor |
+| MsQuic (`msquic.dll`) | MIT | part of the .NET runtime pack (System.Net.Quic); not used by AGB Studio | editor |
+| Microsoft.DiaSymReader.Native (`Microsoft.DiaSymReader.Native.amd64.dll`) | ships in the .NET runtime pack, whose package licence is MIT; the DLL's own licence terms were not checked separately | part of the .NET runtime pack (symbol reading); not used by AGB Studio directly | editor |
 | Inter | SIL OFL 1.1 | editor UI font | editor |
 | JetBrains Mono | SIL OFL 1.1 | editor code font | editor |
 | IBM Plex Sans Thai (+ Looped) | SIL OFL 1.1 | editor Thai UI text | editor |
@@ -21,4 +31,14 @@
 
 Reference only, no code copied: pokeemerald (pret), Butano (zlib), Poryscript.
 
-The build writes `THIRD_PARTY.txt` next to every exported ROM with the libtonc and maxmod notices.
+The build writes `THIRD_PARTY.txt` next to every ROM with the libtonc and maxmod notices, and Export ROM copies it
+next to the exported ROM. It does not yet include the MIT notice of the AGB Studio runtime itself (D-05);
+`docs/user/licence-for-your-games.md` tells users what to add.
+
+AGB Studio's own code is under the MIT licence (`LICENSE` at the repository root, D-05).
+
+Package check (P16.02, 2026-10-31): every DLL in `bin/` of `build/package/AGB-Studio-1.0.0-win-x64` (227 DLLs, package
+built from commit `dec626c`) maps to a row above or to AGB Studio's own assemblies (`AGBStudio.dll`,
+`AgbStudio.*.dll`). Licences were read from the NuGet package metadata (`.nuspec` licence expression) and the licence
+and notice files in the local NuGet cache. Fonts are embedded in `AGBStudio.dll`. A package built from a newer commit
+was not checked.

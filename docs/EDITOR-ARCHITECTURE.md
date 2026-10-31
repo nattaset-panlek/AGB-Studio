@@ -2,7 +2,10 @@
 
 The editor is `editor/AgbStudio.Editor` (Avalonia 11.3 on .NET 10, Windows only, D-01 / D-10; output `AGBStudio.exe`).
 Tests are `tests/AgbStudio.Editor.Tests` (xUnit + Avalonia.Headless with real Skia rendering).
-Phase 10 built the shell and the design system; Phase 11 adds one window per Figma frame, each in its own files.
+Phase 10 built the shell and the design system; Phase 11 added the windows: every page, dialog, settings tab, popover
+and menu of checklist section 4 is registered (`docs/evidence/scope-inventory-review.md`), each in its own files under
+`Windows/`. `AGBStudio.exe --gallery` opens the component gallery used for SHOT and component review instead of the
+Launcher.
 
 ## Layout of the code
 
@@ -15,6 +18,7 @@ Phase 10 built the shell and the design system; Phase 11 adds one window per Fig
 | `Services/` | Preferences (`%APPDATA%\AGBStudio\preferences.json`), project settings, recent projects, undo, autosave, documents, toasts, theme, toolchain, project / build / emulator hooks, Edit routing |
 | `Shell/` | `MainWindow` (Title Bar + page host + overlays), `WindowService`, `WindowCatalog`, `SceneWorkspace` (T-P01 docking layout), `CommandPalette` (T-O07), `KeyboardShortcutsDialog` (T-D10), `UnsavedChangesDialog` (T-D12), `UI` helpers |
 | `Gallery/` | `GalleryCatalog` (every component variant, used by SHOT) and `ComponentGallery` (`AGBStudio --gallery`) |
+| `Windows/` | One folder per window group: `Launcher` (T-P12, T-P20-T-P22, T-D01, T-D22, T-M17, T-O13, tutorials, release notes), `SceneEditor` (T-P01 panels, T-P05, T-P06, T-D02, T-D03, T-O01-T-O06, T-M11-T-M16, the GBA screen renderer of D-18), `Tilemap` (T-P03, T-P26, T-M20), `Sprite` (T-P08, T-D13, T-M19), `Palette` (T-P10, T-O10), `Font` (T-P09, T-D15, T-D16), `Database` (T-P07, T-D17-T-D19), `Localization` (T-P14, T-D20), `Dialogue` (T-P16, T-D21, T-M23, T-M24), `Audio` (T-P15, T-P25: tracker view, module player, DMG preview), `LogicGraph` (T-P17, T-O08, T-M21), `WorldMap` (T-P13, T-O09, T-M22), `Scripts` (T-P04, T-P18, T-D14, T-O11, external editors), `Build` (T-D05-T-D07, T-D23, T-P11, cartridge devices), `Import` (T-D04, T-D24), `Play` (T-P02, T-M18), `Debugger` (T-P19, T-P23, T-P24, budgets), `Settings` (T-D08, T-D09, T-S01-T-S09, T-O12, the missing-toolchain help), `Menus` (title bar menu actions, T-D11, links of D-13, screenshot / GIF) |
 
 ## Rules
 
@@ -79,7 +83,9 @@ public static void BuildRom(EditorServices s) { ... }
    `ProjectSettings` (the project's `ProjectFile`, saved into the .agbproj), `Build` (`BuildService.BuildAsync(options,
    IBuildObserver)` runs `AgbStudio.Build.Pipeline.GameBuilder`; `LoadReport()` reads `BuildReport`), `Toolchain`
    (`Toolchain.Check()` results), `Emulator` (`EmulatorHost.Acquire()` returns the single `AgbStudio.Emu.LibretroCore`
-   of the process), `Documents` (dirty tracking, Save / Save All), `Undo`, `Toasts`, `Preferences`, `Recent`, `Status`
+   of the process; `Release()` frees it), `Documents` (dirty tracking, Save / Save All), `Undo`, `Toasts`,
+   `Autosave` (saves dirty documents every N minutes set in Preferences), `Theme` (switches the Dark / Light token
+   sets), `Preferences`, `Recent`, `Status`
    (status bar texts), `System` (folder / file / save pickers, Show in Explorer, open in the external editor; set
    `System.Selection` to what Show in Explorer should reveal), `Commands`, `Shortcuts`, `Windows`. Share your own models with `Services.Set(x)` / `Services.Get<T>()`.
 6. Undoable edits go through `Services.Undo.Do(new DelegateAction(name, undo, redo))`. A panel whose selection supports
