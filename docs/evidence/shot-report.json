@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 02:52:05Z",
+  "generated": "2026-10-31 04:40:20Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3428,15 +3428,15 @@
       "set": "frame Audio",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.28,
-      "BestShiftDiffPercent": 5.28,
+      "DiffPercent": 5.29,
+      "BestShiftDiffPercent": 5.29,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
       "MeanChannelError": 5.41,
-      "ColourDiffPercent": 8.59
+      "ColourDiffPercent": 8.6
     },
     {
       "Id": "T-P25",
@@ -3848,8 +3848,8 @@
       "set": "frame Play Mode",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 13.08,
-      "BestShiftDiffPercent": 13.08,
+      "DiffPercent": 13.07,
+      "BestShiftDiffPercent": 13.07,
       "shift": [
         0,
         0
@@ -3878,8 +3878,8 @@
       "set": "frame Debugger",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.26,
-      "BestShiftDiffPercent": 5.26,
+      "DiffPercent": 5.27,
+      "BestShiftDiffPercent": 5.27,
       "shift": [
         0,
         0
@@ -3893,15 +3893,15 @@
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.2,
-      "BestShiftDiffPercent": 3.2,
+      "DiffPercent": 3.14,
+      "BestShiftDiffPercent": 3.14,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.62,
-      "ColourDiffPercent": 5.61
+      "MeanChannelError": 3.55,
+      "ColourDiffPercent": 5.56
     },
     {
       "Id": "T-P24",
@@ -4553,15 +4553,15 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.69,
-      "BestShiftDiffPercent": 1.69,
+      "DiffPercent": 1.7,
+      "BestShiftDiffPercent": 1.7,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
       "MeanChannelError": 2.43,
-      "ColourDiffPercent": 5.08
+      "ColourDiffPercent": 5.09
     },
     {
       "Id": "T-P10",
@@ -4712,6 +4712,276 @@
       "LayoutOffset": 0,
       "MeanChannelError": 4.78,
       "ColourDiffPercent": 6.15
+    },
+    {
+      "Id": "type/brand-13",
+      "set": "Type specimen Brand/13",
+      "figma": "209x16",
+      "app": "209x16",
+      "DiffPercent": 20.93,
+      "BestShiftDiffPercent": 19.8,
+      "shift": [
+        0,
+        1
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 26.37,
+      "ColourDiffPercent": 34.36
+    },
+    {
+      "Id": "type/title-18",
+      "set": "Type specimen Title/18",
+      "figma": "68x24",
+      "app": "68x24",
+      "DiffPercent": 6.86,
+      "BestShiftDiffPercent": 6.86,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 8.29,
+      "ColourDiffPercent": 18.01
+    },
+    {
+      "Id": "type/title-14",
+      "set": "Type specimen Title/14",
+      "figma": "228x18",
+      "app": "228x18",
+      "DiffPercent": 15.4,
+      "BestShiftDiffPercent": 15.4,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 16.98,
+      "ColourDiffPercent": 27.75
+    },
+    {
+      "Id": "type/body-12",
+      "set": "Type specimen Body/12",
+      "figma": "1160x16",
+      "app": "1160x16",
+      "DiffPercent": 11.48,
+      "BestShiftDiffPercent": 7.3,
+      "shift": [
+        -1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 12.65,
+      "ColourDiffPercent": 18.49
+    },
+    {
+      "Id": "type/body-12-medium",
+      "set": "Type specimen Body/12 Medium",
+      "figma": "194x16",
+      "app": "194x16",
+      "DiffPercent": 19.49,
+      "BestShiftDiffPercent": 19.49,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 22.01,
+      "ColourDiffPercent": 31.51
+    },
+    {
+      "Id": "type/body-12-semibold",
+      "set": "Type specimen Body/12 Semibold",
+      "figma": "196x16",
+      "app": "196x16",
+      "DiffPercent": 15.18,
+      "BestShiftDiffPercent": 15.18,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 15.47,
+      "ColourDiffPercent": 26.82
+    },
+    {
+      "Id": "type/label-11",
+      "set": "Type specimen Label/11",
+      "figma": "176x14",
+      "app": "176x14",
+      "DiffPercent": 21.83,
+      "BestShiftDiffPercent": 19.6,
+      "shift": [
+        -1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 26.07,
+      "ColourDiffPercent": 33.77
+    },
+    {
+      "Id": "type/label-11-medium",
+      "set": "Type specimen Label/11 Medium",
+      "figma": "55x14",
+      "app": "55x14",
+      "DiffPercent": 14.16,
+      "BestShiftDiffPercent": 14.16,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 16.93,
+      "ColourDiffPercent": 33.38
+    },
+    {
+      "Id": "type/caption-10",
+      "set": "Type specimen Caption/10",
+      "figma": "160x12",
+      "app": "160x12",
+      "DiffPercent": 29.32,
+      "BestShiftDiffPercent": 28.33,
+      "shift": [
+        -1,
+        0
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 35.99,
+      "ColourDiffPercent": 41.2
+    },
+    {
+      "Id": "type/overline-11",
+      "set": "Type specimen Overline/11",
+      "figma": "207x14",
+      "app": "207x14",
+      "DiffPercent": 17.53,
+      "BestShiftDiffPercent": 17.53,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 19.33,
+      "ColourDiffPercent": 30.75
+    },
+    {
+      "Id": "type/mono-10",
+      "set": "Type specimen Mono/10",
+      "figma": "42x12",
+      "app": "42x12",
+      "DiffPercent": 2.98,
+      "BestShiftDiffPercent": 2.98,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 6.43,
+      "ColourDiffPercent": 24.6
+    },
+    {
+      "Id": "type/mono-11",
+      "set": "Type specimen Mono/11",
+      "figma": "170x14",
+      "app": "170x14",
+      "DiffPercent": 0.04,
+      "BestShiftDiffPercent": 0.04,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 0.72,
+      "ColourDiffPercent": 3.45
+    },
+    {
+      "Id": "type/mono-11-bold",
+      "set": "Type specimen Mono/11 Bold",
+      "figma": "205x14",
+      "app": "205x14",
+      "DiffPercent": 11.64,
+      "BestShiftDiffPercent": 11.64,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 11.43,
+      "ColourDiffPercent": 22.93
+    },
+    {
+      "Id": "type/mono-13",
+      "set": "Type specimen Mono/13",
+      "figma": "242x20",
+      "app": "242x20",
+      "DiffPercent": 10.95,
+      "BestShiftDiffPercent": 10.95,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 12.43,
+      "ColourDiffPercent": 18.22
+    },
+    {
+      "Id": "type/thai-13",
+      "set": "Type specimen Thai/13",
+      "figma": "229x20",
+      "app": "229x20",
+      "DiffPercent": 20.55,
+      "BestShiftDiffPercent": 11.2,
+      "shift": [
+        0,
+        -1
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 27.17,
+      "ColourDiffPercent": 28.12
+    },
+    {
+      "Id": "type/thai-13-medium",
+      "set": "Type specimen Thai/13 Medium",
+      "figma": "232x20",
+      "app": "232x20",
+      "DiffPercent": 21.62,
+      "BestShiftDiffPercent": 10.67,
+      "shift": [
+        0,
+        -1
+      ],
+      "LayoutOffset": 1,
+      "MeanChannelError": 29.43,
+      "ColourDiffPercent": 29.55
+    },
+    {
+      "Id": "type/pixel-10",
+      "set": "Type specimen Pixel/10",
+      "figma": "100x12",
+      "app": "100x12",
+      "DiffPercent": 24.83,
+      "BestShiftDiffPercent": 24.83,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 25.15,
+      "ColourDiffPercent": 35.67
+    },
+    {
+      "Id": "T-P02-game-view",
+      "set": "Play Mode game view \u00B7 Hitboxes and Tile collision on",
+      "figma": "860x510",
+      "app": "860x510",
+      "DiffPercent": 32.91,
+      "BestShiftDiffPercent": 32.91,
+      "shift": [
+        0,
+        0
+      ],
+      "LayoutOffset": 0,
+      "MeanChannelError": 29.34,
+      "ColourDiffPercent": 78.19
     }
   ],
   "chromeRegions": [
