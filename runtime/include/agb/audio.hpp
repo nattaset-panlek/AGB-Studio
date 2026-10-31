@@ -8,11 +8,15 @@ namespace agb::audio {
 
 struct Config {
     const void* soundbank = nullptr;  // generated soundbank (mmutil)
-    u8 channels = 8;                  // maxmod mixing channels (Figma: 8 ch)
+    u8 channels = 8;                  // maxmod mixing channels (Project Settings · Audio, Figma: 8 ch)
+    u8 mixKHz = 21;                   // mixing rate (Project Settings · Audio): 8, 10, 13, 16, 18, 21, 27 or 31 kHz
 };
 
-// Starts maxmod at 21 kHz with static buffers (no heap) and hooks its VBlank and frame work.
+// Starts maxmod with static buffers (no heap) and hooks its VBlank and frame work. The buffers are sized at compile time
+// for AGB_AUDIO_MIX_KHZ and AGB_AUDIO_CHANNELS (the build passes the project's settings; 21 kHz and 16 channels
+// otherwise); a rate or channel count above them falls back to them. May be called again (after a VBlank wait too).
 void init(const Config& config);
+u8 mixKHz();  // the rate maxmod mixes at (0 = not started)
 bool ready();
 
 void playMusic(u16 module, bool loop = true);

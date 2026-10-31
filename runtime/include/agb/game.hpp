@@ -96,6 +96,7 @@ struct GameDef {
     u8 actionCount;
     const void* soundbank;
     u8 audioChannels;
+    u8 audioMixKHz;         // Project Settings · Audio mixing rate (0 = 21 kHz)
     void (*init)();         // generated per-game setup (script natives, fonts, strings)
     bool skipSplash;        // Debug builds start without the boot splash
     const void* const* textTables;  // agb::text::Table per language

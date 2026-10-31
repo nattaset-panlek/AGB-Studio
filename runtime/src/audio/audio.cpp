@@ -8,16 +8,49 @@
 
 namespace agb::audio {
 
+// Project Settings · Audio: the build passes the project's mixing rate and channel count, so the buffers below are the
+// size the game needs. Runtime test ROMs mix at 21 kHz (D-14) with up to 16 channels.
+#ifndef AGB_AUDIO_MIX_KHZ
+#define AGB_AUDIO_MIX_KHZ 21
+#endif
+#ifndef AGB_AUDIO_CHANNELS
+#define AGB_AUDIO_CHANNELS 16
+#endif
+
 namespace {
-constexpr int kMaxChannels = 16;
-// Buffer sizes from maxmod.h. Mixing memory must be in IWRAM; the rest may live in EWRAM.
-u8 g_mixingMemory[MM_MIXLEN_21KHZ] AGB_ALIGN4;  // plain .bss is IWRAM
-AGB_EWRAM_BSS u8 g_waveMemory[MM_MIXLEN_21KHZ] AGB_ALIGN4;
+struct Rate {
+    u8 khz;
+    mm_mixmode mode;
+    u16 bytes;  // MM_MIXLEN_*: one frame of mixing at this rate
+};
+constexpr Rate kRates[] = {
+    {8, MM_MIX_8KHZ, MM_MIXLEN_8KHZ},    {10, MM_MIX_10KHZ, MM_MIXLEN_10KHZ}, {13, MM_MIX_13KHZ, MM_MIXLEN_13KHZ},
+    {16, MM_MIX_16KHZ, MM_MIXLEN_16KHZ}, {18, MM_MIX_18KHZ, MM_MIXLEN_18KHZ}, {21, MM_MIX_21KHZ, MM_MIXLEN_21KHZ},
+    {27, MM_MIX_27KHZ, MM_MIXLEN_27KHZ}, {31, MM_MIX_31KHZ, MM_MIXLEN_31KHZ},
+};
+// The maxmod rate nearest to `khz` (a tie takes the lower one).
+constexpr const Rate& rateFor(int khz) {
+    int best = 0;
+    for (int i = 1; i < static_cast<int>(sizeof kRates / sizeof kRates[0]); ++i) {
+        const int d = kRates[i].khz - khz, bd = kRates[best].khz - khz;
+        if ((d < 0 ? -d : d) < (bd < 0 ? -bd : bd)) best = i;
+    }
+    return kRates[best];
+}
+constexpr const Rate& kBufferRate = rateFor(AGB_AUDIO_MIX_KHZ);
+constexpr int kMaxChannels = AGB_AUDIO_CHANNELS < 1 ? 1 : AGB_AUDIO_CHANNELS > 32 ? 32 : AGB_AUDIO_CHANNELS;
+
+// Buffer sizes from maxmod.h. The mixing memory (maxmod's 32-bit sum of every channel, read and written per sample and
+// channel) must be in IWRAM; the wave memory (the 8-bit output the sound DMA plays) and the channel state may live in
+// EWRAM.
+u8 g_mixingMemory[kBufferRate.bytes] AGB_ALIGN4;  // plain .bss is IWRAM
+AGB_EWRAM_BSS u8 g_waveMemory[kBufferRate.bytes] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_modChannels[kMaxChannels * MM_SIZEOF_MODCH] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_actChannels[kMaxChannels * MM_SIZEOF_ACTCH] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_mixChannels[kMaxChannels * MM_SIZEOF_MIXCH] AGB_ALIGN4;
 
 bool g_ready = false;
+u8 g_mixKHz = 0;
 bool g_musicOn = false;
 fixed g_volume = fixed(1), g_fadeFrom, g_fadeTo;
 u16 g_fadeFrames = 0, g_fadeElapsed = 0;
@@ -40,9 +73,22 @@ void init(const Config& config) {
     REG_SNDDMGCNT = SDMG_BUILD_LR(SDMG_SQR1 | SDMG_SQR2 | SDMG_WAVE | SDMG_NOISE, 7);
     REG_SNDDSCNT = SDS_DMG100;
     if (config.soundbank) {
-        const int ch = config.channels > kMaxChannels ? kMaxChannels : config.channels;
+        int ch = config.channels < 1 ? 1 : config.channels;
+        if (ch > kMaxChannels) {
+            debug::logf("warning: audio: %d mixing channels asked, this build has buffers for %d", ch, kMaxChannels);
+            ch = kMaxChannels;
+        }
+        const Rate* rate = &rateFor(config.mixKHz ? config.mixKHz : kBufferRate.khz);
+        if (rate->bytes > kBufferRate.bytes) {
+            debug::logf("warning: audio: mixing at %u kHz needs a larger buffer than this build has; mixing at %u kHz", rate->khz, kBufferRate.khz);
+            rate = &kBufferRate;
+        }
         mm_gba_system sys;
-        sys.mixing_mode = MM_MIX_21KHZ;
+        // maxmod reads mixing_mode as a 32-bit word, but this compiler stores the enum in one byte (arm-none-eabi
+        // short enums): clear the padding first. Stack garbage there picked a wrong buffer length and timer, and the
+        // init then hung or restarted the ROM, depending on what the stack held (after a VBlank wait, in main()).
+        __builtin_memset(&sys, 0, sizeof sys);
+        sys.mixing_mode = rate->mode;
         sys.mod_channel_count = static_cast<mm_word>(ch);
         sys.mix_channel_count = static_cast<mm_word>(ch);
         sys.module_channels = reinterpret_cast<mm_addr>(g_modChannels);
@@ -51,17 +97,23 @@ void init(const Config& config) {
         sys.mixing_memory = reinterpret_cast<mm_addr>(g_mixingMemory);
         sys.wave_memory = reinterpret_cast<mm_addr>(g_waveMemory);
         sys.soundbank = const_cast<mm_addr>(config.soundbank);
+        // The VBlank hook goes in first: mmInit waits for two VBlanks, and maxmod's VBlank work during them leaves its
+        // double buffer at the first half for the next mix. Hooked afterwards, a second init could mix the first frame
+        // at the write position the previous init left (past the end of the wave buffer).
+        g_ready = false;
+        system::addVBlankHook(mmVBlank);
         mmInit(&sys);
         // maxmod resets the DMG master volume; keep the DMG channels audible for register effects.
         REG_SNDDMGCNT = SDMG_BUILD_LR(SDMG_SQR1 | SDMG_SQR2 | SDMG_WAVE | SDMG_NOISE, 7);
         REG_SNDDSCNT = static_cast<u16>(REG_SNDDSCNT | SDS_DMG100);
-        system::addVBlankHook(mmVBlank);
         g_ready = true;
+        g_mixKHz = rate->khz;
     }
     system::setFrameHook(frameHook);
 }
 
 bool ready() { return g_ready; }
+u8 mixKHz() { return g_mixKHz; }
 
 void playMusic(u16 module, bool loop) {
     if (!g_ready) return;

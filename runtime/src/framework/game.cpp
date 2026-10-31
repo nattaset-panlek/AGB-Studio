@@ -458,7 +458,7 @@ void boot(const GameDef& def) {
     system::init();
     if (def.save.type != save::Type::None) save::configure(def.save);
     if (def.actionKeys) input::setActionMap(def.actionKeys, def.actionCount);
-    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8)});
+    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8), def.audioMixKHz ? def.audioMixKHz : static_cast<u8>(21)});
     if (def.dmgSfx) audio::setDmgTable(static_cast<const audio::DmgSfx*>(def.dmgSfx), def.dmgSfxCount);
     rng::seed(0xA6B5);
     if (def.textTables) {
