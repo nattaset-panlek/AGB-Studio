@@ -275,6 +275,178 @@ public class NewProjectTests
         Assert.All(TemplateCatalog.All, t => Assert.NotNull(ProjectCreator.BuildTemplate(t)));
     }
 
+    // ---- P15.02-P15.08: each template card makes its template game, and that game builds to a ROM ----------------
+
+    /// <summary>P15.02: the Top-down Adventure card makes the village game (NPC, push block, key, door) and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_TopDownAdventure_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Top-down Adventure", "Village Walk");
+        IsTheTemplate(h, p, "topdown");
+        Assert.Equal(["House", "Title", "Village"], Names(p.SceneFiles()));
+        Assert.Equal(["Door", "KeyItem", "Npc", "PushBlock"], Names(p.ScriptFiles()));
+        Assert.Equal(["Player", "NPC", "Crate", "Door", "Key"], p.Settings.Tags);
+        Assert.Equal(["keys", "doorOpen"], p.Settings.Save.Fields.Select(f => f.Name));
+        Assert.Equal("Talk", p.Settings.Input[0].Action);
+        Assert.Equal("Mode 0 · 1 BG layers · 6 actors · 4 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        await BuildsToARom(h, "VILLAGEWALK", "VILL");
+    }
+
+    /// <summary>P15.03: the Turn-based RPG card makes the party / battle / shop game with its Database tables, and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_TurnBasedRpg_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Turn-based RPG", "Slime Quest");
+        IsTheTemplate(h, p, "rpg");
+        Assert.Equal(["Battle", "Meadow", "Title"], Names(p.SceneFiles()));
+        Assert.Equal(["Battle", "Explorer", "Shopkeeper"], Names(p.ScriptFiles()));
+        Assert.Equal(["Enemies", "Heroes", "Items"], Names(p.TableFiles()));
+        Assert.Equal(["Player", "NPC", "Encounter"], p.Settings.Tags);
+        Assert.Equal(["gold", "exp", "heroHp", "mageHp", "mageMp", "potions", "level", "battles"], p.Settings.Save.Fields.Select(f => f.Name));
+        Assert.Equal("gold", p.Settings.Scripting.ShopCurrency);
+        await BuildsToARom(h, "SLIMEQUEST", "SLIM");
+    }
+
+    /// <summary>P15.04: the Shoot 'em up card makes the scrolling stage with waves and the power-up, and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_ShootEmUp_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Shoot 'em up", "Star Patrol");
+        IsTheTemplate(h, p, "shmup");
+        Assert.Equal(["Stage_01", "Title"], Names(p.SceneFiles()));
+        Assert.Equal(["ShipController", "SpaceSlime", "Stage"], Names(p.ScriptFiles()));
+        Assert.Equal(["Player", "Enemy", "Shot", "EnemyShot", "PowerUp"], p.Settings.Tags);
+        Assert.Equal("Fire", p.Settings.Input[0].Action);
+        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 3 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        await BuildsToARom(h, "STARPATROL", "STAR");
+    }
+
+    /// <summary>P15.05: the Puzzle card with Sample level on makes the falling-gem game (not the empty project), and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_Puzzle_WithSampleLevel_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Puzzle", "Gem Drop");
+        IsTheTemplate(h, p, "puzzle");
+        Assert.Equal(["Board", "Title"], Names(p.SceneFiles()));
+        Assert.Equal(["Board"], Names(p.ScriptFiles()));
+        Assert.Equal(["gems"], Names(p.TilesetFiles()));
+        Assert.Equal(["Board"], p.Settings.Tags);
+        Assert.Equal(["score", "best"], p.Settings.Save.Fields.Select(f => f.Name));
+        Assert.Equal("Turn", p.Settings.Input[0].Action);
+        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 1 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        await BuildsToARom(h, "GEMDROP", "GEMD");
+    }
+
+    /// <summary>P15.07: the Beat 'em up card makes the pier brawl (fighter, thugs, waves), and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_BeatEmUp_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Beat 'em up", "Pier Brawl");
+        IsTheTemplate(h, p, "brawler");
+        Assert.Equal(["Pier", "Title"], Names(p.SceneFiles()));
+        Assert.Equal(["Fighter", "Thug", "Waves"], Names(p.ScriptFiles()));
+        Assert.Equal(["Player", "Enemy"], p.Settings.Tags);
+        Assert.Equal("Attack", p.Settings.Input[0].Action);
+        Assert.Equal("Mode 0 · 3 BG layers · 7 actors · 3 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        await BuildsToARom(h, "PIERBRAWL", "PIER");
+    }
+
+    /// <summary>P15.08: the Racing (Mode 7) card makes the circuit on a rotating ground plane (an affine scene), and it builds.</summary>
+    [AvaloniaFact]
+    public async Task Create_RacingMode7_WritesTheTemplateGameThatBuilds()
+    {
+        using var h = new LauncherHarness();
+        var p = await CreateFromCard(h, "Racing (Mode 7)", "Kart Cup");
+        IsTheTemplate(h, p, "racing");
+        Assert.Equal(["Circuit", "Title"], Names(p.SceneFiles()));
+        Assert.Equal(["Kart", "Rival"], Names(p.ScriptFiles()));
+        Assert.Equal(1, GameProject.Load<SceneFile>(Path.Combine(p.ScenesDir, "Circuit.scene")).VideoMode);
+        Assert.Equal(["Player", "Grass", "Finish", "Check"], p.Settings.Tags);
+        Assert.Equal(["best"], p.Settings.Save.Fields.Select(f => f.Name));
+        Assert.Equal("Accelerate", p.Settings.Input[0].Action);
+        Assert.Equal("Mode 1 · 2 BG layers · 7 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        await BuildsToARom(h, "KARTCUP", "KART");
+    }
+
+    /// <summary>New Project as a user makes it: File › New Project, the template card, the name, Location, no git, Create Project.</summary>
+    static async Task<GameProject> CreateFromCard(LauncherHarness h, string card, string name)
+    {
+        h.Key(PhysicalKey.N, RawInputModifiers.Control);
+        var dlg = Assert.IsType<NewProjectDialog>(h.Win.Overlays.Open.Single());
+        var c = dlg.Cards.Single(x => x.Title == card);
+        c.BringIntoView();   // the third row of cards is below the fold of the template grid
+        Capture.Pump();
+        h.Click(c);
+        Assert.Equal(card, dlg.Cards.Single(x => x.IsSelected).Title);
+        var nameBox = Box(dlg.NameField);
+        nameBox.Focus();
+        nameBox.SelectAll();
+        h.Type(name);
+        h.Launcher.PickFolder = _ => Task.FromResult<string?>(Path.Combine(h.Fx.Folder, "Made"));
+        h.Click(dlg.Location.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "PART_Box"));
+        var folder = Path.Combine(h.Fx.Folder, "Made", GameProject.FileName(name));
+        Assert.Equal(folder, dlg.Location.Selected);
+        // Sample level stays on: the template's own game is made
+        Assert.True(dlg.SampleLevel.IsChecked);
+        h.Click(dlg.Git);
+        Assert.False(dlg.Git.IsChecked);
+        h.Click(Confirm(dlg));
+        await LauncherHarness.Until(() => h.S.Project.Current != null && !h.Win.Overlays.IsOpen);
+        var p = h.S.Project.Current!;
+        Assert.Equal(Path.Combine(folder, GameProject.FileName(name) + ".agbproj"), p.ProjectPath);
+        Assert.Equal(name, p.Settings.Name);
+        Assert.Equal("T-P01", h.Win.CurrentPageId);
+        Assert.False(Directory.Exists(Path.Combine(p.Root, ".git")));
+        return p;
+    }
+
+    /// <summary>The project holds what the AgbStudio.Build template writes, as a project made from it directly.</summary>
+    static void IsTheTemplate(LauncherHarness h, GameProject p, string id)
+    {
+        var reference = AgbStudio.Build.Content.Templates.TemplateCatalog.Find(id)!.Create(Path.Combine(h.Fx.Folder, "Reference"), "Reference");
+        Assert.Equal(Names(reference.SceneFiles()), Names(p.SceneFiles()));
+        Assert.Equal(Names(reference.ScriptFiles()), Names(p.ScriptFiles()));
+        Assert.Equal(Names(reference.SpriteFiles()), Names(p.SpriteFiles()));
+        Assert.Equal(Names(reference.TilesetFiles()), Names(p.TilesetFiles()));
+        Assert.Equal(Names(reference.MapFiles()), Names(p.MapFiles()));
+        Assert.Equal(Names(reference.MusicFiles()), Names(p.MusicFiles()));
+        Assert.Equal(Names(reference.SoundFiles()), Names(p.SoundFiles()));
+        Assert.Equal(Names(reference.TableFiles()), Names(p.TableFiles()));
+        Assert.Equal(reference.Settings.Tags, p.Settings.Tags);
+        Assert.Equal(reference.Settings.Save.Fields.Select(f => f.Name), p.Settings.Save.Fields.Select(f => f.Name));
+        Assert.Equal(AgbStudio.Build.Content.Templates.TemplateInfo.Stats(reference), AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        // its title screen is the start scene and the template's own Thai font is the default font
+        Assert.Equal(("Title", "Title"), (p.Settings.General.StartScene, p.Settings.LastScene));
+        Assert.Equal("thai_vwf", p.Settings.General.DefaultFont);
+        Assert.Empty(p.GraphFiles());
+        Assert.All(p.ScriptFiles(), f => Assert.Contains("class ", File.ReadAllText(f)));
+    }
+
+    /// <summary>Build › Build ROM (a real build with devkitPro) writes the ROM, with the ROM title and game code of New Project in its header.</summary>
+    static async Task BuildsToARom(LauncherHarness h, string romTitle, string gameCode)
+    {
+        Assert.True(new AgbStudio.Build.Toolchain().IsComplete, "devkitPro toolchain not found");
+        Assert.Equal((romTitle, gameCode), (h.S.Project.Current!.Settings.General.RomTitle, h.S.Project.Current.Settings.General.GameCode));
+        h.S.ProjectSettings.Settings.Build.RunAfterBuild = false;
+        h.S.Commands.Execute("build.buildRom");
+        Capture.Pump();
+        var d = Assert.IsType<AgbStudio.Editor.Windows.Build.BuildRomDialog>(h.Win.Overlays.Open.Single());
+        await LauncherHarness.Until(() => d.Completion.IsCompleted, 900_000);
+        var r = d.Completion.Result!;
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.True(File.Exists(r.RomPath), r.RomPath);
+        Assert.StartsWith(Path.GetFullPath(h.S.Project.Current.BuildDir), Path.GetFullPath(r.RomPath), StringComparison.OrdinalIgnoreCase);
+        var rom = File.ReadAllBytes(r.RomPath);
+        Assert.Equal(romTitle, System.Text.Encoding.ASCII.GetString(rom, 0xA0, 12).TrimEnd('\0', ' '));
+        Assert.Equal(gameCode, System.Text.Encoding.ASCII.GetString(rom, 0xAC, 4));
+        Assert.StartsWith("Build OK", h.S.Status.Build, StringComparison.Ordinal);
+    }
+
     [AvaloniaFact]
     public void LightTheme_UsesTheLightTokens()
     {
