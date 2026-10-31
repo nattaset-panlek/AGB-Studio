@@ -39,7 +39,7 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
     public int ConversationIndex { get; private set; }
     /// <summary>The selected line card; selecting one (click, a new line, another conversation) ends Select All.</summary>
     public int SelectedLine { get => _selectedLine; private set { _selectedLine = value; AllLinesSelected = false; } }
-    /// <summary>Edit â€º Select All: every line of the conversation is selected; Cut / Copy / Duplicate / Delete act on all of them.</summary>
+    /// <summary>Edit › Select All: every line of the conversation is selected; Cut / Copy / Duplicate / Delete act on all of them.</summary>
     public bool AllLinesSelected { get; private set; }
     public int SelectedChoice { get; private set; } = -1;
     public string Primary { get; private set; } = "en";

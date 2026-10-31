@@ -36,7 +36,7 @@ public sealed class DatabasePage : ToolPage
     public ProjectData? Data => _data;
     public TableDoc? Current { get; private set; }
     public int SelectedRow { get; private set; } = -1;
-    /// <summary>Edit â€º Select All: every row the grid shows (after the filter) is selected; a row click selects that row alone.</summary>
+    /// <summary>Edit › Select All: every row the grid shows (after the filter) is selected; a row click selects that row alone.</summary>
     public bool AllRowsSelected { get; private set; }
     /// <summary>The rows the Edit menu acts on, in table order: every shown row after Select All, else the selected row.</summary>
     public IReadOnlyList<int> SelectedRows => AllRowsSelected && Current != null ? Grid.VisibleRowIndices.Where(r => r < Current.Table.Rows.Count).ToList()
@@ -152,7 +152,7 @@ public sealed class DatabasePage : ToolPage
         Refresh();
     }
 
-    /// <summary>Edit â€º Select All in the grid: every row it shows.</summary>
+    /// <summary>Edit › Select All in the grid: every row it shows.</summary>
     public void SelectAllRows()
     {
         if (Current is null || Grid.VisibleRowIndices.Count == 0) return;

@@ -18,8 +18,10 @@ public sealed record HierarchyRow(SceneItem Item, string Label, string Glyph, st
 /// <summary>
 /// Hierarchy (T-P01, P11.12): the scene, its camera, background layers and actors (actors of a group with two or more
 /// members under a folder), filtered by the workspace's "Search scene…" field. Click selects (in sync with the
-/// viewport and Inspector), the chevron or a double click opens and closes folders, a double click on an actor focuses
-/// it in the viewport, right click opens the Actor Context Menu (T-M12), F2 renames in place.
+/// viewport and Inspector), Ctrl + click adds an actor to the selection or takes it out, Shift + click selects the
+/// actors from the first selected one to the clicked one, the chevron or a double click opens and closes folders, a
+/// double click on an actor focuses it in the viewport, right click opens the Actor Context Menu (T-M12), F2 renames in
+/// place.
 /// </summary>
 [EditorWindow("T-P01:Hierarchy", Kind = WindowKind.Panel)]
 public sealed class HierarchyPanel : Panel, IEditTarget
@@ -180,14 +182,15 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         var sel = _m.Selection;
         foreach (var r in VisibleRows())
         {
-            var selected = sel == r.Item || (sel is { Kind: SceneItemKind.Group } g && r.Item.Kind == SceneItemKind.Group && g.Name == r.Item.Name);
+            var selected = r.Item.Kind == SceneItemKind.Actor ? _m.IsActorSelected(r.Item.Index)
+                : sel == r.Item || (sel is { Kind: SceneItemKind.Group } g && r.Item.Kind == SceneItemKind.Group && g.Name == r.Item.Name);
             var item = new TreeItem
             {
                 Label = r.Label, Glyph = r.Glyph, Depth = r.Depth, Toggle = r.Toggle, IsSelected = selected,
                 Meta = selected && r.Item.Kind == SceneItemKind.Actor ? "Actor" : r.Meta,
                 Tag = r, Name = "Row_" + r.Key,
             };
-            item.Activated += (_, e) => OnActivated(item, r, e.ClickCount);
+            item.Activated += (_, e) => OnActivated(item, r, e.ClickCount, e.Modifiers);
             item.PointerPressed += (_, e) =>
             {
                 if (!e.GetCurrentPoint(item).Properties.IsRightButtonPressed) return;
@@ -201,9 +204,19 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         }
     }
 
-    void OnActivated(TreeItem item, HierarchyRow r, int clicks)
+    void OnActivated(TreeItem item, HierarchyRow r, int clicks, KeyModifiers mods = KeyModifiers.None)
     {
         SceneEditTarget.Of(_m).Active = SceneEditTarget.Panel.Scene;
+        if (r.Item.Kind == SceneItemKind.Actor && clicks == 1 && (mods & KeyModifiers.Control) != 0)
+        {
+            _m.ToggleActor(r.Item.Index);
+            return;
+        }
+        if (r.Item.Kind == SceneItemKind.Actor && clicks == 1 && (mods & KeyModifiers.Shift) != 0)
+        {
+            SelectRange(r);
+            return;
+        }
         var pointerX = _lastPointerX;
         var inToggle = r.Toggle != TreeToggle.None && pointerX >= 0 && pointerX < TreeItem.IndentOf(r.Depth) + 16;
         if (inToggle || (clicks == 2 && r.Toggle != TreeToggle.None))
@@ -226,6 +239,18 @@ public sealed class HierarchyPanel : Panel, IEditTarget
     }
 
     double _lastPointerX = -1;
+
+    /// <summary>Shift + click: the actors of the rows shown from the first selected actor to the clicked one.</summary>
+    void SelectRange(HierarchyRow to)
+    {
+        var rows = VisibleRows();
+        var anchor = _m.SelectedActorIndex;
+        var from = rows.FindIndex(x => x.Item.Kind == SceneItemKind.Actor && x.Item.Index == anchor);
+        var end = rows.FindIndex(x => x.Key == to.Key);
+        if (from < 0 || end < 0) { _m.SelectActor(to.Item.Index); return; }
+        var (a, b) = from <= end ? (from, end) : (end, from);
+        _m.SelectActors(rows.Skip(a).Take(b - a + 1).Where(x => x.Item.Kind == SceneItemKind.Actor).Select(x => x.Item.Index), anchor);
+    }
 
     // ---- inline rename (F2, Actor Context Menu › Rename) ----------------------------------------------
 

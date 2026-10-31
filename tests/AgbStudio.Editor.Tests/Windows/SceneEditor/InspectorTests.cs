@@ -28,6 +28,34 @@ public sealed class InspectorTests : IDisposable
         _w.Type(text);
     }
 
+    /// <summary>
+    /// Several actors selected (Ctrl + click in the Hierarchy): Figma has no Inspector state for it, so the Inspector
+    /// shows "2 actors selected" and the first actor's fields read-only; a plain click makes them editable again.
+    /// </summary>
+    [AvaloniaFact]
+    public void SeveralActors_ShowTheFirstReadOnlyWithTheCount()
+    {
+        _w.Click(_w.Find<TreeItem>("Row_actor:0"));
+        _w.Click(_w.Find<TreeItem>("Row_actor:3"), mods: RawInputModifiers.Control);
+        Assert.Equal("2 actors selected", _w.Find<TextBlock>("MultiSelectionText").Text);
+        Assert.Equal("Player", _w.Find<TextBlock>("ActorName").Text);
+        var fields = _w.Find<StackPanel>("MultiSelectionFields");
+        Assert.False(fields.IsEnabled);
+        var boxes = fields.GetVisualDescendants().OfType<TextBox>().ToList();
+        Assert.NotEmpty(boxes);
+        Assert.All(boxes, b => Assert.False(b.IsEffectivelyEnabled));
+        Assert.False(_w.Find<Button>("PriorityButton").IsEffectivelyEnabled);
+        // a click on the priority does nothing: nothing is edited while several actors are selected
+        var before = File.ReadAllText(_w.M.ScenePath!);
+        _w.Click(_w.Find<Button>("PriorityButton"));
+        Assert.Equal(before, File.ReadAllText(_w.M.ScenePath!));
+        // one actor again: its fields can be edited
+        _w.Click(_w.Find<TreeItem>("Row_actor:3"));
+        Assert.DoesNotContain(_w.All<TextBlock>(), t => t.Name == "MultiSelectionText");
+        Assert.Equal("Question Block", _w.Find<TextBlock>("ActorName").Text);
+        Assert.True(_w.Find<Button>("PriorityButton").IsEffectivelyEnabled);
+    }
+
     [AvaloniaFact]
     public void Header_TransformAndSpriteOfThePlayer()
     {

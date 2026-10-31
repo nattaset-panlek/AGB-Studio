@@ -4,7 +4,7 @@ namespace AgbStudio.Editor.Windows.SceneEditor;
 
 /// <summary>
 /// The Edit menu (P10.11) and the Rename / Delete / Duplicate entries of the Actor and Asset context menus act on the
-/// Scene Editor panel used last: actors (Hierarchy, viewport) or the selected asset (Assets panel).
+/// Scene Editor panel used last: the selected actors (Hierarchy, viewport) or the selected assets (Assets panel).
 /// </summary>
 public sealed class SceneEditTarget : IEditTarget
 {
@@ -35,33 +35,33 @@ public sealed class SceneEditTarget : IEditTarget
 
     public void Copy()
     {
-        if (Active == Panel.Scene) _m.CopyActor(_m.SelectedActorIndex);
+        if (Active == Panel.Scene) _m.CopyActors(_m.SelectedActorIndices);
         else Assets.Copy();
     }
 
     public void Paste()
     {
-        if (Active == Panel.Scene) _m.PasteActor();
+        if (Active == Panel.Scene) _m.PasteActors();
         else Assets.Paste();
     }
 
     public void Duplicate()
     {
-        if (Active == Panel.Scene) _m.DuplicateActor(_m.SelectedActorIndex);
+        if (Active == Panel.Scene) _m.DuplicateActors(_m.SelectedActorIndices);
         else Assets.Duplicate();
     }
 
     public void Delete()
     {
-        if (Active == Panel.Scene) _m.DeleteActor(_m.SelectedActorIndex);
+        if (Active == Panel.Scene) _m.DeleteActors(_m.SelectedActorIndices);
         else Assets.Delete();
     }
 
-    /// <summary>Select All in the scene selects the scene (every actor is under it); in Assets, every asset of the shown category.</summary>
+    /// <summary>Select All: every actor of the scene; in Assets, every asset of the shown category.</summary>
     public void SelectAll()
     {
         if (Active == Panel.Assets) Assets.SelectAll(Assets.ShownCategory);
-        else if (_m.Scene != null) _m.Selection = new SceneItem(SceneItemKind.Scene);
+        else _m.SelectAllActors();
     }
 
     /// <summary>F2: rename the selected actor (inline in the Hierarchy) or the selected asset.</summary>
