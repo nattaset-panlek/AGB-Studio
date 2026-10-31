@@ -22,8 +22,8 @@ Only what exists in the code is described; where a blueprint idea is not built, 
 
 D-04 lists `templates/` and `samples/` folders; they do not exist. Templates, samples and the Sky Hopper fixture are
 written by code in `tools/AgbStudio.Build/Content` (`Templates/*Template.cs`, `Samples.cs`, `SampleProjects.cs` (the
-`mini` sample), `SkyHopper.cs`, `PixelArt.cs`, `SplashArt.cs`) with the music writers in `tools/AgbStudio.Build/Audio`
-(`XmWriter.cs`, `Chiptune.cs`) when a project is created.
+`mini` sample), `SkyHopper.cs`, `PixelArt.cs`, `SplashArt.cs`) with the module and sound writers in
+`tools/AgbStudio.Build/Audio` (`XmWriter.cs`, `Chiptune.cs`, `AudioWriters.cs`) when a project is created.
 
 ## Blueprint sections and where they live
 
