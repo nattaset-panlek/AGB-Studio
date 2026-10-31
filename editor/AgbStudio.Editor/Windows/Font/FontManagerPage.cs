@@ -361,7 +361,8 @@ public sealed class FontManagerPage : DockPanel
             return box;
         }
         var stack = Toggle("Stack upper vowels & tone marks", "StackMarks", f => f.StackUpperMarks, (f, v) => f.StackUpperMarks = v);
-        var lower = Toggle("Place lower vowels (ุ)", "LowerVowels", f => f.PlaceLowerVowels, (f, v) => f.PlaceLowerVowels = v);
+        // the mark on a no-break space (Unicode's base for a mark shown alone), so it sits between the brackets as in Figma
+        var lower = Toggle("Place lower vowels (\u00A0\u0E38)", "LowerVowels", f => f.PlaceLowerVowels, (f, v) => f.PlaceLowerVowels = v);
         var wrap = Toggle("Word-wrap Thai by dictionary", "ThaiWrap", f => f.ThaiWordWrap, (f, v) => f.ThaiWordWrap = v);
         var note = UI.Text("Thai has no spaces between words, so line breaks use a word list — text never splits mid-word.", "Label/11", "text/muted");
         note.TextWrapping = TextWrapping.Wrap;
