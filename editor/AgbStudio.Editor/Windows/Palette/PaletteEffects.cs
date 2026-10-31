@@ -1,3 +1,5 @@
+using AgbStudio.Core.Project;
+
 namespace AgbStudio.Editor.Windows.Palette;
 
 /// <summary>

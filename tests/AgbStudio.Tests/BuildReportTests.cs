@@ -119,6 +119,68 @@ public sealed partial class BuildReportTests(EmulatorFixture emu)
         Assert.Equal(4, GameBuilder.DialogueBoxBytes / 1024);
         Assert.True(scene.VramBgBytes > scene.VramTextBytes);
         Assert.Equal(4, scene.ObjPalettes);  // hero, slime, coin, flag
+
+        // P7.12: VRAM, palette RAM and RAM per asset (what it takes when a scene loads it), consistent with the scene
+        // budgets and the linker map.
+        var mapPath = r.ElfPath + ".map";
+        BuildReport.ReportAsset Row(string type, string name) => report.Assets.Single(a => a.Type == type && a.Name == name);
+        // A sprite: one frame in OBJ VRAM for each actor that shows it, and its own OBJ palette bank. Frames are copied
+        // from ROM, so no RAM; all its frames are the tile array the linker map shows in ROM.
+        var hero = Row("Sprite", "hero");
+        Assert.Equal(("OBJ", 0L, 32L, 0L), (hero.Vram, hero.VramMapBytes, hero.PaletteBytes, hero.RamBytes));
+        Assert.Equal(b.Assets.Sprites["hero"].Count * hero.VramBytes, SectionBytes(mapPath, "agbasset_sprite_hero_tiles"));
+        var shown = sceneFile.Actors.Where(a => b.Assets.Sprites.ContainsKey(a.Sprite)).GroupBy(a => a.Sprite).ToList();
+        Assert.Equal(scene.VramObjBytes, shown.Sum(g => Math.Min(g.Count(), b.Assets.Sprites[g.Key].Count) * Row("Sprite", g.Key).VramBytes));
+        Assert.Equal(scene.ObjPalettes * 32L, shown.Sum(g => Row("Sprite", g.Key).PaletteBytes));
+        // A tileset: every tile in BG VRAM (LZ77 tiles are decompressed by the BIOS straight into VRAM) and its banks.
+        var tileset = Row("Tileset", "forest_tiles");
+        Assert.Equal(("BG", b.Assets.Tilesets["forest_tiles"].Count * 32L, 0L, 0L), (tileset.Vram, tileset.VramBytes, tileset.VramMapBytes, tileset.RamBytes));
+        // A map: two screen blocks for each drawn layer and their shadow in the screen arena; its cells stay in ROM.
+        var forestMap = GameProject.Load<MapFile>(Path.Combine(p.MapsDir, "Forest_01.map"));
+        var drawn = forestMap.Layers.Count(l => l.Type != LayerType.CollisionOnly);
+        var mapRow = Row("Map", "Forest_01");
+        Assert.Equal(("BG", 0L, drawn * 4096L, drawn * 4096L), (mapRow.Vram, mapRow.VramTileBytes, mapRow.VramMapBytes, mapRow.RamBytes));
+        var mapInRom = ObjectBytes(map.RomByObject, "maps_map_Forest_01.o");
+        Assert.True(mapRow.Bytes >= mapInRom && mapInRom >= forestMap.Width * forestMap.Height * 2, $"map: report {mapRow.Bytes} B, linker map {mapInRom} B");
+        // The scene's BG budget is the sum of what it loads: its map, the tileset once, the text layer and its 2 KB map.
+        Assert.Equal(scene.VramBgBytes, mapRow.VramBytes + tileset.VramBytes + scene.VramTextBytes + 2048);
+        Assert.Equal(scene.BgPalettes * 32L, mapRow.PaletteBytes + tileset.PaletteBytes);
+        // The boot splash: its tiles and palette, one 2 KB screen block and its shadow.
+        var splash = Row("Image", "Boot splash");
+        Assert.Equal(("BG", 2048L, 2048L), (splash.Vram, splash.VramMapBytes, splash.RamBytes));
+        Assert.True(splash.VramTileBytes > 0 && splash.PaletteBytes > 0);
+        // RAM: the map shadows are allocated in the screen arena, the 112 KB EWRAM buffer the linker map shows (ramSplit).
+        var arena = report.RamSplit.Single(x => x.Name == "Screen arena").Bytes;
+        Assert.Equal(112 * 1024, arena);
+        Assert.True(mapRow.RamBytes + splash.RamBytes <= arena);
+        // Read from ROM where they are: sounds, music, fonts, strings and tables take no VRAM and no RAM.
+        Assert.Contains(report.Assets, a => a.Type is "Font");
+        Assert.All(report.Assets.Where(a => a.Type is "Music" or "Sound" or "Font" or "Text" or "Data"),
+            a => Assert.Equal(("", 0L, 0L, 0L), (a.Vram, a.VramBytes, a.PaletteBytes, a.RamBytes)));
+
+        // P7.12: report.json and report-history.json are valid against their schemas (docs/schemas).
+        var reportErrors = SchemaTests.Validate("report.schema.json", File.ReadAllText(Path.Combine(p.BuildDir, "report.json")));
+        Assert.True(reportErrors.Count == 0, string.Join("\n", reportErrors.Take(20)));
+        var historyErrors = SchemaTests.Validate("report-history.schema.json", File.ReadAllText(Path.Combine(p.BuildDir, "report-history.json")));
+        Assert.True(historyErrors.Count == 0, string.Join("\n", historyErrors.Take(20)));
+        Assert.NotEmpty(SchemaTests.Validate("report.schema.json", """{ "format": 1, "assets": [ { "name": "hero", "vramBytes": "1 KB" } ] }"""));
+    }
+
+    /// <summary>Bytes of the input section that holds one symbol in the linker map (-fdata-sections gives each symbol its
+    /// own section; C++ names are mangled, so the plain name is matched inside the section name).</summary>
+    static long SectionBytes(string mapPath, string symbol)
+    {
+        var lines = File.ReadAllLines(mapPath);
+        var start = Array.FindIndex(lines, l => l.StartsWith("Linker script and memory map", StringComparison.Ordinal));
+        var name = new Regex(@"^ \.\S*[^A-Za-z_]" + symbol + @"E?(\s|$)");
+        for (var i = start; i < lines.Length; i++)
+        {
+            if (!name.IsMatch(lines[i])) continue;
+            var m = Regex.Match(lines[i], @"^ \.\S+\s+0x([0-9a-f]+)\s+0x([0-9a-f]+)\s");
+            if (!m.Success && i + 1 < lines.Length) m = Regex.Match(lines[i + 1], @"^\s+0x([0-9a-f]+)\s+0x([0-9a-f]+)\s");
+            if (m.Success) return long.Parse(m.Groups[2].Value, NumberStyles.HexNumber);
+        }
+        return -1;
     }
 
     [Fact]

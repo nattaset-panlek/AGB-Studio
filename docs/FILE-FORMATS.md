@@ -4,11 +4,11 @@ Every project file is UTF-8 JSON with camelCase property names (D-03), written b
 so it diffs well in version control. Each top-level document carries `"format": 1`; a file with a higher format was
 written by a newer AGB Studio and is refused with a message instead of being misread. The C# classes in
 `tools/AgbStudio.Core/Project` are the reference (and `tools/AgbStudio.Scripting` for `.graph` and `.dlg`); this page
-lists what lives where. There are no separate JSON schema files.
+lists what lives where.
 
 JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`, `scene`, `map`, `sprite-meta`,
-`tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg` and
-`graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
+`tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg`,
+`palettes` and `graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
 `SchemaTests.SchemasMatchTheFileModel` fails when a class changes and its schema was not regenerated (run the tests with
 `AGB_UPDATE_SCHEMAS=1` to rewrite them).
 
@@ -114,10 +114,17 @@ copies it in any scene when the scene has no actor of that name.
 
 ## Other files
 
+- `assets/palettes/palettes.json` (`PaletteLibraryFile`, Palette Manager; read and written by the editor only, the
+  build takes the colours from the art and the sprite meta): `banks` (each `kind` `Bg` / `Obj`, `slot` 0-15, `name`,
+  `colors` as "#RRGGBB" with "none" for the locked transparent index, at most 16, `assets` that use the bank as
+  project-relative paths, `lockTransparent`, `mergeNear`, `sortByHue`) and `effects` (`fade`, `cycle`, `flash`: each
+  `kind`, `name`, `bankKind`, `bank` with -1 for every bank, colour range `first` / `last`, `frames`, cycle
+  `direction` `Left` / `Right` / `PingPong`, 15-bit `color`, `enabled`).
 - `fonts/<name>.font` (`FontFile`): source kind (`Ttf`, `Bdf`, `Image`) and file, pixel size, variable or fixed width,
   character sets, extra characters, line height, baseline, spacing, bits per pixel, drop shadow, Thai mark stacking
-  and lower-vowel placement, glyph overrides (edited pixels by code point). OpenType CFF fonts are refused by the
-  build.
+  and lower-vowel placement, glyph overrides (edited pixels by code point). `Ttf` takes a `.ttf` or an `.otf` file:
+  TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed. Font collections (`.ttc`), web fonts
+  (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
 - `data/<Table>.db` (`TableFile`): key field, keep in ROM, `fields` (name, type `int` / `fixed` / `bool` / `text` /
   `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized) and `rows`.
 - `text/strings.<lang>.json` (`StringTable`): `language` and a sorted `strings` map from key to text.
@@ -142,8 +149,21 @@ copies it in any scene when the scene has no actor of that name.
 | `obj/build.ninja`, `obj/*.elf`, `obj/*.elf.map`, `obj/obj/` | NativeBuild | the build graph, the linked ELF, its map file, objects |
 | `gen/` | GameBuilder, scripting compiler | generated C++ (assets, scenes, strings, scripts, database), the soundbank, debugger maps |
 | `cache/manifest.json` | AssetCache | hashes of converted assets for incremental builds |
-| `report.json` | BuildReport | ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets, warnings |
+| `report.json` | BuildReport | `format`, ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets (`scenes`), build time per step (`stepSeconds`), warnings. Each of `assets` (largest ROM first; `largestAssets` is the first ten) has `name`, `type`, ROM `bytes` and `share` (percent of the ROM), and what it takes when a scene loads it: `vram` (`BG`, `OBJ` or empty), `vramBytes` = `vramTileBytes` + `vramMapBytes`, `paletteBytes` (32 per 16-colour bank) and `ramBytes` (see below) |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
+
+What an asset takes when loaded (`GameBuilder` `AssetInfo`, the same numbers the scene budgets add up): a sprite one
+frame of OBJ tiles for each actor that shows it and its own OBJ palette bank (none when it shares a palette); a tileset
+or image all its tiles in BG VRAM and its palette banks (LZ77 tiles are decompressed by the BIOS straight into VRAM, so
+no RAM); a map, for each tile or image layer, a 64 x 32 screen map (4 KB) in BG VRAM and its 4 KB shadow in the screen
+arena (EWRAM), and for each rotate / scale layer a 16 KB character block for its 8bpp tiles, its map and its palette
+banks; the boot splash its tiles, palette, a 2 KB screen map and its 2 KB shadow. Music, sounds, fonts, string tables
+and Database tables are read from ROM: no VRAM and no RAM (the text layer's tiles are in the scene budget's
+`vramTextBytes`; the Maxmod mixing buffer and other runtime memory are in `ramSplit`). A script that edits map tiles
+(`Scene.SetTile`) copies that layer's cells into the screen arena once; that copy is not counted.
+
+`docs/schemas/report.schema.json` and `report-history.schema.json` are generated from `BuildReport` like the project
+format schemas; `BuildReportTests.ReportNumbersMatchTheLinkerMap` checks a real build's files against them.
 
 ## Editor files (per user)
 

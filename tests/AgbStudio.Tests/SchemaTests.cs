@@ -6,6 +6,7 @@ using System.Text.Json.Serialization.Metadata;
 using AgbStudio.Build;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Content.Templates;
+using AgbStudio.Build.Pipeline;
 using AgbStudio.Core.Project;
 using AgbStudio.Scripting.Dialogue;
 using AgbStudio.Scripting.Graph;
@@ -46,6 +47,10 @@ public sealed class SchemaTests
         ("strings-meta.schema.json", typeof(StringMeta), "AGB Studio string notes (text/strings.meta.json)", null),
         ("prefab.schema.json", typeof(ActorData), "AGB Studio prefab (prefabs/<Name>.prefab)", null),
         ("dlg.schema.json", typeof(DialogueFile), "AGB Studio dialogue (dialogue/<name>.dlg)", DialogueJson),
+        ("palettes.schema.json", typeof(PaletteLibraryFile), "AGB Studio Palette Manager library (assets/palettes/palettes.json)", null),
+        // P7.12: build output read by the editor (Build Report, Budget Details) and by tools outside AGB Studio.
+        ("report.schema.json", typeof(BuildReport), "AGB Studio build report (build/report.json)", BuildReport.Json),
+        ("report-history.schema.json", typeof(List<BuildReport.HistoryEntry>), "AGB Studio build history (build/report-history.json)", BuildReport.Json),
     ];
 
     public static string Generate(Type type, string title, JsonSerializerOptions? options)
@@ -84,8 +89,8 @@ public sealed class SchemaTests
         }
         Assert.True(update || stale.Count == 0, $"Schemas differ from the file model (rewritten; review and commit them): {string.Join(", ", stale)}");
         Assert.True(File.Exists(Path.Combine(SchemaDir, "graph.schema.json")));
-        // Every format names its version.
-        foreach (var (file, type, _, _) in Generated.Where(g => g.Type != typeof(ActorData)))
+        // Every format names its version (a prefab is an actor of a scene; the build history is a list).
+        foreach (var (file, type, _, _) in Generated.Where(g => g.Type != typeof(ActorData) && g.Type != typeof(List<BuildReport.HistoryEntry>)))
             Assert.True(Schema(file)["properties"]?["format"] != null, $"{file} has no format field");
     }
 
@@ -107,6 +112,7 @@ public sealed class SchemaTests
         if (name.EndsWith(".dlg", StringComparison.Ordinal)) return "dlg.schema.json";
         if (name.EndsWith(".graph", StringComparison.Ordinal)) return "graph.schema.json";
         if (rel == "text/strings.meta.json") return "strings-meta.schema.json";
+        if (rel == "assets/palettes/palettes.json") return "palettes.schema.json";
         if (rel.StartsWith("text/strings.", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)) return "strings.schema.json";
         if (!name.EndsWith(".meta.json", StringComparison.Ordinal)) return null;
         if (rel.StartsWith("assets/sprites/", StringComparison.Ordinal)) return "sprite-meta.schema.json";
@@ -156,6 +162,7 @@ public sealed class SchemaTests
             Tiles = { [3] = new TileProperties { Collision = CollisionType.SlopeUp, Animation = [3, 4], Tag = "ground" } },
             AutoTiles = { new AutoTileSet { Rules = { new AutoTileRule { Name = "Top edge", Mask = [2, 0, 2, 1, 1, 1, 2, 1, 2], Tile = 5 } } } },
         });
+        Check("palettes.schema.json", new PaletteLibraryFile { Banks = { new PaletteBankData { Kind = BankKind.Obj, Slot = 15, Colors = { "none", "#FFFFFF" } } } });
         Check("font.schema.json", new FontFile { Name = "f", SourceKind = FontSourceKind.Bdf, Glyphs = { ["U+0E01"] = new GlyphOverride { Advance = 6, Rows = { "0123" } } } });
         Check("scene.schema.json", new SceneFile
         {
@@ -198,6 +205,8 @@ public sealed class SchemaTests
         Assert.Contains(Validate("music-meta.schema.json", """{ "format": 1, "volume": "loud" }"""), e => e.Contains("volume"));
         Assert.Contains(Validate("sfx.schema.json", """{ "format": 1, "chanel": "Wave" }"""), e => e.Contains("chanel"));
         Assert.Contains(Validate("sfx.schema.json", """{ "format": 1, "channel": "Square3" }"""), e => e.Contains("channel"));
+        Assert.Contains(Validate("palettes.schema.json", """{ "format": 1, "banks": [ { "kind": "Sprite", "slot": 0 } ] }"""), e => e.Contains("kind"));
+        Assert.Contains(Validate("palettes.schema.json", """{ "format": 1, "effects": { "fade": { "frames": "slow" } } }"""), e => e.Contains("frames"));
     }
 
     // ---- a small JSON Schema validator for the keywords the schemas use -------------------------------

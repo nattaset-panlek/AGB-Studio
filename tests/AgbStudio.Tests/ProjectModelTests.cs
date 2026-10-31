@@ -49,6 +49,16 @@ public sealed class ProjectModelTests
         RoundTrip("text/strings.meta.json", new StringMeta { Keys = { ["dlg.forest.hopper_01"] = new StringInfo { Group = "Dialogue", Speaker = "Hopper", BoxWidth = 200, MaxLines = 2 } } });
         RoundTrip("assets/audio/music/bgm_forest.xm.meta.json", new MusicMeta { Volume = 0.5, LoopStart = 2, FadeOnSceneChange = false });
         RoundTrip("assets/audio/sfx/jump.wav.meta.json", new SoundMeta { Rate = 11025, Volume = 0.75 });
+        // The Palette Manager library (editor only): banks with their colours, assets and options, and the three effects.
+        RoundTrip("assets/palettes/palettes.json", new PaletteLibraryFile
+        {
+            Banks =
+            {
+                new PaletteBankData { Kind = BankKind.Bg, Slot = 0, Name = "forest", Colors = { "none", "#2E7D32", "#A5D6A7" }, Assets = { "assets/tilesets/forest_tiles.png" } },
+                new PaletteBankData { Kind = BankKind.Obj, Slot = 3, Name = "hero", Colors = { "none", "#FFCC80" }, LockTransparent = false, MergeNear = true, SortByHue = true },
+            },
+            Effects = new PaletteEffectsData { Cycle = new PaletteEffectData { Kind = EffectKind.Cycle, Name = "lava", Bank = 2, First = 4, Last = 7, Direction = CycleDirection.PingPong, Enabled = false } },
+        });
         // Make Prefab writes the actor as it is in the scene (no format field of its own).
         RoundTrip("prefabs/Slime.prefab", new ActorData { Name = "Slime", Kind = ActorKind.Enemy, Sprite = "slime", Components = { new ComponentData { Type = "Patrol" } } }, versioned: false);
     }

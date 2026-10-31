@@ -54,4 +54,4 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 - Builds are not code-signed (D-19): Windows SmartScreen may ask before the first start.
 - Check for Updates and Report a Bug use the addresses in editor.json; with none set they say so (D-13).
 - Writing to a GBxCart RW cartridge is turned off until it has been verified on hardware.
-- OpenType (CFF) fonts are refused by the build: use TrueType, BDF or an image sheet.
+- OpenType variable fonts (CFF2 outlines), font collections (.ttc) and web fonts (.woff) are refused: use a static .otf or .ttf, BDF or an image sheet.
