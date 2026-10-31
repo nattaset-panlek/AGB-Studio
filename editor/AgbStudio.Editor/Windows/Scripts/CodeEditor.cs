@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Theme;
@@ -682,7 +682,8 @@ public sealed class CodeEditor : Panel, IEditTarget
                     var end = Math.Min(issue.End, LineEnd(line));
                     var x1 = TextLeft + XOf(issue.Start);
                     var x2 = TextLeft + (end > issue.Start ? XOf(end) : XOf(issue.Start) + 6);
-                    Squiggle(ctx, x1, x2, LineTop(line) + LineHeight - 3, Token(issue.Severity == ScriptSeverity.Error ? "status/danger" : "status/warning"));
+                    // Figma T-P04: the wave 4 px under the glyphs, its crests 5 px apart
+                    Squiggle(ctx, x1, x2, LineTop(line) + LineHeight + 1, Token(issue.Severity == ScriptSeverity.Error ? "status/danger" : "status/warning"));
                 }
             if (IsFocused && !IsReadOnly)
             {
@@ -710,8 +711,9 @@ public sealed class CodeEditor : Panel, IEditTarget
         using (var c = g.Open())
         {
             c.BeginFigure(new Point(x1, y), false);
-            var up = true;
-            for (var x = x1 + 2; x <= x2 + 0.01; x += 2, up = !up) c.LineTo(new Point(x, up ? y - 2 : y));
+            // half waves of about 2.5 px that end exactly under the end of the word
+            var n = Math.Max(1, (int)Math.Round((x2 - x1) / 2.5));
+            for (var i = 1; i <= n; i++) c.LineTo(new Point(x1 + (x2 - x1) * i / n, i % 2 == 1 ? y - 2 : y));
             c.EndFigure(false);
         }
         ctx.DrawGeometry(null, new Pen(brush, 1), g);

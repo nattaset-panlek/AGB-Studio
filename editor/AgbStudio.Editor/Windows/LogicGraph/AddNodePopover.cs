@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Windows.Scripts;
@@ -72,9 +72,11 @@ public sealed class AddNodePopover : Border, IOverlayContent
     {
         query = query.Trim();
         // a word of the title that starts with the query ranks like a prefix ("veloc" finds Set Velocity X as well as
-        // Velocity X); then nodes that do something come before nodes that read a value
+        // Velocity X); then the nodes with a hint of their own (Figma T-O08: Set Velocity X, Set Velocity Y, Get Velocity),
+        // then nodes that do something before nodes that read a value
         var scored = NodeCatalog.All.Select((n, i) => (n, i, s: query.Length == 0 ? 0 : Math.Max(Shell.PaletteSearch.Score(n.Title, query), Shell.PaletteSearch.Score(n.Type, query))))
-            .Where(x => x.s >= 0).OrderByDescending(x => Math.Min(x.s, 800)).ThenBy(x => x.n.Role == NodeRole.Value ? 1 : 0).ThenByDescending(x => x.s).ThenBy(x => x.i)
+            .Where(x => x.s >= 0).OrderByDescending(x => Math.Min(x.s, 800)).ThenBy(x => GraphDocument.HasCuratedHint(x.n.Type) ? 0 : 1)
+            .ThenBy(x => x.n.Role == NodeRole.Value ? 1 : 0).ThenByDescending(x => x.s).ThenBy(x => x.i)
             .Select(x => x.n).ToList();
         // categories in the order their best match appears
         var shown = new List<NodeDef>();
@@ -101,9 +103,10 @@ public sealed class AddNodePopover : Border, IOverlayContent
                 cat = def.Category;
                 var square = new Border { Width = 8, Height = 8, CornerRadius = new CornerRadius(2), VerticalAlignment = VerticalAlignment.Center };
                 if (Application.Current?.FindResource(GraphDocument.CategoryColor(cat)) is Color c) square.Background = new SolidColorBrush(c);
-                _results.Children.Add(new Border { Height = 26, Padding = new Thickness(10, 8, 10, 2), Child = UI.Row(8, square, UI.Text(cat, "Overline/11", "text/muted")) });
+                _results.Children.Add(new Border { Height = 26, Padding = new Thickness(10, 8, 10, 2), Child = UI.Row(6, square, UI.Text(cat, "Overline/11", "text/muted")) });
             }
-            var row = new MenuRow { Label = def.Title, Height = 30, Name = "Node_" + def.Type };
+            // Figma: the name at 10 px inside the row, text/primary also when selected
+            var row = new MenuRow { Label = def.Title, Height = 30, Padding = new Thickness(10, 0), Name = "Node_" + def.Type, Classes = { "PrimaryName" } };
             // the hint in the Figma row is Label/11, not the mono shortcut style of the Menu Item
             var hint = UI.Text(GraphDocument.Hint(def.Type), "Label/11", "text/muted");
             hint.HorizontalAlignment = HorizontalAlignment.Right;

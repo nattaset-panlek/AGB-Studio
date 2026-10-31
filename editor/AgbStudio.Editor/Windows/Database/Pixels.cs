@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using AgbStudio.Core;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Graphics;
@@ -36,30 +36,52 @@ public sealed record PixelData(int Width, int Height, uint[] Argb)
     }
 }
 
-/// <summary>Draws <see cref="PixelData"/> scaled by a whole number, nearest neighbour, centred in its bounds.</summary>
+/// <summary>
+/// Draws <see cref="PixelData"/> centred in its bounds: scaled by a whole number, nearest neighbour, or at a fixed
+/// <see cref="Scale"/> (a fractional one is drawn as Figma draws pixel art at that size, <see cref="PixelScale"/>).
+/// </summary>
 public sealed class PixelImage : Control
 {
     public static readonly StyledProperty<PixelData?> PixelsProperty = AvaloniaProperty.Register<PixelImage, PixelData?>(nameof(Pixels));
     public static readonly StyledProperty<int> MaxScaleProperty = AvaloniaProperty.Register<PixelImage, int>(nameof(MaxScale), 8);
+    public static readonly StyledProperty<double> ScaleProperty = AvaloniaProperty.Register<PixelImage, double>(nameof(Scale));
 
-    WriteableBitmap? _bmp;
+    WriteableBitmap? _bmp, _scaled;
 
-    static PixelImage() => AffectsRender<PixelImage>(PixelsProperty, MaxScaleProperty);
+    static PixelImage() => AffectsRender<PixelImage>(PixelsProperty, MaxScaleProperty, ScaleProperty);
 
     public PixelImage() => RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.None);
 
     public PixelData? Pixels { get => GetValue(PixelsProperty); set => SetValue(PixelsProperty, value); }
     public int MaxScale { get => GetValue(MaxScaleProperty); set => SetValue(MaxScaleProperty, value); }
+    /// <summary>A fixed scale (0: the largest whole number up to <see cref="MaxScale"/> that fits).</summary>
+    public double Scale { get => GetValue(ScaleProperty); set => SetValue(ScaleProperty, value); }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == PixelsProperty) { _bmp = Pixels?.ToBitmap(); }
+        if (change.Property == PixelsProperty) { _bmp = Pixels?.ToBitmap(); _scaled = null; }
+        if (change.Property == ScaleProperty) _scaled = null;
     }
 
     public override void Render(DrawingContext context)
     {
         if (_bmp is null || Pixels is not { } p) return;
+        if (Scale > 0 && !PixelScale.IsWhole(Scale))
+        {
+            _scaled ??= PixelScale.Area(p.Argb, p.Width, p.Height, Scale);
+            var sz = _scaled.PixelSize;
+            var r = new Rect(Math.Round((Bounds.Width - sz.Width) / 2), Math.Round((Bounds.Height - sz.Height) / 2), sz.Width, sz.Height);
+            context.DrawImage(_scaled, new Rect(0, 0, sz.Width, sz.Height), r);
+            return;
+        }
+        if (Scale > 0)
+        {
+            var s = (int)Math.Round(Scale);
+            context.DrawImage(_bmp, new Rect(0, 0, p.Width, p.Height),
+                new Rect(Math.Round((Bounds.Width - p.Width * s) / 2), Math.Round((Bounds.Height - p.Height * s) / 2), p.Width * s, p.Height * s));
+            return;
+        }
         var k = Math.Max(1, Math.Min(MaxScale, (int)Math.Floor(Math.Min(Bounds.Width / p.Width, Bounds.Height / p.Height))));
         if (Bounds.Width < p.Width || Bounds.Height < p.Height) k = 1;
         var w = p.Width * k;

@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Support;
@@ -12,20 +12,20 @@ namespace AgbStudio.Editor.Tests.Windows.Play;
 
 /// <summary>
 /// SHOT renders of Play Mode (T-P02), Play Speed (T-M18) and the Debugger (T-P19, T-P23, T-P24) with the Sky Hopper
-/// fixture running, and P12.05: the Play Mode game view with the Hitboxes and Tile collision overlays on, cropped to
+/// fixture running, and P12.05: the Play Mode game view with the Hitboxes overlay on (Tile collision off), cropped to
 /// the Game View rectangle of the Figma frame (docs/evidence/figma/T-P02-game-view.json).
 /// </summary>
 public sealed class PlayShots : IShotSource, IShotSpecimen
 {
     public IEnumerable<(string Id, string Set, string FigmaPng, Action<string> Render)> Specimens()
     {
-        yield return ("T-P02-game-view", "Play Mode game view · Hitboxes and Tile collision on", Path.Combine(Repo.FigmaEvidence, "T-P02-game-view.png"), path =>
+        yield return ("T-P02-game-view", "Play Mode game view · Hitboxes on, Tile collision off", Path.Combine(Repo.FigmaEvidence, "T-P02-game-view.png"), path =>
         {
             using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Repo.FigmaEvidence, "T-P02-game-view.json")));
             int Get(string k) => (int)Math.Round(json.RootElement.GetProperty(k).GetDouble());
             var full = Path.Combine(Path.GetDirectoryName(path)!, "T-P02-overlays-full.png");
-            // both overlays on, as the toolbar chips of the Figma frame show them
-            RenderPage(full, 1440, 900, "T-P02", m => { m.Play.Hitboxes = true; m.Play.TileCollision = true; Jump(m.Play); });
+            // the overlays as the Figma Game View draws them: hitboxes (with the velocity arrows) on, tile collision off
+            RenderPage(full, 1440, 900, "T-P02", m => { m.Play.Hitboxes = true; m.Play.TileCollision = false; Jump(m.Play); });
             using (var src = SkiaSharp.SKBitmap.Decode(full))
             using (var crop = new SkiaSharp.SKBitmap(Get("w"), Get("h")))
             {

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Build.Fonts;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
@@ -364,8 +364,11 @@ public sealed class FontManagerPage : DockPanel
         // Thai layout
         CheckBox Toggle(string text, string name, Func<FontFile, bool> get, Action<FontFile, bool> set)
         {
-            // Thai marks in the label need the Thai face for the whole cluster
-            object content = text.Any(c => ThaiText.IsThai(c)) ? new TextBlock { Text = text, FontFamily = AgbStudio.Editor.Theme.Fonts.Thai, FontSize = 12, LineHeight = 16 } : text;
+            // Thai marks in the label need the Thai face for the whole cluster; padding under the 16 px line keeps a lower
+            // vowel inside the text's bounds (which clip it), the negative margin takes it out of the layout again
+            object content = text.Any(c => ThaiText.IsThai(c))
+                ? new TextBlock { Text = text, FontFamily = AgbStudio.Editor.Theme.Fonts.Thai, FontSize = 12, LineHeight = 16, Padding = new Thickness(0, 0, 0, 6), Margin = new Thickness(0, 0, 0, -6) }
+                : text;
             var box = new CheckBox { Content = content, Height = 20, Name = name };
             box.IsCheckedChanged += (_, _) =>
             {
@@ -376,7 +379,8 @@ public sealed class FontManagerPage : DockPanel
             return box;
         }
         var stack = Toggle("Stack upper vowels & tone marks", "StackMarks", f => f.StackUpperMarks, (f, v) => f.StackUpperMarks = v);
-        var lower = Toggle("Place lower vowels (ุ)", "LowerVowels", f => f.PlaceLowerVowels, (f, v) => f.PlaceLowerVowels = v);
+        // a no-break space carries the lower vowel, so it shows between the brackets as in Figma
+        var lower = Toggle("Place lower vowels (\u00A0ุ)", "LowerVowels", f => f.PlaceLowerVowels, (f, v) => f.PlaceLowerVowels = v);
         var wrap = Toggle("Word-wrap Thai by dictionary", "ThaiWrap", f => f.ThaiWordWrap, (f, v) => f.ThaiWordWrap = v);
         var note = UI.Text("Thai has no spaces between words, so line breaks use a word list — text never splits mid-word.", "Label/11", "text/muted");
         note.TextWrapping = TextWrapping.Wrap;

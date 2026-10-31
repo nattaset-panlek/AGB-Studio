@@ -1,4 +1,4 @@
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
@@ -166,8 +166,7 @@ public sealed class ProjectData
     }
 
     /// <summary>Files in the order they were created (tables and conversations are listed as the user added them).</summary>
-    static IEnumerable<string> CreationOrder(IEnumerable<string> files) =>
-        files.OrderBy(File.GetCreationTimeUtc).ThenBy(f => f, StringComparer.Ordinal);
+    static IEnumerable<string> CreationOrder(IEnumerable<string> files) => AgbStudio.Editor.Services.CreationOrder.Of(files, StringComparer.Ordinal);
 
     static string LanguageOfFile(string path)
     {

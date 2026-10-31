@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
@@ -94,7 +94,8 @@ public sealed class ScriptEditorPage : DockPanel
         var outlineHeader = new PanelHeader { Title = "Outline", Glyph = "nodes", Name = "OutlineHeader" };
         var left = new DockPanel();
         PageChrome.DockTo(left, scriptsHeader, Avalonia.Controls.Dock.Top);
-        var scriptsScroll = new ScrollViewer { Content = _scriptList, Height = 195, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+        // Figma T-P04 draws no scrollbar: the list scrolls with the wheel
+        var scriptsScroll = new ScrollViewer { Content = _scriptList, Height = 195, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden };
         PageChrome.DockTo(left, scriptsScroll, Avalonia.Controls.Dock.Top);
         PageChrome.DockTo(left, outlineHeader, Avalonia.Controls.Dock.Top);
         left.Children.Add(new ScrollViewer { Content = _outline });

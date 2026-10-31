@@ -1,4 +1,4 @@
-<!-- 4.16 chrome: Title Bar, Menu Bar Item, Menu Item, Menu Separator, menu surface, Dialog Header / Footer, Popover Header, Tooltip -->
+﻿<!-- 4.16 chrome: Title Bar, Menu Bar Item, Menu Item, Menu Separator, menu surface, Dialog Header / Footer, Popover Header, Tooltip -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="using:AgbStudio.Editor.Controls"
@@ -118,6 +118,10 @@
       <Setter Property="Background" Value="{DynamicResource accent/selected}" />
       <Setter Property="Foreground" Value="{DynamicResource text/on-selected}" />
       <Style Selector="^ /template/ TextBlock#PART_Right"><Setter Property="Foreground" Value="{DynamicResource text/on-selected}" /></Style>
+    </Style>
+    <!-- popover result lists (T-O05, T-O08): the selected name stays text/primary, only the hint turns text/on-selected -->
+    <Style Selector="^.PrimaryName:selected">
+      <Setter Property="Foreground" Value="{DynamicResource text/primary}" />
     </Style>
   </ControlTheme>
 

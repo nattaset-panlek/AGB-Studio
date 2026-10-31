@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Shell;
+﻿using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Windows.Palette;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,7 +11,7 @@ namespace AgbStudio.Editor.Windows.Sprite;
 /// <summary>The drawing tools of the Sprite Editor toolbar, in Figma order.</summary>
 public enum DrawTool { Pencil, Eraser, Fill, Line, Rectangle, Pipette }
 
-/// <summary>Pixels of one frame drawn at an integer scale, optionally on the scene backdrop (previews, frame thumbs).</summary>
+/// <summary>Pixels of one frame drawn at a scale (a fractional one blends pixel edges by area), optionally on the scene backdrop (previews, frame thumbs).</summary>
 public sealed class PixelView : Control
 {
     uint[] _pixels = [];
@@ -29,6 +29,7 @@ public sealed class PixelView : Control
         _backdrop = backdrop;
         _pad = pad;
         _mirror = mirror;
+        _scaled = null;
         InvalidateMeasure();
         InvalidateVisual();
     }
@@ -38,9 +39,29 @@ public sealed class PixelView : Control
 
     protected override Size MeasureOverride(Size availableSize) => new(_w * _scale + 2 * _pad, _h * _scale + 2 * _pad);
 
+    Avalonia.Media.Imaging.WriteableBitmap? _scaled;
+
     public override void Render(DrawingContext ctx)
     {
         if (_backdrop is { } b) ctx.DrawRectangle(new ImmutableSolidColorBrush(Colour15.ToColor(b)), null, new Rect(Bounds.Size), 4, 4);
+        if (!Graphics.PixelScale.IsWhole(_scale))
+        {
+            // a fractional scale (frame thumbs at 2.5x as Figma draws the sprite art): pixel edges blended by area
+            if (_scaled == null)
+            {
+                var px = new uint[_w * _h];
+                for (var y = 0; y < _h; y++)
+                    for (var x = 0; x < _w; x++)
+                    {
+                        var i = y * _w + (_mirror ? _w - 1 - x : x);
+                        px[y * _w + x] = i < _pixels.Length && !Colour15.IsTransparent(_pixels[i]) ? _pixels[i] | 0xFF000000 : 0;
+                    }
+                _scaled = Graphics.PixelScale.Area(px, _w, _h, _scale);
+            }
+            var sz = _scaled.PixelSize;
+            ctx.DrawImage(_scaled, new Rect(0, 0, sz.Width, sz.Height), new Rect(_pad, _pad, sz.Width, sz.Height));
+            return;
+        }
         var brushes = new Dictionary<uint, IBrush>();
         for (var y = 0; y < _h; y++)
             for (var x = 0; x < _w; x++)

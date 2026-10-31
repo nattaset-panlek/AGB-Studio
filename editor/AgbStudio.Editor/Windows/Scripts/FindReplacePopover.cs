@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
@@ -135,7 +135,9 @@ public sealed class FindReplacePopover : Border, IOverlayContent
             box.Padding = new Thickness(8, 0, 8, 0);
             AgbStudio.Editor.Theme.Fig.SetStyle(box, "Mono/11");
         }
-        var toggles = UI.Row(4, _case, _word, _regex);
+        // Figma T-O11: Aa 9 px before ab, ab 6 px before .*, .* 5 px from the field's right edge
+        var toggles = UI.Row(6, _case, _word, _regex);
+        _word.Margin = new Thickness(3, 0, 0, 0);
         foreach (var t in new[] { _case, _word, _regex })
         {
             t.Width = 34;
@@ -150,7 +152,7 @@ public sealed class FindReplacePopover : Border, IOverlayContent
         var queryDock = new DockPanel();
         DockPanel.SetDock(inBox, Dock.Right);
         queryDock.Children.AddRange([inBox, Query]);
-        var queryFrame = UI.Frame(queryDock, "bg/base", "border/default", new Thickness(1), new Thickness(9, 0, 2, 0), 6).Named("FindQueryFrame");
+        var queryFrame = UI.Frame(queryDock, "bg/base", "border/default", new Thickness(1), new Thickness(9, 0, 5, 0), 6).Named("FindQueryFrame");
         queryFrame.Height = 30;
         Query.GotFocus += (_, _) => queryFrame.Token(Border.BorderBrushProperty, "accent/default");
         Query.LostFocus += (_, _) => queryFrame.Token(Border.BorderBrushProperty, "border/default");

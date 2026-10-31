@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
@@ -38,7 +38,8 @@ public sealed class TableGrid : Border, IEditTarget
         _page = page;
         Name = "TableGrid";
         Focusable = true;
-        _scroll = new ScrollViewer { Content = _rows, MaxHeight = VisibleRows * RowHeight, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+        // Figma T-P07 draws no scrollbar: the rows scroll with the wheel
+        _scroll = new ScrollViewer { Content = _rows, MaxHeight = VisibleRows * RowHeight, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden };
         Child = new DockPanel { Children = { _header, _scroll } };
         DockPanel.SetDock(_header, Dock.Top);
     }
