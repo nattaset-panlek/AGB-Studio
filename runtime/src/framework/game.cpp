@@ -539,7 +539,10 @@ void frame() {
     Screen* s = g_stack[g_depth - 1];
     if (g_loadStep >= 0) {
         const u32 t0 = profile::cyclesNow();
+        // Load steps run with the picture covered (faded out, or nothing shown yet at boot): they may write VRAM at once.
+        commit::beginStagedLoad();
         const bool done = s->load(g_loadStep);
+        commit::endStagedLoad();
         const u32 spent = profile::cyclesNow() - t0;
         if (g_loadStep < 8) g_stepCycles[g_loadStep] = spent;
         if (spent > g_loadWorstCycles) {

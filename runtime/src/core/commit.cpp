@@ -7,10 +7,17 @@
 namespace agb::commit {
 
 namespace {
-struct Copy {
-    void* dst;
-    const void* src;
-    u32 bytes;
+// One queued write of `rows` rows, `dstStride` bytes apart in VRAM: a copy reads each row from the caller's memory, a
+// fill writes `value` to every halfword, a sequence writes value, value + 1 ... across the rows.
+enum class Kind : u8 { Copy, Fill, Sequence };
+struct Write {
+    u8* dst;
+    const u8* src;
+    u32 rowBytes;
+    u16 rows;
+    u16 dstStride;
+    u16 value;
+    Kind kind;
 };
 
 AGB_EWRAM_BSS ObjAttr g_oam[128] AGB_ALIGN4;
@@ -21,9 +28,11 @@ s32 g_bgRef[2][2];
 u8 g_bgRefDirty = 0;
 bool g_oamDirty = false, g_palDirty = false;
 // Read once per entry in VBlank: EWRAM is fast enough, and IWRAM is kept for the stack and hot data (G-HW.04).
-AGB_EWRAM_BSS Copy g_queue[kDmaQueueSize];
+AGB_EWRAM_BSS Write g_queue[kDmaQueueSize];
 int g_queueLen = 0;
 u32 g_queueBytes = 0, g_budget = kDefaultDmaBudget, g_deferred = 0;
+bool g_staged = false;
+u32 g_direct = 0;
 
 // I/O offsets of the shadowed 16-bit display registers, in Reg order.
 constexpr u16 kRegOffset[RegCount] = {
@@ -39,6 +48,56 @@ void dmaCopy(void* dst, const void* src, u32 bytes) {
         dma3_cpy(dst, src, bytes);
     else
         for (u32 i = 0; i < bytes / 2; ++i) static_cast<u16*>(dst)[i] = static_cast<const u16*>(src)[i];
+}
+
+void dmaFill(void* dst, u16 value, u32 bytes) {
+    if (((reinterpret_cast<u32>(dst) | bytes) & 3) == 0)
+        dma3_fill(dst, value | (static_cast<u32>(value) << 16), bytes);
+    else
+        for (u32 i = 0; i < bytes / 2; ++i) static_cast<u16*>(dst)[i] = value;
+}
+
+void writeRow(Write& w) {
+    switch (w.kind) {
+        case Kind::Copy:
+            dmaCopy(w.dst, w.src, w.rowBytes);
+            w.src += w.rowBytes;
+            break;
+        case Kind::Fill:
+            dmaFill(w.dst, w.value, w.rowBytes);
+            break;
+        case Kind::Sequence: {
+            u16* d = reinterpret_cast<u16*>(w.dst);
+            for (u32 i = 0; i < w.rowBytes / 2; ++i) d[i] = w.value++;
+            break;
+        }
+    }
+    w.dst += w.dstStride;
+    --w.rows;
+}
+
+void deferred() {
+    ++g_deferred;
+    debug::warnOnce(1, "too much graphics data changed this frame, so the rest is copied next frame. Change fewer tiles or palettes per frame.");
+}
+
+bool push(const Write& w) {
+    if (g_queueLen >= kDmaQueueSize) {
+        debug::warnOnce(5, "more than 64 graphics changes were queued for one frame, so one was dropped. Change fewer text panels or pictures per frame.");
+        return false;
+    }
+    g_queue[g_queueLen++] = w;
+    g_queueBytes += w.rowBytes * w.rows;
+    return true;
+}
+
+// Debug builds: staged loads and VBlank may write VRAM at once; anything else would show half-written graphics.
+void checkDirect() {
+#if defined(AGB_DEBUG)
+    if (g_staged || REG_VCOUNT >= 160 || (REG_DISPCNT & DCNT_BLANK)) return;
+    ++g_direct;
+    debug::warnOnce(4, "graphics memory was written at once while the picture was showing, so the screen may tear. Queue the change for VBlank (commit queue) or make it in a scene load.");
+#endif
 }
 
 void writeRegisters(u32 mask) {
@@ -81,9 +140,32 @@ void flush() {
         dma3_cpy(pal_bg_mem, g_pal, sizeof g_pal);
         g_palDirty = false;
     }
-    for (int i = 0; i < g_queueLen; ++i) dmaCopy(g_queue[i].dst, g_queue[i].src, g_queue[i].bytes);
-    g_queueLen = 0;
+    // Queued writes in order, up to the frame's DMA budget; rows past it wait for the next VBlank (a row larger than the
+    // whole budget goes first in a frame of its own).
+    u32 left = g_budget;
+    bool any = false;
+    int done = 0;
+    for (; done < g_queueLen; ++done) {
+        Write& w = g_queue[done];
+        while (w.rows && (w.rowBytes <= left || !any)) {
+            writeRow(w);
+            left = w.rowBytes < left ? left - w.rowBytes : 0;
+            any = true;
+        }
+        if (w.rows) break;
+    }
+    if (done == g_queueLen) {
+        g_queueLen = 0;
+        g_queueBytes = 0;
+        return;
+    }
     g_queueBytes = 0;
+    for (int i = done; i < g_queueLen; ++i) {
+        g_queue[i - done] = g_queue[i];
+        g_queueBytes += g_queue[i].rowBytes * g_queue[i].rows;
+    }
+    g_queueLen -= done;
+    deferred();
 }
 
 void setReg(Reg r, u16 value) {
@@ -127,27 +209,42 @@ void markPaletteDirty() { g_palDirty = true; }
 
 bool queueCopy(void* dst, const void* src, u32 bytes) {
     if (g_queueLen >= kDmaQueueSize || g_queueBytes + bytes > g_budget) {
-        ++g_deferred;
-        debug::warnOnce(1, "too much graphics data changed this frame, so the rest is copied next frame. Change fewer tiles or palettes per frame.");
+        deferred();
         return false;
     }
-    g_queue[g_queueLen++] = {dst, src, bytes};
-    g_queueBytes += bytes;
-    return true;
+    return push({static_cast<u8*>(dst), static_cast<const u8*>(src), bytes, 1, 0, 0, Kind::Copy});
+}
+
+bool queueFill(void* dst, u16 value, u32 rowBytes, u32 rows, u32 dstStride) {
+    if (!rows || !rowBytes) return true;
+    return push({static_cast<u8*>(dst), nullptr, rowBytes, static_cast<u16>(rows), static_cast<u16>(dstStride), value, Kind::Fill});
+}
+
+bool queueSequence(void* dst, u16 value, u32 rowEntries, u32 rows, u32 dstStride) {
+    if (!rows || !rowEntries) return true;
+    return push({static_cast<u8*>(dst), nullptr, rowEntries * 2, static_cast<u16>(rows), static_cast<u16>(dstStride), value, Kind::Sequence});
 }
 
 void setDmaBudget(u32 bytes) { g_budget = bytes; }
 u32 queuedBytes() { return g_queueBytes; }
 u32 deferredCount() { return g_deferred; }
 
-void copyNow(void* dst, const void* src, u32 bytes) { dmaCopy(dst, src, bytes); }
+void copyNow(void* dst, const void* src, u32 bytes) {
+    checkDirect();
+    dmaCopy(dst, src, bytes);
+}
 
 void fillNow(void* dst, u32 value, u32 bytes) {
+    checkDirect();
     if (((reinterpret_cast<u32>(dst) | bytes) & 3) == 0)
         dma3_fill(dst, value, bytes);
     else
         for (u32 i = 0; i < bytes / 2; ++i) static_cast<u16*>(dst)[i] = static_cast<u16>(value);
 }
+
+void beginStagedLoad() { g_staged = true; }
+void endStagedLoad() { g_staged = false; }
+u32 directWrites() { return g_direct; }
 
 void flushRegistersNow() {
     writeRegisters((1u << RegCount) - 1);

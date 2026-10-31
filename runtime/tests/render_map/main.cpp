@@ -249,5 +249,7 @@ AGB_TEST(big_camera_jump_fits_in_a_frame) {
 
 int main() {
     system::init();
+    // These tests load layers directly, without a scene's staged load: the whole run counts as one (P2.04).
+    commit::beginStagedLoad();
     test::runAll();
 }

@@ -38,7 +38,8 @@ public:
     // Draws every glyph of a run now with its top-left at (x, y) (menus and titles).
     void drawRun(const data::TextRun& run, int x, int y);
     void setInk(u8 ink) { style_.ink = ink; }
-    // Points the box's map entries at `blank` (closing a menu); the tiles stay reserved.
+    // Points the box's map entries at `blank` (closing a menu); the tiles stay reserved. Both map writes are queued
+    // for the next VBlank (commit::queueFill / queueSequence).
     void unmap(u16 blank = 0);
     void remap();  // writes the map entries again (another panel covered this one)
     int widthPx() const { return w_ * 8; }

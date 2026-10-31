@@ -266,9 +266,13 @@ AGB_TEST(mode3_bitmap_mosaic_and_blended_sprite) {
     const u16* fb = bitmap::frameBuffer();
     CHECK_EQ(fb[0], picturePixel(0, 0));
     CHECK_EQ(fb[159 * 240 + 239], picturePixel(239, 159));
-    bitmap::fill(200, 140, 30, 10, 0x7FFF);
+    // A filled rectangle goes through the commit queue: it changes only its pixels, and only in VBlank (P2.04).
+    CHECK(bitmap::fill(200, 140, 30, 10, 0x7FFF));
+    CHECK_EQ(fb[145 * 240 + 210], picturePixel(210, 145));
+    system::waitVBlank();
     CHECK_EQ(fb[145 * 240 + 210], 0x7FFF);
     CHECK_EQ(fb[145 * 240 + 199], picturePixel(199, 145));
+    CHECK_EQ(fb[150 * 240 + 210], picturePixel(210, 150));
     // Rows queued through the commit queue arrive in VBlank: restore the rectangle from the picture.
     CHECK(bitmap::queueRows(g_picture, 140, 10));
     system::waitVBlank();
@@ -291,5 +295,7 @@ AGB_TEST(mode3_bitmap_mosaic_and_blended_sprite) {
 
 int main() {
     system::init();
+    // These tests load layers directly, without a scene's staged load: the whole run counts as one (P2.04).
+    commit::beginStagedLoad();
     test::runAll();
 }

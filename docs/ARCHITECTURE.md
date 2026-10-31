@@ -93,6 +93,20 @@ effects and the debug-channel actor table. `system::waitVBlank()` sleeps in the 
 commit queues, so the hardware changes of a frame land in VBlank. The profiler counts Logic and Render cycles per
 frame and frame overruns.
 
+**Commit queues (P2.04).** Runtime modules write the OAM, palette and display-register shadows and queue VRAM writes;
+`commit::flush` (VBlank only) writes the registers, OAM and palette, then the queued VRAM writes in order up to the
+per-frame DMA budget (16 KB by default). Three kinds of VRAM write are queued: `queueCopy` (a copy from the caller's
+memory; refused when the budget is used up, so the caller retries next frame: sprite frames, text tiles, map rows),
+`queueFill` (a rectangle filled with one value: closing a text panel, the text layer's blank map, the Mode 3
+`bitmap::fill`) and `queueSequence` (a rectangle of map entries value, value + 1 ...: a text panel's tiles mapped in
+order). Fills and sequences keep everything they need in the queue entry, so rows past the budget wait for the next
+VBlank instead of being refused. A deferral counts in `deferredCount()` and logs "too much graphics data changed this
+frame, so the rest is copied next frame" once. `copyNow` / `fillNow` (and LZ77 to VRAM) write at once and are only for
+staged loads: the scene loader opens `beginStagedLoad` / `endStagedLoad` around each load step, which runs while the
+picture is faded out. Debug builds count a `copyNow` / `fillNow` made while the picture shows (outside VBlank, forced
+blank and a staged load) in `directWrites()` and log it once; the pause, options and dialogue panels therefore change
+the text layer only through the queue (`framework_ui` test `pause_and_resume_map_text_in_vblank`).
+
 ## Data contract
 
 `runtime/include/agb/data.hpp` defines what the build writes: tilesets with 16x16 metatiles (2x2 screen entries of one

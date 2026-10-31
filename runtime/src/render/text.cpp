@@ -44,21 +44,19 @@ bool TextBox::init(int bg, int tileX, int tileY, int widthTiles, int heightTiles
     return true;
 }
 
+// Map writes go through the commit queue, so a panel opened or closed during play (pause, options, dialogue) changes
+// the screen in VBlank.
 void TextBox::remap() {
     if (bg_ < 0 || !tiles_) return;
     // Map entries: sequential tiles row by row (32-wide screen block).
     u16* map = commit::bgMap(bg::config(bg_).screenBlock);
-    u16 row[32];
-    for (int y = 0; y < h_; ++y) {
-        for (int x = 0; x < w_; ++x) row[x] = static_cast<u16>((mapBase_ + y * w_ + x) | (bank_ << 12));
-        commit::copyNow(map + (tileY_ + y) * 32 + tileX_, row, static_cast<u32>(w_) * 2);
-    }
+    commit::queueSequence(map + tileY_ * 32 + tileX_, static_cast<u16>(mapBase_ | (bank_ << 12)), static_cast<u32>(w_), static_cast<u32>(h_), 64);
 }
 
 void TextBox::unmap(u16 blank) {
     if (bg_ < 0) return;
     u16* map = commit::bgMap(bg::config(bg_).screenBlock);
-    for (int y = 0; y < h_; ++y) commit::fillNow(map + (tileY_ + y) * 32 + tileX_, blank * 0x00010001u, static_cast<u32>(w_) * 2);
+    commit::queueFill(map + tileY_ * 32 + tileX_, blank, static_cast<u32>(w_) * 2, static_cast<u32>(h_), 64);
 }
 
 void TextBox::drawRun(const data::TextRun& run, int x, int y) {

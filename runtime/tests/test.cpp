@@ -28,6 +28,18 @@ void fail(const char* file, int line, const char* expr) {
 
 int failures() { return g_failures; }
 
+bool loggedSince(u32 since, const char* text) {
+    const debug::Channel& ch = debug::channel();
+    const u32 head = ch.logHead;
+    if (head - since > debug::kLogSize) since = head - debug::kLogSize;
+    for (u32 start = since; start < head; ++start) {
+        u32 i = 0;
+        while (text[i] && start + i < head && ch.log[(start + i) % debug::kLogSize] == text[i]) ++i;
+        if (!text[i]) return true;
+    }
+    return false;
+}
+
 void showResultOnScreen() { g_showResult = true; }
 
 void runAll() {
