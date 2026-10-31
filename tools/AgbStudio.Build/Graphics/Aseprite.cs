@@ -46,14 +46,16 @@ public sealed class AsepriteFile
     public static AsepriteFile Parse(byte[] data, string name = "sprite")
     {
         var f = new AsepriteFile();
-        var r = new Reader(data);
+        var r = new Reader(data, name);
         r.Dword();  // file size
-        if (r.Word() != 0xA5E0) throw new InvalidDataException($"{name} is not an Aseprite file.");
+        if (r.Word() != 0xA5E0)
+            throw new InvalidDataException($"{name} is not an Aseprite file (it does not start with the Aseprite file mark), so it can't be read. Save the sprite from Aseprite as .aseprite, or export it as a .png, then import it again.");
         var frames = r.Word();
         f.Width = r.Word();
         f.Height = r.Word();
         f.ColorDepth = r.Word();
-        if (f.ColorDepth is not (32 or 16 or 8)) throw new InvalidDataException($"{name}: colour depth {f.ColorDepth} is not RGBA, grayscale or indexed.");
+        if (f.ColorDepth is not (32 or 16 or 8))
+            throw new InvalidDataException($"{name} has colour depth {f.ColorDepth}, which is not one Aseprite writes (RGBA, grayscale or indexed), so the file is damaged. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.");
         var flags = r.Dword();
         r.Skip(2 + 4 + 4);  // speed (deprecated), two zero DWORDs
         var transparentIndex = r.Byte();
@@ -66,7 +68,8 @@ public sealed class AsepriteFile
         {
             var frameStart = r.Position;
             var frameBytes = (int)r.Dword();
-            if (r.Word() != 0xF1FA) throw new InvalidDataException($"{name}: frame {fi} is damaged.");
+            if (r.Word() != 0xF1FA)
+                throw new InvalidDataException($"{name}: frame {fi + 1} is damaged (its frame header is wrong), so the file can't be read. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.");
             var oldChunks = r.Word();
             f.Durations.Add(r.Word());
             r.Skip(2);
@@ -144,7 +147,8 @@ public sealed class AsepriteFile
                                 using var outMs = new MemoryStream();
                                 z.CopyTo(outMs);
                                 c.Pixels = outMs.ToArray();
-                                if (c.Pixels.Length < c.Width * c.Height * f.ColorDepth / 8) throw new InvalidDataException($"{name}: a cel in frame {fi} is damaged.");
+                                if (c.Pixels.Length < c.Width * c.Height * f.ColorDepth / 8)
+                                    throw new InvalidDataException($"{name}: a cel in frame {fi + 1} is damaged (it holds fewer pixels than its size needs), so the file can't be read. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.");
                                 cels.Add(c);
                                 break;
                             }
@@ -289,13 +293,14 @@ public sealed class AsepriteFile
         return -1;
     }
 
-    sealed class Reader(byte[] data)
+    sealed class Reader(byte[] data, string name)
     {
         public int Position;
 
         void Need(int n)
         {
-            if (Position + n > data.Length) throw new InvalidDataException("The Aseprite file ends too early.");
+            if (Position + n > data.Length)
+                throw new InvalidDataException($"{name} ends too early (the file is cut short, or it was still being saved), so it can't be read. Save it again in Aseprite, or copy the whole file again, then import it again.");
         }
 
         public byte Byte() { Need(1); return data[Position++]; }

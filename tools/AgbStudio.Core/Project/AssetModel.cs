@@ -134,6 +134,8 @@ public sealed class FontFile
     public bool PlaceLowerVowels { get; set; } = true;
     public bool ThaiWordWrap { get; set; } = true;
     public Dictionary<string, GlyphOverride> Glyphs { get; set; } = new();  // edited pixels by code point
+    /// <summary>Font Manager "Draw to": the BG (0-3) of the text layer; omitted = BG 0.</summary>
+    public int? DrawTo { get; set; }
 }
 
 public sealed class GlyphOverride

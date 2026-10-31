@@ -19,7 +19,8 @@ namespace AgbStudio.Editor.Windows.SceneEditor;
 /// Asset Picker T-O04, animation via Animation List T-M16, frames, palette to Palette Manager T-P10), its behaviours
 /// with their fields and the Collider, script fields (double click the header to open the Script Editor), Add
 /// Component (T-O05) and the GBA Budget meters (click for Budget Details T-O06). Every change is an undoable edit of
-/// the .scene file; typing and slider drags merge into one undo step.
+/// the .scene file; typing and slider drags merge into one undo step. With several actors selected, the first one's
+/// fields are shown read-only under "N actors selected".
 /// </summary>
 [EditorWindow("T-P01:Inspector", Kind = WindowKind.Panel)]
 public sealed class InspectorPanel : Panel
@@ -55,7 +56,7 @@ public sealed class InspectorPanel : Panel
     {
         var sel = _m.Selection;
         var a = _m.SelectedActor;
-        return $"{_m.ScenePath}|{sel}|{a?.Kind}|{a?.Sprite}|{a?.Animation}|{string.Join(",", a?.Components.Select(c => c.Type) ?? [])}|{_m.Map?.Layers.Count}";
+        return $"{_m.ScenePath}|{sel}|{_m.SelectedActorIndices.Count}|{a?.Kind}|{a?.Sprite}|{a?.Animation}|{string.Join(",", a?.Components.Select(c => c.Type) ?? [])}|{_m.Map?.Layers.Count}";
     }
 
     public void Rebuild()
@@ -65,7 +66,8 @@ public sealed class InspectorPanel : Panel
         _content.Children.Clear();
         var sel = _m.Selection;
         if (_m.Scene == null) return;
-        if (_m.SelectedActor is { } actor) BuildActor(actor, _m.SelectedActorIndex);
+        if (_m.SelectedActor is { } actor && _m.SelectedActorIndices.Count is var n and > 1) BuildActors(actor, _m.SelectedActorIndex, n);
+        else if (_m.SelectedActor is { } one) BuildActor(one, _m.SelectedActorIndex);
         else if (sel is { Kind: SceneItemKind.Layer } l && _m.Map?.Layers.ElementAtOrDefault(l.Index) is { } layer) BuildLayer(layer, l.Index);
         else if (sel is { Kind: SceneItemKind.Camera }) BuildCamera();
         else BuildScene(sel);
@@ -114,6 +116,25 @@ public sealed class InspectorPanel : Panel
         if (!colliderPlaced && (a.Sprite.Length > 0 || a.Collider != null))
             _content.Children.Add(Section(SectionBody(new SectionHeader { Title = "Collider", Glyph = "square" }, [ColliderField(index)])));
         _content.Children.Add(Section(AddComponentButton(), new Thickness(12, 10, 12, 11)));
+    }
+
+    /// <summary>
+    /// Several actors selected (Hierarchy Ctrl / Shift + click, Select All): Figma has no Inspector state for it, so the
+    /// first selected actor's fields are shown read-only under "N actors selected"; the Edit menu acts on all of them.
+    /// </summary>
+    void BuildActors(ActorData first, int index, int count)
+    {
+        var start = _content.Children.Count;
+        BuildActor(first, index);
+        var built = _content.Children.Skip(start).ToList();
+        _content.Children.RemoveRange(start, built.Count);
+        var icon = new Icon { Glyph = "layers", Size = 14, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "accent/default");
+        var text = UI.Text($"{count} actors selected", "Body/12 Semibold", "text/primary");
+        text.Name = "MultiSelectionText";
+        _content.Children.Add(Section(UI.Row(8, icon, text)).Named("MultiSelection"));
+        var fields = new StackPanel { IsEnabled = false, Name = "MultiSelectionFields" };
+        fields.Children.AddRange(built);
+        _content.Children.Add(fields);
     }
 
     Control ActorHeader(ActorData a, int index)

@@ -1,6 +1,7 @@
 using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
+using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 using Avalonia;
 using Avalonia.Controls;
@@ -264,7 +265,7 @@ public sealed class GbaScreenView : Control
             if (_m.Grid.ShowGrid && _m.Grid.Size > 0) DrawGrid(ctx, screen, k);
             if (_m.Grid.CameraBounds) DrawCameraBounds(ctx, k);
             if (_m.IsTileTool) DrawBrush(ctx, k);
-            else DrawSelection(ctx, k);
+            else DrawSelection(ctx);
         }
     }
 
@@ -360,7 +361,8 @@ public sealed class GbaScreenView : Control
         }
     }
 
-    IBrush? Token(string key) => this.FindResource(key) as IBrush ?? Application.Current?.FindResource(key) as IBrush;
+    // the theme's brush for this control's theme variant (FindResource without one missed the themed tokens: no accent outline)
+    IBrush? Token(string key) => ThemeService.Token(this, key);
 
     /// <summary>Preferences › Appearance: the grid between game pixels at 400% and above.</summary>
     public bool PixelGridShown => _m.Services.Preferences.Current.PixelGridAt(Scale);
@@ -394,14 +396,24 @@ public sealed class GbaScreenView : Control
         }
     }
 
-    void DrawSelection(DrawingContext ctx, double k)
+    /// <summary>The outline the viewport draws around a selected actor, in this control.</summary>
+    public Rect? SelectionBox(int index)
+    {
+        if (ActorRect(index) is not { } r) return null;
+        var k = Scale;
+        var tl = ToView(r.X, r.Y);
+        return new Rect(Math.Round(tl.X - 4) + 0.5, Math.Round(tl.Y - 4) + 0.5, Math.Round(r.W * k + 8), Math.Round(r.H * k + 8));
+    }
+
+    /// <summary>Every selected actor gets its outline; the first one selected also gets the corner handles and its name.</summary>
+    void DrawSelection(DrawingContext ctx)
     {
         var i = _m.SelectedActorIndex;
-        if (i < 0 || ActorRect(i) is not { } r) return;
+        if (i < 0 || SelectionBox(i) is not { } box) return;
         var accent = Token("accent/default");
         var white = Token("lit/white");
-        var tl = ToView(r.X, r.Y);
-        var box = new Rect(Math.Round(tl.X - 4) + 0.5, Math.Round(tl.Y - 4) + 0.5, Math.Round(r.W * k + 8), Math.Round(r.H * k + 8));
+        foreach (var other in _m.SelectedActorIndices)
+            if (other != i && SelectionBox(other) is { } b) ctx.DrawRectangle(null, new Pen(accent, 1), b);
         ctx.DrawRectangle(null, new Pen(accent, 1), box);
         foreach (var c in new[] { box.TopLeft, box.TopRight, box.BottomLeft, box.BottomRight })
             ctx.DrawRectangle(white, new Pen(accent, 1), new Rect(c.X - 3, c.Y - 3, 6, 6));
@@ -539,10 +551,10 @@ public sealed class GbaScreenView : Control
         var i = _m.SelectedActorIndex;
         if (i < 0 || e.Handled || e.KeyModifiers != KeyModifiers.None) return;
         var step = _m.Grid.Snap ? _m.Grid.Size : 1;
-        var a = _m.Scene!.Actors[i];
         (int dx, int dy) = e.Key switch { Key.Left => (-step, 0), Key.Right => (step, 0), Key.Up => (0, -step), Key.Down => (0, step), _ => (0, 0) };
         if (dx == 0 && dy == 0) return;
-        _m.MoveActor(i, a.X + dx, a.Y + dy);
+        // the arrow keys move every selected actor (one undo step)
+        _m.MoveActorsBy(_m.SelectedActorIndices, dx, dy);
         e.Handled = true;
     }
 

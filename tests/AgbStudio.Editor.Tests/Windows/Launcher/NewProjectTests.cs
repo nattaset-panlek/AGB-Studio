@@ -464,6 +464,88 @@ public class NewProjectTests
     static TextBlock Help(TemplatedControl f) => f.GetVisualDescendants().OfType<StackPanel>().First().Children.OfType<TextBlock>().Last();
     static Button Confirm(NewProjectDialog d) => d.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "PART_Confirm");
 
+    // ---- P10.08: New Project closes the open project, so unsaved files are asked about first (T-D12) ---------------
+
+    /// <summary>Sky Hopper open with PlayerController.cs edited in the Script Editor and not saved; File › New Project… filled in.</summary>
+    static async Task<(LauncherHarness H, NewProjectDialog Dlg, string Script, string Before)> NewProjectWithAnUnsavedScript()
+    {
+        var h = new LauncherHarness(startPage: null, recent: false);
+        h.Fx.OpenSkyHopper();
+        h.Show("T-P01");
+        AgbStudio.Editor.Windows.Scripts.ScriptEditorSettings.Of(h.S).FormatOnSave = false;
+        var script = Path.Combine(h.S.Project.Current!.ScriptsDir, "PlayerController.cs");
+        var before = File.ReadAllText(script);
+        _ = h.S.Windows.Open("T-P04", script, source: "test");
+        await LauncherHarness.Until(() => h.Win.CurrentPage is AgbStudio.Editor.Windows.Scripts.ScriptEditorPage { Buffer: not null });
+        var page = (AgbStudio.Editor.Windows.Scripts.ScriptEditorPage)h.Win.CurrentPage!;
+        page.Editor.Focus();
+        page.Editor.MoveCaret(1, page.Editor.LineText(0).Length + 1);
+        h.Type(" // unsaved");
+        Assert.True(page.Buffer!.Document.IsDirty);
+        // File › New Project…
+        var file = h.Win.MenuBar.Items.OfType<MenuItem>().Single(m => (string?)m.Header == "File");
+        h.Click(file);
+        h.Click(file.Items.OfType<MenuItem>().Single(m => (string?)m.Header == "New Project…"));
+        var dlg = Assert.IsType<NewProjectDialog>(h.Win.Overlays.Open.Single());
+        dlg.NameField.Text = "Forest Run";
+        dlg.SetLocationBase(Path.Combine(h.Fx.Folder, "Made"));
+        dlg.SampleLevel.IsChecked = false;
+        return (h, dlg, script, before);
+    }
+
+    static UnsavedChangesDialog AskedFirst(LauncherHarness h)
+    {
+        var ask = Assert.IsType<UnsavedChangesDialog>(h.Win.Overlays.Open[^1]);
+        Assert.Equal(("T-D12", "NewProject"), h.S.Windows.Requests[^1]);
+        Assert.Equal("Save changes before closing the project?", ask.GetVisualDescendants().OfType<DialogHeader>().Single().Title);
+        Assert.Contains("PlayerController.cs", ask.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text));
+        return ask;
+    }
+
+    /// <summary>
+    /// P10.08 "close": Create Project with an unsaved script asks "Save changes before closing the project?". Esc keeps
+    /// the open project and the New Project dialog, creates nothing and leaves the script unsaved; Create Project again
+    /// and Save All saves the script, then the new project is created and opened.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task P10_08_NewProject_WithAnUnsavedFile_AsksFirst_CancelKeepsIt_SaveAllSavesThenCreates()
+    {
+        var (h, dlg, script, before) = await NewProjectWithAnUnsavedScript();
+        using var _ = h;
+        h.Click(Confirm(dlg));
+        AskedFirst(h);
+        h.Key(PhysicalKey.Escape);
+        Assert.Same(dlg, h.Win.Overlays.Open.Single());
+        Assert.Equal("Sky Hopper", h.S.Project.Name);
+        Assert.False(Directory.Exists(Path.Combine(h.Fx.Folder, "Made", "ForestRun")));
+        Assert.True(h.S.Documents.HasUnsaved);
+        Assert.Equal(before, File.ReadAllText(script));
+
+        h.Click(Confirm(dlg));
+        var ask = AskedFirst(h);
+        h.Click(ask.GetVisualDescendants().OfType<AgbButton>().Single(b => (string?)b.Content == "Save All"));
+        await LauncherHarness.Until(() => h.S.Project.Name == "Forest Run" && !h.Win.Overlays.IsOpen);
+        Assert.Contains("// unsaved", File.ReadAllText(script));
+        Assert.Equal(Path.Combine(h.Fx.Folder, "Made", "ForestRun", "ForestRun.agbproj"), h.S.Project.Current!.ProjectPath);
+        Assert.False(h.S.Documents.HasUnsaved);
+        Assert.Equal("T-P01", h.Win.CurrentPageId);
+    }
+
+    /// <summary>P10.08 "close": Don't Save leaves the script on disk as it was and the new project is created and opened.</summary>
+    [AvaloniaFact]
+    public async Task P10_08_NewProject_WithAnUnsavedFile_DontSaveCreatesWithoutWriting()
+    {
+        var (h, dlg, script, before) = await NewProjectWithAnUnsavedScript();
+        using var _ = h;
+        h.Click(Confirm(dlg));
+        var ask = AskedFirst(h);
+        h.Click(ask.GetVisualDescendants().OfType<AgbButton>().Single(b => (string?)b.Content == "Don't Save"));
+        await LauncherHarness.Until(() => h.S.Project.Name == "Forest Run" && !h.Win.Overlays.IsOpen);
+        Assert.Equal(before, File.ReadAllText(script));
+        Assert.False(h.S.Documents.HasUnsaved);
+        Assert.DoesNotContain(h.S.Documents.Open, d => d.Name == "PlayerController.cs");
+    }
+
     static string[] Names(IEnumerable<string> files) => files.Select(GameProject.AssetName).Order().ToArray();
     static IBrush? Token(Control c, string key) => c.TryFindResource(key, c.ActualThemeVariant, out var v) ? v as IBrush : null;
 }

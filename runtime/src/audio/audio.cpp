@@ -87,7 +87,7 @@ void init(const Config& config) {
     if (config.soundbank) {
         int ch = config.channels < 1 ? 1 : config.channels;
         if (ch > kMaxChannels) {
-            debug::logf("warning: audio: %d mixing channels asked, this build has buffers for %d", ch, kMaxChannels);
+            debug::logf("warning: audio: %d mixing channels asked, but this build has buffers for %d, so it mixes %d. Set audio.channels in the .agbproj to %d or less.", ch, kMaxChannels, kMaxChannels, kMaxChannels);
             ch = kMaxChannels;
         }
         const Rate* rate = &rateFor(config.mixKHz ? config.mixKHz : kBufferRate.khz);

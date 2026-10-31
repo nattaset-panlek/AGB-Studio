@@ -116,9 +116,10 @@ public abstract class SelectableRow : TemplatedControl
     {
         base.OnPointerPressed(e);
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
-        Activated?.Invoke(this, new RoutedEventArgsWrapper(e.ClickCount));
+        Activated?.Invoke(this, new RoutedEventArgsWrapper(e.ClickCount, e.KeyModifiers));
         e.Handled = true;
     }
 }
 
-public sealed record RoutedEventArgsWrapper(int ClickCount);
+/// <summary>A row click: how many clicks in a row and the keys held (Ctrl / Shift + click add to a selection).</summary>
+public sealed record RoutedEventArgsWrapper(int ClickCount, KeyModifiers Modifiers = KeyModifiers.None);

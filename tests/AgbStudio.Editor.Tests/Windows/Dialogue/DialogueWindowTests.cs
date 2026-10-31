@@ -229,6 +229,81 @@ public class DialogueWindowTests : DataE2E
         Compile(DlgPath("forest_intro"));
     }
 
+    /// <summary>
+    /// P10.11 on dialogue lines with the keyboard: Cut / Paste moves a line, Duplicate and Delete work on the clicked
+    /// line; Select All selects every line of the conversation and Copy / Paste, Duplicate, Delete and Cut / Paste then
+    /// act on all of them in one undo step; a click selects one line again. The file still compiles.
+    /// </summary>
+    [AvaloniaFact]
+    public void P10_11_EditMenuOnLines_CutDuplicateDeleteAndSelectAll()
+    {
+        var page = OpenFromToolsMenu();
+        List<string> Lines() => page.Conversation!.Lines.Select((l, i) => $"{l.Speaker}|{l.Command}|{page.TextOf(page.KeyOf(l, i), l.Text, "en")}").ToList();
+        var o = Lines();
+        Assert.True(o.Count >= 3);
+        void Ctrl(PhysicalKey k) => Key(k, RawInputModifiers.Control);
+        void Undo() { S.Undo.Undo(); Capture.Pump(); }
+        bool Shown(int i) => Find<Border>("Line_" + (i + 1)).Background == AgbStudio.Editor.Services.ThemeService.Token(Win, "accent/selected");
+
+        // Cut the first line; Paste puts it after the selected one
+        Click(Find<Border>("Line_1"));
+        Ctrl(PhysicalKey.X);
+        Assert.Equal(o.Skip(1), Lines());
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(new[] { o[1], o[0] }.Concat(o.Skip(2)), Lines());
+        Undo();
+        Undo();
+        Assert.Equal(o, Lines());
+        // Duplicate the second line, then Delete the copy
+        Click(Find<Border>("Line_2"));
+        Assert.Equal(1, page.SelectedLine);
+        Ctrl(PhysicalKey.D);
+        Assert.Equal(o.Take(2).Append(o[1]).Concat(o.Skip(2)), Lines());
+        Assert.Equal(2, page.SelectedLine);
+        Key(PhysicalKey.Delete);
+        Assert.Equal(o, Lines());
+
+        // Select All: every line card is shown selected
+        Click(Find<Border>("Line_1"));
+        Ctrl(PhysicalKey.A);
+        Assert.True(page.AllLinesSelected);
+        Assert.All(Enumerable.Range(0, o.Count), i => Assert.True(Shown(i), $"line {i + 1} is not shown selected"));
+        // Copy / Paste: a copy of every line at the end, one undo step
+        Ctrl(PhysicalKey.C);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(o.Concat(o), Lines());
+        Assert.False(page.AllLinesSelected);
+        Undo();
+        Assert.Equal(o, Lines());
+        // Duplicate
+        Ctrl(PhysicalKey.A);
+        Ctrl(PhysicalKey.D);
+        Assert.Equal(o.Concat(o), Lines());
+        Undo();
+        Assert.Equal(o, Lines());
+        // Delete: every line; undo brings them back
+        Ctrl(PhysicalKey.A);
+        Key(PhysicalKey.Delete);
+        Assert.Empty(page.Conversation!.Lines);
+        Undo();
+        Assert.Equal(o, Lines());
+        // Cut / Paste: all lines go, then come back
+        Ctrl(PhysicalKey.A);
+        Ctrl(PhysicalKey.X);
+        Assert.Empty(page.Conversation!.Lines);
+        Ctrl(PhysicalKey.V);
+        Assert.Equal(o, Lines());
+        // a click selects one line again
+        Ctrl(PhysicalKey.A);
+        Click(Find<Border>("Line_2"));
+        Assert.False(page.AllLinesSelected);
+        Assert.Equal(1, page.SelectedLine);
+        Assert.False(Shown(0));
+        Assert.True(Shown(1));
+        Save();
+        Compile(DlgPath("forest_intro"));
+    }
+
     [AvaloniaFact]
     public void P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip()
     {

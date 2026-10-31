@@ -9,8 +9,8 @@ dropping in images, adding a player, painting tiles or choosing a template.
 
 ## Opens from
 
-- File › New Project (Empty)
-- Opening any project that has no assets, scripts, actors or map yet
+- Opening any project that has no assets, scripts, actors or map yet, for example a Puzzle project made in New Project
+  with every include option off (there is no separate File › New Project (Empty) item: checklist 1.4 item 3)
 
 ## What is on it
 

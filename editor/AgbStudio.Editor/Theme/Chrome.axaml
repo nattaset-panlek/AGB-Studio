@@ -263,13 +263,15 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border BorderBrush="{DynamicResource border/default}" BorderThickness="0,1,0,0" Padding="20,0">
+          <!-- the buttons are laid out first; the hint gets the width they leave, wraps to a second line and then ends
+               with an ellipsis, so a long hint never squeezes or pushes out the buttons -->
           <DockPanel HorizontalSpacing="8">
-            <TextBlock DockPanel.Dock="Left" Text="{TemplateBinding Hint}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
-                       IsVisible="{TemplateBinding Hint, Converter={x:Static t:Conv.NotEmpty}}" />
             <c:AgbButton Name="PART_Confirm" DockPanel.Dock="Right" Kind="{TemplateBinding ConfirmKind}" Size="LG" Content="{TemplateBinding ConfirmText}" IsDefault="True" />
             <c:AgbButton Name="PART_Cancel" DockPanel.Dock="Right" Kind="Secondary" Size="LG" Content="{TemplateBinding CancelText}"
                          IsVisible="{TemplateBinding CancelText, Converter={x:Static t:Conv.NotEmpty}}" />
-            <Panel />
+            <TextBlock Name="PART_Hint" Text="{TemplateBinding Hint}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center"
+                       TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
+                       IsVisible="{TemplateBinding Hint, Converter={x:Static t:Conv.NotEmpty}}" />
           </DockPanel>
         </Border>
       </ControlTemplate>

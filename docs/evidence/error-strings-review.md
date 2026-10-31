@@ -35,14 +35,14 @@ jargon or ids, or no context. Placeholders are written as `{name}`; runtime stri
 
 | Area | Rows | OK | PARTIAL | POOR |
 |---|---|---|---|---|
-| Build pipeline | 52 | 52 | 0 | 0 |
+| Build pipeline | 62 | 62 | 0 | 0 |
 | Scripting compiler | 103 | 103 | 0 | 0 |
 | Analyzer | 18 | 18 | 0 | 0 |
 | Project files | 9 | 9 | 0 | 0 |
 | CLI | 16 | 16 | 0 | 0 |
-| Runtime Console | 45 | 45 | 0 | 0 |
+| Runtime Console | 46 | 46 | 0 | 0 |
 | Editor | 153 | 153 | 0 | 0 |
-| **Total** | **396** | **396** | **0** | **0** |
+| **Total** | **407** | **407** | **0** | **0** |
 
 At the review snapshot the counts were 149 OK, 193 PARTIAL and 53 POOR (Build pipeline 12 / 33 / 7, Scripting compiler
 53 / 44 / 6, Analyzer 9 / 8 / 1, Project files 0 / 6 / 3, CLI 2 / 12 / 2, Runtime Console 1 / 25 / 19, Editor 72 / 65 /
@@ -135,9 +135,19 @@ diagnostics here have no line). Converter problems also show in Import Asset (T-
 | tools/AgbStudio.Build/Graphics/SpriteConverter.cs:53 (via GameBuilder.cs:216 and Import Asset) | `Uses {n} colours. A GBA sprite palette holds 16, so it needs reducing or splitting.` + buttons "Reduce to 16", "Split into {n} palettes" | OK | - |
 | tools/AgbStudio.Build/Graphics/TilesetConverter.cs:51 (via GameBuilder.cs and Import Asset) | `{n} tiles use more than 15 colours (a GBA tile has 15 plus transparent), so their colours were reduced. Check them, or redraw them with fewer colours.` | OK | - |
 | tools/AgbStudio.Build/Graphics/TilesetConverter.cs:56 (via GameBuilder.cs and Import Asset) | `The tiles need more than the {n} free palettes, so all colours were reduced to one palette of 16. Use fewer different colour sets, or split the tileset.` | OK | - |
-| tools/AgbStudio.Build/Fonts/TrueType.cs:22 | `{font} is not a TrueType font: it is an OpenType font with CFF outlines, or not a font file, and AGB Studio reads only TrueType outlines. Use the .ttf version of the font.` | OK | - |
-| tools/AgbStudio.Build/Fonts/TrueType.cs:31 | `{font} is damaged or incomplete (its '{table}' table is missing), so it can't be read. Download the font again, or use another one.` | OK | - |
-| tools/AgbStudio.Build/Fonts/TrueType.cs:64 | `{font} has no Unicode character map, so its letters can't be found. Use a Unicode .ttf font.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:28 | `{font} is a font collection (.ttc), which AGB Studio does not read. Save one font of it as .ttf or .otf.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:29 | `{font} is a web font (WOFF), which AGB Studio does not read. Use the .ttf or .otf version of the font.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:30 | `{font} is not a TrueType or OpenType font, so it can't be read. Use a .ttf or .otf font file.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:39 | `{font} has CFF2 outlines (an OpenType variable font), which AGB Studio does not read. Use a static .otf or .ttf version of the font.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:41 (and Cff.cs:68 `Damaged`) | `{font} is damaged or incomplete (its '{table}' table is missing), so it can't be read. Download the font again, or use another one.` (Cff.cs: `... ({what}, e.g. its CFF table is cut short) ...`) | OK | - |
+| tools/AgbStudio.Build/Fonts/Cff.cs:38 | `{font} has CFF outlines of version {n}, which AGB Studio does not read. Use a .ttf version of the font, or an .otf with CFF version 1 outlines.` | OK | - |
+| tools/AgbStudio.Build/Fonts/Cff.cs:47 | `{font} uses Type 1 charstrings inside CFF, which AGB Studio does not read. Use a .ttf version of the font.` | OK | - |
+| tools/AgbStudio.Build/Fonts/TrueType.cs:79 | `{font} has no Unicode character map, so its letters can't be found. Use a Unicode .ttf or .otf font.` | OK | - |
+| tools/AgbStudio.Build/Graphics/Aseprite.cs:52 | `{file} is not an Aseprite file (it does not start with the Aseprite file mark), so it can't be read. Save the sprite from Aseprite as .aseprite, or export it as a .png, then import it again.` | OK | - |
+| tools/AgbStudio.Build/Graphics/Aseprite.cs:58 | `{file} has colour depth {n}, which is not one Aseprite writes (RGBA, grayscale or indexed), so the file is damaged. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.` | OK | - |
+| tools/AgbStudio.Build/Graphics/Aseprite.cs:72 | `{file}: frame {n} is damaged (its frame header is wrong), so the file can't be read. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.` | OK | - |
+| tools/AgbStudio.Build/Graphics/Aseprite.cs:151 | `{file}: a cel in frame {n} is damaged (it holds fewer pixels than its size needs), so the file can't be read. Open it in Aseprite and save it again, or export the sprite as a .png, then import it again.` | OK | - |
+| tools/AgbStudio.Build/Graphics/Aseprite.cs:303 | `{file} ends too early (the file is cut short, or it was still being saved), so it can't be read. Save it again in Aseprite, or copy the whole file again, then import it again.` | OK | - |
 | tools/AgbStudio.Build/Graphics/PaletteFiles.cs:28 | `{file} is not a JASC .pal or GIMP .gpl palette.` | OK | - |
 | tools/AgbStudio.Build/Graphics/SpriteConverter.cs:40 (and Gba.cs:45) | `Sprite {sprite}: frames are {w}×{h} pixels, but the biggest GBA sprite is 64×64. Set a frame size of 64×64 or less in the Sprite Editor.` (Gba.FitOam: `Frames of {w}×{h} pixels are larger than the biggest GBA sprite (64×64). Set a frame size of 64×64 or less in the Sprite Editor.`) | OK | - |
 
@@ -147,8 +157,16 @@ Notes:
   arrive without the file that caused them (see Project files and AGB0300 "Script too long"). Since the rewording
   pass the sprite, tileset, image and font being converted is the diagnostic file, project JSON errors name their file
   and line (`GameProject.Load`), and "Script too long" is an AGB0300 error at the cutscene.
-- Import Asset marks `.otf` files "Ready · rendered to a GBA font when you build." (`AssetImporter.cs:123`), but most
-  `.otf` fonts have CFF outlines and then fail the build with `TrueType.cs:22`.
+- Import Asset marks `.otf` files "Ready · rendered to a GBA font when you build." (`AssetImporter.cs:123`). Since the
+  CFF reader (`Fonts/Cff.cs`) the build renders `.otf` fonts with CFF version 1 outlines; the old `TrueType.cs:22`
+  refusal of every CFF font is gone. What is still refused (collections, WOFF, CFF2, other CFF versions, Type 1
+  charstrings) is in the TrueType.cs:28-39 and Cff.cs:38/47 rows, each with the font to use instead.
+- The five Aseprite reader texts (`Graphics/Aseprite.cs`, added after the snapshot) reach Build ROM through
+  `GameBuilder.cs` `StepError` and Import Asset as they are. Reworded for the G-ERR.01 recheck
+  (`review-p10-14-recheck.md`): each says what is damaged, why the file can't be read and what to do (save it again in
+  Aseprite, or import a .png). Frame numbers count
+  from 1, as Aseprite shows them. `ImageConverterTests.ADamagedAsepriteFileIsRefusedWithItsName` checks the name and
+  the fix.
 
 ## Scripting compiler
 
@@ -337,6 +355,7 @@ errors. `warnOnce` texts are logged once per run with a `warning: ` prefix.
 
 | File:line | Text | Verdict | Suggested wording |
 |---|---|---|---|
+| runtime/src/audio/audio.cpp:90 | `warning: audio: %d mixing channels asked, but this build has buffers for %d, so it mixes %d. Set audio.channels in the .agbproj to %d or less.` (the game asks for the project's channels; the build sizes the buffers for at most 16) | OK | - |
 | runtime/src/audio/audio.cpp:190 | `warning: SFX Designer sound number %u is not in this ROM, so nothing played. Rebuild the game, or check the sound name.` | OK | - |
 | runtime/src/core/assert.cpp:13 | `assert failed: %s(%d): %s. The game stopped here. (%s)` (the game stops) | OK | - |
 | runtime/include/agb/memory.hpp:79 | assert `an object was used after it was destroyed; check scripts that keep a reference after Destroy()` | OK | - |

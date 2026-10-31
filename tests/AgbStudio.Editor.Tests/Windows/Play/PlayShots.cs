@@ -97,6 +97,7 @@ public sealed class PlayShots : IShotSource, IShotSpecimen
     {
         using var fx = new Fixture();
         var play = PlayTestSupport.Open(fx);
+        fx.GameLanguage("en");   // the Figma game view shows the English HUD ("SCORE"); Play builds with it
         var win = new MainWindow(fx.Services) { Width = w, Height = h, SystemDecorations = SystemDecorations.None };
         try
         {

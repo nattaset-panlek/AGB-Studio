@@ -181,13 +181,21 @@ public sealed class MainWindow : Window, IShellHost
         return result == "discard";
     }
 
+    /// <summary>Closing the window (X, Alt+F4, File › Exit) with unsaved files asks first (T-D12); a second close while it asks only waits for that answer.</summary>
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
         if (_exitConfirmed || !_s.Documents.HasUnsaved) return;
         e.Cancel = true;
-        if (await ConfirmExitAsync()) { _exitConfirmed = true; Close(); }
+        if (_asking) return;
+        _asking = true;
+        bool close;
+        try { close = await ConfirmExitAsync(); }
+        finally { _asking = false; }
+        if (close) { _exitConfirmed = true; Close(); }
     }
+
+    bool _asking;
 
     protected override void OnOpened(EventArgs e)
     {

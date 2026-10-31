@@ -37,7 +37,7 @@ public sealed class FontManagerPage : DockPanel
     public FontEntry? Font { get; private set; }
     public int SelectedGlyph { get; private set; }
     public GlyphEditor Editor { get; } = new();
-    public IReadOnlyList<GlyphGroup> Groups => Font is null ? [] : FontEntry.Groups(Font.File);
+    public IReadOnlyList<GlyphGroup> Groups => Font is null ? [] : Font.GroupsWithText();
     public GlyphGroup? Group => _group < Groups.Count ? Groups[_group] : null;
 
     public static readonly string[] ToolGlyphs = ["pencil", "eraser", "pipette", "grid"];
@@ -71,6 +71,7 @@ public sealed class FontManagerPage : DockPanel
         Children.Add(PageChrome.Toolbar(s, [PageChrome.ToolGroup(_tools), _summary], MapLibrary.Of(s).SceneMap()?.Scene?.VideoMode ?? 0));
 
         var glyphCount = new StatusItem { Name = "Status_Glyphs" };
+        glyphCount.Click += (_, _) => ShowMissing();
         var rom = new StatusItem { Glyph = "chip", Name = "Status_Rom" };
         var saved = new StatusItem { Glyph = "check", Content = "Saved", Name = "Status_Saved" };
         Children.Add(PageChrome.StatusBar([PageChrome.ReadyItem(s.Status), glyphCount], [rom, saved]));
@@ -80,8 +81,9 @@ public sealed class FontManagerPage : DockPanel
             glyphCount.IsVisible = rom.IsVisible = f != null;
             saved.IsVisible = f is { IsDirty: false };
             if (f is null) return;
-            glyphCount.Content = $"{f.GlyphCount} glyphs · {f.Font.Missing.Count} missing";
-            glyphCount.Glyph = f.Font.Missing.Count > 0 ? "warn" : "type";
+            var missing = f.AllMissing.Count;
+            glyphCount.Content = $"{f.GlyphCount} glyphs · {missing} missing";
+            glyphCount.Glyph = missing > 0 ? "warn" : "type";
             rom.Content = "ROM " + Kb(f.Font.RomBytes);
         });
 
@@ -106,6 +108,8 @@ public sealed class FontManagerPage : DockPanel
         PageChrome.WhileAttached(this, () =>
         {
             _attached = true;
+            // the project's strings may have changed while another page was shown
+            Font?.ReloadText();
             _lib.ListChanged += Refresh;
             Listen(Font, true);
             if (Font is { } current) _s.System.Selection = () => current.Path;
@@ -140,6 +144,7 @@ public sealed class FontManagerPage : DockPanel
     {
         if (_attached) Listen(Font, false);
         Font = _lib.Select(font);
+        font.ReloadText();
         if (_attached) Listen(font, true);
         var groups = Groups;
         _group = Math.Max(0, groups.ToList().FindIndex(g => g.Name == "Thai consonants"));
@@ -153,6 +158,16 @@ public sealed class FontManagerPage : DockPanel
         _group = Math.Clamp(index, 0, Math.Max(0, Groups.Count - 1));
         SelectedGlyph = Group?.CodePoints.FirstOrDefault() ?? 0;
         Refresh();
+    }
+
+    /// <summary>The status item "N missing": shows the glyphs the project's text needs (else the first missing one's group).</summary>
+    public void ShowMissing()
+    {
+        if (Font is not { } f || f.AllMissing is not [var first, ..]) return;
+        var groups = Groups.ToList();
+        var i = groups.FindIndex(g => g.Name == FontEntry.TextMissingGroup);
+        if (i < 0) i = groups.FindIndex(g => g.CodePoints.Contains(first));
+        if (i >= 0) SelectGroup(i);
     }
 
     public void SelectGlyph(int cp)

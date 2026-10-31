@@ -12,7 +12,7 @@
 | Avalonia 11.3 (incl. Avalonia.DesignerSupport) | MIT | editor UI | editor |
 | MicroCom.Runtime 0.11 | MIT | COM interop used by Avalonia on Windows | editor |
 | ANGLE (`av_libglesv2.dll`, package Avalonia.Angle.Windows.Natives) | BSD 3-clause (licence file in the package) | OpenGL ES on Direct3D for Avalonia rendering | editor |
-| SkiaSharp 3.119 | MIT | font rasterising and image I/O in the editor and toolchain | editor |
+| SkiaSharp 3.119 | MIT | Avalonia's 2D renderer in the editor (`Program.cs` `.UseSkia()`); the toolchain does not use it (PNG through its own `Png.cs`, fonts rasterised by its own `Fonts/` code) | editor |
 | Skia (`libSkiaSharp.dll`) | BSD 3-clause; bundled parts (etc1, gif and others) listed in the package's THIRD-PARTY-NOTICES.txt | native 2D graphics behind SkiaSharp | editor |
 | HarfBuzzSharp 8.3 | MIT | text shaping binding used by Avalonia | editor |
 | HarfBuzz (`libHarfBuzzSharp.dll`) | "Old MIT" | native text shaping | editor |
@@ -25,7 +25,7 @@
 | Press Start 2P | SIL OFL 1.1 | pixel labels in the editor | editor |
 | Nunito | SIL OFL 1.1 | wordmark | editor |
 | Noto Sans Thai | SIL OFL 1.1 | default Thai game font source | templates |
-| Noto Sans (`third_party/fonts/fallback-latin.ttf`) | SIL OFL 1.1 (`OFL-NotoSans.txt`) | Latin glyphs for fonts that lack them | toolchain |
+| Noto Sans (`third_party/fonts/fallback-latin.ttf`) | SIL OFL 1.1 (`OFL-NotoSans.txt`) | Latin glyphs for fonts that lack them; source font of the boot splash text built into every game with Boot splash on (`Content/SplashArt.cs`); copied into Sky Hopper as `NotoSans.ttf` for its `pixel8` and `title_big` fonts | toolchain; its rasterised glyphs in games |
 | Ninja | Apache-2.0 | runs the native build when it is on PATH; otherwise AGB Studio runs the same build itself | not shipped |
 | ICU Thai dictionary (thaidict.txt) | Unicode licence (ICU) | Thai word-break list at build time | toolchain |
 

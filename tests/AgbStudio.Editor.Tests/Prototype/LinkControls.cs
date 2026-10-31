@@ -35,6 +35,10 @@ public static class LinkControls
         "Figma links the Scene menu title of the title bar back to the Scene Editor; in AGB Studio that title opens the " +
         "Scene menu (T-M04, as Editor Map board 2 draws it), and the Scene document tab leads back to the Scene Editor.";
 
+    const string BuildMenuDiffers =
+        "Figma links the Build menu title of the Scene Editor straight to Build ROM (T-D06); in AGB Studio that title opens the " +
+        "Build menu (T-M05, as Editor Map board 2 draws it), and Build ROM is its first item.";
+
     /// <summary>The Launcher sidebar item that opens a window.</summary>
     static string NavLabel(string? to) => to switch
     {
@@ -55,7 +59,7 @@ public static class LinkControls
         ("T-P20", "row / column / Button", "T-D01") => Named<AgbButton>("UseTemplate"),
 
         // Scene Editor (T-P01)
-        ("T-P01", "Title Bar / Menus / Build", "T-D06") => MenuItem("Build", "Build ROM"),
+        ("T-P01", "Title Bar / Menus / Build", "T-D06") => MenuItem("Build", "Build ROM") with { Differs = BuildMenuDiffers },
         ("T-P01", "Title Bar / Actions / Debug", "T-P19") => Named<AgbButton>("PART_Debug"),
         ("T-P01", "Toolbar / Play / Play Control", "T-P02") => Named<PlayControl>("PlayButton"),
         ("T-P01", "Toolbar / Chip", "T-O02") => Named<Chip>("VideoModeChip"),

@@ -1,16 +1,23 @@
 # AGB Studio · File formats
 
-Every project file is UTF-8 JSON with camelCase property names (D-03), written by `GameProject.Save` with indentation
-so it diffs well in version control. Each top-level document carries `"format": 1`; a file with a higher format was
-written by a newer AGB Studio and is refused with a message instead of being misread. The C# classes in
-`tools/AgbStudio.Core/Project` are the reference (and `tools/AgbStudio.Scripting` for `.graph` and `.dlg`); this page
-lists what lives where.
+Every project file is UTF-8 JSON with camelCase property names (D-03), written with indentation so it diffs well in
+version control: most by `GameProject.Save`, and `.map`, `.font`, `.dlg` and `.graph` by their editor documents
+(`MapDocument`, `FontEntry` in `FontLibrary.cs`, `DialogueDoc` in `ProjectData.cs`, `GraphDocument`), which add the
+editor-only fields listed below. Each top-level document carries `"format": 1`, except a prefab, which is a plain
+`ActorData` with no format field. Only `.agbproj` (`GameProject.Open`), `.dlg` (`DialogueFile.Parse`) and `.graph`
+(`LogicGraph.Parse`) check it: a file with a higher format was written by a newer AGB Studio and is refused with a
+message. Every other file is read by `GameProject.Load<T>` or the editor documents with no version check. The C#
+classes in `tools/AgbStudio.Core/Project` are the reference (and `tools/AgbStudio.Scripting` for `.graph` and
+`.dlg`); this page lists what lives where.
 
 JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`, `scene`, `map`, `sprite-meta`,
 `tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg`,
-`palettes` and `graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
+`palettes` and `graph`. All but `graph` are generated from the C# classes with the JSON settings of `GameProject.Save`;
 `SchemaTests.SchemasMatchTheFileModel` fails when a class changes and its schema was not regenerated (run the tests with
-`AGB_UPDATE_SCHEMAS=1` to rewrite them).
+`AGB_UPDATE_SCHEMAS=1` to rewrite them). The schemas do not hold the editor-only fields the Tilemap Editor, Font
+Manager, Dialogue Editor and Logic Graph write (`bgSize` / `bpp`, `drawTo`, speaker `names` / `color`, `comments` /
+`collapsed` / `disabled`, below), and the schema check in `SchemaTests` rejects unknown fields, so a file with one of
+them does not pass its schema.
 
 ## Project folder
 
@@ -18,27 +25,31 @@ JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`,
 MyGame/
   MyGame.agbproj          project settings (ProjectFile)
   .gitignore              "build/"
+  MyGame.csproj, Directory.Build.props, .editorconfig, .vscode/settings.json, .vscode/extensions.json
+                          external IDE files (CsprojGenerator), written when a script is opened in an external
+                          editor with Preferences "Generate .csproj for IntelliSense" on, then kept current by
+                          every build
   scenes/*.scene          scenes (SceneFile)
   maps/*.map              tile maps and layers (MapFile)
-  prefabs/*.prefab        actors saved with Make Prefab (ActorData)
+  prefabs/*.prefab        Make Prefab: one actor (ActorData) each
   assets/
-    sprites/*.png         sprite sheets + <name>.png.meta.json (SpriteMeta); *.aseprite files: frames, layers, tags
-    tilesets/*.png        16 x 16 editor tiles + .meta.json (TilesetMeta)
-    images/*.png          full-screen backgrounds for image layers
+    sprites/*.png|*.aseprite  sprite sheets + <name>.png.meta.json (SpriteMeta); *.aseprite files: frames, layers, tags
+    tilesets/*.png|*.aseprite  16 x 16 editor tiles + .meta.json (TilesetMeta)
+    images/*.png|*.aseprite  full-screen backgrounds for image layers
     palettes/*.pal|*.gpl  imported palettes (JASC / GIMP)
     palettes/palettes.json  Palette Manager banks and palette effects (PaletteLibraryFile, editor only)
     audio/music/*.mod|*.xm  music + .meta.json (MusicMeta)
-    audio/sfx/*.wav       sampled sound effects (and baked SFX Designer effects) + .meta.json (SoundMeta)
+    audio/sfx/*.wav       sampled sound effects + .meta.json (SoundMeta) when imported; a baked SFX Designer
+                          effect writes its .wav here with no .meta.json
   audio/sfx/*.sfx         SFX Designer effects (SfxFile)
-  fonts/*.font            game fonts (FontFile) next to their .ttf / .bdf / image source
+  fonts/*.font            game fonts (FontFile) next to their .ttf / .otf / .bdf / image source
   scripts/**/*.cs         C# behaviours
   scripts/**/*.graph      Logic Graphs (the matching .cs is generated from them)
   data/*.db               Database tables (TableFile)
   text/strings.<lang>.json  Localization tables (StringTable)
   text/strings.meta.json  per-key group, speaker, notes, box width and lines (StringMeta)
   dialogue/*.dlg          Dialogue Editor files (DialogueFile)
-  prefabs/*.prefab        Make Prefab: one actor (ActorData) each
-  build/                  everything the build writes (never edited by hand)
+  build/                  everything the build, Play Mode and Flash to Cartridge write (never edited by hand)
 ```
 
 ## `<name>.agbproj` (ProjectFile)
@@ -47,13 +58,13 @@ MyGame/
 |---|---|
 | `name`, `tags`, `lastScene` | project name, tag list (Project Settings · Tags), the scene opened last |
 | `general` | game title, ROM title (12 ASCII), game code (4), maker code (2), version, start scene, default font and language, boot splash and its length, skip splash in Debug |
-| `input`, `allowRemap` | the ten buttons with an action name and keyboard key each; whether the Options screen remaps them |
+| `input`, `allowRemap` | one row per button (by default seven: `A`, `B`, `L`, `R`, `Start`, `Select` and one `D-pad` row), each with `button`, `action`, `keyboard` and `gamepad`; whether the Options screen remaps them |
 | `save` | save type (`None`, `Sram32K`, `Flash64K`, `Flash128K`, `Eeprom8K`), slots, autosave, checksum, save fields (name and type), `flagIds` (written by the build: the saved flag id of each Dialogue Editor flag; a flag keeps its id and a new flag never reuses one, so adding a flag does not change what old save data means) |
 | `build` | configuration (`Debug` / `Release`), optimise flags, compress graphics (LZ77), output folder, strip debug log, ROM size warning (MB), keep asserts, run after build |
 | `scripting` | analyzer severities (`GAE001`..`GAE006`), shop currency field and other script options |
 | `localization` | source language, languages (code, name, font, fallback), Thai word wrap, show missing keys, fail on missing |
 | `audio` | Maxmod channels (`channels`, 1 to 16) and mixing rate (`mixKHz`: 8, 10, 13, 16, 18, 21, 27 or 31; the runtime mixes at it) |
-| `ui` | Menu / UI kit colours and layout of the title, pause and options screens |
+| `ui` | Menu / UI kit: `pauseMenu` (on or off), `titleScene` (for Quit to title), `font`, seven colours (`ink`, `muted`, `paper`, `screen`, `screenInk`, `barTrack`, `barFill`) and `dim` (pause overlay); no layout (a title screen's menu layout is the scene's `menu`) |
 
 ## `scenes/<Name>.scene` (SceneFile)
 
@@ -76,10 +87,11 @@ An actor (`ActorData`) has a `name`, `kind` (`Empty`, `Player`, `Enemy`, `Pickup
 from, Hierarchy `group`, `collider` (null = from the sprite), `zoneW` / `zoneH` for trigger and camera zones, a label
 `text` key for Text Labels, and `components`: each a behaviour `type` with its Inspector `fields` as strings.
 
-A link (`LinkData`, Link Settings) has `from` (an actor in this scene), `kind` (`OnTouch`, `Door`, `Respawn`), `to`
-(a scene), `spawnAt` (a spawn point name or "x,y") with `spawnX` / `spawnY`, `transition` (`Cut`, `Fade`, `Slide`),
-`duration` in seconds and `onlyIf` (a C# condition, empty = always). The runtime currently treats every kind like
-`OnTouch`.
+A link (`LinkData`, Link Settings) has `from` (an actor in this scene, or empty), `kind` (`OnTouch`, `Door`,
+`Respawn`), `to` (a scene), `spawnAt` (a spawn point name or "x,y") with `spawnX` / `spawnY`, `transition` (`Cut`,
+`Fade`, `Slide`), `duration` in seconds and `onlyIf` (a C# condition, empty = always). Each kind fires as described
+above (`game.cpp` `checkLinks`: Door on the frame Up goes down during the overlap, Respawn on the overlap or when the
+player is lost).
 
 A scene `menu` (`SceneMenu`, title screens) has the panel `x`, `y`, `width`, `height`, `spacing` and `items`, each
 with a `text` (a string key or ASCII text), a `command` (`LoadScene`, `Continue`, `Options`, `QuitToTitle`) and the
@@ -92,7 +104,12 @@ layer (`MapLayerData`) has a `name`, hardware `bg` (0-3), `type` (`Tile`, `Image
 `priority`, `parallaxX` / `parallaxY` (1 = moves with the camera), `wrap`, `cells` (one metatile index per cell,
 row-major) or, for image layers, the `image` name. Affine layers are converted at build time to 8bpp tiles with flips
 and palettes baked in (at most 256 tiles). A map is the layout of a scene (blueprint "Layout"): several scenes can
-show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`).
+show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`). The Tilemap Editor also writes
+`bgSize` ("32x32", "64x32", "32x64" or "64x64"; left out = 64x32) and `bpp` (4 or 8; left out = 4).
+
+The Tilemap Editor (`MapDocument`) also writes two top-level fields that are not in `MapFile` or `map.schema.json`:
+`bgSize` (`"32x32"`, `"32x64"` or `"64x64"`; left out for the default 64x32) and `bpp` (`8`; left out for the default
+4). It keeps any other field it does not know and writes it back on save. The build does not read `bgSize` or `bpp`.
 
 ## `prefabs/<Name>.prefab` (ActorData)
 
@@ -127,22 +144,28 @@ copies it in any scene when the scene has no actor of that name.
   `kind`, `name`, `bankKind`, `bank` with -1 for every bank, colour range `first` / `last`, `frames`, cycle
   `direction` `Left` / `Right` / `PingPong`, 15-bit `color`, `enabled`).
 - `fonts/<name>.font` (`FontFile`): source kind (`Ttf`, `Bdf`, `Image`) and file, pixel size, variable or fixed width,
-  character sets, extra characters, line height, baseline, spacing, bits per pixel, drop shadow, Thai mark stacking
-  and lower-vowel placement, glyph overrides (edited pixels by code point). `Ttf` takes a `.ttf` or an `.otf` file:
-  TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed. Font collections (`.ttc`), web fonts
-  (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
+  `cellHeight` (image fonts), character sets, extra characters, line height, baseline, spacing, bits per pixel, drop
+  shadow, Thai mark stacking and lower-vowel placement, `thaiWordWrap`, glyph overrides (edited pixels by code point).
+  `Ttf` takes a `.ttf` or an `.otf` file: TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed.
+  Font collections (`.ttc`), web fonts (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
+  `drawTo` is the BG (0-3) of the text layer chosen in Font Manager · Draw to (left out = BG 0).
 - `data/<Table>.db` (`TableFile`): key field, keep in ROM, `fields` (name, type `int` / `fixed` / `bool` / `text` /
-  `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized) and `rows`.
+  `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized, `showInInspector`, and
+  `reference`, the table a `reference` field points at) and `rows`.
 - `text/strings.<lang>.json` (`StringTable`): `language` and a sorted `strings` map from key to text.
 - `audio/sfx/<name>.sfx` (`SfxFile`): DMG `channel` (`Square1`, `Square2`, `Wave`, `Noise`), `bake` (to a `.wav`
   instead of playing on the DMG channel), `volume` (0-15), `duty`, `envelopeStep` / `envelopeUp`, `startNote`,
   `sweepTime` / `sweepShift` / `sweepUp` (Square 1), `length` in seconds, `wave` (32 samples, 0-15), `noiseDivider` /
-  `noiseShort`. The build turns every effect that is not baked into DMG register values in the ROM.
+  `noiseShort`. The build turns every effect into DMG register values in the ROM, except one that is baked or has a
+  `.wav` of the same name in `assets/audio/sfx` (that `.wav` plays instead).
 - `scripts/<Name>.graph` (`LogicGraph`): `class` (the generated C# class), `nodes` (each `id`, `type` from the node
   catalog, `x`, `y`, `props`) and `links` (`from` / `to` as "node.pin", from an output pin to an input pin). The
-  generated `<Name>.cs` next to it carries a header and is read-only in the editor (D-11).
+  generated `<Name>.cs` next to it carries a header and is read-only in the editor (D-11). The Logic Graph editor
+  adds `comments` (`title`, `x`, `y`, `w`, `h`), `collapsed` (node ids) and `disabled` (nodes and links switched off,
+  a graph of the same shape that is not compiled).
 - `dialogue/<name>.dlg` (`DialogueFile`): `name`, `textSpeed`, `blip`, `speakers` (`name`, `portrait`, `blip`,
-  `textSpeed`) and `conversations` (`id`, `lines`). A line has an optional `id`, `speaker`, a string `key` or inline
+  `textSpeed`, and from New Speaker `names` per language and the name tag `color`) and `conversations` (`id`,
+  `lines`). A line has an optional `id`, `speaker`, a string `key` or inline
   `text` per language, `portrait`, `speed`, `blip`, `showIf`, `thenSet`, `next`, `choices` (each `key` or `text`,
   `showIf`, `thenSet`, `goto`, `scene`, `end`), or a `command` with its arguments (`scene`, `flag` / `value`,
   `table` / `item` / `count`, `sound` / `volume`, `frames` / `seconds`, `amplitude`).
@@ -151,12 +174,15 @@ copies it in any scene when the scene has no actor of that name.
 
 | File | Written by | Holds |
 |---|---|---|
-| `<rom>.gba`, `THIRD_PARTY.txt` | GameBuilder | the ROM and the libtonc and maxmod notices that travel with it |
+| `<rom>.gba`, `THIRD_PARTY.txt` | GameBuilder | the ROM and the notices that travel with it (the AGB Studio runtime, libtonc, maxmod) |
 | `obj/build.ninja`, `obj/*.elf`, `obj/*.elf.map`, `obj/obj/` | NativeBuild | the build graph, the linked ELF, its map file, objects |
 | `gen/` | GameBuilder, scripting compiler | generated C++ (assets, scenes, strings, scripts, database), the soundbank, debugger maps |
 | `cache/manifest.json` | AssetCache | hashes of converted assets for incremental builds |
 | `report.json` | BuildReport | `format`, ROM size by category and per asset, IWRAM / EWRAM use (all from the linker map), `ramSplit` (IWRAM / EWRAM by blueprint 10 row, with each row's default budget), save slot bytes, per-scene VRAM and palette budgets (`scenes`), build time per step (`stepSeconds`), warnings. Each of `assets` (largest ROM first; `largestAssets` is the first ten) has `name`, `type`, ROM `bytes` and `share` (percent of the ROM), and what it takes when a scene loads it: `vram` (`BG`, `OBJ` or empty), `vramBytes` = `vramTileBytes` + `vramMapBytes`, `paletteBytes` (32 per 16-colour bank) and `ramBytes` (see below) |
 | `report-history.json` | BuildReport | the last 20 builds, failed ones included (first error) |
+| `ide/` | CsprojGenerator | the external IDE project's API reference assembly, analyzers, generated project API and its `obj/` / `bin/` (always `build/ide`, whatever the output folder) |
+| `play/<rom>.sav` | Play Mode (`PlayController`) | the save data of the game run in Play Mode |
+| `save-backups/<rom>-<time>.sav` | Flash to Cartridge (`FlashDialog`) | the cartridge's save data, read before flashing when "Back up the save file first" is on |
 
 What an asset takes when loaded (`GameBuilder` `AssetInfo`, the same numbers the scene budgets add up): a sprite one
 frame of OBJ tiles for each actor that shows it and its own OBJ palette bank (none when it shares a palette); a tileset
@@ -174,6 +200,8 @@ format schemas; `BuildReportTests.ReportNumbersMatchTheLinkerMap` checks a real 
 ## Editor files (per user)
 
 In `%APPDATA%\AGBStudio\`: `preferences.json` (Preferences, including the Script Editor and external editor
-settings), `recent-projects.json` (recent projects), `tutorials.json` (tutorial progress) and
-`launcher-projects.json` (Launcher project thumbnails). Next to the program: `editor.json` (website, bug, update,
-community and release notes URLs, D-13) and, in a packaged copy, `release-notes.md` (the Launcher's What's new).
+settings), `recent-projects.json` (recent projects), `tutorials.json` (tutorial progress),
+`launcher-projects.json` (Launcher project thumbnails) and `crash\crash-<time>.log` (crash logs, `CrashGuard`). Next
+to the program: `editor.json` (website, bug, update, community and release notes URLs, D-13, and `devkitProUrl`, the
+devkitPro installer page shown when devkitPro is not found) and, in a packaged copy, `release-notes.md` (the
+Launcher's What's new).

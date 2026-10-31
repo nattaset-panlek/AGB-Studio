@@ -59,6 +59,41 @@ public sealed class ScriptToolsTests : IDisposable
         Assert.False(_h.Win.Overlays.IsOpen);
     }
 
+    /// <summary>
+    /// T-O11 / T-C21: Ctrl+H in the Script Editor opens Find &amp; Replace in replace mode: the word at the caret is the
+    /// query and the caret is in the Replace field, so typing goes there and Enter replaces the current match.
+    /// </summary>
+    [AvaloniaFact]
+    public void CtrlH_OpensFindAndReplaceInReplaceMode_TypeAndEnterReplaces()
+    {
+        var page = OpenPlayer();
+        page.Editor.Focus();
+        page.Editor.MoveCaret(6, 20);
+        _h.Key(Key.H, RawInputModifiers.Control);
+        Assert.Equal(("T-O11", "Ctrl+H"), _h.S.Windows.Requests[^1]);
+        var find = Assert.IsType<FindReplacePopover>(_h.Win.Overlays.Open.Single());
+        Assert.Equal("jumpPower", find.Query.Text);
+        Assert.Equal("1 of 2", find.CountText);
+        Assert.True(find.Replacement.IsEffectivelyVisible);
+        Assert.Same(find.Replacement, _h.Win.FocusManager!.GetFocusedElement());
+        // the typing lands in Replace, not in the query or the script
+        _h.Type("jumpForce");
+        Assert.Equal("jumpForce", find.Replacement.Text);
+        Assert.Equal("jumpPower", find.Query.Text);
+        _h.Key(Key.Enter);
+        Assert.Contains("public fixed jumpForce = 3.5;", page.Editor.Text);
+        Assert.Single(find.Hits);
+        Assert.Equal("1 of 1", find.CountText);
+        _h.Key(Key.Escape);
+        Assert.False(_h.Win.Overlays.IsOpen);
+        // Ctrl+F opens the same popover in find mode: the caret goes to the query
+        page.Editor.Focus();
+        _h.Key(Key.F, RawInputModifiers.Control);
+        find = Assert.IsType<FindReplacePopover>(_h.Win.Overlays.Open.Single());
+        Assert.NotSame(find.Replacement, _h.Win.FocusManager!.GetFocusedElement());
+        _h.Key(Key.Escape);
+    }
+
     [AvaloniaFact]
     public void FindOptions_CaseWholeWordRegexAndScopes()
     {
@@ -88,8 +123,9 @@ public sealed class ScriptToolsTests : IDisposable
         find.SetScope(FindScope.AllScripts);
         find.Query.Text = "lastScore";
         find.Replacement.Text = "previousScore";
-        Assert.Equal(1, find.ReplaceEverything());
+        Assert.Equal(3, find.ReplaceEverything());   // HUD.cs declares, compares and sets it
         Assert.Contains("previousScore", File.ReadAllText(SkyHopperProject.Script(_h.Fx, "HUD")));
+        Assert.DoesNotContain("lastScore", File.ReadAllText(SkyHopperProject.Script(_h.Fx, "HUD")));
     }
 
     [AvaloniaFact]

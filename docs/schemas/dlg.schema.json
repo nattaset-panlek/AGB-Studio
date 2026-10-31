@@ -40,6 +40,21 @@
           },
           "textSpeed": {
             "type": "integer"
+          },
+          "names": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       }
