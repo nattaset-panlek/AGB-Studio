@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
 using AgbStudio.Analyzers;
@@ -184,8 +184,16 @@ public sealed class ScriptAnalysis
             list.Add(new CodeSpan(c.TextSpan.Start, c.TextSpan.Length, kind.Value));
             last = c.TextSpan.Start;
         }
-        return original is null ? list : FixedAsKeyword(original, list);
+        return original is null ? list : FixedAsKeyword(original, NotGbaKeywords(original, list));
     }
+
+    /// <summary>
+    /// `float`, `double` and `decimal` are C# keywords but not types a GBA script can use (the analyzer flags them):
+    /// Figma T-P04 draws such a word as plain text under its squiggle, not in the keyword colour.
+    /// </summary>
+    static List<CodeSpan> NotGbaKeywords(string original, List<CodeSpan> spans) =>
+        spans.Where(s => !(s.Kind == CodeKind.Keyword && s.Start + s.Length <= original.Length
+            && original.AsSpan(s.Start, s.Length) is "float" or "double" or "decimal")).ToList();
 
     /// <summary>`fixed` is written as a keyword in scripts (D-22): colour it as one even though it binds as the Fixed alias.</summary>
     static List<CodeSpan> FixedAsKeyword(string original, List<CodeSpan> spans)

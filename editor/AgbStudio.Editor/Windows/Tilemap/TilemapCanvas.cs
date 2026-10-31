@@ -1,4 +1,4 @@
-using AgbStudio.Core.Project;
+﻿using AgbStudio.Core.Project;
 using AgbStudio.Editor.Theme;
 using Avalonia;
 using Avalonia.Controls;
@@ -81,7 +81,8 @@ public sealed class TilemapCanvas : Control
         }
         // the camera (GBA screen) frame and its label
         var warn = Res("status/warning");
-        ctx.DrawRectangle(null, new Pen(warn, 2), win.Inflate(-1));
+        // Figma T-P03: a 1 px line 1 px inside the screen edge (the map shows outside it)
+        ctx.DrawRectangle(null, new Pen(warn, 1), win.Deflate(1.5));
         var style = TextStyles.Get("Label/11 Medium");
         var text = new FormattedText($"Camera {TilemapSession.ScreenW}×{TilemapSession.ScreenH}", System.Globalization.CultureInfo.InvariantCulture,
             FlowDirection.LeftToRight, new Typeface(style.FontFamily, FontStyle.Normal, style.FontWeight), 10, Res("bg/canvas"));
@@ -156,8 +157,9 @@ public sealed class TilemapCanvas : Control
         if (box is not { } c) return;
         var (px, py) = _s.ScreenOf(c.X, c.Y);
         var r = new Rect(win.X + px * z, win.Y + py * z, c.W * 16 * z, c.H * 16 * z);
-        using (ctx.PushOpacity(0.35)) ctx.FillRectangle(Res("text/on-selected")!, r);
-        ctx.DrawRectangle(null, new Pen(Res("text/on-selected"), 1.5), r.Deflate(0.75));
+        // Figma T-P03: a white 1.5 px outline over a faint (14 %) white fill
+        using (ctx.PushOpacity(0.14)) ctx.FillRectangle(Res("lit/white")!, r);
+        ctx.DrawRectangle(null, new Pen(Res("lit/white"), 1.5), r.Deflate(0.75));
     }
 
     // ---- input -------------------------------------------------------------------------------------

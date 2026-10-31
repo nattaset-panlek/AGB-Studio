@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
@@ -128,7 +128,9 @@ public sealed class LineInspector : DockPanel
         SectionTitle = $"Line {index + 1}";
         list.Children.Add(Dropdown_("Speaker", () => _page.Current!.File.Speakers.Select(s => s.Name), v => Edit(x => x.Speaker = v)));
         list.Children.Add(Dropdown_("Portrait", () => Portraits(), v => Edit(x => x.Portrait = v == Default ? null : v)));
-        var speed = new InspectorField { Kind = FieldKind.Slider, Label = "Text speed", Name = "Field_TextSpeed" };
+        // Figma T-P16 wraps the value ("2 ch/" "frame") over the 24 px row: the field is 28 px tall (two 14 px lines)
+        // and takes 24 px of the list
+        var speed = new InspectorField { Kind = FieldKind.Slider, Label = "Text speed", Name = "Field_TextSpeed", Height = 28, Margin = new Thickness(0, -2) };
         _fields["Text speed"] = speed;
         int? dragFrom = null;
         speed.PropertyChanged += (_, e) =>

@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Commands;
+﻿using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
@@ -39,8 +39,10 @@ public sealed class SceneEditorShots : IShotSource
         }));
         yield return ("T-P06", (path, w, h) => BottomPanel(path, w, h, "Tab_Animation", _ => { }, win =>
         {
-            // the Figma frame shows onion skin on
-            win.GetVisualDescendants().OfType<AnimationPanel>().Single().OnionSkin = true;
+            // the Figma frame shows onion skin on and frame 3 selected
+            var anim = win.GetVisualDescendants().OfType<AnimationPanel>().Single();
+            anim.OnionSkin = true;
+            anim.SelectFrame(2);
         }));
         yield return ("T-D02", (path, w, h) => WithScene(fx =>
         {

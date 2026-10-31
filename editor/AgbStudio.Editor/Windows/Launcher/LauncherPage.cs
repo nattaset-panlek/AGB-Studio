@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Commands;
+﻿using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
@@ -69,7 +69,8 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         var right = UI.Frame(_side, "bg/panel", "border/default", new Thickness(1, 0, 0, 0)).Named("LauncherRight");
         right.Width = 320;
         SetDock(right, Dock.Right);
-        var scroll = new ScrollViewer { Content = _main, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Name = "LauncherScroll" };
+        // Figma T-P12 / T-P20 / T-P21 draw no scrollbar: the page scrolls with the wheel
+        var scroll = new ScrollViewer { Content = _main, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden, Name = "LauncherScroll" };
         Children.AddRange([top, side, right, scroll]);
 
         _main.Content = tab switch { "T-P20" => TemplatesMain(), "T-P21" => LearnMain(), _ => ProjectsMain() };

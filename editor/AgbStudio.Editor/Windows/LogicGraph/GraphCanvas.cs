@@ -1,4 +1,4 @@
-using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Windows.Scripts;
@@ -192,7 +192,7 @@ public sealed class GraphCanvas : Panel, IEditTarget
         inner.Children.Add(header);
         if (def != null && !Doc.Collapsed.Contains(n.Id))
         {
-            var rows = GraphDocument.Rows(def);
+            var rows = Doc.RowsOf(n);
             for (var i = 0; i < rows.Count; i++)
             {
                 var y = GraphDocument.HeaderHeight + GraphDocument.BodyPad + i * GraphDocument.RowHeight - 1;

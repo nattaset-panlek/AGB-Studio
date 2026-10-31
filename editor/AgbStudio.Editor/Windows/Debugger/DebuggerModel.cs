@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -474,7 +474,8 @@ public sealed class DebuggerModel
 
     static string EwramCategory(string name)
     {
-        if (Regex.IsMatch(name, @"actor|g_debug$|g_screenArena|sprites::|script::", RegexOptions.IgnoreCase)) return "Actor pool";
+        // g_slotMemory: the per-actor behaviour slots (framework/actor.cpp)
+        if (Regex.IsMatch(name, @"actor|g_slotMemory|g_debug$|g_screenArena|sprites::|script::", RegexOptions.IgnoreCase)) return "Actor pool";
         if (Regex.IsMatch(name, @"render::|bg::|commit::|palettes::|map", RegexOptions.IgnoreCase)) return "Tilemap buffers";
         if (Regex.IsMatch(name, @"audio::|^mm|^mp|mixer", RegexOptions.IgnoreCase)) return "Audio mixer";
         if (Regex.IsMatch(name, @"text::|ui::|string", RegexOptions.IgnoreCase)) return "Strings";

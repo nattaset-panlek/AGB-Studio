@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Build.Graphics;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
@@ -246,15 +246,16 @@ public sealed class ImportAssetDialog : FigmaDialog
         _ => "assets",
     };
 
-    /// <summary>The preview: sprite frames at 2x, other images scaled to fit, an icon for other files.</summary>
+    /// <summary>The preview: sprite frames at up to 3x, other images scaled to fit, an icon for other files.</summary>
     static Control Preview(ImportItem item)
     {
         if (item.Image is { } img && item.Pixels is { } px)
         {
             if (item.Kind == ImportKind.SpriteSheet && item.FrameWidth > 0 && item.FrameHeight > 0)
             {
-                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 22, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                var scale = Math.Max(1, Math.Min(2, 64 / Math.Max(item.FrameWidth, item.FrameHeight)));
+                // T-D04: 16 px frames at 3x, 6 px apart
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+                var scale = Math.Max(1, Math.Min(3, 64 / Math.Max(item.FrameWidth, item.FrameHeight)));
                 var cols = Math.Max(1, img.Width / item.FrameWidth);
                 var shown = 0;
                 for (var f = 0; f < cols * item.FrameRows && shown < 4; f++)

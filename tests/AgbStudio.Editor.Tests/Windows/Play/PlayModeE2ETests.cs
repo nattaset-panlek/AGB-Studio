@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
@@ -241,6 +241,19 @@ public class PlayModeE2ETests : EditorDriver
         var success = ((ISolidColorBrush)AgbStudio.Editor.Services.ThemeService.Token(Win, "status/success")!).Color.ToUInt32();
         // the player's collider outline, in status/success
         Assert.Equal(success, At(left + 0.2, top + player.ColliderH * 1.5));
+        // only actors that move with a physics body get one (Figma T-P02 outlines the player and the slime): not the HUD
+        // hearts (orange, status/warning) and not the Goal Flag trigger (accent/default)
+        Assert.True(GameScreen.HasBody(player));
+        var hearts = Play.World.Actors.Where(a => a.Data?.Group == "HUD" && a.ColliderW > 0).ToList();
+        Assert.NotEmpty(hearts);
+        Assert.All(hearts, h => Assert.False(GameScreen.HasBody(h)));
+        Assert.False(GameScreen.HasBody(Play.World.Find("Goal Flag")!));
+        Assert.All(Play.World.Actors.Where(a => a.Data?.Kind == AgbStudio.Core.Project.ActorKind.Enemy), e => Assert.True(GameScreen.HasBody(e)));
+        var warning = ((ISolidColorBrush)AgbStudio.Editor.Services.ThemeService.Token(Win, "status/warning")!).Color.ToUInt32();
+        var heart = hearts[0];
+        var hx = origin.X + (Math.Floor(heart.Actor.X) + heart.ColliderX - Play.World.CameraX) * 3;
+        var hy = origin.Y + (Math.Floor(heart.Actor.Y) + heart.ColliderY - Play.World.CameraY) * 3;
+        Assert.NotEqual(warning, At(hx + 0.2, hy + heart.ColliderH * 1.5));
         Click(page.HitboxesChip);
         Assert.False(Play.Hitboxes);
         Assert.NotEqual(success, At(left + 0.2, top + player.ColliderH * 1.5));

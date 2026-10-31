@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AgbStudio.Build;
@@ -34,7 +34,7 @@ public sealed class NewFontDialog : FigmaDialog
     readonly Segment[] _kinds;
     readonly CheckBox[] _sets;
     readonly Image _sample = new() { Name = "SamplePreview", HorizontalAlignment = HorizontalAlignment.Left };
-    readonly TextBlock _caption = UI.Text(null, "Label/11", "text/muted");
+    readonly TextBlock _caption = UI.Text(null, "Label/11", "text/secondary");
     readonly DialogFooter _footer;
 
     public SelectField File { get; } = new() { Label = "File", Name = "FileField" };

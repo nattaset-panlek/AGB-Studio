@@ -1,4 +1,4 @@
-<!-- 4.16 inspector, feedback, cards, tables and forms, logic graph, brand -->
+﻿<!-- 4.16 inspector, feedback, cards, tables and forms, logic graph, brand -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="using:AgbStudio.Editor.Controls"
@@ -60,7 +60,8 @@
               </TextBox>
             </Grid>
             <DockPanel Name="PART_Slider" HorizontalSpacing="8" IsVisible="False">
-              <TextBlock DockPanel.Dock="Right" Width="46" Text="{TemplateBinding Value}" t:Fig.Style="Mono/11" Foreground="{DynamicResource text/primary}" TextAlignment="Right" VerticalAlignment="Center" />
+              <!-- a long value wraps inside the 46 px column, as Figma's "2 ch/ frame" (T-P16) -->
+              <TextBlock DockPanel.Dock="Right" Width="46" Text="{TemplateBinding Value}" t:Fig.Style="Mono/11" Foreground="{DynamicResource text/primary}" TextAlignment="Right" TextWrapping="Wrap" VerticalAlignment="Center" />
               <c:AgbSlider Value="{TemplateBinding SliderValue, Mode=TwoWay}" VerticalAlignment="Center" />
             </DockPanel>
             <c:AgbSwitch Name="PART_Toggle" IsChecked="{TemplateBinding IsOn, Mode=TwoWay}" HorizontalAlignment="Left" VerticalAlignment="Center" IsVisible="False" />
@@ -276,9 +277,11 @@
           <Rectangle Name="PART_Box" RadiusX="6" RadiusY="6" Fill="{DynamicResource bg/base}" Stroke="{DynamicResource border/default}" StrokeThickness="1" />
           <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
             <!-- IBM Plex Sans Thai is 1.65 em tall (29.7 px at 18 px). Figma centres that box in the 20 px line, Avalonia
-                 keeps the baseline at the ascent when the line is smaller, so the glyph is lifted by half the difference. -->
+                 keeps the baseline at the ascent when the line is smaller, so the glyph is lifted by half the difference.
+                 8 px of padding under the line keep the parts below the baseline (ญ ฎ ฏ ฐ) inside the text's bounds, which
+                 clip it; the negative bottom margin takes them out of the layout again. -->
             <TextBlock Name="PART_Char" Text="{TemplateBinding Char}" FontFamily="{x:Static t:Fonts.Thai}" FontWeight="Medium" FontSize="18" LineHeight="20"
-                       Margin="0,-5,0,5" Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
+                       Margin="0,-5,0,-3" Padding="0,0,0,8" Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
             <TextBlock Text="{TemplateBinding Code}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" HorizontalAlignment="Center" />
           </StackPanel>
         </Panel>

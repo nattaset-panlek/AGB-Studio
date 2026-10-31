@@ -1,4 +1,4 @@
-using AgbStudio.Core;
+﻿using AgbStudio.Core;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
@@ -399,7 +399,8 @@ public class SpriteEditorE2ETests : ArtWindowHarness
         Click(Find<Chip>("OnionChip"));
         Assert.True(page.OnionSkin);
         Assert.Equal(ChipStyle.Accent, Find<Chip>("OnionChip").Style);
-        Assert.True(Find<IconButton>("Tool_onion").IsActive);
+        // Figma T-P08 draws the toolbar button off while onion skin is on: only the chip shows the state
+        Assert.False(Find<IconButton>("Tool_onion").IsActive);
         Assert.Equal(doc.Meta.Animations[0].Frames[page.FramePosition - 1], page.Canvas.OnionFrame);
         Key(PhysicalKey.S, RawInputModifiers.Control);
         var saved = GameProject.Load<SpriteMeta>(GameProject.MetaPath(doc.Path));

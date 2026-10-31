@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
@@ -479,7 +479,8 @@ public sealed class ComponentPicker : ScenePopover
             foreach (var b in g)
             {
                 // the description in the Figma row is Label/11, not the shortcut style of the Menu Item
-                var row = new MenuRow { Label = b.Title, Height = 30, Name = "Behaviour_" + b.Name };
+                // Figma: the selected name stays text/primary, only the description turns text/on-selected
+                var row = new MenuRow { Label = b.Title, Height = 30, Name = "Behaviour_" + b.Name, Classes = { "PrimaryName" } };
                 var desc = UI.Text(b.Description, "Label/11", "text/muted");
                 desc.HorizontalAlignment = HorizontalAlignment.Right;
                 desc.Margin = new Thickness(0, 0, 10, 0);
