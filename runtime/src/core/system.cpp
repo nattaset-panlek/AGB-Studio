@@ -11,7 +11,10 @@ AGB_EWRAM_BSS_NAMED(agb_profiler) Stats g_stats;
 u32 g_acc[static_cast<int>(Category::Count)];
 Category g_current = Category::Logic;
 u32 g_mark = 0;
+u32 g_vblankFreeMin = 0xFFFFFFFFu;
 }  // namespace
+
+u32 vblankFreeMin() { return g_vblankFreeMin; }
 
 // Timers 2 and 3 cascade into a free-running 32-bit cycle counter.
 u32 cyclesNow() {
@@ -109,9 +112,13 @@ void waitVBlank() {
     profile::begin(profile::Category::Render);
     debug::tracePhase(debug::Phase::VBlankCommit);
     commit::flush();
-    // VBlank lasts 68 lines of 1232 cycles from line 160; report how much of it is left.
+    // VBlank lasts 68 lines of 1232 cycles from line 160; report how much of it is left. A commit that ends in the next
+    // frame's drawing lines may tear the picture (G-HW.07).
     const u32 line = REG_VCOUNT;
-    const_cast<profile::Stats&>(profile::stats()).vblankFreeCycles = line >= 160 && line < 228 ? (228 - line) * 1232 : 0;
+    const u32 vblankFree = line >= 160 && line < 228 ? (228 - line) * 1232 : 0;
+    const_cast<profile::Stats&>(profile::stats()).vblankFreeCycles = vblankFree;
+    if (vblankFree < profile::g_vblankFreeMin) profile::g_vblankFreeMin = vblankFree;
+    if (!vblankFree) debug::warnOnce(3, "the VBlank commit did not finish inside VBlank; queue fewer VRAM copies per frame");
     profile::begin(profile::Category::Audio);
     if (g_frameHook) g_frameHook();
     profile::endFrame(overrun);

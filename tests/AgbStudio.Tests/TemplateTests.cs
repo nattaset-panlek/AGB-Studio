@@ -92,6 +92,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(maxX > 900, $"got as far as x {maxX}");
         Assert.DoesNotContain(s.Actors(), a => a.Name == "Player");  // the goal flag leads back to the title
         Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -99,6 +100,22 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     // are reported separately ("load step ... took N cycles").
     static bool GameplayOverrun(string line) =>
         line.Contains("took longer than one frame", StringComparison.Ordinal) && line.Contains(": update)", StringComparison.Ordinal);
+
+    // G-HW.07: every frame of the play-through fitted its 280,896 cycles (the runtime logs each gameplay or staged-load
+    // frame that missed its VBlank), every commit finished inside VBlank, and the longest step of every scene load (the
+    // worst scene included) fitted one frame. The load records and a profiler reading go to the test output.
+    void AssertFrameBudget(PlaySession s)
+    {
+        var loads = s.Log.Where(l => l.Contains(" loaded: longest load step ", StringComparison.Ordinal)).ToList();
+        foreach (var l in loads) log.WriteLine(l);
+        if (s.Profiler() is { } p)
+            log.WriteLine($"profiler: busiest of the last 120 frames {p.History.Max()} cycles; logic {p.Logic}, render {p.Render}, audio {p.Audio}, VBlank left {p.VBlankFree}");
+        Assert.NotEmpty(loads);
+        Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Log, l => l.Contains("VBlank commit did not finish", StringComparison.Ordinal));
+        foreach (var l in loads)
+            Assert.True(long.Parse(System.Text.RegularExpressions.Regex.Match(l, @"' (\d+) cycles").Groups[1].Value) < 280896, l);
+    }
 
     static LiveActor Me(PlaySession s) => s.Actors().Single(a => a.Name == "Player");
 
@@ -196,6 +213,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         for (var i = 0; i < 40; i++) s.Step();
         Assert.Equal(0, SceneIndex());  // House
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", s.Log.Concat(Overruns)));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -235,6 +253,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         }
         Assert.NotEqual(story, SceneIndex());  // back on the title screen
         Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -272,6 +291,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         for (var i = 0; i < 10 && SceneIndex() == board; i++) { Press(s, GbaKeys.A); for (var k = 0; k < 30; k++) s.Step(); }
         Assert.NotEqual(board, SceneIndex());  // the well filled up and A went back to the title
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -307,6 +327,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.DoesNotContain(s.Log, l => l.Contains("actor slots are in use", StringComparison.Ordinal));
         Assert.DoesNotContain(s.Log, l => l.Contains("is full", StringComparison.Ordinal));
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -358,6 +379,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(Field(0) > 10, $"gold {Field(0)}");  // the slime's gold
         Assert.True(Field(1) > 0, $"exp {Field(1)}");
         Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -430,6 +452,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         for (var i = 0; i < 300 && SceneIndex() == circuit; i++) s.Step();
         Assert.NotEqual(circuit, SceneIndex());  // back to the title after the finish
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        AssertFrameBudget(s);
         s.Stop();
     }
 
@@ -492,6 +515,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(most >= 4, $"at most {most} thugs at once");
         Assert.NotEqual(pier, SceneIndex());  // stage clear returns to the title
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        AssertFrameBudget(s);
         s.Stop();
     }
 

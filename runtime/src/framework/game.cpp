@@ -361,10 +361,14 @@ void publishGameInfo() {
 // Staged load driver for the top screen.
 int g_loadStep = -1;
 u32 g_stepCycles[8];
+u32 g_loadWorstCycles = 0;  // the longest single load-step frame of the current load
+int g_loadWorstStep = 0;
 
 void beginLoad(Screen* s) {
     AGB_UNUSED(s);
     g_loadStep = 0;
+    g_loadWorstCycles = 0;
+    g_loadWorstStep = 0;
 }
 }  // namespace
 
@@ -442,10 +446,20 @@ void frame() {
         const bool done = s->load(g_loadStep);
         const u32 spent = profile::cyclesNow() - t0;
         if (g_loadStep < 8) g_stepCycles[g_loadStep] = spent;
+        if (spent > g_loadWorstCycles) {
+            g_loadWorstCycles = spent;
+            g_loadWorstStep = g_loadStep;
+        }
         if (spent > profile::kCyclesPerFrame * 3 / 4)
             debug::logf("warning: load step '%s' of %s took %lu cycles; split it into smaller steps", scene::loadStepName(g_loadStep), s->name(), spent);
         if (done) {
             g_loadStep = -1;
+#if defined(AGB_DEBUG)
+            // Console record of the load budget (G-HW.07): every staged-load step must fit in one frame.
+            debug::logf("%s loaded: longest load step '%s' %lu cycles (%lu%% of a frame); least VBlank left after a commit %lu cycles",
+                        s == g_sceneScreen && g_scene.def ? g_scene.def->name : s->name(), scene::loadStepName(g_loadWorstStep), g_loadWorstCycles,
+                        g_loadWorstCycles * 100 / profile::kCyclesPerFrame, profile::vblankFreeMin());
+#endif
             s->enter();
         } else if (g_holdStep) {
             g_holdStep = false;
