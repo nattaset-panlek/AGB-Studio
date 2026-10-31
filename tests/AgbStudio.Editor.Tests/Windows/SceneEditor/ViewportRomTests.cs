@@ -2,7 +2,9 @@ using AgbStudio.Build;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Pipeline;
 using AgbStudio.Core.Project;
+using AgbStudio.Editor.Services;
 using AgbStudio.Emu;
+using AgbStudio.Editor.Tests.Support;
 using AgbStudio.Editor.Windows.SceneEditor;
 using AgbStudio.Scripting;
 using Xunit.Abstractions;
@@ -17,6 +19,7 @@ namespace AgbStudio.Editor.Tests.Windows.SceneEditor;
 /// and at their live position read from the debug channel; every other pixel (the backgrounds with parallax, the text
 /// layer and the still actors) must be equal. Palette RAM and the OAM entries of still sprites are compared as well.
 /// </summary>
+[Collection(EmulatorCollection.Name)]
 public sealed class ViewportRomTests(ITestOutputHelper log)
 {
     static readonly Lazy<GameProject> Project = new(() =>
@@ -38,7 +41,9 @@ public sealed class ViewportRomTests(ITestOutputHelper log)
 
     static Capture Run(string rom, int frames)
     {
-        using var core = new LibretroCore();
+        // the process core, shared with the other editor tests (D-06)
+        using var host = new EmulatorHost();
+        var core = host.Acquire();
         var s = new PlaySession(core);
         s.Start(rom);
         for (var i = 0; i < frames; i++) s.Step();
@@ -132,8 +137,8 @@ public sealed class ViewportRomTests(ITestOutputHelper log)
         Assert.True(comparedA > 240 * 160 * 3 / 4, $"only {comparedA} pixels compared");
         Assert.Equal(0, mismatchA);
 
-        // B: the camera follows the goal flag (still), so the map scrolls in x and y: BG parallax 0.2 / 0.5 / 1 and
-        // the text layer, which shares BG0 with the sky layer and so takes its scroll
+        // B: the camera follows the goal flag (still), so the map scrolls in x and y: BG parallax 0.2 / 0.5 / 1, and
+        // the text layer, which takes the BG the map leaves free and so does not scroll
         scene.Camera.Follow = "Goal Flag";
         GameProject.Save(scenePath, scene);
         var b = Run(Build(p).RomPath, 120);

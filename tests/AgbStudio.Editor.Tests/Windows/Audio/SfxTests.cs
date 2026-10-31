@@ -17,6 +17,7 @@ using Avalonia.VisualTree;
 namespace AgbStudio.Editor.Tests.Windows.Audio;
 
 /// <summary>DMG register values and the hardware synthesis of the SFX Designer (P11.45).</summary>
+[Collection(EmulatorCollection.Name)]
 public class DmgSoundTests
 {
     static SfxFile Preset(string name)

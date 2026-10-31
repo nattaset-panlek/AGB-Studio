@@ -16,6 +16,7 @@ using Avalonia.VisualTree;
 namespace AgbStudio.Editor.Tests.Shell;
 
 /// <summary>Headless E2E of the shell: real windows, real key presses and clicks (P10.01, P10.06-P10.08, P10.11-P10.13, P10.18, P10.20).</summary>
+[Collection(EmulatorCollection.Name)]
 public class ShellE2ETests : IDisposable
 {
     readonly Fixture _fx = new();

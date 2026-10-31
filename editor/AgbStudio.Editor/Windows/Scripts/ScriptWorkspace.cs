@@ -408,11 +408,11 @@ public sealed class ScriptWorkspace : IDisposable
     {
         var r = await CheckAsync();
         if (r is null || !r.Success) return;
-        // D-15: in Play mode the game is rebuilt and restarted with its state; otherwise the next Play uses the new code
-        if (_s.Emulator.IsLoaded && !_s.Build.IsBuilding)
+        // D-15: in Play mode the game is rebuilt (Debug) and continues in the new ROM with its state; otherwise the next
+        // Play uses the new code
+        if (_s.GetService(typeof(Play.PlayController)) is Play.PlayController { IsRunning: true } play && !_s.Build.IsBuilding)
         {
-            try { await _s.Build.BuildAsync(); }
-            catch (InvalidOperationException) { }
+            await play.HotReloadAsync(className);
             Log(ConsoleLevel.Success, $"Hot reload: {className} updated in the running game", check: true);
         }
         else Log(ConsoleLevel.Success, $"Hot reload: {className} updated", check: true);

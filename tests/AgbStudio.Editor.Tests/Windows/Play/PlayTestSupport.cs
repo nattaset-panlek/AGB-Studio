@@ -11,12 +11,12 @@ using AgbStudio.Scripting;
 namespace AgbStudio.Editor.Tests.Windows.Play;
 
 /// <summary>
-/// One mGBA core for the whole test process (libretro keeps global state; the editor tests run one at a time) and the
-/// Sky Hopper fixture built once into the worktree's build folder (build/test-projects/editor-play).
+/// The Sky Hopper fixture built once into the worktree's build folder (build/test-projects/editor-play). The mGBA core
+/// is the one process core the editors share through their EmulatorHost (libretro keeps global state); the classes that
+/// run it are in the <see cref="EmulatorCollection"/> and their Fixture gives it back when disposed.
 /// </summary>
 public static class PlayTestSupport
 {
-    static readonly Lazy<LibretroCore> s_core = new(() => new LibretroCore());
     static readonly Lazy<(string ProjectPath, BuildResult Result)> s_built = new(() =>
     {
         var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "editor-play");
@@ -26,16 +26,15 @@ public static class PlayTestSupport
         return (p.ProjectPath, r);
     });
 
-    public static LibretroCore Core => s_core.Value;
     public static string ProjectPath => s_built.Value.ProjectPath;
     public static BuildResult Built => s_built.Value.Result;
 
-    /// <summary>A fixture with the Figma documents (Fixture.OpenSkyHopper), switched to the built Sky Hopper project, sharing the process core.</summary>
+    /// <summary>A fixture with the Figma documents (Fixture.OpenSkyHopper), switched to the built Sky Hopper project, holding the process core.</summary>
     public static PlayController Open(Fixture fx)
     {
         fx.OpenSkyHopper();
         fx.Services.Project.Open(ProjectPath);
-        fx.Services.Set(Core);
+        fx.Services.Emulator.Acquire();
         var play = PlayController.Of(fx.Services);
         play.UseTimer = false;
         play.AudioFactory = () => new CountingSink();

@@ -16,7 +16,7 @@ namespace AgbStudio.Editor.Windows.Play;
 /// collision overlays, Stop / Pause / Step and "Simulating · mGBA", frame number and the Play Speed chip (T-M18). The
 /// Inspector shows the selected actor live; the Console shows build and game logs; the status bar shows Running /
 /// Paused, Hot reload, fps and CPU. Opened by Build › Play / Play from Here / Build &amp; Run (args: none), the Game
-/// tab (args: the document) and Build Report › Run in mGBA (args: <see cref="PlayStart.RunBuilt"/>).
+/// tab (args: the document) and Build Report › Run in mGBA (args: <see cref="PlayStart.RunBuilt"/>, or the built ROM's path).
 /// </summary>
 [EditorWindow("T-P02")]
 public sealed class PlayModePage : DockPanel
@@ -161,6 +161,7 @@ public sealed class PlayModePage : DockPanel
 
         // Game tab, Build Report › Run in mGBA: start when nothing runs yet
         if (args is PlayStart how && _play.State != PlayState.Building) _ = _play.StartAsync(how);
+        else if (args is string rom && File.Exists(rom) && _play.State != PlayState.Building) _ = _play.StartAsync(PlayStart.RunBuilt, rom);
         else if (args is EditorDocument && !_play.IsRunning && _play.State != PlayState.Building) _ = _play.StartAsync(PlayStart.Play);
     }
 

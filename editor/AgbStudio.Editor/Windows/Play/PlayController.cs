@@ -38,6 +38,10 @@ public sealed class PlayController : IDisposable
     int _lastScene = -1, _sceneSettle;
     long _paletteFrame = -1;
     bool _quietHandover;
+    // Stop and Dispose bump it, so a Play whose build is still running does not start the game when the build ends
+    int _starts;
+    // true while this controller builds (Play, hot reload); other builds of the project reload the running game
+    bool _ownBuild;
 
     PlayController(EditorServices s)
     {
@@ -46,6 +50,7 @@ public sealed class PlayController : IDisposable
         s.Set(Console);
         s.Documents.Open.CollectionChanged += (_, _) => WatchDocuments();
         WatchDocuments();
+        s.Build.Finished += OnBuildFinished;
         Debugger.BuildHistory.Of(s);
         // Pause / Step / Stop act on a running game only (Scene Editor and Play Mode toolbars, F10)
         if (s.Commands.TryGet("play.pause", out var pause)) pause.Handle(TogglePause, () => IsRunning);
@@ -144,6 +149,7 @@ public sealed class PlayController : IDisposable
         if (State == PlayState.Building) return false;
         var project = _s.Project.Current;
         StopSession(save: true);
+        var start = ++_starts;
         StartedAs = how;
         if (how != PlayStart.RunBuilt || romPath == null)
         {
@@ -154,8 +160,17 @@ public sealed class PlayController : IDisposable
                 State = PlayState.Building;
                 Changed?.Invoke();
                 BuildResult r;
+                _ownBuild = true;
                 try { r = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
                 catch (InvalidOperationException e) { Console.Add(ConsoleLevel.Error, e.Message); return Fail(); }
+                finally { _ownBuild = false; }
+                if (start != _starts)
+                {
+                    // stopped (or the editor closed) while building
+                    State = PlayState.Stopped;
+                    Changed?.Invoke();
+                    return false;
+                }
                 LastBuild = r;
                 ReportBuild(r);
                 if (!r.Success) return Fail();
@@ -245,6 +260,7 @@ public sealed class PlayController : IDisposable
     /// <summary>Stop: saves the save file, unloads the ROM and returns to the Scene Editor (T-C11).</summary>
     public void Stop()
     {
+        _starts++;
         StopSession(save: true);
         Changed?.Invoke();
         _ = _s.Windows.Open("T-P01", source: "PlayStop");
@@ -531,10 +547,29 @@ public sealed class PlayController : IDisposable
     {
         if (Session == null || _s.Project.Current == null || _s.Build.IsBuilding) return false;
         BuildResult r;
+        _ownBuild = true;
         try { r = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
         catch (InvalidOperationException e) { Console.Add(ConsoleLevel.Error, e.Message); return false; }
+        finally { _ownBuild = false; }
         LastBuild = r;
         if (!r.Success) { ReportBuild(r); return false; }
+        return Reload(r, changed);
+    }
+
+    /// <summary>
+    /// A build this controller did not start (Build ROM, a script saved in an external editor) finished while the game
+    /// runs: the game continues in the new ROM, as after a save (D-15).
+    /// </summary>
+    void OnBuildFinished(BuildResult r)
+    {
+        if (_ownBuild || !IsRunning || !HotReloadEnabled || !r.Success || !File.Exists(r.RomPath)) return;
+        if (!Dispatcher.UIThread.CheckAccess()) { Dispatcher.UIThread.Post(() => OnBuildFinished(r)); return; }
+        LastBuild = r;
+        Reload(r, Path.GetFileNameWithoutExtension(r.RomPath));
+    }
+
+    bool Reload(BuildResult r, string changed)
+    {
         if (Session == null) return false;
         WriteSaveFile();
         var ok = Session.HotReload(r.RomPath);
@@ -567,5 +602,9 @@ public sealed class PlayController : IDisposable
         Publish();
     }
 
-    public void Dispose() => StopSession(save: true);
+    public void Dispose()
+    {
+        _starts++;
+        StopSession(save: true);
+    }
 }

@@ -1,6 +1,7 @@
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
+using AgbStudio.Editor.Tests.Support;
 using AgbStudio.Editor.Windows.Launcher;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -10,6 +11,7 @@ using Avalonia.VisualTree;
 namespace AgbStudio.Editor.Tests.Windows.Launcher;
 
 /// <summary>Tutorial Steps (P11.04): "Your first platformer" step 3 ticks itself from editor actions; Back / Skip / Next step.</summary>
+[Collection(EmulatorCollection.Name)]
 public class TutorialTests
 {
     [AvaloniaFact]
