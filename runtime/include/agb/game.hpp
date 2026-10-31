@@ -94,6 +94,7 @@ struct GameDef {
     const ui::Splash* splash;  // Project Settings · General · Boot splash (nullptr = none)
     const ui::Kit* ui;         // menus, pause overlay and options screen (nullptr = none)
     u8 textLanguage;           // Project Settings · General · Default language (index into textTables)
+    bool autosave;             // Project Settings · Save data · Autosave: save::lastSlot() after each scene loads
 };
 
 namespace game {

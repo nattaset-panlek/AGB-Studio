@@ -71,7 +71,8 @@ struct Save {
     static bool Exists(int slot) { return save::exists(slot); }
     static void Erase(int slot) { save::erase(slot); }
     // Remembers the current scene and the player's position, then writes slot 0 (Scene Settings OnExit).
-    static void Checkpoint();
+    static void Checkpoint() { Checkpoint(0); }
+    static void Checkpoint(int slot);
     static u16 scene() { return game::state() ? header().scene : 0; }
 };
 

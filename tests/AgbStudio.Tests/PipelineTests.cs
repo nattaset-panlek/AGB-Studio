@@ -67,6 +67,8 @@ public sealed class PipelineTests(EmulatorFixture emu)
         }
         Assert.NotNull(ch);
         actors = ReadActors(core, ch!);
+        // Save data · Autosave: the level wrote slot 0 (copy A starts with the "AGBS" header) once it loaded.
+        Assert.Equal("AGBS", System.Text.Encoding.ASCII.GetString(core.SaveRam[..4]));
         core.UnloadRom();
         Assert.Contains(actors, a => a.Name == "Player");
         var player = actors.First(a => a.Name == "Player");
@@ -168,6 +170,32 @@ public sealed class PipelineTests(EmulatorFixture emu)
             "start " + GameBuilder.StepLink, "end " + GameBuilder.StepLink + " True",
         ], log.Events);
         Assert.True(r.StepTimes.ContainsKey(GameBuilder.StepLink));
+    }
+
+    [Fact]
+    public void MissingStringsUseTheLanguageFallbackOrShowTheKeyInDebug()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_l10n"));
+        SampleText.AddTo(p, "en");
+        var thPath = Path.Combine(p.TextDir, "strings.th.json");
+        var th = GameProject.Load<StringTable>(thPath);
+        th.Strings.Remove("hud.score");
+        GameProject.Save(thPath, th);
+        // Keys are sorted: dlg.forest.hopper_01, hud.score, ui.menu.start; hud.score is run 1 of the Thai table.
+        string? Run1(BuildConfiguration config)
+        {
+            var r = new GameBuilder(p, new Toolchain()).Build(new BuildOptions { Configuration = config });
+            Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+            var cpp = File.ReadAllText(Path.Combine(p.BuildDir, "gen", "text", "strings_th.cpp"));
+            var runs = System.Text.RegularExpressions.Regex.Match(cpp, @"runs\[\] = \{([^}]*)\}").Groups[1].Value.Split(", ");
+            if (runs[1] == "nullptr") return null;
+            return System.Text.RegularExpressions.Regex.Match(cpp, @"TextRun r1 = \{&\w+, r1g, (\d+),").Groups[1].Value;
+        }
+        Assert.Equal("11", Run1(BuildConfiguration.Debug));  // "[hud.score]" (Show missing keys)
+        Assert.Null(Run1(BuildConfiguration.Release));       // the runtime falls back to the source language
+        p.Settings.Localization.Languages.Single(l => l.Code == "th").Fallback = "en";
+        p.SaveSettings();
+        Assert.Equal("5", Run1(BuildConfiguration.Release));  // "SCORE" from the Thai language's own fallback
     }
 
     [Fact]

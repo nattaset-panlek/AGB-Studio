@@ -2,6 +2,7 @@
 
 #include <tonc.h>
 
+#include "agb/api.hpp"
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
 #include "agb/input.hpp"
@@ -192,6 +193,8 @@ public:
                 }
                 g_scene.lastLoadFrames = system::frame() - g_scene.loadStartFrame;
                 g_scene.loaded = true;
+                // Autosave: gameplay scenes only (a scene with a menu is a title or menu screen).
+                if (g_def->autosave && !d->menu && g_def->state) api::Save::Checkpoint(save::lastSlot());
                 if (d->onEnter) d->onEnter();
                 if (d->menu) ui::openSceneMenu(*d->menu);
                 return true;

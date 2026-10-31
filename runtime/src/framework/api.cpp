@@ -2,7 +2,7 @@
 
 namespace agb::api {
 
-void Save::Checkpoint() {
+void Save::Checkpoint(int slot) {
     if (!game::state()) return;
     SaveHeader& h = header();
     h.scene = game::currentScene();
@@ -14,7 +14,7 @@ void Save::Checkpoint() {
         h.x = static_cast<s16>(player->pos.x.floor());
         h.y = static_cast<s16>(player->pos.y.floor());
     }
-    save::write(0, game::state());
+    save::write(slot, game::state());
 }
 
 }  // namespace agb::api

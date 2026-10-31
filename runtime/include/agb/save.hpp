@@ -31,6 +31,7 @@ bool write(int slot, const void* data);
 bool read(int slot, void* data);
 bool exists(int slot);
 void erase(int slot);
+int lastSlot();  // the slot last read or written (0 at boot): Project Settings · Save data "Autosave" writes it
 bool lastReadMigrated();
 
 u32 crc32(const void* data, u32 size, u32 crc = 0);

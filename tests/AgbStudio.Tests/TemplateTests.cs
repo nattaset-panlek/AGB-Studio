@@ -494,4 +494,33 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
         s.Stop();
     }
+
+    public static IEnumerable<object[]> SampleIds => [["Sky Hopper demo"], ["Cave Quest"], ["Snow Run"], ["Dusk Story"]];
+
+    [Theory]
+    [MemberData(nameof(SampleIds))]
+    public void SampleProjectsBuildAndBootToTheTitle(string name)
+    {
+        Func<string, GameProject> create = name switch
+        {
+            "Sky Hopper demo" => AgbStudio.Build.Content.SkyHopper.Create,
+            "Cave Quest" => AgbStudio.Build.Content.Samples.CaveQuest,
+            "Snow Run" => AgbStudio.Build.Content.Samples.SnowRun,
+            _ => AgbStudio.Build.Content.Samples.DuskStory,
+        };
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "sample_" + name.Replace(' ', '_'));
+        if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        var p = create(dir);
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new ScriptBackend() }.Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 200; i++) s.Step();
+        Assert.NotNull(s.Channel);
+        var start = p.SceneFiles().Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.Ordinal).ToList().IndexOf(p.Settings.General.StartScene);
+        Assert.Equal(start, s.Core.ReadU16(s.Channel!.Game));
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "title.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
+        Assert.DoesNotContain(s.Log, l => l.Contains("has no text", StringComparison.Ordinal) || l.Contains("could not be loaded", StringComparison.Ordinal));
+        s.Stop();
+    }
 }

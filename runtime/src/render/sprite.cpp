@@ -5,6 +5,7 @@
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
 #include "agb/render/palette.hpp"
+#include "agb/system.hpp"
 
 namespace agb::render::sprites {
 
@@ -45,6 +46,7 @@ bool g_affineUsed[kMaxAffine];
 u32 g_useClock = 0;
 u32 g_copies = 0;
 int g_drawn = 0;
+constexpr int kLineCycles = 1210;  // sprite rendering cycles per screen line (HBlank not free for OAM)
 
 bool tilesFree(int first, int count) {
     for (int t = first; t < first + count; ++t)
@@ -323,6 +325,14 @@ int build() {
     }
     commit::ObjAttr* oam = commit::oam();
     int out = 0;
+#if defined(AGB_DEBUG)
+    // Debug builds check the sprite load per line every 32 frames: the hardware has 1210 cycles per line for sprites
+    // (one per pixel of width, 2 per pixel of an affine sprite's box plus 10) and silently drops what does not fit.
+    const bool checkLines = (system::frame() & 31) == 0;
+    u16 lineCycles[160];
+    if (checkLines)
+        for (u16& c : lineCycles) c = 0;
+#endif
     for (int k = 0; k < n; ++k) {
         Instance& s = g_sprites[sorted[k]];
         // Swap the cached frame when the frame changed.
@@ -358,8 +368,25 @@ int build() {
         oam[out].attr0 = a0;
         oam[out].attr1 = a1;
         oam[out].attr2 = a2;
+#if defined(AGB_DEBUG)
+        if (checkLines) {
+            const int cost = s.affine >= 0 ? 2 * sh.width * ds + 10 : sh.width;
+            const int y0 = top < 0 ? 0 : top, y1 = top + sh.height * ds > 160 ? 160 : top + sh.height * ds;
+            for (int y = y0; y < y1; ++y) lineCycles[y] = static_cast<u16>(lineCycles[y] + cost);
+        }
+#endif
         if (++out == 128) break;
     }
+#if defined(AGB_DEBUG)
+    if (checkLines) {
+        int worst = 0;
+        for (int y = 1; y < 160; ++y)
+            if (lineCycles[y] > lineCycles[worst]) worst = y;
+        if (lineCycles[worst] > kLineCycles)
+            debug::logf("warning: screen line %d needs %d sprite cycles and the hardware has %d; some sprites on it will not show",
+                        worst, lineCycles[worst], kLineCycles);
+    }
+#endif
     for (int i = out; i < 128; ++i) oam[i].attr0 = ATTR0_HIDE;
     g_drawn = out;
     return out;

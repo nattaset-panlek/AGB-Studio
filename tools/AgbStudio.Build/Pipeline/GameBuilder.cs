@@ -90,6 +90,7 @@ public sealed class GameBuilder
     readonly List<string> _sources = new();
     readonly List<string> _includeDirs = new();
     BuildResult _result = new();
+    BuildConfiguration _config;
     AssetCache _cache = null!;
     ScriptOutput _scriptOut = new();
     public BuildAssetInfo Assets { get; } = new();
@@ -103,6 +104,7 @@ public sealed class GameBuilder
         Directory.CreateDirectory(GenDir);
         _cache = new AssetCache(_p.BuildDir);
         var config = options.Configuration ?? _p.Settings.Build.Configuration;
+        _config = config;
         try
         {
             if (!Step(StepAssets, () => ConvertAssets())) return Finish(sw);
@@ -441,11 +443,21 @@ public sealed class GameBuilder
             if (langs.Count > 1)
                 foreach (var l in langs)
                     if (Fonts.ThaiText.CodePoints(l.Name).All(cp => cp < 0x20 || font.Font.Get(cp) != null)) table.Strings[LanguageKey(l.Code)] = l.Name;
-            var missing = _stringKeys.Count(k => !table.Strings.ContainsKey(k) && !k.StartsWith("_lang.", StringComparison.Ordinal));
-            if (missing > 0 && lang != loc.Source)
-                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing} strings missing in {info?.Name ?? lang}."));
+            var missing = _stringKeys.Where(k => !table.Strings.ContainsKey(k) && !k.StartsWith("_lang.", StringComparison.Ordinal)).ToList();
+            if (missing.Count > 0 && lang != loc.Source)
+                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing.Count} strings missing in {info?.Name ?? lang}."));
+            // A missing string takes the language's own Fallback (Localization · Languages), else "[key]" in Debug
+            // builds (Show missing keys), else the game's fallback language at runtime.
+            var strings = new Dictionary<string, string>(table.Strings);
+            var fallback = info?.Fallback is { Length: > 0 } fb && fb != lang ? tables.FirstOrDefault(t => t.Table.Language == fb).Table : null;
+            if (lang != loc.Source)
+                foreach (var k in missing)
+                {
+                    if (fallback != null && fallback.Strings.TryGetValue(k, out var text)) strings[k] = text;
+                    else if (loc.ShowMissingKeys && _config == BuildConfiguration.Debug) strings[k] = "[" + k + "]";
+                }
             var diags = new List<Diagnostic>();
-            var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, table.Strings, font, k =>
+            var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, strings, font, k =>
             {
                 var m = meta.Keys.GetValueOrDefault(k);
                 return (m?.BoxWidth ?? 224, m?.MaxLines ?? 3);
@@ -862,7 +874,7 @@ public sealed class GameBuilder
         sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, {(ScriptsCompiled ? "agb_scripts_init" : "nullptr")}, {(s.General.SkipSplashInDebug ? "true" : "false")}, ");
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
-        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}}};\n");
+        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");

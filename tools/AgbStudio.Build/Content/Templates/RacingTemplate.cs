@@ -207,7 +207,7 @@ public static class RacingTemplate
         var title = new int[15 * 10];
         for (var y = 0; y < 10; y++)
             for (var x = 0; x < 15; x++)
-                title[y * 15 + x] = y < 6 ? TGrass : y == 6 || y == 9 ? TKerb : x == 3 ? TFinish : TRoad;
+                title[y * 15 + x] = y < 8 ? TGrass : y == 8 ? TKerb : x == 3 ? TFinish : TRoad;  // the menu stays on the grass
         var titleMap = new MapFile { Name = "Title", Tileset = "circuit", Width = 15, Height = 10, CollisionLayer = -1 };
         titleMap.Layers.Add(new MapLayerData { Name = "Ground", Type = LayerType.Tile, Bg = 1, Priority = 1, Cells = title.ToList() });
         GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), titleMap);
