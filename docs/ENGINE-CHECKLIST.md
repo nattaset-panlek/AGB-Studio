@@ -262,7 +262,7 @@
   - [ ] matches Figma
 - **T-P19 Debugger** (Profiler view) · 1440 x 900 · from: #9 Debug, Tools › Debugger
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_01_Profiler_120FramesAgainstBudget_ThisFrameLogicRenderAudioIdle, test:DebuggerE2ETests.P13_02_VramTiles_ByCharBlock_MatchEmulatorMemory, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, test:DebuggerE2ETests.P13_06_Breakpoints_StopAtPlayerController19_PausedAtFrame_CallStackInCSharpNames, test:BreakpointUiTests.Breakpoints_FromTheScriptEditorGutterF9AndTheBreakpointsView_StopTheGame, test:BreakpointUiTests.OamSpritesAndProfilerViews_ShowTheirOwnData, doc:docs/user/windows/T-P19-debugger.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P19.png, report:docs/evidence/shot-report.md (5.11 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 
 ### 4.2 Dialogs (Editor Map board 3 · 12)
 
@@ -274,22 +274,22 @@
   - [ ] matches Figma
 - **T-D03 Scene Settings** · 600 x 646 · from: #18 Scene size chip, Scene › Scene Settings…
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:SceneDialogTests.SceneSettings_AppliesEverySection_RenamesWithLinks_AndUndo, doc:docs/user/windows/T-D03-scene-settings.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D03.png, report:docs/evidence/shot-report.md (2.02 %, offset 1 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D04 Import Asset** · 900 x 460 · from: File › Import Asset…, Assets › Import…, Sprite Editor › Drop zone, Palette Manager › Import .pal / .gpl, Audio › Music +
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, test:ImportDialogTests.FileImportAsset_ListsFilesShowsOptionsAndImports, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, doc:docs/user/windows/T-D04-import-asset.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D05 Export ROM** · 560 x 488 · from: File › Export ROM (.gba)…
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ExportRomTests.Fields_ComeFromTheProject_ValidateAndExportARelease, test:ExportRomBootTests.PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom, doc:docs/user/windows/T-D05-export-rom.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D05.png, report:docs/evidence/shot-report.md (1.89 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D06 Build ROM** (progress) · 600 x 440 · from: #10 Build ROM, Build › Build ROM, Build Report › Build again
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, doc:docs/user/windows/T-D06-build-rom.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D06.png, report:docs/evidence/shot-report.md (2.29 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D07 Flash to Cartridge** · 560 x 368 · from: Build › Flash to Cartridge…, Build Report › Flash to cartridge
   - [ ] implemented
   - [ ] matches Figma
 - **T-D08 Project Settings** (Input tab) · 900 x 620 · from: File › Project Settings…
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, test:PlayModeE2ETests.P12_09_KeyboardAndGamepad_FromProjectSettingsInput, doc:docs/user/windows/T-D08-project-settings.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D08.png, report:docs/evidence/shot-report.md (1.02 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D09 Preferences** (Emulator tab) · 900 x 620 · from: #35 Emulator status, File › Preferences…, Launcher › Settings tab
   - [x] implemented — evidence: test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.OpensAtEmulatorFromFileMenuShortcutAndStatusBar_TabsFromTheirIds, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D09.png, report:docs/evidence/shot-report.md (0.67 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
@@ -313,16 +313,16 @@
   - [ ] matches Figma
 - **T-S03 Project Settings · Build** · 900 x 620
   - [x] implemented — evidence: test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.BuildTab_FieldsChangeTheBuild, test:ProjectSettingsTests.Tabs_ShowTheProjectsData, test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, doc:docs/user/windows/T-S03-project-settings-build.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S03.png, report:docs/evidence/shot-report.md (0.85 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-S04 Project Settings · Scripting** · 900 x 620
   - [x] implemented — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.TreatWarningsAsErrors_FailsTheScriptStepOnAWarning, test:ScriptEditorSettingsTests.InlineHints_OffKeepsTheHintClosed_OnOpensIt, test:ScriptEditorSettingsTests.AnalyzerChip_OpensProjectSettingsOnScripting, doc:docs/user/windows/T-S04-project-settings-scripting.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S04.png, report:docs/evidence/shot-report.md (1.86 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-S05 Project Settings · Localization** · 900 x 620
   - [x] implemented — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LimitTests.MissingStringsWarnOrFailAsLocalizationSays, doc:docs/user/windows/T-S05-project-settings-localization.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S05.png, report:docs/evidence/shot-report.md (0.80 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-S06 Preferences · Appearance** · 900 x 620
   - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferenceEffectsTests.Appearance_PixelGridAt400Percent_AndReduceMotion, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S06.png, report:docs/evidence/shot-report.md (0.57 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-S07 Preferences · Editor** · 900 x 620
   - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferenceEffectsTests.Editor_DefaultSnapCollisionOverlayAndBudgetInInspector, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ServiceTests.Undo_RespectsHistoryLimitFromPreferences, test:ServiceTests.Autosave_SavesDirtyDocumentsEveryNMinutes, test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:ExternalEditorDetectionTests.SettingsPersistWithFigmaDefaults, doc:docs/user/windows/T-S07-preferences-editor.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -331,7 +331,7 @@
   - [ ] matches Figma
 - **T-S09 Preferences · Shortcuts** · 900 x 620
   - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, test:PreferencesTests.Shortcuts_ShowTheConflictChip, test:CommandAndShortcutTests.Shortcuts_RebindToCtrlG_ReportsGoToLine, test:CommandAndShortcutTests.Shortcuts_PersistInPreferencesAndResetToDefaults, doc:docs/user/windows/T-S09-preferences-shortcuts.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S09.png, report:docs/evidence/shot-report.md (0.89 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 
 ### 4.4 Popovers (Editor Map board 3 · 7)
 
@@ -340,10 +340,10 @@
   - [ ] matches Figma
 - **T-O02 Video Mode** · 380 x 400 · from: #12 Video mode chip
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, doc:docs/user/windows/T-O02-video-mode.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O02.png, report:docs/evidence/shot-report.md (1.88 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O03 Grid & Snap** · 300 x 328 · from: #19 Grid chip
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.GridSnap_SizeSwitchesAndColour, test:ViewportTests.GridButtonAndGridSnapDrawTheOverlays, doc:docs/user/windows/T-O03-grid-and-snap.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O03.png, report:docs/evidence/shot-report.md (0.99 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O04 Asset Picker** · 440 x 368 · from: #28 Sheet dropdown, Add to Scene › Prefab…, Tilemap Editor › Tileset dropdown
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.SheetAndAnimationDropdowns, test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:PopoverAndMenuTests.AssetPicker_SearchTabsAndPick, doc:docs/user/windows/T-O04-asset-picker.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -352,7 +352,7 @@
   - [ ] matches Figma
 - **T-O06 Budget Details** · 420 x 398 · from: #33 GBA Budget
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.GbaBudget_ShowsLiveMetersAndOpensBudgetDetails, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, test:BudgetAndHistoryTests.P13_07_PaletteSharingSuggestion_ForTheFixture, test:BudgetAndHistoryTests.P13_07_LiveBudget_FromTheRunningGame, doc:docs/user/windows/T-O06-budget-details.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O06.png, report:docs/evidence/shot-report.md (3.08 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O07 Command Palette** · 640 x 325 · from: Edit › Command Palette…, Edit › Find in Project…, Ctrl+K
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.CommandPalette_CtrlK_TypeArrowEnter, test:ShellE2ETests.CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches, test:CommandAndShortcutTests.Palette_FindsTheFigmaResultsForPla, doc:docs/user/windows/T-O07-command-palette.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -474,10 +474,10 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-D17 New Table** · 520 x 440 · from: Database › Tables +
   - [x] implemented — evidence: test:DatabaseWindowTests.P11_40_NewTableFromEmptyCsvAndCopy_UndoRemovesTheFile, doc:docs/user/windows/T-D17-new-table.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D17.png, report:docs/evidence/shot-report.md (1.77 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D18 Add Field** · 520 x 516 · from: Database › Schema +
   - [x] implemented — evidence: test:DatabaseWindowTests.P11_40_AddFieldRarityEnumIsOneBytePerRow, doc:docs/user/windows/T-D18-add-field.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D18.png, report:docs/evidence/shot-report.md (1.14 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D19 Import CSV** · 780 x 478 · from: Database › Import CSV
   - [ ] implemented
   - [ ] matches Figma
@@ -504,7 +504,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-O09 Link Settings** · 360 x 330 · from: World Map › Link chip (click a link)
   - [x] implemented — evidence: test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, doc:docs/user/windows/T-O09-link-settings.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O09.png, report:docs/evidence/shot-report.md (2.75 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O10 Palette Effect** · 380 x 372 · from: Palette Manager › Fade / Cycle
   - [x] implemented — evidence: test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, doc:docs/user/windows/T-O10-palette-effect.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -513,7 +513,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-O12 Record Shortcut** · 340 x 264 · from: Preferences › Shortcuts › pencil
   - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, doc:docs/user/windows/T-O12-record-shortcut.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O12.png, report:docs/evidence/shot-report.md (1.41 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O13 Tutorial Steps** · 380 x 466 · from: Launcher › Learn › Tutorial Start / Continue
   - [x] implemented — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:TutorialTests.P11_04_FirstPlatformerStep3_SubStepsTickThemselves_BackSkipNext, test:TutorialTests.P11_04_FinishingTheLastStepMarksTheTutorialDone, test:TutorialTests.P11_04_OpenedThroughTheWindowServiceItShowsTheTutorial, doc:docs/user/windows/T-O13-tutorial-steps.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O13.png, report:docs/evidence/shot-report.md (2.00 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
@@ -547,7 +547,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-L03 Preferences · Appearance · Light** · 900 x 620
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-L03.png, report:docs/evidence/shot-report.md (0.54 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - [x] T-L04 Every other window switches to "AGB Studio · Light" tokens with no hard-coded colours (game pixels and code colours stay as designed) · Verify: `REV` + automated scan for colour literals outside the token file — evidence: test:DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme, test:DesignSystemTests.Slider_KnobIsTheLitWhiteToken_AsTheSwitchKnob, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, test:NewProjectTests.LightTheme_UsesTheLightTokens, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, doc:docs/EDITOR-ARCHITECTURE.md, doc:docs/evidence/review-final-sweep.md, commit:7487e78 (2026-10-31)
 
 ### 4.11 System windows from Editor Map board 4 (operating-system dialogs, no visual check)
@@ -1471,11 +1471,13 @@ Exit gate:
 | 2026-10-31 | SHOT review | T-P12, T-P18, T-P20, T-P21, T-D11 version | Figma shows version 0.1 (Launcher "v0.1", About "0.1.0", Scripting API "Docs v0.1"); the release is 1.0.0 (docs/RELEASE-NOTES.md) | Show the running version everywhere from one source (1.0.0) | pending |
 | 2026-10-31 | SHOT review | T-S08, P11.62 build cache | Preferences · Paths shows one build cache at `%LOCALAPPDATA%\AGBStudio\cache`; the app keeps the cache per project (in the project build folder), so a cache never mixes two projects | Keep the cache per project and word the field as such, or move it to the one folder | pending |
 | 2026-10-31 | fixture review | T-P01, T-P02, T-P03 player position | Figma draws the hero standing on the ground at screen (40, 112) of a 30 x 20 map with a following camera, but its Inspector says X 40 / Y 112 (and T-P03 "tile 12, 4"); on a 20-row map the ground is at y 288, so the picture and the numbers cannot both be true | Match the picture (the fixture puts the player on the ground, X 48 / Y 288) | pending |
-| 2026-10-31 | fixture review | T-P01 Hierarchy HUD, T-P01 viewport score | Figma lists "HUD · Score" alone at the end of the Hierarchy and the viewport shows "SCORE 0120"; the hearts it draws must be actors, so the fixture groups them with the score in a "HUD (4)" folder, and the number is drawn by the running game (the editor viewport shows the label "SCORE") | Accept (the hearts are actors; the score is game state) | pending |
-| 2026-10-31 | fixture review | T-P01, T-O04, T-P08, T-D21 sprite count | Figma says 12 sprites in T-P01 but shows 6 in T-O04 and T-P08 and 4 portraits in T-D21; the fixture has 12, so T-P01 and T-O04 scroll and T-D21 shows every sprite as a portrait | Keep 12 (T-P01) | pending |
+| 2026-10-31 | fixture review | T-P01 Hierarchy HUD, T-P01 viewport score | Figma lists "HUD · Score" alone at the end of the Hierarchy and the viewport shows "SCORE 0120"; the hearts it draws must be actors, so the fixture groups them with the score in a "HUD (4)" folder, and the score label and its number are drawn by the running game (the editor viewport shows the hearts only) | Accept (the hearts are actors; the score is game state) | pending |
+| 2026-10-31 | fixture review | T-P01, T-O04, T-P08, T-D21 sprite count | Figma says 12 sprites in T-P01 but shows 6 in T-O04 and T-P08 and 4 portraits in T-D21; the fixture has 12 (13 in the editor test fixture, which adds an empty `player.png` for T-O07), so T-P01 and T-O04 scroll and T-D21 shows every sprite as a portrait | Keep 12 (T-P01) | pending |
 | 2026-10-31 | fixture review | T-P03 tile numbers and rules | Figma numbers the first tile "#0", counts 412 solid tiles and labels the rule set "(16)" while drawing 5 rule cards; the engine reserves tile 0 for empty (first tile "#1"), the fixture map has 58 solid tiles and 5 rules | Accept the engine numbering and the counts of the fixture | pending |
 | 2026-10-31 | fixture review | T-D04, T-P10 palette banks | Figma shows the Palette Manager banks of a project with a saved palette library (OBJ banks as drawn); the fixture writes no `palettes.json`, so the banks are derived from the art ("OBJ 7") | Write a palette library into the fixture that matches the frames, or accept derived banks | pending |
 | 2026-10-31 | fixture review | T-P09 Font Manager | Figma marks U+0E03 and U+0E05 missing and gives an advance of 9; the bundled Noto Sans Thai has both glyphs and an advance of 7 at that size; title_big shows "16x16 fixed" where Figma says "16x16" | Accept what the real font reports | pending |
+| 2026-10-31 | windows review | T-D01, T-L02, D-09 | New Project shows eight template cards in a scrolling grid (the Launcher · Templates set, D-09); the New Project frame draws six | Keep eight (D-09, checklist 1.4 item 4) | pending |
+| 2026-10-31 | windows review | T-D10 | The Keyboard Shortcuts dialog has a footer link "Edit in Preferences › Shortcuts" that the frame does not draw | Keep the link (it leads to T-S09, where shortcuts are edited), or remove it | pending |
 | 2026-10-31 | page fixes | T-P07, T-P08, T-P25 dirty dot | Figma shows the document tab dirty dot and "Saved" in the status bar at the same time; the app shows one or the other | Accept (a capture shows either the dirty dot or "Saved") | pending |
 | 2026-10-31 | page fixes | T-P12, T-P20, T-P21, T-O07, T-M11 Templates icon | The Templates glyph is drawn filled with a hollow quarter that moves between frames (top-left in T-P12, bottom-right in T-M11); the icon set (70 icons, T-K04) has the outlined 2x2 grid the app uses | Same answer as the menu icon fill row (outline) | pending |
 | 2026-10-31 | page fixes | T-P01 Inspector speed | T-P01 draws the `speed` field as a number box while T-P04 shows the same `[Range]` field as a slider; the app shows `[Range]` fields as sliders | Keep the slider | pending |
