@@ -955,12 +955,16 @@ public sealed class GameBuilder
         // Scene hooks from the scripting compiler: Scene Settings events, then the SceneScript of the same name.
         var hooks = ScriptsCompiled ? $"agb_scene_{id}_onLoad, agb_scene_{id}_onEnter, agb_scene_{id}_onExit" : "nullptr, nullptr, nullptr";
         sb.Append($"    {hooks}, {backdrop}, {(scene.AlphaBlending ? "true" : "false")}, {(scene.Mosaic ? "true" : "false")},\n");
-        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}}};\n");
+        // World Map inspector music Volume: the game's music volume while the scene's own track plays (0..256).
+        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}, {SceneMusicVolume(scene)}}};\n");
         // Asset declarations go after the includes (first line block of sb).
         var text = sb.ToString();
         var cut = text.IndexOf("namespace {", StringComparison.Ordinal);
         Write(Path.Combine(GenDir, "scenes", $"scene_{id}.cpp"), text[..cut] + externs + text[cut..]);
     }
+
+    /// <summary>The scene's music Volume (0..1) as SceneDef::musicVolume, 0..256.</summary>
+    public static int SceneMusicVolume(SceneFile scene) => (int)Math.Round(Math.Clamp(scene.Music.Volume, 0, 1) * 256);
 
     /// <summary>A map file's layers in ROM: <c>agbasset_map_&lt;Map&gt;_layers</c> in gen/maps (P5.03).</summary>
     public sealed record MapOut(MapFile Map, string Symbol, int LayerCount, int CollisionLayer);

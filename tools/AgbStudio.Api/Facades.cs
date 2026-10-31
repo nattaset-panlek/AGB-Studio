@@ -38,12 +38,15 @@ public static class Music
     [ScriptOp("native:StopMusic")]
     public static void Stop() { }
 
-    /// <summary>Music volume 0..1.</summary>
+    /// <summary>
+    /// The game's music volume 0..1 (a scene starts its track at its own music Volume). The player's Options music volume
+    /// and the track's volume multiply it; this does not change the player's setting.
+    /// </summary>
     /// <param name="volume">Volume 0..1.</param>
     [Cpp("agb::api::Music::SetVolume({0})")]
     public static void SetVolume(@fixed volume) { }
 
-    /// <summary>Ramps the music volume over a number of frames (stops at 0).</summary>
+    /// <summary>Ramps the music's fade level over a number of frames (stops at 0); the next Play starts at full level.</summary>
     /// <param name="to">Target volume 0..1.</param>
     /// <param name="frames">Duration in frames.</param>
     [Cpp("agb::api::Music::Fade({0}, {1})")]

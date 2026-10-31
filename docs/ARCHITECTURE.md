@@ -84,8 +84,12 @@ busy (Audio page).
 Each module's MusicMeta (Audio page: volume, loop start, fade on scene change) is built in by `SoundbankBuilder`: the
 loop start is written into the module as maxmod's restart order (a looping song continues there when it ends), and the
 volume and fade flag go into the table `agb_soundbank_music` that `GameDef::music` hands to `audio::init`. The module
-plays at the music volume times its track volume (`audio::moduleVolume()`), and `game::loadScene` fades it only when
-the scene and the track both ask for it (`audio_music` ROM test).
+plays at four volumes multiplied (`audio::moduleVolume()`): the player's (Options "Music" slider,
+`audio::setMusicVolume`; nothing else changes it, so it stays through scene changes and `game::boot`), the game's (the
+scene's music Volume, `SceneDef::musicVolume`, set when the scene starts its own track, or `Music.SetVolume`), the fade
+(`Music.Fade`, fade on scene change; back to full when a module starts) and the track's MusicMeta volume.
+`game::loadScene` fades only when the scene and the track both ask for it (`audio_music` ROM test). The Options values
+live in RAM: no save data holds them, so a power cycle starts at full volume.
 
 ## Frame order (blueprint 04)
 

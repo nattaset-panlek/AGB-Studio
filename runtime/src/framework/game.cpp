@@ -249,8 +249,9 @@ public:
             default:  // 7 fade in + OnEnter
                 applyVideoEffects(d);
                 render::effects::beginIn(g_scene.transition, g_scene.transitionFrames);
+                // The scene's own track at the scene's music volume; the player's Options music volume stays as it is.
                 if (d->music >= 0 && audio::ready()) {
-                    audio::setMusicVolume(fixed(1));
+                    audio::setGameMusicVolume(fixed::fromRaw(d->musicVolume));
                     audio::playMusic(static_cast<u16>(d->music));
                 }
                 g_scene.lastLoadFrames = system::frame() - g_scene.loadStartFrame;

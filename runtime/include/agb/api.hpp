@@ -45,7 +45,7 @@ struct Sound {
 struct Music {
     static void Play(u16 module) { audio::playMusic(module); }
     static void Stop() { audio::stopMusic(); }
-    static void SetVolume(fixed v) { audio::setMusicVolume(v); }
+    static void SetVolume(fixed v) { audio::setGameMusicVolume(v); }  // not the player's Options volume
     static void Fade(fixed to, int frames) { audio::fadeMusic(to, static_cast<u16>(frames)); }
     static bool Playing() { return audio::musicPlaying(); }
 };

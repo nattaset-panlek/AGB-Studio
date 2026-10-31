@@ -78,6 +78,7 @@ struct SceneDef {
     // scene's layers and sprites take part in the mosaic, which the scene's transitions grow (up to 9 px blocks).
     bool alphaBlend, mosaic;
     const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
+    u16 musicVolume = 256;        // World Map inspector music Volume (0..256): the game's music volume for `music`
 };
 
 // A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.

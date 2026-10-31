@@ -30,14 +30,25 @@ void init(const Config& config);
 u8 mixKHz();  // the rate maxmod mixes at (0 = not started)
 bool ready();
 
+// Music volume: maxmod mixes the module at the product of four levels, each 0..1:
+//   the player's music volume (Options "Music" slider): setMusicVolume / musicVolume; nothing else changes it, so it
+//     stays the same through scene changes and game::boot;
+//   the game's music volume: the scene's Music volume when the scene starts its track (World Map inspector), or
+//     Music.SetVolume: setGameMusicVolume / gameMusicVolume;
+//   the fade (Music.Fade, "Fade on scene change"): fadeMusic / musicFade, back to 1 when a module starts;
+//   the track's MusicMeta volume (MusicInfo::volume).
 void playMusic(u16 module, bool loop = true);
 void stopMusic();
 bool musicPlaying();
-void setMusicVolume(fixed volume);  // 0..1
-// Ramps the music volume to `target` over `frames` ("Fade on scene change"); stops at 0 if `stopAtZero`.
-void fadeMusic(fixed target, u16 frames, bool stopAtZero = true);
+void setMusicVolume(fixed volume);  // the player's music volume (Options), 0..1
 fixed musicVolume();
-// The volume maxmod mixes the module at, 0..1024: the music volume times the track's MusicMeta volume.
+void setGameMusicVolume(fixed volume);  // the game's music volume, 0..1
+fixed gameMusicVolume();
+// Ramps the fade level to `target` over `frames` ("Fade on scene change", Music.Fade); stops the music at 0 if
+// `stopAtZero`.
+void fadeMusic(fixed target, u16 frames, bool stopAtZero = true);
+fixed musicFade();
+// The volume maxmod mixes the module at, 0..1024: the four levels above multiplied.
 u16 moduleVolume();
 // The MusicMeta "Fade on scene change" of the module playing (true when the game has no music table).
 bool musicFadesOnSceneChange();
