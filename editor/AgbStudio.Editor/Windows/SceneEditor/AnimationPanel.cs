@@ -45,17 +45,21 @@ public sealed class AnimationPanel : DockPanel
         _s = s;
         _m = SceneEditorModel.Of(s);
         Name = "AnimationPanel";
-        var left = UI.Frame(_list, null, "border/default", new Thickness(0, 0, 1, 0), new Thickness(6, 8, 6, 6));
+        // Figma: the list without a divider, rows from y 6; Play on a bg/hover square and Step a bare icon; the bar and
+        // the frames from x 14 of the right part
+        var left = UI.Frame(_list, null, null, null, new Thickness(6, 6, 6, 6));
         left.Width = 170;
         SetDock(left, Avalonia.Controls.Dock.Left);
         Children.Add(left);
-        var bar = new DockPanel { HorizontalSpacing = 10, Height = 28 };
-        var buttons = UI.Row(4, Boxed(_play), Boxed(_step));
+        var bar = new DockPanel { HorizontalSpacing = 10, Height = 26 };
+        _play.Token(Avalonia.Controls.Primitives.TemplatedControl.BackgroundProperty, "bg/hover");
+        _play.CornerRadius = new CornerRadius(6);
+        var buttons = UI.Row(8, _play, _step);
         SetDock(buttons, Avalonia.Controls.Dock.Left);
         SetDock(_onion, Avalonia.Controls.Dock.Right);
         bar.Children.AddRange([buttons, _onion, _info]);
-        var right = UI.Column(11, bar, _frames);
-        right.Margin = new Thickness(12, 8, 12, 10);
+        var right = UI.Column(10, bar, _frames);
+        right.Margin = new Thickness(14, 8, 12, 10);
         Children.Add(right);
         _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(1 / 59.7275) };
         _timer.Tick += (_, _) => Tick();
@@ -76,8 +80,6 @@ public sealed class AnimationPanel : DockPanel
         AttachedToVisualTree += (_, _) => { _m.SelectionChanged -= Reset; _m.Changed -= Rebuild; _m.SelectionChanged += Reset; _m.Changed += Rebuild; Rebuild(); };
         Reset();
     }
-
-    static Border Boxed(IconButton b) => UI.Frame(b, "bg/raised", "border/default", null, new Thickness(0), 6);
 
     ActorData? Actor => _m.SelectedActor;
     string? Sprite => Actor?.Sprite is { Length: > 0 } sp ? sp : null;
