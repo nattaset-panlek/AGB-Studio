@@ -155,16 +155,26 @@ public static class ProjectCreator
         }
     }
 
+    /// <summary>The genre template of AgbStudio.Build that writes a complete project for an editor template, or null.</summary>
+    public static AgbStudio.Build.Content.Templates.TemplateInfo? BuildTemplate(TemplateInfo t) =>
+        AgbStudio.Build.Content.Templates.TemplateCatalog.Find(t.Id == "novel" ? "visualnovel" : t.Id);
+
     static GameProject Assemble(NewProjectOptions o, string name, string dir, List<string> warnings)
     {
         GameProject p;
+        // With "Sample level" a genre template of AgbStudio.Build writes the whole game (scenes, scripts, art, fonts and its
+        // title screen as start scene): that is the template's sample. Without it the project starts empty (T-P22).
+        var complete = true;
         if (TemplateFolder(o.Template) is { } prepared)
         {
             CopyDirectory(prepared, dir);
             p = GameProject.Open(dir);
         }
+        else if (o.SampleLevel && BuildTemplate(o.Template) is { } template)
+            p = template.Create(dir, name);
         else
         {
+            complete = false;
             p = GameProject.Create(dir, name);
             if (o.Template.Content == TemplateContent.PlatformerKit) SampleProjects.WriteCommonArt(p);
         }
@@ -177,12 +187,14 @@ public static class ProjectCreator
         var ns = GameProject.FileName(name).Replace("-", "_", StringComparison.Ordinal);
         s.Scripting.Namespace = ns.Length > 0 && char.IsDigit(ns[0]) ? "_" + ns : ns;
 
-        if (o.SampleLevel) AddSampleLevel(p);
+        var sample = o.SampleLevel && !complete;
+        if (sample) AddSampleLevel(p);
         if (!p.SceneFiles().Any()) AddStartScene(p);
-        var start = o.SampleLevel ? SampleScene : p.SceneFiles().Select(GameProject.AssetName).Contains(s.General.StartScene) ? s.General.StartScene : GameProject.AssetName(p.SceneFiles().First());
+        var start = sample ? SampleScene : p.SceneFiles().Select(GameProject.AssetName).Contains(s.General.StartScene) ? s.General.StartScene : GameProject.AssetName(p.SceneFiles().First());
         s.General.StartScene = start;
         s.LastScene = start;
-        if (o.ThaiFont) AddThaiFont(p, warnings);
+        // a template that has the Thai font already keeps its own font settings
+        if (o.ThaiFont && !File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font"))) AddThaiFont(p, warnings);
         if (o.LogicGraphExamples) AddLogicGraph(p);
 
         // the project file is named after the project (Sky Hopper -> SkyHopper.agbproj)

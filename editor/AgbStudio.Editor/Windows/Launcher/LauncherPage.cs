@@ -76,6 +76,7 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         _side.Content = tab switch { "T-P20" => TemplateDetails(), "T-P21" => LearnSide(), _ => HomeSide() };
 
         _launcher.Changed += Refresh;
+        _launcher.StatusChanged += () => Dispatcher.UIThread.Post(() => _status.Text = _launcher.StatusLine());
         _launcher.SelectionChanged += () => Dispatcher.UIThread.Post(UpdateSelection);
         _launcher.Tutorials.Changed += Refresh;
         _launcher.RenameRequested += BeginRename;
@@ -513,7 +514,8 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
 
     void OpenHardwareGuide()
     {
-        var guide = new[] { AppContext.BaseDirectory, Path.Combine(AppContext.BaseDirectory, "docs") }.Select(d => Path.Combine(d, "gba-hardware-guide.md")).FirstOrDefault(File.Exists);
+        // offline: the guide installed with the editor (docs/user)
+        var guide = Menus.About.UserGuide("gba-hardware-guide.md");
         if (guide is null) _s.Toasts.Show("The GBA hardware guide is not installed.", ToastStatus.Error);
         else _launcher.OpenDocument(guide);
     }

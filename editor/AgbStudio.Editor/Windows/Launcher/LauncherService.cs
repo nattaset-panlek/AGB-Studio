@@ -91,6 +91,8 @@ public sealed class LauncherService
     /// <summary>A project was created with New Project (tutorials).</summary>
     public event Action<string>? ProjectCreated;
     public event Action? Changed;
+    /// <summary>Only the status line changed (the toolchain check): the page does not rebuild its cards and rows for it.</summary>
+    public event Action? StatusChanged;
 
     LauncherService(EditorServices s)
     {
@@ -103,7 +105,8 @@ public sealed class LauncherService
         StatusLine = DefaultStatusLine;
         PickFolder = title => s.System.PickFolderAsync(title);
         s.Recent.Changed += () => { if (_selected != null && !s.Recent.Items.Any(r => Same(r.Path, _selected.Path))) Selected = null; Changed?.Invoke(); };
-        s.Toolchain.Changed += () => Changed?.Invoke();
+        // the check ends whenever it ends (gcc -dumpversion): rebuilding the page then could swallow a click in progress
+        s.Toolchain.Changed += () => StatusChanged?.Invoke();
         s.Windows.Opened += _ => RefreshCommands();
         // the context menu commands act on the selected card while a Launcher page is shown
         foreach (var (id, run) in new (string, Action)[]

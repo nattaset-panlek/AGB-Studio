@@ -194,17 +194,47 @@ public class LauncherE2ETests
         h.Click(h.Find<Button>("Community_Release_notes"));
         var notes = Assert.Single(h.Opened);
         Assert.Contains("## 0.1", File.ReadAllText(notes));
+        // the GBA hardware guide opens offline: the copy installed with the editor (docs/user)
         h.Click(h.Find<Button>("Doc_GBA_hardware_guide"));
-        Assert.Contains(h.S.Toasts.Visible, t => t.Text.Contains("hardware guide"));
+        Assert.Equal(2, h.Opened.Count);
+        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "docs", "user", "gba-hardware-guide.md"), h.Opened[^1]);
+        Assert.StartsWith("# GBA hardware guide", File.ReadAllText(h.Opened[^1]));
 
-        // a sample without content says so; Sky Hopper demo is made in the projects folder and opened
-        h.Click(h.Find<SceneCard>("Sample_Cave_Quest"));
-        await LauncherHarness.Until(() => h.S.Toasts.Visible.Any(t => t.Text == "Cave Quest is not installed."));
+        // a sample is made in the projects folder on first use and opened (Sky Hopper demo here, the others in
+        // P11_03_Samples_EachIsMadeAndOpened)
         h.Click(h.Find<SceneCard>("Sample_Sky_Hopper_demo"));
         await LauncherHarness.Until(() => h.S.Project.Current != null, 180000);
         Assert.Equal("Sky Hopper", h.S.Project.Name);
         Assert.StartsWith(Path.Combine(h.Fx.Folder, "GBAProjects", "SkyHopperdemo"), h.S.Project.Current!.Root);
         Assert.Equal("T-P01", h.Win.CurrentPageId);
+    }
+
+    [AvaloniaFact]
+    public async Task P11_03_Samples_EachIsMadeAndOpened()
+    {
+        // no recent projects: the fixture's empty "Snow Run" project would be opened instead of the sample
+        using var h = new LauncherHarness("T-P21", recent: false);
+        foreach (var (card, name, folder) in new[] { ("Sample_Cave_Quest", "Cave Quest", "CaveQuest"), ("Sample_Snow_Run", "Snow Run", "SnowRun"), ("Sample_Dusk_Story", "Dusk Story", "DuskStory") })
+        {
+            _ = h.S.Windows.Open("T-P21", source: "test");
+            Capture.Pump();
+            h.Click(h.Find<SceneCard>(card));
+            await LauncherHarness.Until(() => h.S.Project.Name == name, 180000);
+            var p = h.S.Project.Current!;
+            Assert.Equal(Path.Combine(h.Fx.Folder, "GBAProjects", folder), Path.GetDirectoryName(p.ProjectPath));
+            Assert.NotEmpty(p.SceneFiles());
+            Assert.NotEmpty(p.ScriptFiles());
+            Assert.Contains(p.Settings.General.StartScene, p.SceneFiles().Select(GameProject.AssetName));
+            Assert.Equal("T-P01", h.Win.CurrentPageId);
+        }
+        // a second click opens the copy made the first time
+        var made = h.S.Recent.Items.Count;
+        _ = h.S.Windows.Open("T-P21", source: "test");
+        Capture.Pump();
+        h.Click(h.Find<SceneCard>("Sample_Cave_Quest"));
+        await LauncherHarness.Until(() => h.S.Project.Name == "Cave Quest", 180000);
+        Assert.Equal(Path.Combine(h.Fx.Folder, "GBAProjects", "CaveQuest"), Path.GetDirectoryName(h.S.Project.Current!.ProjectPath));
+        Assert.Equal(made, h.S.Recent.Items.Count);
     }
 
     [AvaloniaFact]
@@ -299,8 +329,8 @@ public class LauncherE2ETests
         var bundled = ReleaseNotes.Parse(ReleaseNotes.Bundled);
         Assert.Equal("0.1", bundled[0].Version);
         Assert.Equal(["Thai variable-width fonts", "Logic Graph ⇄ C# sync", "Flash to EZ-Flash / EverDrive"], bundled[0].Highlights);
-        Assert.Equal(new Version(0, 1, 0, 0), EditorVersion.Value);
-        Assert.Equal("v0.1", EditorVersion.Short);
+        Assert.Equal(new Version(1, 0, 0, 0), EditorVersion.Value);   // Directory.Build.props
+        Assert.Equal("v1.0", EditorVersion.Short);
 
         using (var h = new LauncherHarness())
             Assert.Equal(["• Thai variable-width fonts", "• Logic Graph ⇄ C# sync", "• Flash to EZ-Flash / EverDrive"], h.Texts(h.Find<StackPanel>("WhatsNew")));
