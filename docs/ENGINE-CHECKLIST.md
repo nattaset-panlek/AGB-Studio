@@ -292,13 +292,13 @@
   - [ ] matches Figma
 - **T-D09 Preferences** (Emulator tab) · 900 x 620 · from: #35 Emulator status, File › Preferences…, Launcher › Settings tab
   - [x] implemented — evidence: test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.OpensAtEmulatorFromFileMenuShortcutAndStatusBar_TabsFromTheirIds, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, doc:docs/user/windows/T-D09-preferences.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D09.png, report:docs/evidence/shot-report.md (0.67 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D10 Keyboard Shortcuts** · 760 x 390 · from: Help › Keyboard Shortcuts
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.Menu_ClickFileOpensItAndHelpKeyboardShortcutsOpensTheDialog, test:AboutTests.KeyboardShortcuts_GroupsAndSearch, doc:docs/user/windows/T-D10-keyboard-shortcuts.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D11 About** · 460 x 304 · from: Help › About AGB Studio
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:AboutTests.Website_IsDisabledWhenNoUrlIsConfigured, doc:docs/user/windows/T-D11-about.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D11.png, report:docs/evidence/shot-report.md (2.73 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D12 Unsaved Changes** · 460 x 262 · from: File › Exit, closing the app or opening another project with unsaved files
   - [ ] implemented
   - [ ] matches Figma
@@ -307,7 +307,7 @@
 
 - **T-S01 Project Settings · General** · 900 x 620
   - [x] implemented — evidence: test:ProjectSettingsTests.OpensFromFileMenuAtInput_TabsSwitch_AndEachTabOpensFromItsWindowId, test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, doc:docs/user/windows/T-S01-project-settings-general.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S01.png, report:docs/evidence/shot-report.md (0.92 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-S02 Project Settings · Save data** · 900 x 620
   - [ ] implemented
   - [ ] matches Figma
@@ -319,7 +319,7 @@
   - [ ] matches Figma
 - **T-S05 Project Settings · Localization** · 900 x 620
   - [x] implemented — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LimitTests.MissingStringsWarnOrFailAsLocalizationSays, doc:docs/user/windows/T-S05-project-settings-localization.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-S05.png, report:docs/evidence/shot-report.md (0.80 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-S06 Preferences · Appearance** · 900 x 620
   - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferenceEffectsTests.Appearance_PixelGridAt400Percent_AndReduceMotion, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -462,7 +462,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
 
 - **T-D13 New Sprite** · 520 x 506 · from: Sprite Editor › Sprites +
   - [x] implemented — evidence: test:SpriteEditorE2ETests.P11_27_NewSprite_FromSpritesPlus, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, doc:docs/user/windows/T-D13-new-sprite.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D13.png, report:docs/evidence/shot-report.md (1.55 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D14 New Script** · 560 x 564 · from: Script Editor › Scripts +, Component Picker › New C# script…
   - [x] implemented — evidence: test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, test:ScriptToolsTests.NewScript_OpenInExternalEditorAfterCreating, doc:docs/user/windows/T-D14-new-script.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -483,16 +483,16 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-D20 Add Language** · 520 x 416 · from: Project Settings › Localization › Add language, Localization › Languages +
   - [x] implemented — evidence: test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, doc:docs/user/windows/T-D20-add-language.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D20.png, report:docs/evidence/shot-report.md (1.82 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D21 New Speaker** · 520 x 438 · from: Dialogue Editor › Speakers +
   - [x] implemented — evidence: test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, doc:docs/user/windows/T-D21-new-speaker.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-D22 Opening Project** (loading state) · 480 x 322 · from: Launcher › Project card, File › Open Recent
   - [ ] implemented
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D22.png, report:docs/evidence/shot-report.md (0.86 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D23 Build ROM · Failed** (error state) · 600 x 382 · from: Build ROM when a step fails
   - [x] implemented — evidence: test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, doc:docs/user/windows/T-D23-build-rom-failed.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D23.png, report:docs/evidence/shot-report.md (1.32 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D24 Import Asset · Errors** (error state) · 720 x 436 · from: Import Asset when a file can't be converted
   - [ ] implemented
   - [ ] matches Figma
@@ -516,7 +516,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-O13 Tutorial Steps** · 380 x 466 · from: Launcher › Learn › Tutorial Start / Continue
   - [x] implemented — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:TutorialTests.P11_04_FirstPlatformerStep3_SubStepsTickThemselves_BackSkipNext, test:TutorialTests.P11_04_FinishingTheLastStepMarksTheTutorialDone, test:TutorialTests.P11_04_OpenedThroughTheWindowServiceItShowsTheTutorial, doc:docs/user/windows/T-O13-tutorial-steps.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O13.png, report:docs/evidence/shot-report.md (2.00 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 
 ### 4.9 States (error / empty / loading) and where they are designed
 
@@ -835,7 +835,7 @@ Entry gate:
 - [ ] P0.E1 User has said building may start · Verify: `USER`
 
 Items (ค่าที่พบเมื่อ 2026-10-31 อยู่ในวงเล็บ):
-- [ ] P0.01 devkitARM present, version recorded (arm-none-eabi-gcc 16.1.0) · Verify: command output saved to `docs/TOOLCHAIN.md`
+- [x] P0.01 devkitARM present, version recorded (arm-none-eabi-gcc 16.1.0) · Verify: command output saved to `docs/TOOLCHAIN.md` — evidence: doc:docs/TOOLCHAIN.md, commit:c407d74 (2026-10-31)
 - [x] P0.02 libtonc present (`libtonc/lib/libtonc.a`) · Verify: hello ROM links against it — evidence: test:RuntimeRomTests.RomPasses, rom:build/runtime-tests/p0_hello.elf.map@d802a71, doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
 - [x] P0.03 libgba and maxmod present (`libgba/lib/libgba.a`, `libmm.a`, `libfat.a`); confirm the runtime links libtonc + libmm without duplicate symbols from libgba · Verify: link map of the hello ROM — evidence: rom:build/runtime-tests/p0_hello.elf.map@d802a71, doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
 - [x] P0.04 devkitPro tools present: gbafix, grit, mmutil, gbalzss, padbin, bin2s · Verify: each tool runs, versions recorded — evidence: doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
@@ -862,7 +862,7 @@ Items:
 - [x] P1.03 Repo created per D-04 with the agreed layout and a README · Verify: `REV` — evidence: doc:README.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 - [ ] P1.04 File format spec per D-03 (project, scene, map, layout, tileset, sprite meta, palette, font, database, strings, dialogue, logic graph, sfx) with JSON schemas and a format version field · Verify: `UT` load / save round trip of every schema
 - [x] P1.05 "Sky Hopper" fixture project that reproduces the data shown in Figma (5 scenes incl. Forest_01 30x20, 6 links, 12 C# scripts, Items table 24 rows / 9 fields, 340 string keys in English / Thai / Japanese, sprites hero / slime / coin / block / heart / cloud, forest_tiles, fonts thai_vwf / pixel8 / title_big, music and SFX) using original placeholder content · Verify: `UT` counts match the Figma frames — evidence: test:FixtureTests.CountsMatchTheFigmaFrames, test:FixtureTests.GeneratedMusicIsReadByMaxmod, commit:d802a71 (2026-10-31)
-- [ ] P1.06 CI pipeline: host unit tests, runtime test ROMs through mgba-rom-test, editor build, artifact upload (infra: every Verify step needs it) · Verify: green run on the empty skeleton
+- [x] P1.06 CI pipeline: host unit tests, runtime test ROMs through mgba-rom-test, editor build, artifact upload (infra: every Verify step needs it) · Verify: green run on the empty skeleton — evidence: doc:ci.cmd, doc:tools/ci-artifacts.ps1, report:build/ci/runs/20261031-130823-ddf96c0/summary.txt, commit:c407d74 (2026-10-31)
 - [x] P1.07 Lint rules: no emoji (codepoint scan), no direct hardware writes outside commit queues in runtime code, no float / double in runtime C++ (infra: G-EMOJI, G-HW) · Verify: CI fails on a planted violation of each — evidence: test:LintTests.PlantedViolationsAreReported, test:LintTests.RepositoryIsClean, doc:ci.cmd, commit:d802a71 (2026-10-31)
 - [x] P1.08 Evidence folders `docs/evidence/figma/` and `docs/evidence/app/` with the naming rule from 2.3 · Verify: `REV` — evidence: doc:docs/evidence/figma, doc:docs/evidence/app, doc:docs/evidence/shot-report.md, commit:d802a71 (2026-10-31)
 - [x] P1.09 Third-party licence register `docs/THIRD_PARTY.md` (per D-05) · Verify: `REV` against G-LEGAL — evidence: doc:docs/THIRD_PARTY.md, doc:docs/evidence/legal-review.md, test:PackagingTests.EveryShippedLibraryHasALicenceRow, commit:d802a71 (2026-10-31)
@@ -883,7 +883,7 @@ Items:
 - [x] P2.01 Boot code and linker sections for IWRAM / EWRAM / ROM, section macros for hot ARM code and EWRAM data · Verify: `RT` boot test, map file shows sections where expected — evidence: test:iwram_code_runs_from_iwram, test:RamBudgetTests.EveryRuntimeTestRomFitsIwramWithItsStackAndEwram, test:RuntimeRomTests.DebugChannelAddressesMatchTheMapFile, commit:d802a71 (2026-10-31)
 - [x] P2.02 Interrupts and frame loop that sleeps with `VBlankIntrWait()` (no busy wait) · Verify: `RT` 600 frames counted at 59.73 Hz; `BUD` CPU halted when idle — evidence: test:frame_loop_counts_and_profiles, commit:d802a71 (2026-10-31)
 - [x] P2.03 Frame order from blueprint 04: input, Screen.Update, behaviours, Event Script VM, tasks, physics, animation, build OAM, palette fade, mark dirty tilemaps · Verify: `RT` trace log order — evidence: test:frame_phases_follow_blueprint_order, commit:d802a71 (2026-10-31)
-- [ ] P2.04 Commit queues (OAM shadow, palette buffer, GPU register shadow, DMA queue with per-frame byte budget, sprite frame copy) flushed only in VBlank · Verify: `RT` overflow defers to the next frame and logs; lint P1.07 passes; Done: no runtime module writes OAM / PAL / VRAM / registers directly
+- [x] P2.04 Commit queues (OAM shadow, palette buffer, GPU register shadow, DMA queue with per-frame byte budget, sprite frame copy) flushed only in VBlank · Verify: `RT` overflow defers to the next frame and logs; lint P1.07 passes; Done: no runtime module writes OAM / PAL / VRAM / registers directly — evidence: test:commit_queue_budget_defers, test:commit_queue_rows_past_the_budget_wait_for_the_next_vblank, test:commit_queue_keeps_room_for_fills_and_sequences, test:direct_vram_writes_outside_a_staged_load_are_counted, test:pause_and_resume_map_text_in_vblank, test:LintTests.PlantedViolationsAreReported, test:LintTests.RepositoryIsClean, commit:c407d74 (2026-10-31)
 - [x] P2.05 Input: held, pressed, released, repeat, AxisX / AxisY, AnyKey, action names from Project Settings · Input [T-D08] · Verify: `UT` with recorded key sequences — evidence: test:input_edges_axes_repeat_and_actions, test:PlayModeTests.KeyboardMapFollowsProjectSettings, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, commit:d802a71 (2026-10-31)
 - [x] P2.06 Tasks and coroutines in a fixed pool · Verify: `UT` — evidence: test:tasks_run_by_priority_and_step, commit:d802a71 (2026-10-31)
 - [x] P2.07 Memory arenas (reset per Screen) and fixed pools with checked handles; pool full = Console warning [T-P05] · Verify: `UT` stale handle and double free caught in Debug — evidence: test:RuntimeRomTests.PoolAssertsCatchStaleHandlesAndDoubleFrees, test:pool_handles_and_arena, test:LimitTests.AFullActorPoolIsReportedInTheConsole, commit:d802a71 (2026-10-31)
@@ -909,14 +909,14 @@ Items:
 - [x] P3.02 Video modes 0, 1, 2, 3 with alpha blending and mosaic toggles [T-O02] · Verify: `RT` per mode, screenshot vs reference image — evidence: test:VideoModeTests.VideoModesMatchReferenceImages, test:mode0_four_tile_layers_blend_and_mosaic, test:mode1_two_tile_layers_and_one_affine, test:mode2_two_affine_layers_blended, test:mode3_bitmap_mosaic_and_blended_sprite, test:video_mode_alpha_blending_and_mosaic, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, shot:docs/evidence/app/P3.02-mode0.png, shot:docs/evidence/app/P3.02-mode1.png, shot:docs/evidence/app/P3.02-mode2.png, shot:docs/evidence/app/P3.02-mode3.png, commit:d802a71 (2026-10-31)
 - [x] P3.03 Affine BG layers for Mode 1-2 [T-M20 Rotate / scale layer] · Verify: `RT` rotate and scale sweep — evidence: test:affine_rotate_scale_sweep, test:affine_sweep_pictures, test:affine_layer_rotates_and_scales, test:VideoModeTests.VideoModesMatchReferenceImages, shot:docs/evidence/app/P3.03-sweep3.png, commit:d802a71 (2026-10-31)
 - [x] P3.04 Metatile map renderer with ring-buffer scroll (rows / columns drawn as the camera moves; BG size 512 x 256) · Verify: `RT` scroll test, no tearing; `BUD` DMA bytes per frame — evidence: test:map_streams_rows_and_columns, test:big_camera_jump_fits_in_a_frame, test:four_layers_128_sprites_and_music_at_60_fps, commit:d802a71 (2026-10-31)
-- [ ] P3.05 Per-layer parallax (x0.2, x0.5, x1.0, x1.2 as in T-D03 and T-P03) · Verify: `RT`
+- [x] P3.05 Per-layer parallax (x0.2, x0.5, x1.0, x1.2 as in T-D03 and T-P03) · Verify: `RT` — evidence: test:parallax_scroll_registers, test:big_camera_jump_fits_in_a_frame, test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, commit:c407d74 (2026-10-31)
 - [x] P3.06 Sprite / OAM manager: 128 entries, priority sort, 32 affine matrices, all 12 OAM shapes [T-M19], sprite frame streaming to OBJ VRAM · Verify: `RT` 128 sprites; `BUD` OAM count — evidence: test:hundred_twenty_eight_sprites_share_frames, test:oam_shapes_flips_and_affine, test:thirty_third_affine_matrix_is_refused, test:overloaded_screen_line_is_reported, test:GraphicsTests.AllTwelveOamSizesAreKnown, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, commit:d802a71 (2026-10-31)
 - [x] P3.07 Sprite animation: frames, ticks per frame, loop, ping-pong [T-P08, T-P06] · Verify: `UT` timing — evidence: test:animation_timing_loop_once_pingpong, test:SpriteEditorE2ETests.P11_26_Timeline_AnimationsTicksLoopPingPongOnionSkin, commit:d802a71 (2026-10-31)
 - [x] P3.08 Palette manager: 16 BG + 16 OBJ banks, fade to black over N frames, tint, cycle (range, speed, direction Left / Right / Ping-pong), flash [T-P10, T-O10] · Verify: `RT` palette RAM checks per frame — evidence: test:fade_tint_flash, test:colour_cycle_directions, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, commit:d802a71 (2026-10-31)
 - [x] P3.09 Text windows: VWF renderer 1bpp / 2bpp (4 shades) to a BG text layer, drop shadow, typewriter speed (chars per frame), blip sound, continue marker [T-P09, T-P16] · Verify: `RT` reference string renders pixel-identical to the golden image — evidence: test:glyph_pixels_2bpp_and_shadow, test:typewriter_reveals_by_step, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, test:ThaiCorpusTests.CorpusMatchesTheReviewedGoldenSheet, test:ThaiCorpusTests.CorpusLinesInTheRomMatchThePreview, commit:d802a71 (2026-10-31)
 - [x] P3.10 Scanline effects (per-line DMA) (infra: Racing (Mode 7) template in T-P20) · Verify: `RT` Mode 7 plane test — evidence: test:scanline_dma_writes_each_line, test:mode7_table_has_perspective, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, commit:d802a71 (2026-10-31)
 - [ ] P3.11 Music with maxmod: soundbank from MOD / XM, play / stop / volume / loop start / fade on scene change, 8 ch at 21 kHz default [T-P15] · Verify: `EMU` listen check; `BUD` mixer CPU near the 6% shown in Figma
-- [ ] P3.12 DMG sound effects from register data: Square 1 (sweep), Square 2, Wave, Noise [T-P25] · Verify: `EMU` sounds match the editor preview; 0 bytes of sample ROM
+- [x] P3.12 DMG sound effects from register data: Square 1 (sweep), Square 2, Wave, Noise [T-P25] · Verify: `EMU` sounds match the editor preview; 0 bytes of sample ROM — evidence: test:DmgSoundTests.Preview_SoundsLikeTheEmulator, test:DmgSoundTests.Synth_FollowsPitchEnvelopeLengthAndSweepOverflow, test:DmgSoundTests.Registers_AreTheHardwareEncodingOfTheFields, test:PipelineTests.SfxDesignerEffectsPlayOnTheDmgChannels, test:SfxDesignerTests.BakeToWav_SavesTheSampleAndHardwareKeepsZeroBytes, commit:c407d74 (2026-10-31)
 - [x] P3.13 Channel usage report (DSound A / B for music, DMG channels for SFX) [T-P15 GBA channels] · Verify: `UT` — evidence: test:AudioPageTests.ChannelsMixerBudget_AndPreviewSfx, test:AudioChannelTests.ModuleChannelCountsAreReadFromTheFiles, test:channel_use_within_maxmod_settings_and_dmg_channels_do_not_clash, commit:d802a71 (2026-10-31)
 - [x] P3.14 Screen transitions Cut / Fade / Slide with duration [T-O09] · Verify: `RT` — evidence: test:transitions_fade_and_slide, commit:d802a71 (2026-10-31)
 
@@ -1024,10 +1024,10 @@ Items:
 - [x] P7.09 Hash cache: key = input bytes + options + converter version; `build/cache/manifest.json`; unchanged inputs skipped (blueprint 11) · Verify: `UT` no-change rebuild converts 0 assets, one option change reconverts 1 — evidence: test:PipelineTests.SecondBuildWithoutChangesConvertsNothingAndIsFast, commit:d802a71 (2026-10-31)
 - [x] P7.10 Build graph with Ninja: g++ `-O2 -mthumb -mcpu=arm7tdmi`, hot code as ARM in IWRAM, `ld --gc-sections`, objcopy, gbafix with title (12), game code (4), maker (2), version [T-D06, T-S01] · Verify: `RT` ROM boots; header bytes checked — evidence: test:BuildReportTests.RomHeaderHoldsTitleGameCodeMakerAndVersion, test:PipelineTests.BuildRomStepsIncludeLinkAndGbafix, test:PipelineTests.MiniPlatformerBuildsAndPlays, test:PipelineTests.BuildsWithoutNinjaAndSkipsUpToDateObjects, test:RamBudgetTests.CodeOfIwramCppFilesCountsAsHotArmCodeNotData, test:iwram_code_runs_from_iwram, commit:d802a71 (2026-10-31)
 - [x] P7.11 Debug / Release configs with optimise level, strip Debug.Log, keep asserts, warn when ROM > N MB (16 MB default), output folder, run in mGBA after build [T-S03] · Verify: `UT` config matrix — evidence: test:BuildReportTests.ConfigurationMatrixSetsCompilerFlagsDefinesAndCompression, test:BuildReportTests.DebugAndReleaseRomsShowTheSameGameWithAndWithoutCompression, test:BuildReportTests.RomSizeWarningComesFromProjectSettingsAndOver32MbFails, test:PipelineTests.BuildOutputFolderFromProjectSettings, test:PipelineTests.FailedAssertsLogFileAndLineAndStopTheGame, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, test:ProjectSettingsTests.BuildTab_FieldsChangeTheBuild, commit:d802a71 (2026-10-31)
-- [ ] P7.12 `build/report.json`: ROM / RAM / VRAM per asset, ROM breakdown (graphics, code, audio, data), largest assets, warnings, time per stage, history [T-P11, T-O06] · Verify: `UT` schema; numbers match the linker map
+- [x] P7.12 `build/report.json`: ROM / RAM / VRAM per asset, ROM breakdown (graphics, code, audio, data), largest assets, warnings, time per stage, history [T-P11, T-O06] · Verify: `UT` schema; numbers match the linker map — evidence: test:BuildReportTests.ReportNumbersMatchTheLinkerMap, test:FixtureBuildTests.FixtureReportMatchesTheLinkerMap, test:SchemaTests.SchemasMatchTheFileModel, test:BuildReportTests.Report_ShowsSizeTimesWarningsVramBreakdownAssetsAndHistory, test:BudgetAndHistoryTests.P13_08_BuildReportHistory_AcrossBuilds_IncludingFailures, doc:docs/schemas/report.schema.json, doc:docs/schemas/report-history.schema.json, commit:c407d74 (2026-10-31)
 - [x] P7.13 Build progress and errors streamed to the editor: steps, per-file progress, timings, `file(line,col)` links, first error [T-D06, T-D23] · Verify: `E2E` — evidence: test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, commit:d802a71 (2026-10-31)
 - [x] P7.14 Clean Build [T-M05] and cache clear with size display [T-S08] · Verify: `UT` — evidence: test:MenuActionTests.CleanBuild_DeletesTheBuildFolder, test:PreferencesTests.Paths_ClearCacheEmptiesTheProjectsBuildCache, commit:d802a71 (2026-10-31)
-- [ ] P7.15 Export ROM: file name, folder, pad to power of two, estimated size [T-D05] · Verify: `UT` padded size; `EMU` padded ROM boots
+- [x] P7.15 Export ROM: file name, folder, pad to power of two, estimated size [T-D05] · Verify: `UT` padded size; `EMU` padded ROM boots — evidence: test:ExportRomBootTests.PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom, test:ExportRomTests.Fields_ComeFromTheProject_ValidateAndExportARelease, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, commit:c407d74 (2026-10-31)
 - [x] P7.16 Asset reference graph for Find Usages and Find Unused Assets [T-M13, T-M03] and "Used by" lists [T-P07, T-P10] · Verify: `UT` — evidence: test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:MenuActionTests.FindUnusedAssets_ListsAssetsNothingMentions, test:ArtLibraryTests.Banks_LoadedWithUsedByLists, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, commit:d802a71 (2026-10-31)
 - [x] P7.17 Reimport [T-M03, T-M13] · Verify: `UT` — evidence: test:PopoverAndMenuTests.AssetContextMenu_EveryItem, commit:d802a71 (2026-10-31)
 - [x] P7.18 Incremental build budget: "Usually under a second" [T-D06] for the fixture after a one-line script change · Verify: `BUD` timing in CI — evidence: test:PipelineTests.FixtureRebuildsAfterAOneLineScriptChangeInUnderASecond, commit:d802a71 (2026-10-31)
@@ -1043,7 +1043,7 @@ Entry gate:
 - [ ] P8.E1 Phase 3 and 7 exits ticked, D-17 decided
 
 Items:
-- [ ] P8.01 Font sources TTF / OTF, BDF, image sheet [T-D15] · Verify: `UT`
+- [x] P8.01 Font sources TTF / OTF, BDF, image sheet [T-D15] · Verify: `UT` — evidence: test:FontSourceTests.OpenTypeFontWithCffOutlinesBuildsTheSameGameFontAsTheTrueTypeFont, test:FontSourceTests.CffCharstringOperatorsDrawTheOutlinesTheyDescribe, test:FontSourceTests.FontFilesAGameFontCannotUseAreRefusedWithTheReason, test:FontSourceTests.BdfFontBuildsGlyphsMetricsAndMissingCharacters, test:FontSourceTests.ImageSheetFontReadsCellsInCharacterSetOrder, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, commit:c407d74 (2026-10-31)
 - [x] P8.02 Fixed (8x8) and variable width fonts, sizes (12 px, 16x16), metrics: height, base, spacing, line, advance per glyph [T-P09] · Verify: `UT` — evidence: test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, test:FontModelTests.SettingsEdits_AreUndoable_AndSavedWithDrawTo, commit:d802a71 (2026-10-31)
 - [x] P8.03 Character sets Basic Latin (95), Thai (87), Symbols (12), Japanese kana [T-P09, T-D15] · Verify: `UT` counts — evidence: test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontModelTests.Groups_ThaiConsonantsAreThe44Letters, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, commit:d802a71 (2026-10-31)
 - [x] P8.04 Glyph data editable per pixel; missing glyphs flagged (Glyph Cell "Missing") [T-P09] · Verify: `UT` — evidence: test:FontModelTests.GlyphEditor_PaintWritesAnOverrideFontBuilderApplies_Undo, test:FontModelTests.MissingIn_ListsCharactersWithoutGlyphs, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, commit:d802a71 (2026-10-31)
@@ -1094,26 +1094,26 @@ Entry gate:
 - [ ] P10.E1 Phase 1 exit ticked, D-01 and D-10 decided
 
 Items:
-- [ ] P10.01 App skeleton on the chosen stack: Title Bar (no brand text), menu bar with 7 menus, status bar [T-M01..T-M07] · Verify: `SHOT` vs Scene Editor chrome
-- [ ] P10.02 Token system with both collections and identical names [T-K01] · Verify: `UT`
+- [x] P10.01 App skeleton on the chosen stack: Title Bar (no brand text), menu bar with 7 menus, status bar [T-M01..T-M07] · Verify: `SHOT` vs Scene Editor chrome — evidence: test:ShellE2ETests.TitleBar_HasSevenMenusAndNoBrandText, test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, shot:docs/evidence/app/T-P01.png, shot:docs/evidence/app/C-title-bar.png, shot:docs/evidence/app/T-M01.png, shot:docs/evidence/app/T-M02.png, shot:docs/evidence/app/T-M03.png, shot:docs/evidence/app/T-M04.png, shot:docs/evidence/app/T-M05.png, shot:docs/evidence/app/T-M06.png, shot:docs/evidence/app/T-M07.png, doc:docs/evidence/shot-report.md, commit:c407d74 (2026-10-31)
+- [x] P10.02 Token system with both collections and identical names [T-K01] · Verify: `UT` — evidence: test:TokenTests.TokenFile_NamesAndValuesMatchFigma, test:TokenTests.BothThemes_HaveIdenticalKeys, test:TokenTests.TokenFile_IsGeneratedFromFigmaExport, test:DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme, commit:c407d74 (2026-10-31)
 - [x] P10.03 Text styles and bundled fonts [T-K02, T-K03] · Verify: `SHOT` specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
-- [ ] P10.04 Icon set [T-K04] · Verify: `UT`
+- [x] P10.04 Icon set [T-K04] · Verify: `UT` — evidence: test:DesignSystemTests.Icons_All70ExportedFromFigma, test:DesignSystemTests.Icons_EveryNameUsedInTheUiExists, commit:c407d74 (2026-10-31)
 - [ ] P10.05 Component library [4.16] · Verify: `SHOT` per component and state
-- [ ] P10.06 Docking layout: Hierarchy, Inspector, bottom panel tabs (Assets, Console, Animation, Database), document tabs with dirty dot [T-P01] · Verify: `E2E`
-- [ ] P10.07 Theme Dark / Light / System, accent colour, UI scale, reduce motion, pixel grid at 400% and above, code font size [T-S06, T-L01..T-L04] · Verify: `E2E`, `SHOT`
+- [x] P10.06 Docking layout: Hierarchy, Inspector, bottom panel tabs (Assets, Console, Animation, Database), document tabs with dirty dot [T-P01] · Verify: `E2E` — evidence: test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, commit:c407d74 (2026-10-31)
+- [x] P10.07 Theme Dark / Light / System, accent colour, UI scale, reduce motion, pixel grid at 400% and above, code font size [T-S06, T-L01..T-L04] · Verify: `E2E`, `SHOT` — evidence: test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, test:PreferenceEffectsTests.Appearance_PixelGridAt400Percent_AndReduceMotion, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:NewProjectTests.LightTheme_UsesTheLightTokens, test:DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme, shot:docs/evidence/app/T-S06.png, shot:docs/evidence/app/T-L01.png, shot:docs/evidence/app/T-L02.png, shot:docs/evidence/app/T-L03.png, doc:docs/evidence/shot-report.md, commit:c407d74 (2026-10-31)
 - [ ] P10.08 Project open / save / save all, dirty tracking, Unsaved Changes on exit, close or opening another project [T-D12] · Verify: `E2E`
-- [ ] P10.09 Undo / redo with the history limit from Preferences (200 steps) [T-S07] · Verify: `UT`
-- [ ] P10.10 Autosave every N minutes [T-S07] · Verify: `UT`
+- [x] P10.09 Undo / redo with the history limit from Preferences (200 steps) [T-S07] · Verify: `UT` — evidence: test:ServiceTests.Undo_RespectsHistoryLimitFromPreferences, commit:c407d74 (2026-10-31)
+- [x] P10.10 Autosave every N minutes [T-S07] · Verify: `UT` — evidence: test:ServiceTests.Autosave_SavesDirtyDocumentsEveryNMinutes, commit:c407d74 (2026-10-31)
 - [ ] P10.11 Cut, copy, paste, duplicate, delete, select all across actors, assets, nodes, dialogue lines, table rows [T-M02] · Verify: `E2E`
-- [ ] P10.12 Command system with Command Palette (Ctrl+K, commands and files, `>` for commands only, keyboard navigation) and Find in Project [T-O07] · Verify: `E2E`
-- [ ] P10.13 Shortcut system: defaults as in Figma menus and T-D10, rebinding, conflict detection, reset to defaults [T-S09, T-O12, T-D10] · Verify: `UT` conflict "Ctrl+G used by Go to line"
-- [ ] P10.14 Storage: Preferences per user, Project Settings per project [T-D09, T-D08] · Verify: `UT`
-- [ ] P10.15 Launcher as start page; "Open last project on start" [T-P12, T-S07] · Verify: `E2E`
+- [x] P10.12 Command system with Command Palette (Ctrl+K, commands and files, `>` for commands only, keyboard navigation) and Find in Project [T-O07] · Verify: `E2E` — evidence: test:ShellE2ETests.CommandPalette_CtrlK_TypeArrowEnter, test:ShellE2ETests.CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches, test:CommandAndShortcutTests.Palette_FindsTheFigmaResultsForPla, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, commit:c407d74 (2026-10-31)
+- [x] P10.13 Shortcut system: defaults as in Figma menus and T-D10, rebinding, conflict detection, reset to defaults [T-S09, T-O12, T-D10] · Verify: `UT` conflict "Ctrl+G used by Go to line" — evidence: test:CommandAndShortcutTests.Shortcuts_RebindToCtrlG_ReportsGoToLine, test:CommandAndShortcutTests.Shortcuts_DefaultsHaveNoConflicts, test:CommandAndShortcutTests.Shortcuts_PersistInPreferencesAndResetToDefaults, test:CommandAndShortcutTests.Shortcuts_ResolveByContext, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, test:AboutTests.KeyboardShortcuts_GroupsAndSearch, commit:c407d74 (2026-10-31)
+- [x] P10.14 Storage: Preferences per user, Project Settings per project [T-D09, T-D08] · Verify: `UT` — evidence: test:ServiceTests.Preferences_DefaultPathIsAppDataAgbStudio, test:ServiceTests.Preferences_DefaultsMatchFigmaAndRoundTrip, test:ServiceTests.ProjectSettings_AreStoredPerProjectInTheAgbproj, commit:c407d74 (2026-10-31)
+- [x] P10.15 Launcher as start page; "Open last project on start" [T-P12, T-S07] · Verify: `E2E` — evidence: test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, commit:c407d74 (2026-10-31)
 - [ ] P10.16 Toolchain detection with found / not found status: devkitPro, devkitARM version, libtonc, maxmod, gbafix, script editor, image editor, Tiled [T-D09, T-S08, T-S03, T-P12] · Verify: `UT` with fake folders
-- [ ] P10.17 OS dialogs and Show in Explorer [T-Y01..T-Y04, T-M03, T-M13, T-M17] · Verify: `E2E`
-- [ ] P10.18 Toasts and tooltips · Verify: `SHOT`
-- [ ] P10.19 Recent projects (Open Recent, Clear Recent, Launcher list with times) [T-M08, T-P12] · Verify: `UT`
-- [ ] P10.20 Thai typing and display in every editor text field (Localization, Dialogue, Database, Font Manager) · Verify: `E2E` with Thai input
+- [x] P10.17 OS dialogs and Show in Explorer [T-Y01..T-Y04, T-M03, T-M13, T-M17] · Verify: `E2E` — evidence: test:SystemShellTests.ShowInExplorer_SelectsFilesOpensFoldersRefusesMissing, test:SystemShellTests.AssetsShowInExplorer_RevealsTheSelectionOrTheProject, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, test:ScriptToolsTests.OpenExternally_StartsTheConfiguredEditorAtTheCaretLine, test:PreferenceEffectsTests.Paths_ProjectsFolderImageEditorTiled_AndBrowse, test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, commit:c407d74 (2026-10-31)
+- [x] P10.18 Toasts and tooltips · Verify: `SHOT` — evidence: test:ShellE2ETests.Toasts_ShowAndCloseAndTooltipsUseTheTooltipComponent, shot:docs/evidence/app/C-toast-success.png, shot:docs/evidence/app/C-toast-error.png, shot:docs/evidence/app/C-tooltip.png, doc:docs/evidence/shot-report.md, commit:c407d74 (2026-10-31)
+- [x] P10.19 Recent projects (Open Recent, Clear Recent, Launcher list with times) [T-M08, T-P12] · Verify: `UT` — evidence: test:ServiceTests.Recent_OpenRecentClearAndTimes, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, shot:docs/evidence/app/T-M08.png, commit:c407d74 (2026-10-31)
+- [x] P10.20 Thai typing and display in every editor text field (Localization, Dialogue, Database, Font Manager) · Verify: `E2E` with Thai input — evidence: test:ShellE2ETests.Thai_TypingIntoTextFieldsAndSearch, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, shot:docs/evidence/app/P10-thai-input.png, commit:c407d74 (2026-10-31)
 
 Exit gate:
 - [ ] P10.X1 Shell, tokens, type, icons and all components pass SHOT · Verify: `USER`
@@ -1126,109 +1126,109 @@ Entry gate:
 - [ ] P11.E1 Phase 10 exit ticked; for each window, the runtime phase it depends on is done
 
 11.A Launcher [T-P12, T-P20, T-P21, T-O13, T-M17, T-D22]
-- [ ] P11.01 Projects: recent list with search, thumbnails, times; Open…; New Project · Verify: `E2E`
-- [ ] P11.02 Templates: filters All / Action / Adventure / RPG / Puzzle / Story / Racing, details "Includes", Use this template · Verify: `E2E`
-- [ ] P11.03 Learn: tutorials with progress (Start / Continue / Review), documentation links, sample projects · Verify: `E2E`
-- [ ] P11.04 Tutorial Steps: step text, sub-steps that tick themselves when the action is done in the editor, Back / Skip / Next step · Verify: `E2E` "Your first platformer" step 3
-- [ ] P11.05 Project Context Menu actions; "Delete project…" asks first and says what is removed · Verify: `E2E`
-- [ ] P11.06 Opening Project with steps and Cancel · Verify: `E2E` cancel leaves no half-open project
-- [ ] P11.07 "What's new" panel fed by release notes · Verify: `E2E`
+- [x] P11.01 Projects: recent list with search, thumbnails, times; Open…; New Project · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, commit:c407d74 (2026-10-31)
+- [x] P11.02 Templates: filters All / Action / Adventure / RPG / Puzzle / Story / Racing, details "Includes", Use this template · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_02_Templates_FiltersSearchDetailsAndUseThisTemplate, commit:c407d74 (2026-10-31)
+- [x] P11.03 Learn: tutorials with progress (Start / Continue / Review), documentation links, sample projects · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:LauncherE2ETests.P11_03_Samples_EachIsMadeAndOpened, commit:c407d74 (2026-10-31)
+- [x] P11.04 Tutorial Steps: step text, sub-steps that tick themselves when the action is done in the editor, Back / Skip / Next step · Verify: `E2E` "Your first platformer" step 3 — evidence: test:TutorialTests.P11_04_FirstPlatformerStep3_SubStepsTickThemselves_BackSkipNext, test:TutorialTests.P11_04_FinishingTheLastStepMarksTheTutorialDone, test:TutorialTests.P11_04_OpenedThroughTheWindowServiceItShowsTheTutorial, commit:c407d74 (2026-10-31)
+- [x] P11.05 Project Context Menu actions; "Delete project…" asks first and says what is removed · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, commit:c407d74 (2026-10-31)
+- [x] P11.06 Opening Project with steps and Cancel · Verify: `E2E` cancel leaves no half-open project — evidence: test:OpeningProjectTests.P11_06_CancelDuringLoadAssets_LeavesTheOpenProjectAsItWas, test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, commit:c407d74 (2026-10-31)
+- [x] P11.07 "What's new" panel fed by release notes · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_07_WhatsNew_ComesFromTheReleaseNotes, test:PackagingTests.PackageHoldsTheRuntimeFontsCoreAndDocsAndFindsItsRoot, commit:c407d74 (2026-10-31)
 
 11.B New Project [T-D01, T-L02, T-P22]
-- [ ] P11.08 Template cards, project name, location with the devkitPro warning, ROM title (12) and game code (4) validation, save type, include options (sample level, Thai variable-width font, Logic Graph examples), Initialize git repository · Verify: `E2E` each option changes the created project
+- [x] P11.08 Template cards, project name, location with the devkitPro warning, ROM title (12) and game code (4) validation, save type, include options (sample level, Thai variable-width font, Logic Graph examples), Initialize git repository · Verify: `E2E` each option changes the created project — evidence: test:NewProjectTests.Create_PlatformerWithSampleLevelThaiFontAndGit, test:NewProjectTests.Create_PuzzleWithLogicGraphOnly, test:NewProjectTests.Create_VisualNovel_WritesTheTemplateGame, test:NewProjectTests.Rules_RomTitleGameCodeLocationAndDevkitPro, test:NewProjectTests.Fields_DeriveFromTheNameValidateAndWarnInsideDevkitPro, commit:c407d74 (2026-10-31)
 - [ ] P11.09 Empty project path opens Scene Editor · Empty project with all empty states [4.9] · Verify: `E2E`
 
 11.C Scene Editor and panels [T-P01, T-P05, T-P06, T-D02, T-D03, T-O01..T-O06, T-M10..T-M16]
-- [ ] P11.10 Viewport shows the scene as the ROM would draw it (per D-18), GBA screen frame 240 x 160, zoom, pan, cursor tile coordinates · Verify: `UT` viewport pixels equal an `RT` capture of the same scene
-- [ ] P11.11 Layer toggles BG0-BG3 / OBJ, video mode chip, scene size chip, grid chip, zoom chip · Verify: `E2E`
-- [ ] P11.12 Hierarchy tree with search, add, context menu, selection sync with viewport · Verify: `E2E`
-- [ ] P11.13 Inspector: Actor header (layer, priority), Transform, Sprite (sheet, animation, frames, palette), behaviours, Collider, script fields, Add Component, component menu, GBA Budget meters · Verify: `E2E`
-- [ ] P11.14 Assets panel: categories with counts, filter, cards, double-click opens the right editor, context menu, drag into the scene · Verify: `E2E`
-- [ ] P11.15 Scene Switcher with search and New Scene… · Verify: `E2E`
-- [ ] P11.16 Console panel: All / Warnings / Errors filters with counts, click a line to open the code · Verify: `E2E`
-- [ ] P11.17 Animation panel: animations of the selected sprite, frame ticks, speed, onion skin · Verify: `E2E`
-- [ ] P11.18 New Scene (template, size, video mode, copy backgrounds, follow camera) and Scene Settings (name, size, start scene, camera, backgrounds parallax, music, OnEnter / OnExit) · Verify: `E2E`
-- [ ] P11.19 Video Mode, Grid & Snap (size 8 / 16 / 32, show grid, snap, tile collision, camera bounds, grid colour), Asset Picker (search, type tabs), Component Picker (categories, search, New C# script…), Budget Details (live numbers, palette-sharing hint) · Verify: `E2E`
-- [ ] P11.20 Menus Add Actor, Add to Scene, Actor Context Menu, Asset Context Menu, Component Menu, Zoom, Animation List · Verify: `E2E` every item
-- [ ] P11.21 Set as Start Scene, Background Layers… (opens Tilemap Editor) · Verify: `E2E`
+- [x] P11.10 Viewport shows the scene as the ROM would draw it (per D-18), GBA screen frame 240 x 160, zoom, pan, cursor tile coordinates · Verify: `UT` viewport pixels equal an `RT` capture of the same scene — evidence: test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, test:ViewportTests.Viewport_ShowsTheGbaScreenAtThreeHundredPercentWithTheStartCamera, test:ViewportTests.Cursor_ZoomAndPan, commit:c407d74 (2026-10-31)
+- [x] P11.11 Layer toggles BG0-BG3 / OBJ, video mode chip, scene size chip, grid chip, zoom chip · Verify: `E2E` — evidence: test:ViewportTests.LayerTogglesHideBackgroundsAndSprites, test:ViewportTests.ChipsOpenTheirWindows, test:ViewportTests.GridButtonAndGridSnapDrawTheOverlays, commit:c407d74 (2026-10-31)
+- [x] P11.12 Hierarchy tree with search, add, context menu, selection sync with viewport · Verify: `E2E` — evidence: test:HierarchyTests.Tree_ShowsTheSceneAsInFigma, test:HierarchyTests.Search_FiltersRowsAndKeepsTheirFolders, test:HierarchyTests.AddButtonAndContextMenu, test:HierarchyTests.Selection_IsSharedWithViewportAndInspector, test:HierarchyTests.F2_RenamesInPlace_AndUndo, commit:c407d74 (2026-10-31)
+- [x] P11.13 Inspector: Actor header (layer, priority), Transform, Sprite (sheet, animation, frames, palette), behaviours, Collider, script fields, Add Component, component menu, GBA Budget meters · Verify: `E2E` — evidence: test:InspectorTests.Header_TransformAndSpriteOfThePlayer, test:InspectorTests.SheetAndAnimationDropdowns, test:InspectorTests.BehaviourFields_SliderTextColliderAndUndo, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:InspectorTests.GbaBudget_ShowsLiveMetersAndOpensBudgetDetails, commit:c407d74 (2026-10-31)
+- [x] P11.14 Assets panel: categories with counts, filter, cards, double-click opens the right editor, context menu, drag into the scene · Verify: `E2E` — evidence: test:BottomPanelTests.Assets_CategoriesWithCountsAndCards, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:BottomPanelTests.Assets_ContextMenuAndDragIntoTheScene, commit:c407d74 (2026-10-31)
+- [x] P11.15 Scene Switcher with search and New Scene… · Verify: `E2E` — evidence: test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, commit:c407d74 (2026-10-31)
+- [x] P11.16 Console panel: All / Warnings / Errors filters with counts, click a line to open the code · Verify: `E2E` — evidence: test:BottomPanelTests.Console_LinesFiltersCountsAndClickToCode, test:BottomPanelTests.Console_TakesBuildResultsFromTheBuildService, commit:c407d74 (2026-10-31)
+- [x] P11.17 Animation panel: animations of the selected sprite, frame ticks, speed, onion skin · Verify: `E2E` — evidence: test:BottomPanelTests.Animation_ListFramesPlayStepAndOnionSkin, test:BottomPanelTests.Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo, commit:c407d74 (2026-10-31)
+- [x] P11.18 New Scene (template, size, video mode, copy backgrounds, follow camera) and Scene Settings (name, size, start scene, camera, backgrounds parallax, music, OnEnter / OnExit) · Verify: `E2E` — evidence: test:SceneDialogTests.NewScene_CreatesTheSceneFromTheOptions_AndUndo, test:SceneDialogTests.SceneSettings_AppliesEverySection_RenamesWithLinks_AndUndo, commit:c407d74 (2026-10-31)
+- [x] P11.19 Video Mode, Grid & Snap (size 8 / 16 / 32, show grid, snap, tile collision, camera bounds, grid colour), Asset Picker (search, type tabs), Component Picker (categories, search, New C# script…), Budget Details (live numbers, palette-sharing hint) · Verify: `E2E` — evidence: test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, test:PopoverAndMenuTests.GridSnap_SizeSwitchesAndColour, test:PopoverAndMenuTests.AssetPicker_SearchTabsAndPick, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, commit:c407d74 (2026-10-31)
+- [x] P11.20 Menus Add Actor, Add to Scene, Actor Context Menu, Asset Context Menu, Component Menu, Zoom, Animation List · Verify: `E2E` every item — evidence: test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentMenu_EveryItem, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, commit:c407d74 (2026-10-31)
+- [x] P11.21 Set as Start Scene, Background Layers… (opens Tilemap Editor) · Verify: `E2E` — evidence: test:SceneDialogTests.SetAsStartScene_AndBackgroundLayers, commit:c407d74 (2026-10-31)
 
 11.D Sprite Editor [T-P08, T-D13, T-M19]
-- [ ] P11.22 Pixel canvas with 8x8 tile grid, zoom 1x / 2x / 4x, drawing tools shown in the toolbar, frame index · Verify: `E2E`
-- [ ] P11.23 Palette panel: 16 colours, R / G / B 0-31, hex, 15-bit value, palette slots used, share palette · Verify: `E2E`
-- [ ] P11.24 Import drop zone, auto-reduce to 16 colours, split sheet into frames · Verify: `E2E`
-- [ ] P11.25 Sprite settings: OAM size menu, origin, collider, mirror X, VRAM per frame · Verify: `E2E`
-- [ ] P11.26 Timeline: animations, ticks per frame with fps estimate, loop, ping-pong, onion skin · Verify: `E2E`
-- [ ] P11.27 New Sprite: name, GBA sizes 8-64 px, frames, palette, start from blank / copy / import, create "idle", add collider · Verify: `E2E`
+- [x] P11.22 Pixel canvas with 8x8 tile grid, zoom 1x / 2x / 4x, drawing tools shown in the toolbar, frame index · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_22_Canvas_TileGridZoomToolsAndFrameIndex, test:SpriteEditorE2ETests.P11_22_SaveWritesThePng, commit:c407d74 (2026-10-31)
+- [x] P11.23 Palette panel: 16 colours, R / G / B 0-31, hex, 15-bit value, palette slots used, share palette · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, commit:c407d74 (2026-10-31)
+- [x] P11.24 Import drop zone, auto-reduce to 16 colours, split sheet into frames · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, commit:c407d74 (2026-10-31)
+- [x] P11.25 Sprite settings: OAM size menu, origin, collider, mirror X, VRAM per frame · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, commit:c407d74 (2026-10-31)
+- [x] P11.26 Timeline: animations, ticks per frame with fps estimate, loop, ping-pong, onion skin · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_26_Timeline_AnimationsTicksLoopPingPongOnionSkin, commit:c407d74 (2026-10-31)
+- [x] P11.27 New Sprite: name, GBA sizes 8-64 px, frames, palette, start from blank / copy / import, create "idle", add collider · Verify: `E2E` — evidence: test:SpriteEditorE2ETests.P11_27_NewSprite_FromSpritesPlus, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, commit:c407d74 (2026-10-31)
 
 11.E Tilemap Editor [T-P03, T-P26, T-M20, T-O04]
-- [ ] P11.28 Tileset panel with tileset dropdown, brush, stamp, random · Verify: `E2E`
-- [ ] P11.29 Tile properties: collision type, flip H, tag, animation, auto-tile set; collision view · Verify: `E2E`
-- [ ] P11.30 Layers table (type, priority, parallax, VRAM char / screen block) and Add Layer menu · Verify: `E2E`
-- [ ] P11.31 Map size, BG size, colours, wrap; stats unique tiles, screen blocks, BG palettes, VRAM BG · Verify: `E2E`
-- [ ] P11.32 Auto-tile Rules panel: rule sets, 3x3 rules (top edge, left edge, right edge, corner, inner), Add rule · Verify: `E2E`
+- [x] P11.28 Tileset panel with tileset dropdown, brush, stamp, random · Verify: `E2E` — evidence: test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:TilemapModelTests.Brush_StampRandomFlip_UndoRedo_SaveRoundTrip, commit:c407d74 (2026-10-31)
+- [x] P11.29 Tile properties: collision type, flip H, tag, animation, auto-tile set; collision view · Verify: `E2E` — evidence: test:TilemapE2ETests.TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView, test:TilemapModelTests.TileProperties_CollisionTagAnimationAutoTile_SavedAndUndoable, commit:c407d74 (2026-10-31)
+- [x] P11.30 Layers table (type, priority, parallax, VRAM char / screen block) and Add Layer menu · Verify: `E2E` — evidence: test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, test:TilemapModelTests.Layers_AddTypesOnFreeBackgrounds_CollisionOnlyBecomesTheSource, test:TilemapModelTests.VramPlan_TilesFromCharBlock0Up_MapsFromScreenBlock31Down, commit:c407d74 (2026-10-31)
+- [x] P11.31 Map size, BG size, colours, wrap; stats unique tiles, screen blocks, BG palettes, VRAM BG · Verify: `E2E` — evidence: test:TilemapE2ETests.MapPanel_SizeBgSizeColoursWrap_AndBudget, test:TilemapModelTests.MapSettings_ResizeBgSizeColoursWrap_PersistAndChangeThePlan, commit:c407d74 (2026-10-31)
+- [x] P11.32 Auto-tile Rules panel: rule sets, 3x3 rules (top edge, left edge, right edge, corner, inner), Add rule · Verify: `E2E` — evidence: test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, test:TilemapModelTests.AutoTileRules_AddEditDelete, test:TilemapModelTests.AutoTile_PaintingAMemberResolvesTheGrassEdgesRules, commit:c407d74 (2026-10-31)
 
 11.F Palette Manager [T-P10, T-O10]
-- [ ] P11.33 BG and OBJ banks with used-by lists, colour editor with 15-bit note · Verify: `E2E`
-- [ ] P11.34 Merge near-duplicate colours, sort by hue, lock index 0 as transparent, Optimize Palettes (Assets menu) · Verify: `UT` merge result
-- [ ] P11.35 Import .pal / .gpl, Export · Verify: `E2E`
-- [ ] P11.36 Palette effects Fade / Cycle / Flash with preview slider and the Palette Effect popover · Verify: `E2E`
+- [x] P11.33 BG and OBJ banks with used-by lists, colour editor with 15-bit note · Verify: `E2E` — evidence: test:PaletteManagerE2ETests.P11_33_BanksUsedByListsAndColourEditor, test:ArtLibraryTests.Banks_LoadedWithUsedByLists, test:ArtLibraryTests.Colour15_LevelsHexAnd15BitValue, commit:c407d74 (2026-10-31)
+- [x] P11.34 Merge near-duplicate colours, sort by hue, lock index 0 as transparent, Optimize Palettes (Assets menu) · Verify: `UT` merge result — evidence: test:ArtLibraryTests.MergeNearDuplicates_KeepsTheFirstColourAndMovesPixels, test:ArtLibraryTests.MergeNearDuplicates_NeverMergesTheTransparentIndexOrDistantColours, test:ArtLibraryTests.SortByHue_OrdersLikeTheToolchainAndKeepsIndex0, test:ArtLibraryTests.LockIndex0_KeepsItTransparentUntilUnlocked, test:ArtLibraryTests.Optimize_RemovesUnusedColours, test:PaletteManagerE2ETests.P11_34_ToolsMergeSortLockAndOptimize, commit:c407d74 (2026-10-31)
+- [x] P11.35 Import .pal / .gpl, Export · Verify: `E2E` — evidence: test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:ArtLibraryTests.ExportAndImport_PalAndGpl, commit:c407d74 (2026-10-31)
+- [x] P11.36 Palette effects Fade / Cycle / Flash with preview slider and the Palette Effect popover · Verify: `E2E` — evidence: test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, commit:c407d74 (2026-10-31)
 
 11.G Font Manager [T-P09, T-D15, T-D16] (data and rendering in Phase 8)
-- [ ] P11.37 Font list, font settings, source, glyph grid with code points, character sets, metrics, glyph detail, Thai layout toggles, rendering options, live GBA preview, ROM / VRAM stats · Verify: `E2E`
-- [ ] P11.38 New Font and Add Characters dialogs · Verify: `E2E`
+- [x] P11.37 Font list, font settings, source, glyph grid with code points, character sets, metrics, glyph detail, Thai layout toggles, rendering options, live GBA preview, ROM / VRAM stats · Verify: `E2E` — evidence: test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, test:FontModelTests.DialoguePreview_TextPixelsAreTheRomRenderer, test:FontModelTests.GlyphEditor_PaintWritesAnOverrideFontBuilderApplies_Undo, commit:c407d74 (2026-10-31)
+- [x] P11.38 New Font and Add Characters dialogs · Verify: `E2E` — evidence: test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, test:FontModelTests.NewFont_DefaultsBuildAPreviewAndCreateTheFile, test:FontModelTests.AddCharacters_RenderFromSourceOrEmptyGlyphs, commit:c407d74 (2026-10-31)
 
 11.H Database [T-P07, T-D17, T-D18, T-D19] (data in Phase 9)
-- [ ] P11.39 Tables list with counts, grid with filter and Add row, record panel, schema panel, "Use it in a script" sample, "Used by" · Verify: `E2E`
-- [ ] P11.40 New Table, Add Field, Import CSV dialogs · Verify: `E2E`
+- [x] P11.39 Tables list with counts, grid with filter and Add row, record panel, schema panel, "Use it in a script" sample, "Used by" · Verify: `E2E` — evidence: test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, test:DatabaseWindowTests.P11_39_EditCellsInPlaceAndSaveWritesTheDbFile, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, test:DatabaseWindowTests.P11_39_RecordEditCommitsToItsRowWhenAnotherRowIsClicked_EditMenuOnRows, commit:c407d74 (2026-10-31)
+- [x] P11.40 New Table, Add Field, Import CSV dialogs · Verify: `E2E` — evidence: test:DatabaseWindowTests.P11_40_NewTableFromEmptyCsvAndCopy_UndoRemovesTheFile, test:DatabaseWindowTests.P11_40_AddFieldRarityEnumIsOneBytePerRow, test:DatabaseWindowTests.P11_40_ImportCsvWarnsOnRows7And15ThenImports, commit:c407d74 (2026-10-31)
 
 11.I Localization [T-P14, T-D20]
-- [ ] P11.41 Languages with progress, string table (key, source, target, fit), search, groups, notes, speaker, GBA preview, status of missing strings · Verify: `E2E`
-- [ ] P11.42 Add Language dialog, Export .csv · Verify: `E2E`
+- [x] P11.41 Languages with progress, string table (key, source, target, fit), search, groups, notes, speaker, GBA preview, status of missing strings · Verify: `E2E` — evidence: test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:LocalizationWindowTests.P11_41_SearchGroupsAndMissingOnly, test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:LocalizationWindowTests.P11_41_FitCheckSaysHowManyLinesTheBoxNeeds, commit:c407d74 (2026-10-31)
+- [x] P11.42 Add Language dialog, Export .csv · Verify: `E2E` — evidence: test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, commit:c407d74 (2026-10-31)
 
 11.J Audio and SFX Designer [T-P15, T-P25]
-- [ ] P11.43 Music list, track info (BPM, speed, patterns, length, loop, loop start, format, volume, fade on scene change), tracker pattern view, preview playback · Verify: `E2E`
-- [ ] P11.44 Sound effect list, GBA channel usage, mixer per channel, Preview SFX, audio ROM and mixer CPU · Verify: `E2E`
-- [ ] P11.45 SFX Designer: output Hardware (DMG) or Bake to .wav, channel, duty, pitch and volume graph, presets (Jump, Coin, Hurt, Laser, Explosion, Power-up, Select), envelope and sweep fields, register view, script snippet · Verify: `E2E`; preview sounds the same as `EMU`
+- [x] P11.43 Music list, track info (BPM, speed, patterns, length, loop, loop start, format, volume, fade on scene change), tracker pattern view, preview playback · Verify: `E2E` — evidence: test:AudioPageTests.ToolsAudio_ListsTheProjectsMusicAndSoundsWithLengths, test:AudioPageTests.TrackInfo_ComesFromTheModuleAndMeta, test:AudioPageTests.Tracker_ShowsThePatternAndFollowsSeek, test:AudioPageTests.Play_RendersTheModuleToPcmAndFollowsThePlayhead, test:AudioPageTests.Inspector_EditsTheMetaUndoAndSave, test:AudioPageTests.TrackerTools_SelectPencilEraser_WriteTheModule, test:TrackerModuleTests.Mod_ParsesOrderPatternsAndLengthFromTempo, test:TrackerModuleTests.Xm_ParsesHeaderInstrumentsAndCells, test:TrackerModuleTests.Player_RendersAudibleStereoAndLoops, commit:c407d74 (2026-10-31)
+- [x] P11.44 Sound effect list, GBA channel usage, mixer per channel, Preview SFX, audio ROM and mixer CPU · Verify: `E2E` — evidence: test:AudioPageTests.ChannelsMixerBudget_AndPreviewSfx, test:TrackerModuleTests.MixerCpu_FollowsTheMeasuredCostPerRateAndChannelCount, commit:c407d74 (2026-10-31)
+- [x] P11.45 SFX Designer: output Hardware (DMG) or Bake to .wav, channel, duty, pitch and volume graph, presets (Jump, Coin, Hurt, Laser, Explosion, Power-up, Select), envelope and sweep fields, register view, script snippet · Verify: `E2E`; preview sounds the same as `EMU` — evidence: test:SfxDesignerTests.OpensTheEffectWithItsFieldsRegistersAndScriptLine, test:SfxDesignerTests.PresetsChannelDutyAndSliders_ChangeTheEffect, test:SfxDesignerTests.BakeToWav_SavesTheSampleAndHardwareKeepsZeroBytes, test:SfxDesignerTests.WaveChannel_PencilDrawsWaveRam_AndPlusCreatesAnEffect, test:SfxDesignerTests.Play_RendersTheEffectAndLoopRepeatsIt, test:DmgSoundTests.Preview_SoundsLikeTheEmulator, test:DmgSoundTests.Registers_AreTheHardwareEncodingOfTheFields, commit:c407d74 (2026-10-31)
 
 11.K Dialogue Editor [T-P16, T-D21, T-M23, T-M24]
-- [ ] P11.46 Conversations list, lines with speaker and language toggle (Thai / English), choices with targets, speakers list, line inspector (portrait, text speed, blip, conditions), GBA preview · Verify: `E2E`
-- [ ] P11.47 New Speaker dialog, Add to Dialogue and Command menus · Verify: `E2E`
+- [x] P11.46 Conversations list, lines with speaker and language toggle (Thai / English), choices with targets, speakers list, line inspector (portrait, text speed, blip, conditions), GBA preview · Verify: `E2E` — evidence: test:DialogueWindowTests.P11_46_ConversationsLinesChoicesSpeakersAndLanguageToggle, test:DialogueWindowTests.P11_46_LineInspectorAndGbaPreview, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, test:DialogueWindowTests.P11_46_NewConversationFromCreateMenuAndUndo, commit:c407d74 (2026-10-31)
+- [x] P11.47 New Speaker dialog, Add to Dialogue and Command menus · Verify: `E2E` — evidence: test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, test:DialogueWindowTests.P11_47_AddToDialogueAndCommandMenusMatchFigma, test:DialogueWindowTests.P11_47_AddLineChoiceCommandsConditionAndPaste, commit:c407d74 (2026-10-31)
 
 11.L Logic Graph [T-P17, T-O08, T-M21]
-- [ ] P11.48 Canvas with nodes, wires, pins by type, zoom (minus / plus / Fit), node palette by category, node inspector, Generated C# panel in sync, status (nodes, wires, compiled) · Verify: `E2E`
-- [ ] P11.49 Add Node popover (search, Enter adds, Shift+Enter adds and connects) and Node Context Menu (incl. Show generated C#) · Verify: `E2E`
+- [x] P11.48 Canvas with nodes, wires, pins by type, zoom (minus / plus / Fit), node palette by category, node inspector, Generated C# panel in sync, status (nodes, wires, compiled) · Verify: `E2E` — evidence: test:LogicGraphTests.ToolsLogicGraph_ShowsNodesWiresPaletteStatusAndGeneratedCode, test:LogicGraphTests.ZoomButtonsWheelAndFit, test:LogicGraphTests.SelectDragWireInspectorAndUndo, test:LogicGraphTests.GeneratedCodeEditsUpdateTheGraph_AndSaveWritesGraphAndCs, test:LogicGraphTests.Inspector_TagModeTarget_AndVectorPins, test:LogicGraphTests.LinkTool_DragsAWireFromNodeToNode, test:LogicGraphTests.Preview_PlaysTheSceneAnimations, commit:c407d74 (2026-10-31)
+- [x] P11.49 Add Node popover (search, Enter adds, Shift+Enter adds and connects) and Node Context Menu (incl. Show generated C#) · Verify: `E2E` — evidence: test:LogicGraphTests.RightClickCanvas_AddNodeSearchEnterAndShiftEnter, test:LogicGraphTests.RightClickNode_ContextMenuDuplicateDisableGroupCollapseShowCodeDelete, test:LogicGraphTests.NodesAddNode_OpensTheAddNodePopover, commit:c407d74 (2026-10-31)
 
 11.M World Map [T-P13, T-O09, T-M22]
-- [ ] P11.50 Scene cards with links, start scene marker, inspector of the selected scene (size, video mode, backgrounds, links, music, events), New Scene, zoom · Verify: `E2E`
-- [ ] P11.51 Link Settings popover and Scene Context Menu · Verify: `E2E`
+- [x] P11.50 Scene cards with links, start scene marker, inspector of the selected scene (size, video mode, backgrounds, links, music, events), New Scene, zoom · Verify: `E2E` — evidence: test:WorldMapTests.CtrlM_ShowsScenesLinksStartSceneAndInspector, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, commit:c407d74 (2026-10-31)
+- [x] P11.51 Link Settings popover and Scene Context Menu · Verify: `E2E` — evidence: test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, commit:c407d74 (2026-10-31)
 
 11.N Script Editor [T-P04, T-D14, T-O11]
-- [ ] P11.52 Script list, breadcrumb to member, code editor with line numbers, highlighting, autocomplete, format on save, tab size, inline analyzer underline and diagnostic popup with quick fixes [T-S07 built-in editor options] · Verify: `E2E`
-- [ ] P11.53 Side panel: attached to, compiles to, exposed fields, outline, API quick reference, Open Scripting API · Verify: `E2E`
-- [ ] P11.54 Bottom panel Problems / Terminal / Output; status line (Ln / Col, language, toolchain) · Verify: `E2E`
-- [ ] P11.55 Find & Replace (case, whole word, regex; this file / all scripts / whole project), New Script dialog, Open externally · Verify: `E2E`
+- [x] P11.52 Script list, breadcrumb to member, code editor with line numbers, highlighting, autocomplete, format on save, tab size, inline analyzer underline and diagnostic popup with quick fixes [T-S07 built-in editor options] · Verify: `E2E` — evidence: test:ScriptEditorTests.LineNumbersHighlightingAndBreadcrumb, test:ScriptEditorTests.TypingAutoIndentTabSizeAndUndo, test:ScriptEditorTests.AutocompleteListsApiMembersAndInsertsTheChoice, test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, test:ScriptEditorTests.FormatOnSaveWritesTheFileAndRunsTheScriptCheck, test:ScriptEditorTests.OpensFromTheDocTabAndListsTheScripts, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ScriptEditorSettingsTests.InlineHints_OffKeepsTheHintClosed_OnOpensIt, commit:c407d74 (2026-10-31)
+- [x] P11.53 Side panel: attached to, compiles to, exposed fields, outline, API quick reference, Open Scripting API · Verify: `E2E` — evidence: test:ScriptEditorTests.SidePanelAttachedToCompilesToExposedFieldsOutlineAndApi, commit:c407d74 (2026-10-31)
+- [x] P11.54 Bottom panel Problems / Terminal / Output; status line (Ln / Col, language, toolchain) · Verify: `E2E` — evidence: test:ScriptEditorTests.BottomPanelProblemsTerminalOutputAndStatusLine, commit:c407d74 (2026-10-31)
+- [x] P11.55 Find & Replace (case, whole word, regex; this file / all scripts / whole project), New Script dialog, Open externally · Verify: `E2E` — evidence: test:ScriptToolsTests.CtrlF_OpensFindWithTheWordAtTheCaret_NextAndReplace, test:ScriptToolsTests.FindOptions_CaseWholeWordRegexAndScopes, test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, test:ScriptToolsTests.OpenExternally_StartsTheConfiguredEditorAtTheCaretLine, commit:c407d74 (2026-10-31)
 
 11.O Scripting API [T-P18]
-- [ ] P11.56 API tree, search, member table, example with Copy example, see also, works offline ("Docs v0.1 · Offline") · Verify: `E2E` with network off
+- [x] P11.56 API tree, search, member table, example with Copy example, see also, works offline ("Docs v0.1 · Offline") · Verify: `E2E` with network off — evidence: test:ScriptingApiTests.HelpScriptingApi_F1_ShowsTheTreeAndTheInputPage, test:ScriptingApiTests.SearchSeeAlsoKeyEnumAndCopyExample, test:ScriptingApiTests.WorksOffline_NoNetworkNeeded, commit:c407d74 (2026-10-31)
 
 11.P Build windows [T-D06, T-D23, T-P11, T-D05, T-D07]
-- [ ] P11.57 Build ROM and Build ROM · Failed bound to the real build stream (Phase 7) · Verify: `E2E`
-- [ ] P11.58 Build Report: header, ROM size, build time split, warnings, free VRAM, ROM breakdown, largest assets, history, Export, Open build folder, Run in mGBA, Flash to cartridge, Build again · Verify: `E2E`
-- [ ] P11.59 Export ROM dialog · Verify: `E2E`
+- [x] P11.57 Build ROM and Build ROM · Failed bound to the real build stream (Phase 7) · Verify: `E2E` — evidence: test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.BuildRom_ScriptError_OpensBuildFailedAndRecordsHistory, test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, commit:c407d74 (2026-10-31)
+- [x] P11.58 Build Report: header, ROM size, build time split, warnings, free VRAM, ROM breakdown, largest assets, history, Export, Open build folder, Run in mGBA, Flash to cartridge, Build again · Verify: `E2E` — evidence: test:BuildReportTests.Report_ShowsSizeTimesWarningsVramBreakdownAssetsAndHistory, test:BuildReportTests.HeaderFields_EditProjectSettings_AndExportActionsOpenTheirWindows, test:BuildReportTests.MenuCommands_OpenTheBuildWindows, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, commit:c407d74 (2026-10-31)
+- [x] P11.59 Export ROM dialog · Verify: `E2E` — evidence: test:ExportRomTests.Fields_ComeFromTheProject_ValidateAndExportARelease, test:ExportRomBootTests.PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom, commit:c407d74 (2026-10-31)
 - [ ] P11.60 Flash to Cartridge per D-12: device detect, cartridge info, back up save first, verify after writing, progress · Verify: `HW`
 
 11.Q Settings dialogs [T-D08, T-D09, T-S01..T-S09, T-D10, T-D11, T-O12]
 - [ ] P11.61 Project Settings tabs Input, General, Save data, Build, Scripting, Localization with every field in the frames · Verify: `E2E` each field persists and changes the build
 - [ ] P11.62 Preferences tabs Emulator, Appearance, Editor, Paths, Shortcuts with every field in the frames · Verify: `E2E`
-- [ ] P11.63 Keyboard Shortcuts dialog (search, groups) and About (version, date, credits, Licenses, Website) · Verify: `E2E`
+- [x] P11.63 Keyboard Shortcuts dialog (search, groups) and About (version, date, credits, Licenses, Website) · Verify: `E2E` — evidence: test:AboutTests.KeyboardShortcuts_GroupsAndSearch, test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:AboutTests.Website_IsDisabledWhenNoUrlIsConfigured, commit:c407d74 (2026-10-31)
 
 11.R Import [T-D04, T-D24]
-- [ ] P11.64 Import Asset: drop or browse, type detection per file, per-file options, import count; errors dialog with fix buttons · Verify: `E2E`
+- [x] P11.64 Import Asset: drop or browse, type detection per file, per-file options, import count; errors dialog with fix buttons · Verify: `E2E` — evidence: test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AssetImporterTests.Fixes_ReduceOrSplitIntoLayeredSprites, test:ImportDialogTests.FileImportAsset_ListsFilesShowsOptionsAndImports, test:ImportDialogTests.Problems_OpenTheErrorsDialog_FixesAndSkipsErrors, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, commit:c407d74 (2026-10-31)
 
 11.S Menus [T-M01..T-M24]
-- [ ] P11.65 Every menu item in 4.5 does its action or opens its window; disabled states when not applicable · Verify: `E2E` per item
-- [ ] P11.66 Tools › Screenshot / GIF captures the Game view to PNG / GIF [T-M06] · Verify: `E2E`
-- [ ] P11.67 Help › Report a Bug…, Check for Updates per D-13 [T-M07] · Verify: `E2E`
+- [x] P11.65 Every menu item in 4.5 does its action or opens its window; disabled states when not applicable · Verify: `E2E` per item — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:MenuActionTests.ProjectCommands_AreDisabledWithoutAProject_AndEnabledWhenOneOpens, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:MenuActionTests.FindUnusedAssets_ListsAssetsNothingMentions, test:MenuActionTests.CleanBuild_DeletesTheBuildFolder, test:CommandAndShortcutTests.Menus_EveryEntryIsARegisteredCommandAndOpensItsWindow, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, commit:c407d74 (2026-10-31)
+- [x] P11.66 Tools › Screenshot / GIF captures the Game view to PNG / GIF [T-M06] · Verify: `E2E` — evidence: test:MenuActionTests.ScreenshotGif_F12SavesThePngThenRecordsAndSavesTheGif, test:MenuActionTests.ScreenshotGif_StopsByItselfAfter30Seconds, test:MenuActionTests.ScreenshotGif_CapturesTheEmulatorCore, test:PlayModeTests.GifEncodesFrames, commit:c407d74 (2026-10-31)
+- [x] P11.67 Help › Report a Bug…, Check for Updates per D-13 [T-M07] · Verify: `E2E` — evidence: test:MenuActionTests.ReportABug_OpensTheConfiguredPage, test:MenuActionTests.CheckForUpdates_NoSourceNewerSameAndOffline, test:AboutTests.EditorJson_IsReadWithItsD13Keys, commit:c407d74 (2026-10-31)
 
 Exit gate:
 - [ ] P11.X1 Every T-P, T-D, T-S, T-O, T-M, T-L in section 4 has both boxes ticked; all T-B and T-C ticked · Verify: `USER`
@@ -1241,17 +1241,17 @@ Entry gate:
 - [ ] P12.E1 Phase 7 and 10 exits ticked, D-06 and D-16 decided
 
 Items:
-- [ ] P12.01 mGBA core embedded in the Game tab: scale 3x, pixel-perfect filter, audio, pause when unfocused, fast-forward key (Tab, 4x) [T-D09] · Verify: `E2E`; `BUD` 59.7 fps
-- [ ] P12.02 Play = incremental build + run; Play from Here; Build & Run in Emulator; Run in mGBA from Build Report [T-M05, T-P11] · Verify: `E2E`
-- [ ] P12.03 Play controls Play / Pause / Step / Stop; Stop returns to Scene Editor [T-P02, T-C11] · Verify: `E2E`
-- [ ] P12.04 Play Speed 1/4x to 4x and Frame step [T-M18] · Verify: `E2E`
+- [x] P12.01 mGBA core embedded in the Game tab: scale 3x, pixel-perfect filter, audio, pause when unfocused, fast-forward key (Tab, 4x) [T-D09] · Verify: `E2E`; `BUD` 59.7 fps — evidence: test:PlayModeE2ETests.P12_01_GameTab_Core3xPixelPerfect_Audio_PauseWhenUnfocused_FastForwardTab, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, commit:c407d74 (2026-10-31)
+- [x] P12.02 Play = incremental build + run; Play from Here; Build & Run in Emulator; Run in mGBA from Build Report [T-M05, T-P11] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, test:PlayRomErrorTests.Run_AFileTheCoreRefuses_ReportsIt_AndStopAndCloseStillWork, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, commit:c407d74 (2026-10-31)
+- [x] P12.03 Play controls Play / Pause / Step / Stop; Stop returns to Scene Editor [T-P02, T-C11] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, test:PlayAcrossEditorTests.PauseAndStep_OnEveryPage_ActOnTheRunningGame, commit:c407d74 (2026-10-31)
+- [x] P12.04 Play Speed 1/4x to 4x and Frame step [T-M18] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_04_PlaySpeed_QuarterToFourTimes_AndFrameStep, test:PlayModeTests.SessionPacesFramesBySpeedAndSteps, shot:docs/evidence/app/T-M18.png, commit:c407d74 (2026-10-31)
 - [ ] P12.05 Overlays Hitboxes and Tile collision drawn over the game view [T-P02] · Verify: `SHOT`
-- [ ] P12.06 Live Inspector: actor state, position, velocity, on ground, script fields [T-P02] · Verify: `E2E` values change while running
-- [ ] P12.07 Console receives Debug.Log and engine logs with timestamps [T-P02, T-P05] · Verify: `E2E`
-- [ ] P12.08 Status bar: frame number, fps, VBlank time free, CPU %, Running / Paused, Hot reload on [T-P02] · Verify: `E2E`
-- [ ] P12.09 Keyboard and gamepad mapped from Project Settings · Input [T-D08] · Verify: `E2E`
-- [ ] P12.10 Save file kept per project while playing (infra: testing Save data) · Verify: `E2E` save, stop, play, load
-- [ ] P12.11 Hot reload in Play mode per D-15 · Verify: `E2E`
+- [x] P12.06 Live Inspector: actor state, position, velocity, on ground, script fields [T-P02] · Verify: `E2E` values change while running — evidence: test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, test:PlayModeTests.LiveInspectorProfilerOamAndPalettes, commit:c407d74 (2026-10-31)
+- [x] P12.07 Console receives Debug.Log and engine logs with timestamps [T-P02, T-P05] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_07_Console_EngineLogsAndDebugLog_WithTimestamps, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, test:PlayAcrossEditorTests.ExternalSave_WhileTheGameRuns_HotReloads_AndItsDebugLogReachesTheConsolePanel, test:PlayUnitTests.Console_ClassifiesGameLines, commit:c407d74 (2026-10-31)
+- [x] P12.08 Status bar: frame number, fps, VBlank time free, CPU %, Running / Paused, Hot reload on [T-P02] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_08_StatusBar_FrameFpsVBlankCpu_RunningPaused_HotReload, commit:c407d74 (2026-10-31)
+- [x] P12.09 Keyboard and gamepad mapped from Project Settings · Input [T-D08] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_09_KeyboardAndGamepad_FromProjectSettingsInput, test:PlayModeTests.KeyboardMapFollowsProjectSettings, test:PlayUnitTests.InputMap_KeyboardAndGamepadColumns, commit:c407d74 (2026-10-31)
+- [x] P12.10 Save file kept per project while playing (infra: testing Save data) · Verify: `E2E` save, stop, play, load — evidence: test:PlayModeE2ETests.P12_10_SaveFile_KeptPerProject_SaveStopPlayLoad, commit:c407d74 (2026-10-31)
+- [x] P12.11 Hot reload in Play mode per D-15 · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayModeTests.HotReloadContinuesInTheSameSceneWithTheSameState, doc:docs/DECISIONS.md, commit:c407d74 (2026-10-31)
 
 Exit gate:
 - [ ] P12.X1 The fixture plays inside the editor at full speed with live Inspector and Console · Verify: `USER`
@@ -1264,15 +1264,15 @@ Entry gate:
 - [ ] P13.E1 Phase 12 exit ticked, D-21 decided
 
 Items:
-- [ ] P13.01 Profiler: frame time for the last 120 frames against 16.7 ms, this frame split Logic / Render / Audio / Idle [T-P19] · Verify: `RT` instrumentation; `E2E`
-- [ ] P13.02 VRAM tiles view by char block (BG / OBJ) [T-P19] · Verify: `E2E` matches mGBA memory
-- [ ] P13.03 OAM sprites table (#, actor, X, Y, size, tile, palette, priority, flags; 12 / 128 in use) [T-P19] · Verify: `E2E`
-- [ ] P13.04 Palettes view: live palette RAM, changed-this-frame outline, address, BGR555 value, RGB, used by, palette effect, Open in Palette Manager, Break when this colour changes [T-P24] · Verify: `E2E`
-- [ ] P13.05 Memory view: memory map of EWRAM / IWRAM by category, watch list by name and address, hex view, Add watch [T-P23] · Verify: `E2E`
-- [ ] P13.06 Breakpoints: C# line breakpoints, VM script breakpoints, "On scene load"; Paused at frame N; call stack with C# names [T-P19] · Verify: `E2E` stop at `PlayerController.cs:19`
-- [ ] P13.07 Budget Details live numbers and suggestions [T-O06] · Verify: `UT` palette-sharing suggestion for the fixture
-- [ ] P13.08 Build Report history across builds [T-P11] · Verify: `E2E`
-- [ ] P13.09 Debug button (#9) and Tools › Debugger open the Debugger [T-B09] · Verify: `E2E`
+- [x] P13.01 Profiler: frame time for the last 120 frames against 16.7 ms, this frame split Logic / Render / Audio / Idle [T-P19] · Verify: `RT` instrumentation; `E2E` — evidence: test:frame_loop_counts_and_profiles, test:DebuggerE2ETests.P13_01_Profiler_120FramesAgainstBudget_ThisFrameLogicRenderAudioIdle, test:BreakpointUiTests.OamSpritesAndProfilerViews_ShowTheirOwnData, shot:docs/evidence/app/T-P19.png, commit:c407d74 (2026-10-31)
+- [x] P13.02 VRAM tiles view by char block (BG / OBJ) [T-P19] · Verify: `E2E` matches mGBA memory — evidence: test:DebuggerE2ETests.P13_02_VramTiles_ByCharBlock_MatchEmulatorMemory, commit:c407d74 (2026-10-31)
+- [x] P13.03 OAM sprites table (#, actor, X, Y, size, tile, palette, priority, flags; 12 / 128 in use) [T-P19] · Verify: `E2E` — evidence: test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, test:BreakpointUiTests.OamSpritesAndProfilerViews_ShowTheirOwnData, commit:c407d74 (2026-10-31)
+- [x] P13.04 Palettes view: live palette RAM, changed-this-frame outline, address, BGR555 value, RGB, used by, palette effect, Open in Palette Manager, Break when this colour changes [T-P24] · Verify: `E2E` — evidence: test:DebuggerE2ETests.P13_04_Palettes_LiveRam_ChangedOutline_AddressBgr555Rgb_UsedBy_OpenAndBreak, shot:docs/evidence/app/T-P24.png, commit:c407d74 (2026-10-31)
+- [x] P13.05 Memory view: memory map of EWRAM / IWRAM by category, watch list by name and address, hex view, Add watch [T-P23] · Verify: `E2E` — evidence: test:DebuggerE2ETests.P13_05_Memory_MapByCategory_WatchList_HexView_AddWatch, shot:docs/evidence/app/T-P23.png, commit:c407d74 (2026-10-31)
+- [x] P13.06 Breakpoints: C# line breakpoints, VM script breakpoints, "On scene load"; Paused at frame N; call stack with C# names [T-P19] · Verify: `E2E` stop at `PlayerController.cs:19` — evidence: test:DebuggerE2ETests.P13_06_Breakpoints_StopAtPlayerController19_PausedAtFrame_CallStackInCSharpNames, test:BreakpointUiTests.Breakpoints_FromTheScriptEditorGutterF9AndTheBreakpointsView_StopTheGame, test:CSharpDebuggerTests.BreakpointPausesWithCallStackAndResumes, commit:c407d74 (2026-10-31)
+- [x] P13.07 Budget Details live numbers and suggestions [T-O06] · Verify: `UT` palette-sharing suggestion for the fixture — evidence: test:BudgetAndHistoryTests.P13_07_PaletteSharingSuggestion_ForTheFixture, test:BudgetAndHistoryTests.P13_07_LiveBudget_FromTheRunningGame, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, commit:c407d74 (2026-10-31)
+- [x] P13.08 Build Report history across builds [T-P11] · Verify: `E2E` — evidence: test:BudgetAndHistoryTests.P13_08_BuildReportHistory_AcrossBuilds_IncludingFailures, commit:c407d74 (2026-10-31)
+- [x] P13.09 Debug button (#9) and Tools › Debugger open the Debugger [T-B09] · Verify: `E2E` — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, commit:c407d74 (2026-10-31)
 
 Exit gate:
 - [ ] P13.X1 All debugger views show correct live data for the fixture · Verify: `USER`
@@ -1285,12 +1285,12 @@ Entry gate:
 - [ ] P14.E1 Phase 6 tier 1 and Phase 10 exits ticked
 
 Items:
-- [ ] P14.01 Script editor Built-in / External; external editor VS Code / JetBrains Rider / Visual Studio / Custom…; executable path with found status [T-S07, T-S08] · Verify: `UT` detection incl. `%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe`
-- [ ] P14.02 Generate `.csproj` (and `.vscode/` settings) for IntelliSense with the API reference assembly and the analyzer package; regenerated when scripts change [T-S07] · Verify: `UT` `dotnet build` of the generated project reports the same GAE diagnostics as the built-in editor
+- [x] P14.01 Script editor Built-in / External; external editor VS Code / JetBrains Rider / Visual Studio / Custom…; executable path with found status [T-S07, T-S08] · Verify: `UT` detection incl. `%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe` — evidence: test:ExternalEditorDetectionTests.DetectsVsCodeInLocalAppDataPrograms, test:ExternalEditorDetectionTests.DetectsRiderVisualStudioFromAppPathsVsWhereAndProgramFiles, test:ExternalEditorDetectionTests.SettingsPersistWithFigmaDefaults, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, commit:c407d74 (2026-10-31)
+- [x] P14.02 Generate `.csproj` (and `.vscode/` settings) for IntelliSense with the API reference assembly and the analyzer package; regenerated when scripts change [T-S07] · Verify: `UT` `dotnet build` of the generated project reports the same GAE diagnostics as the built-in editor — evidence: test:IdeTests.GeneratedProjectBuildsWithTheSameGaeDiagnostics, commit:c407d74 (2026-10-31)
 - [ ] P14.03 "Open .cs with" and Open externally open the file at the right line [T-S07, T-Y03] · Verify: `E2E` in each installed IDE; record `n/a` for IDEs not installed
-- [ ] P14.04 Hot reload when an external save is detected [T-S07] · Verify: `E2E`
-- [ ] P14.05 New Script "Open in the external editor after creating" [T-D14] · Verify: `E2E`
-- [ ] P14.06 API reference assembly with XML docs shipped with the editor · Verify: `UT` autocomplete lists the members of P6.09
+- [x] P14.04 Hot reload when an external save is detected [T-S07] · Verify: `E2E` — evidence: test:PlayAcrossEditorTests.ExternalSave_WhileTheGameRuns_HotReloads_AndItsDebugLogReachesTheConsolePanel, test:ScriptToolsTests.HotReload_ExternalSaveReloadsTheEditorAndChecksTheScripts, commit:c407d74 (2026-10-31)
+- [x] P14.05 New Script "Open in the external editor after creating" [T-D14] · Verify: `E2E` — evidence: test:ScriptToolsTests.NewScript_OpenInExternalEditorAfterCreating, commit:c407d74 (2026-10-31)
+- [x] P14.06 API reference assembly with XML docs shipped with the editor · Verify: `UT` autocomplete lists the members of P6.09 — evidence: test:IdeTests.AutocompleteListsTheApiMembers, test:IdeTests.ReferenceAssemblyShipsWithXmlDocs, test:IdeTests.ApiDocsCoverEveryPublicMember, commit:c407d74 (2026-10-31)
 - [ ] P14.07 Analyzer rules and the "Change to fixed" fix work inside VS Code, Rider and Visual Studio · Verify: `E2E` per IDE
 
 Exit gate:
@@ -1331,7 +1331,7 @@ Items:
 - [ ] P16.01 Windows package per D-19; first run detects or guides the devkitPro install; uninstall keeps user projects · Verify: install on a clean Windows user account
 - [x] P16.02 About: version, date, credits text, Licenses list (every third-party item), Website [T-D11] · Verify: `REV` against `docs/THIRD_PARTY.md` — evidence: test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:PackagingTests.EveryShippedLibraryHasALicenceRow, doc:docs/THIRD_PARTY.md, commit:d802a71 (2026-10-31)
 - [x] P16.03 Check for Updates and Report a Bug per D-13 [T-M07] · Verify: `E2E` — evidence: test:MenuActionTests.CheckForUpdates_NoSourceNewerSameAndOffline, test:MenuActionTests.ReportABug_OpensTheConfiguredPage, test:AboutTests.EditorJson_IsReadWithItsD13Keys, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
-- [ ] P16.04 Brand applied: icon, wordmark, Launcher brand block, About icon, banners [T-R01..T-R03] · Verify: `SHOT`
+- [x] P16.04 Brand applied: icon, wordmark, Launcher brand block, About icon, banners [T-R01..T-R03] · Verify: `SHOT` — evidence: test:ShellE2ETests.Window_HasTheAppIcon, shot:docs/evidence/app/C-brand-mark.png, shot:docs/evidence/app/C-brand-app-icon-light.png, shot:docs/evidence/app/C-brand-app-icon-dark.png, shot:docs/evidence/app/C-brand-app-icon-indigo.png, shot:docs/evidence/app/T-P12.png, shot:docs/evidence/app/T-D11.png, doc:docs/brand/README.md, doc:README.md, doc:docs/RELEASE-NOTES.md, commit:c407d74 (2026-10-31)
 - [ ] P16.05 Release notes for the version, shown in Launcher "What's new" · Verify: `DOC`
 - [ ] P16.06 Release candidate passes every section 4 box and every gate; sample ROMs boot on hardware if available · Verify: CI report, `HW`
 - [ ] P16.07 Code signing and update channel per D-19 · Verify: signature check
@@ -1347,7 +1347,7 @@ Exit gate:
 
 ### G-HW · GBA hardware limits
 
-- [ ] G-HW.01 VRAM: BG <= 64 KB in tile modes, OBJ <= 32 KB (16 KB in bitmap modes), char block and screen block accounting matches hardware · Verify: `BUD` limit checks fail the build with a clear message; `RT` limits test ROM
+- [x] G-HW.01 VRAM: BG <= 64 KB in tile modes, OBJ <= 32 KB (16 KB in bitmap modes), char block and screen block accounting matches hardware · Verify: `BUD` limit checks fail the build with a clear message; `RT` limits test ROM — evidence: test:bg_vram_full_refuses_and_keeps_what_is_placed, test:bitmap_mode_leaves_no_background_vram_for_tiles, test:obj_vram_full_refuses_a_frame_and_keeps_the_others, test:bitmap_mode_sprites_get_16_kb_and_leave_the_picture_alone, test:bg_allocation_and_config, test:LimitTests.TooMuchBackgroundVramFailsTheBuildWithTheScene, test:LimitTests.TooManySpriteFramesForObjVramFailTheBuild, test:TilemapModelTests.VramPlan_TilesFromCharBlock0Up_MapsFromScreenBlock31Down, test:TilemapModelTests.VramPlan_FullCharBlockMovesOn_AndTooMuchDoesNotFit, commit:c407d74 (2026-10-31)
 - [x] G-HW.02 OAM <= 128 sprites and <= 32 affine matrices; per-scanline sprite overload warned · Verify: `BUD`, `RT` — evidence: test:hundred_twenty_eight_sprites_share_frames, test:thirty_third_affine_matrix_is_refused, test:overloaded_screen_line_is_reported, test:four_layers_128_sprites_and_music_at_60_fps, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, commit:d802a71 (2026-10-31)
 - [x] G-HW.03 Palettes <= 16 BG + 16 OBJ banks of 16 colours, index 0 transparent · Verify: `BUD` — evidence: test:LimitTests.TooManyBackgroundPalettesFailTheBuild, test:LimitTests.TooManySpritePalettesFailTheBuildUnlessSpritesShareThem, test:ArtLibraryTests.LockIndex0_KeepsItTransparentUntilUnlocked, commit:d802a71 (2026-10-31)
 - [ ] G-HW.04 IWRAM <= 32 KB including stack, EWRAM <= 256 KB, split per blueprint 10 defaults · Verify: `BUD` from the map file
