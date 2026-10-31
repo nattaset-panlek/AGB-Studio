@@ -5,7 +5,7 @@ using AgbStudio.Build.Pipeline;
 
 namespace AgbStudio.Tests;
 
-/// <summary>G-HW.08: audio channel use stays within the Maxmod settings (Project Settings · Audio "Channels") and the
+/// <summary>G-HW.08: audio channel use stays within the Maxmod settings (the project's audio.channels) and the
 /// DMG channels do not clash. The runtime side (effects never exceed the mixing channels, one effect per DMG channel,
 /// music never on a DMG channel) is audio_basic channel_use_within_maxmod_settings_and_dmg_channels_do_not_clash.</summary>
 public sealed class AudioChannelTests
@@ -55,6 +55,6 @@ public sealed class AudioChannelTests
         p.SaveSettings();
         var r = new GameBuilder(p, new Toolchain()).Build();
         Assert.False(r.Success);
-        Assert.Contains(r.Diagnostics, d => d.ToString().Contains("plays 4 channels but Project Settings · Audio mixes 2", StringComparison.Ordinal));
+        Assert.Contains(r.Diagnostics, d => d.ToString().Contains("plays 4 channels but the project mixes 2", StringComparison.Ordinal));
     }
 }

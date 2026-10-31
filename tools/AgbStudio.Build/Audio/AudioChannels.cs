@@ -2,9 +2,9 @@ using System.Text;
 
 namespace AgbStudio.Build.Audio;
 
-/// <summary>Channel budget of the audio settings (G-HW.08): Maxmod mixes Project Settings · Audio "Channels" (the runtime
-/// allocates at most 16, runtime/src/audio/audio.cpp), and every music module must fit in them, because Maxmod keeps one
-/// module channel per pattern channel. Sampled effects share the same mixing channels; SFX Designer effects use the four
+/// <summary>Channel budget of the audio settings (G-HW.08): Maxmod mixes the project's <c>audio.channels</c> (shown on the
+/// Audio page as "Maxmod · N ch"; the runtime allocates at most 16, runtime/src/audio/audio.cpp), and every music module
+/// must fit in them, because Maxmod keeps one module channel per pattern channel. Sampled effects share the same mixing channels; SFX Designer effects use the four
 /// DMG channels, which Maxmod never touches.</summary>
 public static class AudioChannels
 {
@@ -38,13 +38,13 @@ public static class AudioChannels
     {
         var problems = new List<string>();
         if (mixingChannels is < 1 or > MaxMixingChannels)
-            problems.Add($"Project Settings · Audio mixes {mixingChannels} channels; AGB Studio supports 1 to {MaxMixingChannels}.");
+            problems.Add($"The project mixes {mixingChannels} audio channels (audio.channels in the project file); AGB Studio supports 1 to {MaxMixingChannels}.");
         foreach (var f in musicFiles)
         {
             var channels = ModuleChannels(File.ReadAllBytes(f), Path.GetExtension(f));
             if (channels is { } c && c > mixingChannels)
-                problems.Add($"Music '{Path.GetFileName(f)}' plays {c} channels but Project Settings · Audio mixes {mixingChannels}: " +
-                    $"raise Channels to {c} or more, or use a module with fewer channels.");
+                problems.Add($"Music '{Path.GetFileName(f)}' plays {c} channels but the project mixes {mixingChannels} (audio.channels in the " +
+                    $"project file, \"Maxmod · {mixingChannels} ch\" on the Audio page): raise it to {c} or more, or use a module with fewer channels.");
         }
         return problems;
     }
