@@ -1,6 +1,6 @@
 # AGB Studio · Engine + Editor Master Checklist
 
-- สถานะ: **ยังไม่เริ่ม build** รอผู้ใช้สั่งเริ่ม (ห้ามเขียนโค้ด engine/editor ก่อนหน้านั้น)
+- สถานะ: **กำลัง build ตาม /goal ของผู้ใช้ (2026-10-31)** ติ๊กเฉพาะข้อที่มีหลักฐาน; entry/exit gate, decision และข้อ `USER` รอผู้ใช้ยืนยันในแชต
 - ฉบับ: 0.1 · 2026-10-31
 - ขอบเขต (scope): ดีไซน์ใน Figma file `givb0hmQYmmaOy7p7DGtb2` page "GBA GameEngine Project" (`3400:3217`) sections "AGB Studio · Components", "AGB Studio · Editor Map", "AGB Studio · Screens", "AGB Studio · Brand"
 - สถาปัตยกรรม: blueprint `D:\GBA-Research\agb-studio-blueprint.html` (published: https://claude.ai/artifact/DnpkUdKGZWyD7EK4L5qpvW)
@@ -821,7 +821,7 @@ Doc-only components, not built in the app: Doc/Callout, Doc/Target Chip (annotat
 - [ ] T-R01 App icon from "Plus Pad" (5-square cross, ink arms, indigo #3b4fd8 centre) for exe, installer, taskbar, About (64 px) · Verify: `SHOT` vs Plus Pad · Logo sheet
 - [ ] T-R02 Wordmark "AGB Studio" in Nunito ExtraBold in the Launcher brand block · Verify: `SHOT` vs T-P12
 - [ ] T-R03 Banners (4) used for the release page and installer · Verify: `REV`
-- [ ] T-R04 ROM boot splash "AGB Studio logo · 2 s", skippable in Debug builds (Project Settings · General) · Blocked until the GBA-size splash art is designed (1.4 item 6)
+- [ ] T-R04 ROM boot splash "AGB Studio logo · 2 s", skippable in Debug builds (Project Settings · General) · The GBA-size splash was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame
 
 ---
 
@@ -836,13 +836,13 @@ Entry gate:
 
 Items (ค่าที่พบเมื่อ 2026-10-31 อยู่ในวงเล็บ):
 - [ ] P0.01 devkitARM present, version recorded (arm-none-eabi-gcc 16.1.0) · Verify: command output saved to `docs/TOOLCHAIN.md`
-- [ ] P0.02 libtonc present (`libtonc/lib/libtonc.a`) · Verify: hello ROM links against it
-- [ ] P0.03 libgba and maxmod present (`libgba/lib/libgba.a`, `libmm.a`, `libfat.a`); confirm the runtime links libtonc + libmm without duplicate symbols from libgba · Verify: link map of the hello ROM
-- [ ] P0.04 devkitPro tools present: gbafix, grit, mmutil, gbalzss, padbin, bin2s · Verify: each tool runs, versions recorded
-- [ ] P0.05 Hello ROM builds (devkitPro `cmake/GBA.cmake` or Makefile, with Ninja) and `gbafix` writes a valid header · Verify: `EMU` boots in VBA-M with a coloured screen and text
-- [ ] P0.06 mGBA and mgba-rom-test installed (not present today; install needs user OK under D-06) · Verify: hello test ROM exits with the pass code headless
-- [ ] P0.07 VBA-M (`D:\devkitPro\visualboyadvance-m.exe`) runs the hello ROM · Verify: `EMU`
-- [ ] P0.08 Host tools recorded: .NET SDK 10.0.400, Ninja 1.12.1, CMake 4.4.3, git 2.39.1, Node 22.20.0, Python 3.10.11; mark which ones the chosen stack needs after D-01 · Verify: versions in `docs/TOOLCHAIN.md`
+- [x] P0.02 libtonc present (`libtonc/lib/libtonc.a`) · Verify: hello ROM links against it — evidence: test:RuntimeRomTests.RomPasses, rom:build/runtime-tests/p0_hello.elf.map@d802a71, doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
+- [x] P0.03 libgba and maxmod present (`libgba/lib/libgba.a`, `libmm.a`, `libfat.a`); confirm the runtime links libtonc + libmm without duplicate symbols from libgba · Verify: link map of the hello ROM — evidence: rom:build/runtime-tests/p0_hello.elf.map@d802a71, doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
+- [x] P0.04 devkitPro tools present: gbafix, grit, mmutil, gbalzss, padbin, bin2s · Verify: each tool runs, versions recorded — evidence: doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
+- [x] P0.05 Hello ROM builds (devkitPro `cmake/GBA.cmake` or Makefile, with Ninja) and `gbafix` writes a valid header · Verify: `EMU` boots in VBA-M with a coloured screen and text — evidence: shot:docs/evidence/app/P0.05-vbam-hello.png, shot:docs/evidence/app/P0.05-mgba-hello.png, test:RuntimeRomTests.RomPasses, test:BuildReportTests.RomHeaderHoldsTitleGameCodeMakerAndVersion, commit:d802a71 (2026-10-31)
+- [x] P0.06 mGBA and mgba-rom-test installed (not present today; install needs user OK under D-06) · Verify: hello test ROM exits with the pass code headless — evidence: test:RuntimeRomTests.RomPasses, doc:docs/DECISIONS.md, doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
+- [x] P0.07 VBA-M (`D:\devkitPro\visualboyadvance-m.exe`) runs the hello ROM · Verify: `EMU` — evidence: shot:docs/evidence/app/P0.07-vbam-hello.png, shot:docs/evidence/app/P0.05-vbam-hello.png, commit:d802a71 (2026-10-31)
+- [x] P0.08 Host tools recorded: .NET SDK 10.0.400, Ninja 1.12.1, CMake 4.4.3, git 2.39.1, Node 22.20.0, Python 3.10.11; mark which ones the chosen stack needs after D-01 · Verify: versions in `docs/TOOLCHAIN.md` — evidence: doc:docs/TOOLCHAIN.md, commit:d802a71 (2026-10-31)
 - [ ] P0.09 Real hardware availability recorded (flash cart, GBxCart RW); if none, every `HW` check is marked `n/a until hardware` · Verify: `USER`
 - [ ] P0.10 Untouched folders are still unchanged after Phase 0 · Verify: `REV` directory listing and timestamps before and after
 
@@ -859,15 +859,15 @@ Entry gate:
 Items:
 - [ ] P1.01 All decisions D-01..D-21 answered and recorded in `docs/DECISIONS.md` (one entry each: question, options, answer, date) · Verify: `USER`
 - [ ] P1.02 Design issues 1.4 items 1-9 resolved in Figma or accepted · Verify: `USER`
-- [ ] P1.03 Repo created per D-04 with the agreed layout and a README · Verify: `REV`
+- [x] P1.03 Repo created per D-04 with the agreed layout and a README · Verify: `REV` — evidence: doc:README.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 - [ ] P1.04 File format spec per D-03 (project, scene, map, layout, tileset, sprite meta, palette, font, database, strings, dialogue, logic graph, sfx) with JSON schemas and a format version field · Verify: `UT` load / save round trip of every schema
-- [ ] P1.05 "Sky Hopper" fixture project that reproduces the data shown in Figma (5 scenes incl. Forest_01 30x20, 6 links, 12 C# scripts, Items table 24 rows / 9 fields, 340 string keys in English / Thai / Japanese, sprites hero / slime / coin / block / heart / cloud, forest_tiles, fonts thai_vwf / pixel8 / title_big, music and SFX) using original placeholder content · Verify: `UT` counts match the Figma frames
+- [x] P1.05 "Sky Hopper" fixture project that reproduces the data shown in Figma (5 scenes incl. Forest_01 30x20, 6 links, 12 C# scripts, Items table 24 rows / 9 fields, 340 string keys in English / Thai / Japanese, sprites hero / slime / coin / block / heart / cloud, forest_tiles, fonts thai_vwf / pixel8 / title_big, music and SFX) using original placeholder content · Verify: `UT` counts match the Figma frames — evidence: test:FixtureTests.CountsMatchTheFigmaFrames, test:FixtureTests.GeneratedMusicIsReadByMaxmod, commit:d802a71 (2026-10-31)
 - [ ] P1.06 CI pipeline: host unit tests, runtime test ROMs through mgba-rom-test, editor build, artifact upload (infra: every Verify step needs it) · Verify: green run on the empty skeleton
-- [ ] P1.07 Lint rules: no emoji (codepoint scan), no direct hardware writes outside commit queues in runtime code, no float / double in runtime C++ (infra: G-EMOJI, G-HW) · Verify: CI fails on a planted violation of each
-- [ ] P1.08 Evidence folders `docs/evidence/figma/` and `docs/evidence/app/` with the naming rule from 2.3 · Verify: `REV`
-- [ ] P1.09 Third-party licence register `docs/THIRD_PARTY.md` (per D-05) · Verify: `REV` against G-LEGAL
-- [ ] P1.10 Developer docs skeleton: `docs/ARCHITECTURE.md` mapping blueprint sections 03-14 to code folders, `docs/BUILD.md` · Verify: `DOC`
-- [ ] P1.11 PR / commit template with "Figma ref: T-... or infra: ..." field (G-SCOPE) · Verify: `REV`
+- [x] P1.07 Lint rules: no emoji (codepoint scan), no direct hardware writes outside commit queues in runtime code, no float / double in runtime C++ (infra: G-EMOJI, G-HW) · Verify: CI fails on a planted violation of each — evidence: test:LintTests.PlantedViolationsAreReported, test:LintTests.RepositoryIsClean, doc:ci.cmd, commit:d802a71 (2026-10-31)
+- [x] P1.08 Evidence folders `docs/evidence/figma/` and `docs/evidence/app/` with the naming rule from 2.3 · Verify: `REV` — evidence: doc:docs/evidence/figma, doc:docs/evidence/app, doc:docs/evidence/shot-report.md, commit:d802a71 (2026-10-31)
+- [x] P1.09 Third-party licence register `docs/THIRD_PARTY.md` (per D-05) · Verify: `REV` against G-LEGAL — evidence: doc:docs/THIRD_PARTY.md, doc:docs/evidence/legal-review.md, test:PackagingTests.EveryShippedLibraryHasALicenceRow, commit:d802a71 (2026-10-31)
+- [x] P1.10 Developer docs skeleton: `docs/ARCHITECTURE.md` mapping blueprint sections 03-14 to code folders, `docs/BUILD.md` · Verify: `DOC` — evidence: doc:docs/ARCHITECTURE.md, doc:docs/BUILD.md, commit:d802a71 (2026-10-31)
+- [x] P1.11 PR / commit template with "Figma ref: T-... or infra: ..." field (G-SCOPE) · Verify: `REV` — evidence: doc:.gitmessage, doc:.github/pull_request_template.md, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P1.X1 Decisions recorded, fixture spec approved, CI green · Verify: `USER`
@@ -880,19 +880,19 @@ Entry gate:
 - [ ] P2.E1 Phase 1 exit ticked, runtime language and build system fixed
 
 Items:
-- [ ] P2.01 Boot code and linker sections for IWRAM / EWRAM / ROM, section macros for hot ARM code and EWRAM data · Verify: `RT` boot test, map file shows sections where expected
-- [ ] P2.02 Interrupts and frame loop that sleeps with `VBlankIntrWait()` (no busy wait) · Verify: `RT` 600 frames counted at 59.73 Hz; `BUD` CPU halted when idle
-- [ ] P2.03 Frame order from blueprint 04: input, Screen.Update, behaviours, Event Script VM, tasks, physics, animation, build OAM, palette fade, mark dirty tilemaps · Verify: `RT` trace log order
+- [x] P2.01 Boot code and linker sections for IWRAM / EWRAM / ROM, section macros for hot ARM code and EWRAM data · Verify: `RT` boot test, map file shows sections where expected — evidence: test:iwram_code_runs_from_iwram, test:RamBudgetTests.EveryRuntimeTestRomFitsIwramWithItsStackAndEwram, test:RuntimeRomTests.DebugChannelAddressesMatchTheMapFile, commit:d802a71 (2026-10-31)
+- [x] P2.02 Interrupts and frame loop that sleeps with `VBlankIntrWait()` (no busy wait) · Verify: `RT` 600 frames counted at 59.73 Hz; `BUD` CPU halted when idle — evidence: test:frame_loop_counts_and_profiles, commit:d802a71 (2026-10-31)
+- [x] P2.03 Frame order from blueprint 04: input, Screen.Update, behaviours, Event Script VM, tasks, physics, animation, build OAM, palette fade, mark dirty tilemaps · Verify: `RT` trace log order — evidence: test:frame_phases_follow_blueprint_order, commit:d802a71 (2026-10-31)
 - [ ] P2.04 Commit queues (OAM shadow, palette buffer, GPU register shadow, DMA queue with per-frame byte budget, sprite frame copy) flushed only in VBlank · Verify: `RT` overflow defers to the next frame and logs; lint P1.07 passes; Done: no runtime module writes OAM / PAL / VRAM / registers directly
-- [ ] P2.05 Input: held, pressed, released, repeat, AxisX / AxisY, AnyKey, action names from Project Settings · Input [T-D08] · Verify: `UT` with recorded key sequences
-- [ ] P2.06 Tasks and coroutines in a fixed pool · Verify: `UT`
-- [ ] P2.07 Memory arenas (reset per Screen) and fixed pools with checked handles; pool full = Console warning [T-P05] · Verify: `UT` stale handle and double free caught in Debug
-- [ ] P2.08 RNG streams (gameplay, AI, effect) with xorshift or PCG · Verify: `UT` same seed gives the same sequence on host and ROM
-- [ ] P2.09 Fixed-point `fixed` (24.8, per T-P04 text) and `fixed2` vector math · Verify: `UT` against a reference table; `BUD` cycles per multiply / divide
+- [x] P2.05 Input: held, pressed, released, repeat, AxisX / AxisY, AnyKey, action names from Project Settings · Input [T-D08] · Verify: `UT` with recorded key sequences — evidence: test:input_edges_axes_repeat_and_actions, test:PlayModeTests.KeyboardMapFollowsProjectSettings, test:ProjectSettingsTests.Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap, commit:d802a71 (2026-10-31)
+- [x] P2.06 Tasks and coroutines in a fixed pool · Verify: `UT` — evidence: test:tasks_run_by_priority_and_step, commit:d802a71 (2026-10-31)
+- [x] P2.07 Memory arenas (reset per Screen) and fixed pools with checked handles; pool full = Console warning [T-P05] · Verify: `UT` stale handle and double free caught in Debug — evidence: test:RuntimeRomTests.PoolAssertsCatchStaleHandlesAndDoubleFrees, test:pool_handles_and_arena, test:LimitTests.AFullActorPoolIsReportedInTheConsole, commit:d802a71 (2026-10-31)
+- [x] P2.08 RNG streams (gameplay, AI, effect) with xorshift or PCG · Verify: `UT` same seed gives the same sequence on host and ROM — evidence: test:RuntimeRomTests.RngMatchesHostReference, test:rng_is_deterministic_per_stream, commit:d802a71 (2026-10-31)
+- [x] P2.09 Fixed-point `fixed` (24.8, per T-P04 text) and `fixed2` vector math · Verify: `UT` against a reference table; `BUD` cycles per multiply / divide — evidence: test:RuntimeRomTests.FixedPointMatchesHostReference, test:fixed_point_reference_table, test:fixed_point_cycle_budget, test:fixed_point_math, commit:d802a71 (2026-10-31)
 - [ ] P2.10 Save system [T-S02]: types None / SRAM 32 KB / Flash 64 KB / Flash 128 KB / EEPROM 8 KB, N slots, two copies per slot with counter, CRC32, format version + migration, autosave on scene change, checksum toggle · Verify: `RT` corrupt one copy -> the other loads; `EMU` per save type; `HW` on one cart
 - [ ] P2.11 Log and assert: `Debug.Log` to the mGBA debug-print interface, asserts in Debug, both stripped in Release unless "Keep asserts" [T-S03] · Verify: `RT` log captured headless; Release ROM string scan finds no log text
-- [ ] P2.12 BIOS wrappers: LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet · Verify: `RT`
-- [ ] P2.13 Debug channel for the editor in Debug builds: symbol and actor-table export used by live Inspector and Debugger [T-P02, T-P19, T-P23] (infra) · Verify: `RT` addresses in the export match the map file
+- [x] P2.12 BIOS wrappers: LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet · Verify: `RT` — evidence: test:bios_wrappers, commit:d802a71 (2026-10-31)
+- [x] P2.13 Debug channel for the editor in Debug builds: symbol and actor-table export used by live Inspector and Debugger [T-P02, T-P19, T-P23] (infra) · Verify: `RT` addresses in the export match the map file — evidence: test:RuntimeRomTests.DebugChannelAddressesMatchTheMapFile, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P2.X1 `core_*` test ROMs pass in CI; IWRAM / EWRAM within blueprint 10 defaults · Verify: `BUD`, `USER` sees the ROM boot
@@ -905,20 +905,20 @@ Entry gate:
 - [ ] P3.E1 Phase 2 exit ticked
 
 Items:
-- [ ] P3.01 BG manager: automatic char block (4 x 16 KB) and screen block (32 x 2 KB) allocation, shown per layer in T-P03 layer table · Verify: `UT` allocator; `RT` 4 layers in Mode 0
-- [ ] P3.02 Video modes 0, 1, 2, 3 with alpha blending and mosaic toggles [T-O02] · Verify: `RT` per mode, screenshot vs reference image
-- [ ] P3.03 Affine BG layers for Mode 1-2 [T-M20 Rotate / scale layer] · Verify: `RT` rotate and scale sweep
-- [ ] P3.04 Metatile map renderer with ring-buffer scroll (rows / columns drawn as the camera moves; BG size 512 x 256) · Verify: `RT` scroll test, no tearing; `BUD` DMA bytes per frame
+- [x] P3.01 BG manager: automatic char block (4 x 16 KB) and screen block (32 x 2 KB) allocation, shown per layer in T-P03 layer table · Verify: `UT` allocator; `RT` 4 layers in Mode 0 — evidence: test:bg_allocation_and_config, test:mode0_four_tile_layers_blend_and_mosaic, test:VideoModeTests.VideoModesMatchReferenceImages, test:TilemapModelTests.VramPlan_TilesFromCharBlock0Up_MapsFromScreenBlock31Down, test:TilemapModelTests.VramPlan_SkyHopperForest01, commit:d802a71 (2026-10-31)
+- [x] P3.02 Video modes 0, 1, 2, 3 with alpha blending and mosaic toggles [T-O02] · Verify: `RT` per mode, screenshot vs reference image — evidence: test:VideoModeTests.VideoModesMatchReferenceImages, test:mode0_four_tile_layers_blend_and_mosaic, test:mode1_two_tile_layers_and_one_affine, test:mode2_two_affine_layers_blended, test:mode3_bitmap_mosaic_and_blended_sprite, test:video_mode_alpha_blending_and_mosaic, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, shot:docs/evidence/app/P3.02-mode0.png, shot:docs/evidence/app/P3.02-mode1.png, shot:docs/evidence/app/P3.02-mode2.png, shot:docs/evidence/app/P3.02-mode3.png, commit:d802a71 (2026-10-31)
+- [x] P3.03 Affine BG layers for Mode 1-2 [T-M20 Rotate / scale layer] · Verify: `RT` rotate and scale sweep — evidence: test:affine_rotate_scale_sweep, test:affine_sweep_pictures, test:affine_layer_rotates_and_scales, test:VideoModeTests.VideoModesMatchReferenceImages, shot:docs/evidence/app/P3.03-sweep3.png, commit:d802a71 (2026-10-31)
+- [x] P3.04 Metatile map renderer with ring-buffer scroll (rows / columns drawn as the camera moves; BG size 512 x 256) · Verify: `RT` scroll test, no tearing; `BUD` DMA bytes per frame — evidence: test:map_streams_rows_and_columns, test:big_camera_jump_fits_in_a_frame, test:four_layers_128_sprites_and_music_at_60_fps, commit:d802a71 (2026-10-31)
 - [ ] P3.05 Per-layer parallax (x0.2, x0.5, x1.0, x1.2 as in T-D03 and T-P03) · Verify: `RT`
-- [ ] P3.06 Sprite / OAM manager: 128 entries, priority sort, 32 affine matrices, all 12 OAM shapes [T-M19], sprite frame streaming to OBJ VRAM · Verify: `RT` 128 sprites; `BUD` OAM count
-- [ ] P3.07 Sprite animation: frames, ticks per frame, loop, ping-pong [T-P08, T-P06] · Verify: `UT` timing
-- [ ] P3.08 Palette manager: 16 BG + 16 OBJ banks, fade to black over N frames, tint, cycle (range, speed, direction Left / Right / Ping-pong), flash [T-P10, T-O10] · Verify: `RT` palette RAM checks per frame
-- [ ] P3.09 Text windows: VWF renderer 1bpp / 2bpp (4 shades) to a BG text layer, drop shadow, typewriter speed (chars per frame), blip sound, continue marker [T-P09, T-P16] · Verify: `RT` reference string renders pixel-identical to the golden image
-- [ ] P3.10 Scanline effects (per-line DMA) (infra: Racing (Mode 7) template in T-P20) · Verify: `RT` Mode 7 plane test
+- [x] P3.06 Sprite / OAM manager: 128 entries, priority sort, 32 affine matrices, all 12 OAM shapes [T-M19], sprite frame streaming to OBJ VRAM · Verify: `RT` 128 sprites; `BUD` OAM count — evidence: test:hundred_twenty_eight_sprites_share_frames, test:oam_shapes_flips_and_affine, test:thirty_third_affine_matrix_is_refused, test:overloaded_screen_line_is_reported, test:GraphicsTests.AllTwelveOamSizesAreKnown, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, commit:d802a71 (2026-10-31)
+- [x] P3.07 Sprite animation: frames, ticks per frame, loop, ping-pong [T-P08, T-P06] · Verify: `UT` timing — evidence: test:animation_timing_loop_once_pingpong, test:SpriteEditorE2ETests.P11_26_Timeline_AnimationsTicksLoopPingPongOnionSkin, commit:d802a71 (2026-10-31)
+- [x] P3.08 Palette manager: 16 BG + 16 OBJ banks, fade to black over N frames, tint, cycle (range, speed, direction Left / Right / Ping-pong), flash [T-P10, T-O10] · Verify: `RT` palette RAM checks per frame — evidence: test:fade_tint_flash, test:colour_cycle_directions, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, commit:d802a71 (2026-10-31)
+- [x] P3.09 Text windows: VWF renderer 1bpp / 2bpp (4 shades) to a BG text layer, drop shadow, typewriter speed (chars per frame), blip sound, continue marker [T-P09, T-P16] · Verify: `RT` reference string renders pixel-identical to the golden image — evidence: test:glyph_pixels_2bpp_and_shadow, test:typewriter_reveals_by_step, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, test:ThaiCorpusTests.CorpusMatchesTheReviewedGoldenSheet, test:ThaiCorpusTests.CorpusLinesInTheRomMatchThePreview, commit:d802a71 (2026-10-31)
+- [x] P3.10 Scanline effects (per-line DMA) (infra: Racing (Mode 7) template in T-P20) · Verify: `RT` Mode 7 plane test — evidence: test:scanline_dma_writes_each_line, test:mode7_table_has_perspective, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, commit:d802a71 (2026-10-31)
 - [ ] P3.11 Music with maxmod: soundbank from MOD / XM, play / stop / volume / loop start / fade on scene change, 8 ch at 21 kHz default [T-P15] · Verify: `EMU` listen check; `BUD` mixer CPU near the 6% shown in Figma
 - [ ] P3.12 DMG sound effects from register data: Square 1 (sweep), Square 2, Wave, Noise [T-P25] · Verify: `EMU` sounds match the editor preview; 0 bytes of sample ROM
-- [ ] P3.13 Channel usage report (DSound A / B for music, DMG channels for SFX) [T-P15 GBA channels] · Verify: `UT`
-- [ ] P3.14 Screen transitions Cut / Fade / Slide with duration [T-O09] · Verify: `RT`
+- [x] P3.13 Channel usage report (DSound A / B for music, DMG channels for SFX) [T-P15 GBA channels] · Verify: `UT` — evidence: test:AudioPageTests.ChannelsMixerBudget_AndPreviewSfx, test:AudioChannelTests.ModuleChannelCountsAreReadFromTheFiles, test:channel_use_within_maxmod_settings_and_dmg_channels_do_not_clash, commit:d802a71 (2026-10-31)
+- [x] P3.14 Screen transitions Cut / Fade / Slide with duration [T-O09] · Verify: `RT` — evidence: test:transitions_fade_and_slide, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P3.X1 4 scrolling BGs + 128 sprites + music at 60 fps on mGBA · Verify: `BUD` profiler capture, `EMU`, `USER`
@@ -931,18 +931,18 @@ Entry gate:
 - [ ] P4.E1 Phase 3 exit ticked
 
 Items:
-- [ ] P4.01 Game and Screen stack: push / pop / replace, coroutine `Load()` in 7 staged steps (blueprint 05), `Update()`, `Exit()`, return continuation · Verify: `RT` no step longer than one frame, overruns logged with the step name
-- [ ] P4.02 Scene / Actor / Behaviour: Start, Update, OnTouch, `Get<T>()`, `Is<T>()`, tag, Destroy [T-P04, T-P17] · Verify: `RT`
-- [ ] P4.03 Built-in behaviours from Component Picker [T-O05]: Platformer Body (gravity, jump force, max speed, slopes, one-way), Top-down Mover (8-way), Projectile, Health (hearts, invincibility), Damage on Touch, Patrol, Chase Player, Sound on Event · Verify: `RT` one scenario per behaviour
-- [ ] P4.04 Collision: tile types Solid / One-way / Ladder / Hazard / Water / None [T-P03]; actor colliders with size and offset [T-P01 Inspector] · Verify: `UT` + `RT`
-- [ ] P4.05 Camera: follow target, dead zone, clamp to map [T-D03], Camera Zone actor [T-M10], shake [T-M24] · Verify: `RT`
-- [ ] P4.06 Actor presets: Empty Actor, Player, Enemy, Pickup, Trigger Zone, Camera Zone, Text Label [T-M10, T-M11] · Verify: `RT` each spawns and behaves
-- [ ] P4.07 Prefabs as const templates in ROM [T-M12 Make Prefab, T-M11 Prefab…] · Verify: `UT`
-- [ ] P4.08 Flags / vars store with stable IDs: persistent (in save), per-map, session · Verify: `UT` adding a flag does not shift existing save data
-- [ ] P4.09 Game state fields (score, coins, lives) declared in scripts and reachable from Logic Graph "Add to Variable" [T-P04, T-P17] · Verify: `UT`
-- [ ] P4.10 Command bus: rules emit commands, presentation answers at declared sync points, input source Player or AI (infra: Turn-based RPG and Puzzle templates in T-P20) · Verify: `UT` rules run headless; `RT` same inputs give the same result
-- [ ] P4.11 Scene API: `Scene.Load`, `Scene.Pause`, `Save.Checkpoint()`, start scene from settings [T-S01, T-D03] · Verify: `RT`
-- [ ] P4.12 Runtime button remap [T-D08 "Let players remap buttons in the options menu"] · Blocked until the options menu is designed (1.4 item 6)
+- [x] P4.01 Game and Screen stack: push / pop / replace, coroutine `Load()` in 7 staged steps (blueprint 05), `Update()`, `Exit()`, return continuation · Verify: `RT` no step longer than one frame, overruns logged with the step name — evidence: test:screen_stack_push_pop_resume_replace, test:staged_load_steps_fit_in_a_frame, commit:d802a71 (2026-10-31)
+- [x] P4.02 Scene / Actor / Behaviour: Start, Update, OnTouch, `Get<T>()`, `Is<T>()`, tag, Destroy [T-P04, T-P17] · Verify: `RT` — evidence: test:platformer_scene_end_to_end, test:translated_behaviours_play_like_the_figma_code, test:RomTests.TranslatedScriptsRunInTheEmulator, test:TranslatorTests.ScriptingApiMembersTranslate, commit:d802a71 (2026-10-31)
+- [x] P4.03 Built-in behaviours from Component Picker [T-O05]: Platformer Body (gravity, jump force, max speed, slopes, one-way), Top-down Mover (8-way), Projectile, Health (hearts, invincibility), Damage on Touch, Patrol, Chase Player, Sound on Event · Verify: `RT` one scenario per behaviour — evidence: test:platformer_scene_end_to_end, test:body_walks_up_and_down_slopes, test:one_way_platform_lands_from_above_and_passes_from_below, test:chase_player_follows_in_range, test:sound_on_event_plays_on_touch_jump_spawn_and_destroy, test:TemplateTests.TopDownAdventureTalksPushesUnlocksAndEnters, test:TemplateTests.ShootEmUpScrollsFiresAndClearsTheStage, commit:d802a71 (2026-10-31)
+- [x] P4.04 Collision: tile types Solid / One-way / Ladder / Hazard / Water / None [T-P03]; actor colliders with size and offset [T-P01 Inspector] · Verify: `UT` + `RT` — evidence: test:one_way_platform_lands_from_above_and_passes_from_below, test:ladder_climbs_without_gravity_and_holds_on_top, test:hazard_tiles_hurt_a_body_with_health, test:water_halves_gravity_and_fall_speed, test:platformer_scene_end_to_end, test:GraphicsTests.TilesetBuildsMetatilesWithCollision, test:TilemapModelTests.TileProperties_CollisionTagAnimationAutoTile_SavedAndUndoable, test:InspectorTests.BehaviourFields_SliderTextColliderAndUndo, commit:d802a71 (2026-10-31)
+- [x] P4.05 Camera: follow target, dead zone, clamp to map [T-D03], Camera Zone actor [T-M10], shake [T-M24] · Verify: `RT` — evidence: test:camera_dead_zone_shake_and_camera_zone, test:platformer_scene_end_to_end, commit:d802a71 (2026-10-31)
+- [x] P4.06 Actor presets: Empty Actor, Player, Enemy, Pickup, Trigger Zone, Camera Zone, Text Label [T-M10, T-M11] · Verify: `RT` each spawns and behaves — evidence: test:empty_actor_spawns_and_runs_its_behaviours, test:platformer_scene_end_to_end, test:camera_dead_zone_shake_and_camera_zone, test:hud_label_comes_back_after_pause_and_options, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, commit:d802a71 (2026-10-31)
+- [x] P4.07 Prefabs as const templates in ROM [T-M12 Make Prefab, T-M11 Prefab…] · Verify: `UT` — evidence: test:prefab_templates_spawn_from_rom, test:FrameworkPlayTests.BuildMakesPrefabTemplatesSharesMapsAndKeepsFlagIds, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, commit:d802a71 (2026-10-31)
+- [x] P4.08 Flags / vars store with stable IDs: persistent (in save), per-map, session · Verify: `UT` adding a flag does not shift existing save data — evidence: test:FlowTests.AddingAFlagKeepsTheIdsOfTheOthersAndTheSaveFormat, test:FrameworkPlayTests.BuildMakesPrefabTemplatesSharesMapsAndKeepsFlagIds, test:vm_runs_cutscene_with_waits_calls_and_stores, commit:d802a71 (2026-10-31)
+- [x] P4.09 Game state fields (score, coins, lives) declared in scripts and reachable from Logic Graph "Add to Variable" [T-P04, T-P17] · Verify: `UT` — evidence: test:GraphTests.FigmaGraphGeneratesTheFigmaCode, test:GraphTests.GeneratedCodeCompilesAndTranslates, test:TranslatorTests.ScriptingApiMembersTranslate, commit:d802a71 (2026-10-31)
+- [x] P4.10 Command bus: rules emit commands, presentation answers at declared sync points, input source Player or AI (infra: Turn-based RPG and Puzzle templates in T-P20) · Verify: `UT` rules run headless; `RT` same inputs give the same result — evidence: test:bus_rules_are_independent_of_presentation, test:TemplateTests.RpgShopsAndWinsABattle, commit:d802a71 (2026-10-31)
+- [x] P4.11 Scene API: `Scene.Load`, `Scene.Pause`, `Save.Checkpoint()`, start scene from settings [T-S01, T-D03] · Verify: `RT` — evidence: test:scene_pause_freezes_until_start, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, test:platformer_scene_end_to_end, test:cutscenes_and_dialogue_run_in_the_vm, test:TemplateTests.SampleProjectsBuildAndBootToTheTitle, commit:d802a71 (2026-10-31)
+- [ ] P4.12 Runtime button remap [T-D08 "Let players remap buttons in the options menu"] · The options screen was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame
 
 Exit gate:
 - [ ] P4.X1 A Forest_01 slice of the fixture runs at 60 fps with player, slimes, coins, HUD · Verify: `EMU`, `BUD`, `USER`
@@ -957,14 +957,14 @@ Entry gate:
 Items:
 - [ ] P5.01 Tilesets (primary / secondary) with 4bpp tiles, dedupe including flips, counts shown as "Unique tiles 58 / 1024" [T-P03] · Verify: `UT`; `BUD`
 - [ ] P5.02 Internal metatile format (2 x 2 tiles x 2 layers + behaviour id + layer type) behind the tile and stamp UI of T-P03 (infra) · Verify: `UT` round trip
-- [ ] P5.03 Layout stored apart from map, shareable between maps (infra) · Verify: `UT`
-- [ ] P5.04 Map header: size, video mode, backgrounds and parallax, music, camera, links [T-D03, T-P13] · Verify: `UT` round trip
-- [ ] P5.05 Map events: entities, portals (door -> spawn point), triggers (area + condition), interactables [T-P01 Hierarchy, T-O09] · Verify: `RT`
-- [ ] P5.06 Map scripts OnEnter / OnExit (and OnLoad as infra) [T-D03] · Verify: `RT`
-- [ ] P5.07 Scene links from World Map: kinds on touch / door / respawn, spawn point, transition, condition "Only if" [T-P13, T-O09] · Verify: `RT` warp Forest_01 -> Forest_02 and Cave_01
-- [ ] P5.08 Tile animation and random brush data [T-P03 tile properties] · Verify: `RT`
-- [ ] P5.09 Auto-tile 3x3 rules resolved at edit time and stored [T-P26] · Verify: `UT` rule set "Grass edges (16)" gives the expected tiles
-- [ ] P5.10 Background layer types: tile, image, rotate / scale, collision-only [T-M20] · Verify: `RT`
+- [x] P5.03 Layout stored apart from map, shareable between maps (infra) · Verify: `UT` — evidence: test:FrameworkPlayTests.BuildMakesPrefabTemplatesSharesMapsAndKeepsFlagIds, doc:docs/FILE-FORMATS.md, commit:d802a71 (2026-10-31)
+- [x] P5.04 Map header: size, video mode, backgrounds and parallax, music, camera, links [T-D03, T-P13] · Verify: `UT` round trip — evidence: test:ProjectModelTests.EveryFileFormatRoundTrips, test:SceneDialogTests.SceneSettings_AppliesEverySection_RenamesWithLinks_AndUndo, commit:d802a71 (2026-10-31)
+- [x] P5.05 Map events: entities, portals (door -> spawn point), triggers (area + condition), interactables [T-P01 Hierarchy, T-O09] · Verify: `RT` — evidence: test:links_on_touch_door_respawn_and_conditions, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, test:TemplateTests.TopDownAdventureTalksPushesUnlocksAndEnters, commit:d802a71 (2026-10-31)
+- [x] P5.06 Map scripts OnEnter / OnExit (and OnLoad as infra) [T-D03] · Verify: `RT` — evidence: test:map_scripts_run_on_load_enter_and_exit, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, commit:d802a71 (2026-10-31)
+- [x] P5.07 Scene links from World Map: kinds on touch / door / respawn, spawn point, transition, condition "Only if" [T-P13, T-O09] · Verify: `RT` warp Forest_01 -> Forest_02 and Cave_01 — evidence: test:SkyHopperPlayTests.AllFiveScenesLoadThroughTheirLinks, test:links_on_touch_door_respawn_and_conditions, commit:d802a71 (2026-10-31)
+- [x] P5.08 Tile animation and random brush data [T-P03 tile properties] · Verify: `RT` — evidence: test:LayerFeatureTests.ImageLayerAndAnimatedTilesShowInTheRom, test:TilemapModelTests.Brush_StampRandomFlip_UndoRedo_SaveRoundTrip, commit:d802a71 (2026-10-31)
+- [x] P5.09 Auto-tile 3x3 rules resolved at edit time and stored [T-P26] · Verify: `UT` rule set "Grass edges (16)" gives the expected tiles — evidence: test:AutoTileTests.GrassEdgesResolveFromNeighbours, test:TilemapModelTests.AutoTile_PaintingAMemberResolvesTheGrassEdgesRules, commit:d802a71 (2026-10-31)
+- [x] P5.10 Background layer types: tile, image, rotate / scale, collision-only [T-M20] · Verify: `RT` — evidence: test:map_streams_rows_and_columns, test:LayerFeatureTests.ImageLayerAndAnimatedTilesShowInTheRom, test:affine_rotate_scale_sweep, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, test:TilemapModelTests.Layers_AddTypesOnFreeBackgrounds_CollisionOnlyBecomesTheSource, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P5.X1 All 5 fixture scenes load through their links with transitions · Verify: `EMU`, `USER`
@@ -978,29 +978,29 @@ Entry gate:
 
 Tier 1 · C# -> C++:
 - [ ] P6.01 C# subset spec documented (types, classes, virtual, generics allowed, attributes, what is forbidden and why) · Verify: `DOC`, `USER`
-- [ ] P6.02 Roslyn analyzer with rules GAE001-GAE006 (or renamed per D-07): allocation in Update / OnTouch, float / double, new inside Update, try / throw, string concat in a loop, capturing lambdas; severity per rule and "Treat warnings as errors" [T-S04] · Verify: `UT` positive and negative case per rule
-- [ ] P6.03 Code fixes "Change to fixed" and "Ignore" [T-P04 diagnostic popup] · Verify: `UT`
-- [ ] P6.04 C# -> C++20 translator (no exceptions, no RTTI), output to `build/gen`, files written only when content changes [T-S04 Generated] · Verify: `UT` golden files; `RT` translated PlayerController behaves like Figma's code sample
-- [ ] P6.05 Line mapping so g++ errors and debugging point at `.cs` lines [T-D06 log, T-D23] · Verify: `UT` planted error reports `PlayerController.cs(22,9)`
-- [ ] P6.06 Public fields and `[Range]` exposed to the Inspector [T-P04 Exposed fields, T-P01] · Verify: `E2E`
-- [ ] P6.07 Project namespace setting [T-S04 Namespace] · Verify: `UT`
-- [ ] P6.08 Script templates Behaviour / Static helper / Scene script [T-D14] · Verify: `UT` each template compiles clean
-- [ ] P6.09 Scripting API v0.1 exactly as T-P18 and the Figma code samples show: Input (Pressed, Held, Released, AxisX / AxisY, AnyKey, Key enum), Behaviour, Actor, Sound, Music, Camera, Save, Text & Dialogue (`Text.Show`), Items (Database), fixed (math), Scene, Game, Debug.Log · Verify: `UT` per member; `DOC` generated page per member
+- [x] P6.02 Roslyn analyzer with rules GAE001-GAE006 (or renamed per D-07): allocation in Update / OnTouch, float / double, new inside Update, try / throw, string concat in a loop, capturing lambdas; severity per rule and "Treat warnings as errors" [T-S04] · Verify: `UT` positive and negative case per rule — evidence: test:AnalyzerTests.Gae001ClassAllocatedInUpdate, test:AnalyzerTests.Gae001NotReportedInStart, test:AnalyzerTests.Gae002FloatFlaggedAsInFigma, test:AnalyzerTests.Gae002NotReportedForFixed, test:AnalyzerTests.Gae003NewArrayInUpdate, test:AnalyzerTests.Gae003NotReportedInStart, test:AnalyzerTests.Gae004TryAndThrow, test:AnalyzerTests.Gae004NotReportedWithoutExceptions, test:AnalyzerTests.Gae005StringConcatenationInLoop, test:AnalyzerTests.Gae005NotReportedOutsideLoops, test:AnalyzerTests.Gae006CapturingLambda, test:AnalyzerTests.Gae006NotReportedForStaticOrPureLambdas, test:AnalyzerTests.SeverityPerRuleIsConfigurable, test:AnalyzerTests.ProjectFileSeveritiesAreRead, test:ProjectSettingsTests.TreatWarningsAsErrors_FailsTheScriptStepOnAWarning, commit:d802a71 (2026-10-31)
+- [x] P6.03 Code fixes "Change to fixed" and "Ignore" [T-P04 diagnostic popup] · Verify: `UT` — evidence: test:CodeFixTests.PopupOffersBothFixes, test:CodeFixTests.ChangeToFixedRewritesTypeAndLiteral, test:CodeFixTests.ChangeToFixedOnLocalsAndReturnTypes, test:CodeFixTests.IgnoreAddsPragmaAroundTheLine, test:CodeFixTests.IgnoreWorksForErrorRules, test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, commit:d802a71 (2026-10-31)
+- [x] P6.04 C# -> C++20 translator (no exceptions, no RTTI), output to `build/gen`, files written only when content changes [T-S04 Generated] · Verify: `UT` golden files; `RT` translated PlayerController behaves like Figma's code sample — evidence: test:TranslatorTests.TranslationMatchesGolden, test:TranslatorTests.NoExceptionsNoRttiNoHeap, test:TranslatorTests.FilesAreWrittenOnlyWhenContentChanges, test:TranslatorTests.GeneratedCppCompilesWithRuntimeFlags, test:RomTests.TranslatedScriptsRunInTheEmulator, test:translated_behaviours_play_like_the_figma_code, commit:d802a71 (2026-10-31)
+- [x] P6.05 Line mapping so g++ errors and debugging point at `.cs` lines [T-D06 log, T-D23] · Verify: `UT` planted error reports `PlayerController.cs(22,9)` — evidence: test:TranslatorTests.PlantedSyntaxErrorReportsFileLineColumn, test:TranslatorTests.GxxErrorsMapBackToCsLines, test:PipelineTests.GccErrorsBecomeClickableDiagnostics, test:CSharpDebuggerTests.BreakpointPausesWithCallStackAndResumes, commit:d802a71 (2026-10-31)
+- [x] P6.06 Public fields and `[Range]` exposed to the Inspector [T-P04 Exposed fields, T-P01] · Verify: `E2E` — evidence: test:InspectorTests.BehaviourFields_SliderTextColliderAndUndo, test:ScriptEditorTests.SidePanelAttachedToCompilesToExposedFieldsOutlineAndApi, test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, commit:d802a71 (2026-10-31)
+- [x] P6.07 Project namespace setting [T-S04 Namespace] · Verify: `UT` — evidence: test:TranslatorTests.ProjectNamespaceSetting, commit:d802a71 (2026-10-31)
+- [x] P6.08 Script templates Behaviour / Static helper / Scene script [T-D14] · Verify: `UT` each template compiles clean — evidence: test:TranslatorTests.TemplatesCompileClean, test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, commit:d802a71 (2026-10-31)
+- [x] P6.09 Scripting API v0.1 exactly as T-P18 and the Figma code samples show: Input (Pressed, Held, Released, AxisX / AxisY, AnyKey, Key enum), Behaviour, Actor, Sound, Music, Camera, Save, Text & Dialogue (`Text.Show`), Items (Database), fixed (math), Scene, Game, Debug.Log · Verify: `UT` per member; `DOC` generated page per member — evidence: test:TranslatorTests.ScriptingApiMembersTranslate, test:IdeTests.ApiDocsCoverEveryPublicMember, test:ScriptingApiTests.HelpScriptingApi_F1_ShowsTheTreeAndTheInputPage, commit:d802a71 (2026-10-31)
 
 Tier 2 · async C# -> bytecode, Event Script VM:
-- [ ] P6.10 `[Cutscene] async Task` with `await Say / Move / Choice / Wait` and `LockAll()` compiled to bytecode + string table (blueprint 06) · Verify: `UT` golden bytecode
-- [ ] P6.11 One opcode table source that generates the compiler side and the VM handlers · Verify: `UT` consistency check
-- [ ] P6.12 VM: several contexts by priority (cutscene, NPC / trigger, immediate), pc, call stack, locals, return value, `Wait(frames)`, `WaitUntil`, `Continue()` from natives (blueprint 07) · Verify: `RT`
-- [ ] P6.13 Native table declared with `[ScriptNative(waits: ...)]` · Verify: `UT`
-- [ ] P6.14 VM debug hooks for breakpoints, step and variable view [T-P19 Breakpoints] · Verify: `RT`
-- [ ] P6.15 Dialogue compiler: lines, speakers, choices, commands (Go to scene, Set flag, Give item, Play sound, Wait, Shake camera), conditions "Show if" and "Then set" [T-P16, T-M23, T-M24] · Verify: `UT` golden; `RT` forest_intro plays with both choices
-- [ ] P6.16 Logic Graph -> C# generator for node categories Events, Input, Physics, Flow, Math, Actor, Sound, Data & Save, Text & UI, Other [T-P17, T-O08] · Verify: `UT` the Figma graph generates the C# shown in its Generated C# panel
-- [ ] P6.17 C# -> Graph direction per D-11 [T-P17 "in sync"] · Verify: `UT` round trip
-- [ ] P6.18 Hot reload per D-15 [T-S04, T-P04 Output line] · Verify: `E2E`
+- [x] P6.10 `[Cutscene] async Task` with `await Say / Move / Choice / Wait` and `LockAll()` compiled to bytecode + string table (blueprint 06) · Verify: `UT` golden bytecode — evidence: test:BytecodeTests.RescueIntroGoldenBytecode, test:BytecodeTests.ChoiceWaitAndReturnGoldenBytecode, commit:d802a71 (2026-10-31)
+- [x] P6.11 One opcode table source that generates the compiler side and the VM handlers · Verify: `UT` consistency check — evidence: test:BytecodeTests.OpcodeTableIsTheSingleSourceForCompilerAndVm, test:BytecodeTests.BuiltinNativesMatchTheRuntime, commit:d802a71 (2026-10-31)
+- [x] P6.12 VM: several contexts by priority (cutscene, NPC / trigger, immediate), pc, call stack, locals, return value, `Wait(frames)`, `WaitUntil`, `Continue()` from natives (blueprint 07) · Verify: `RT` — evidence: test:vm_runs_cutscene_with_waits_calls_and_stores, test:vm_wait_until_checks_its_condition_every_frame, test:FlowTests.WaitUntilCompilesItsConditionInPlace, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, test:cutscenes_and_dialogue_run_in_the_vm, commit:d802a71 (2026-10-31)
+- [x] P6.13 Native table declared with `[ScriptNative(waits: ...)]` · Verify: `UT` — evidence: test:BytecodeTests.ScriptNativeTableFromAttributes, commit:d802a71 (2026-10-31)
+- [x] P6.14 VM debug hooks for breakpoints, step and variable view [T-P19 Breakpoints] · Verify: `RT` — evidence: test:vm_breakpoint_pauses_and_resumes, test:vm_single_step_and_locals_view, test:BreakpointUiTests.Breakpoints_FromTheScriptEditorGutterF9AndTheBreakpointsView_StopTheGame, commit:d802a71 (2026-10-31)
+- [x] P6.15 Dialogue compiler: lines, speakers, choices, commands (Go to scene, Set flag, Give item, Play sound, Wait, Shake camera), conditions "Show if" and "Then set" [T-P16, T-M23, T-M24] · Verify: `UT` golden; `RT` forest_intro plays with both choices — evidence: test:DialogueTests.ForestIntroGoldenCSharpAndBytecode, test:DialogueTests.LinesChoicesAndCommandsBecomeTheRightCalls, test:cutscenes_and_dialogue_run_in_the_vm, test:RomTests.TranslatedScriptsRunInTheEmulator, commit:d802a71 (2026-10-31)
+- [x] P6.16 Logic Graph -> C# generator for node categories Events, Input, Physics, Flow, Math, Actor, Sound, Data & Save, Text & UI, Other [T-P17, T-O08] · Verify: `UT` the Figma graph generates the C# shown in its Generated C# panel — evidence: test:GraphTests.FigmaGraphGeneratesTheFigmaCode, test:GraphTests.CatalogCoversEveryFigmaCategory, test:GraphTests.EveryActionAndValueNodeGeneratesCompilableCode, commit:d802a71 (2026-10-31)
+- [x] P6.17 C# -> Graph direction per D-11 [T-P17 "in sync"] · Verify: `UT` round trip — evidence: test:GraphTests.RoundTripKeepsTheGraph, test:GraphTests.EditedGeneratedCodeUpdatesTheGraph, test:GraphTests.OnlyGraphGeneratedFilesConvertBack, test:LogicGraphTests.GeneratedCodeEditsUpdateTheGraph_AndSaveWritesGraphAndCs, commit:d802a71 (2026-10-31)
+- [x] P6.18 Hot reload per D-15 [T-S04, T-P04 Output line] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayModeTests.HotReloadContinuesInTheSameSceneWithTheSameState, test:PlayAcrossEditorTests.ExternalSave_WhileTheGameRuns_HotReloads_AndItsDebugLogReachesTheConsolePanel, commit:d802a71 (2026-10-31)
 
 Tier 3 · data -> ROM const tables:
-- [ ] P6.19 Database tables -> `constexpr` tables + enum IDs, one generated unit per table [T-P07] · Verify: `UT`; changing one row rebuilds one unit
-- [ ] P6.20 Typed access (`Items.Get(ItemId.Potion)`) generated per table [T-P07, T-D17] · Verify: `UT`
+- [x] P6.19 Database tables -> `constexpr` tables + enum IDs, one generated unit per table [T-P07] · Verify: `UT`; changing one row rebuilds one unit — evidence: test:DatabaseTests.GeneratesEnumsStructsAndRows, test:DatabaseBuildTests.ChangingOneRowRebuildsOnlyThatTable, test:DatabaseBuildTests.TablesBuildIntoTheRomAsData, commit:d802a71 (2026-10-31)
+- [x] P6.20 Typed access (`Items.Get(ItemId.Potion)`) generated per table [T-P07, T-D17] · Verify: `UT` — evidence: test:DatabaseTests.GeneratesEnumsStructsAndRows, test:DatabaseTests.TableNamesGiveTypedIds, test:TranslatorTests.ScriptingApiMembersTranslate, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P6.X1 All fixture scripts compile, analyzer flags `coyoteTime` float as in Figma, ROM runs · Verify: `RT`, `USER`
@@ -1013,24 +1013,24 @@ Entry gate:
 - [ ] P7.E1 Phase 2 exit ticked, D-03 decided
 
 Items:
-- [ ] P7.01 Per-asset `meta.json` options (frame size, palette slot, compression, etc.) edited in the editor (blueprint 11) · Verify: `UT` schema
-- [ ] P7.02 Image converter: PNG / Aseprite -> 4bpp tiles, reduce to 16 colours, share palette, split frames, trim empty frames, create animation [T-D04, T-D13] · Verify: `UT` golden output
+- [x] P7.01 Per-asset `meta.json` options (frame size, palette slot, compression, etc.) edited in the editor (blueprint 11) · Verify: `UT` schema — evidence: test:SchemaTests.SchemasMatchTheFileModel, test:SchemaTests.FilledInInstancesOfEveryFormatValidate, test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, test:AudioPageTests.Inspector_EditsTheMetaUndoAndSave, test:ArtLibraryTests.AddBank_AndAssign_WriteTheOwnerIntoSpriteMeta, commit:d802a71 (2026-10-31)
+- [x] P7.02 Image converter: PNG / Aseprite -> 4bpp tiles, reduce to 16 colours, share palette, split frames, trim empty frames, create animation [T-D04, T-D13] · Verify: `UT` golden output — evidence: test:ImageConverterTests.PngSheetSplitsTrimsEmptyFramesAndMatchesTheGolden, test:ImageConverterTests.ReducedAndSharedPalettesMatchTheGolden, test:ImageConverterTests.AsepriteSpritesBuildWithTheirTagsAsAnimations, test:ImageConverterTests.AsepriteFlattensLayersAndGivesTheSameTilesAsThePng, test:GraphicsTests.QuantizerReducesTo15, test:GraphicsTests.PalettesPackIntoBanks, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, commit:d802a71 (2026-10-31)
 - [ ] P7.03 Image errors in plain language with fixes: "Reduce to 16" and "Split into 3 palettes" [T-D24] · Verify: `UT` 48-colour image gives that message
-- [ ] P7.04 Tiled `.tmx` import -> map / layout [T-D04] · Verify: `UT`
-- [ ] P7.05 Palette import / export `.pal` / `.gpl` [T-P10] · Verify: `UT`
-- [ ] P7.06 Audio: MOD / XM -> maxmod soundbank via mmutil; WAV -> 11 kHz mono 8-bit; MP3 rejected with the Figma message [T-D04, T-D24] · Verify: `UT`
-- [ ] P7.07 `.sfx` (DMG) -> register tables; Bake to `.wav` [T-P25] · Verify: `UT`
-- [ ] P7.08 LZ77 compression compatible with the BIOS [T-S03, T-D05] · Verify: `RT` BIOS decompresses converter output exactly
-- [ ] P7.09 Hash cache: key = input bytes + options + converter version; `build/cache/manifest.json`; unchanged inputs skipped (blueprint 11) · Verify: `UT` no-change rebuild converts 0 assets, one option change reconverts 1
-- [ ] P7.10 Build graph with Ninja: g++ `-O2 -mthumb -mcpu=arm7tdmi`, hot code as ARM in IWRAM, `ld --gc-sections`, objcopy, gbafix with title (12), game code (4), maker (2), version [T-D06, T-S01] · Verify: `RT` ROM boots; header bytes checked
-- [ ] P7.11 Debug / Release configs with optimise level, strip Debug.Log, keep asserts, warn when ROM > N MB (16 MB default), output folder, run in mGBA after build [T-S03] · Verify: `UT` config matrix
+- [x] P7.04 Tiled `.tmx` import -> map / layout [T-D04] · Verify: `UT` — evidence: test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, commit:d802a71 (2026-10-31)
+- [x] P7.05 Palette import / export `.pal` / `.gpl` [T-P10] · Verify: `UT` — evidence: test:GraphicsTests.PaletteFilesRoundTrip, test:ArtLibraryTests.ExportAndImport_PalAndGpl, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, commit:d802a71 (2026-10-31)
+- [x] P7.06 Audio: MOD / XM -> maxmod soundbank via mmutil; WAV -> 11 kHz mono 8-bit; MP3 rejected with the Figma message [T-D04, T-D24] · Verify: `UT` — evidence: test:FixtureTests.GeneratedMusicIsReadByMaxmod, test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:ImportDialogTests.Problems_OpenTheErrorsDialog_FixesAndSkipsErrors, commit:d802a71 (2026-10-31)
+- [x] P7.07 `.sfx` (DMG) -> register tables; Bake to `.wav` [T-P25] · Verify: `UT` — evidence: test:PipelineTests.SfxDesignerEffectsPlayOnTheDmgChannels, test:DmgSoundTests.Registers_AreTheHardwareEncodingOfTheFields, test:SfxDesignerTests.BakeToWav_SavesTheSampleAndHardwareKeepsZeroBytes, commit:d802a71 (2026-10-31)
+- [x] P7.08 LZ77 compression compatible with the BIOS [T-S03, T-D05] · Verify: `RT` BIOS decompresses converter output exactly — evidence: test:GraphicsTests.Lz77RoundTripsAndIsVramSafe, test:BuildReportTests.DebugAndReleaseRomsShowTheSameGameWithAndWithoutCompression, test:bios_wrappers, commit:d802a71 (2026-10-31)
+- [x] P7.09 Hash cache: key = input bytes + options + converter version; `build/cache/manifest.json`; unchanged inputs skipped (blueprint 11) · Verify: `UT` no-change rebuild converts 0 assets, one option change reconverts 1 — evidence: test:PipelineTests.SecondBuildWithoutChangesConvertsNothingAndIsFast, commit:d802a71 (2026-10-31)
+- [x] P7.10 Build graph with Ninja: g++ `-O2 -mthumb -mcpu=arm7tdmi`, hot code as ARM in IWRAM, `ld --gc-sections`, objcopy, gbafix with title (12), game code (4), maker (2), version [T-D06, T-S01] · Verify: `RT` ROM boots; header bytes checked — evidence: test:BuildReportTests.RomHeaderHoldsTitleGameCodeMakerAndVersion, test:PipelineTests.BuildRomStepsIncludeLinkAndGbafix, test:PipelineTests.MiniPlatformerBuildsAndPlays, test:PipelineTests.BuildsWithoutNinjaAndSkipsUpToDateObjects, test:RamBudgetTests.CodeOfIwramCppFilesCountsAsHotArmCodeNotData, test:iwram_code_runs_from_iwram, commit:d802a71 (2026-10-31)
+- [x] P7.11 Debug / Release configs with optimise level, strip Debug.Log, keep asserts, warn when ROM > N MB (16 MB default), output folder, run in mGBA after build [T-S03] · Verify: `UT` config matrix — evidence: test:BuildReportTests.ConfigurationMatrixSetsCompilerFlagsDefinesAndCompression, test:BuildReportTests.DebugAndReleaseRomsShowTheSameGameWithAndWithoutCompression, test:BuildReportTests.RomSizeWarningComesFromProjectSettingsAndOver32MbFails, test:PipelineTests.BuildOutputFolderFromProjectSettings, test:PipelineTests.FailedAssertsLogFileAndLineAndStopTheGame, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, test:ProjectSettingsTests.BuildTab_FieldsChangeTheBuild, commit:d802a71 (2026-10-31)
 - [ ] P7.12 `build/report.json`: ROM / RAM / VRAM per asset, ROM breakdown (graphics, code, audio, data), largest assets, warnings, time per stage, history [T-P11, T-O06] · Verify: `UT` schema; numbers match the linker map
-- [ ] P7.13 Build progress and errors streamed to the editor: steps, per-file progress, timings, `file(line,col)` links, first error [T-D06, T-D23] · Verify: `E2E`
-- [ ] P7.14 Clean Build [T-M05] and cache clear with size display [T-S08] · Verify: `UT`
+- [x] P7.13 Build progress and errors streamed to the editor: steps, per-file progress, timings, `file(line,col)` links, first error [T-D06, T-D23] · Verify: `E2E` — evidence: test:BuildRomTests.Stream_FromTheBuildThread_UpdatesStepsProgressAndLog, test:BuildRomTests.BuildRom_RealBuild_StreamsStepsAndUpdatesStatusAndReport, test:BuildRomTests.Failure_ShowsTheFailedStepItsPredecessorSkippedStepsAndErrors, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, commit:d802a71 (2026-10-31)
+- [x] P7.14 Clean Build [T-M05] and cache clear with size display [T-S08] · Verify: `UT` — evidence: test:MenuActionTests.CleanBuild_DeletesTheBuildFolder, test:PreferencesTests.Paths_ClearCacheEmptiesTheProjectsBuildCache, commit:d802a71 (2026-10-31)
 - [ ] P7.15 Export ROM: file name, folder, pad to power of two, estimated size [T-D05] · Verify: `UT` padded size; `EMU` padded ROM boots
-- [ ] P7.16 Asset reference graph for Find Usages and Find Unused Assets [T-M13, T-M03] and "Used by" lists [T-P07, T-P10] · Verify: `UT`
-- [ ] P7.17 Reimport [T-M03, T-M13] · Verify: `UT`
-- [ ] P7.18 Incremental build budget: "Usually under a second" [T-D06] for the fixture after a one-line script change · Verify: `BUD` timing in CI
+- [x] P7.16 Asset reference graph for Find Usages and Find Unused Assets [T-M13, T-M03] and "Used by" lists [T-P07, T-P10] · Verify: `UT` — evidence: test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:MenuActionTests.FindUnusedAssets_ListsAssetsNothingMentions, test:ArtLibraryTests.Banks_LoadedWithUsedByLists, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, commit:d802a71 (2026-10-31)
+- [x] P7.17 Reimport [T-M03, T-M13] · Verify: `UT` — evidence: test:PopoverAndMenuTests.AssetContextMenu_EveryItem, commit:d802a71 (2026-10-31)
+- [x] P7.18 Incremental build budget: "Usually under a second" [T-D06] for the fixture after a one-line script change · Verify: `BUD` timing in CI — evidence: test:PipelineTests.FixtureRebuildsAfterAOneLineScriptChangeInUnderASecond, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P7.X1 Fixture builds clean -> `.gba`; a second build with no changes does no work; report matches the map file · Verify: `RT`, `BUD`, `USER`
@@ -1044,16 +1044,16 @@ Entry gate:
 
 Items:
 - [ ] P8.01 Font sources TTF / OTF, BDF, image sheet [T-D15] · Verify: `UT`
-- [ ] P8.02 Fixed (8x8) and variable width fonts, sizes (12 px, 16x16), metrics: height, base, spacing, line, advance per glyph [T-P09] · Verify: `UT`
-- [ ] P8.03 Character sets Basic Latin (95), Thai (87), Symbols (12), Japanese kana [T-P09, T-D15] · Verify: `UT` counts
-- [ ] P8.04 Glyph data editable per pixel; missing glyphs flagged (Glyph Cell "Missing") [T-P09] · Verify: `UT`
-- [ ] P8.05 Thai layout at build time: stack upper vowels and tone marks, shift marks on ascender consonants (ป ฝ ฟ ฬ), place lower vowels ุ ู and handle descender consonants (ฎ ฏ ฐ ญ), sara am ำ [T-P09 Thai layout] · Verify: `UT` full combination corpus vs golden bitmaps
-- [ ] P8.06 Thai word wrap by dictionary at build time; never splits a word; line breaks precomputed [T-P09, T-S05, T-P14] · Verify: `UT` known sentences; `RT` wrapped output
-- [ ] P8.07 Rendering 2bpp / 4 shades, drop shadow, draw to a BG text layer, VRAM text budget (4 / 16 KB) [T-P09] · Verify: `RT`; `BUD`
+- [x] P8.02 Fixed (8x8) and variable width fonts, sizes (12 px, 16x16), metrics: height, base, spacing, line, advance per glyph [T-P09] · Verify: `UT` — evidence: test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, test:FontModelTests.SettingsEdits_AreUndoable_AndSavedWithDrawTo, commit:d802a71 (2026-10-31)
+- [x] P8.03 Character sets Basic Latin (95), Thai (87), Symbols (12), Japanese kana [T-P09, T-D15] · Verify: `UT` counts — evidence: test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontModelTests.Groups_ThaiConsonantsAreThe44Letters, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, commit:d802a71 (2026-10-31)
+- [x] P8.04 Glyph data editable per pixel; missing glyphs flagged (Glyph Cell "Missing") [T-P09] · Verify: `UT` — evidence: test:FontModelTests.GlyphEditor_PaintWritesAnOverrideFontBuilderApplies_Undo, test:FontModelTests.MissingIn_ListsCharactersWithoutGlyphs, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, commit:d802a71 (2026-10-31)
+- [x] P8.05 Thai layout at build time: stack upper vowels and tone marks, shift marks on ascender consonants (ป ฝ ฟ ฬ), place lower vowels ุ ู and handle descender consonants (ฎ ฏ ฐ ญ), sara am ำ [T-P09 Thai layout] · Verify: `UT` full combination corpus vs golden bitmaps — evidence: test:ThaiCorpusTests.EveryClusterStacksItsMarksWithoutCollisions, test:ThaiCorpusTests.CorpusMatchesTheReviewedGoldenSheet, commit:d802a71 (2026-10-31)
+- [x] P8.06 Thai word wrap by dictionary at build time; never splits a word; line breaks precomputed [T-P09, T-S05, T-P14] · Verify: `UT` known sentences; `RT` wrapped output — evidence: test:ThaiWrapTests.EveryLineBreakFallsOnADictionaryWordStart, test:ThaiWrapTests.KnownSentencesWrapAtTheirWords, test:ThaiWrapTests.UnknownNamesAreNotSplitLetterByLetter, test:TextPipelineTests.DictionaryWrapNeverSplitsWords, test:ThaiCorpusTests.CorpusLinesInTheRomMatchThePreview, commit:d802a71 (2026-10-31)
+- [x] P8.07 Rendering 2bpp / 4 shades, drop shadow, draw to a BG text layer, VRAM text budget (4 / 16 KB) [T-P09] · Verify: `RT`; `BUD` — evidence: test:glyph_pixels_2bpp_and_shadow, test:text_layer_avoids_the_scene_bgs, test:BuildReportTests.ReportNumbersMatchTheLinkerMap, commit:d802a71 (2026-10-31)
 - [ ] P8.08 Add Characters: paste text, list missing glyphs with code points, render them from the source font, option to scan all dialogue and localization strings [T-D16] · Verify: `UT` the Figma sample finds 7 missing
-- [ ] P8.09 Editor preview uses the same layout and rasteriser as the ROM [T-P09, T-P14, T-P16] · Verify: `UT` editor bitmap equals an `RT` ROM capture of the same string (pixel diff 0)
-- [ ] P8.10 Default font and font per language [T-S01, T-S05, T-D20] · Verify: `UT`
-- [ ] P8.11 ROM size estimate per font ("about 6 KB of ROM") [T-D15, T-P09] · Verify: `BUD` estimate within 10% of the built size
+- [x] P8.09 Editor preview uses the same layout and rasteriser as the ROM [T-P09, T-P14, T-P16] · Verify: `UT` editor bitmap equals an `RT` ROM capture of the same string (pixel diff 0) — evidence: test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, test:FontModelTests.DialoguePreview_TextPixelsAreTheRomRenderer, test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, commit:d802a71 (2026-10-31)
+- [x] P8.10 Default font and font per language [T-S01, T-S05, T-D20] · Verify: `UT` — evidence: test:ProjectSettingsTests.EveryField_PersistsToTheAgbproj, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, test:FontModelTests.ProjectFonts_DefaultFirst_BuiltByFontBuilder, commit:d802a71 (2026-10-31)
+- [x] P8.11 ROM size estimate per font ("about 6 KB of ROM") [T-D15, T-P09] · Verify: `BUD` estimate within 10% of the built size — evidence: test:BuildReportTests.ReportNumbersMatchTheLinkerMap, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P8.X1 G-THAI passes · Verify: `USER` reviews the Thai screenshots
@@ -1066,22 +1066,22 @@ Entry gate:
 - [ ] P9.E1 Phase 6 tier 3 and Phase 7 exits ticked
 
 Database:
-- [ ] P9.01 Tables with enum key field `id`, rows add / edit / filter, record panel [T-P07] · Verify: `UT`
-- [ ] P9.02 Field types int, fixed, bool, text, enum (with values), sprite, sound, script, reference; default; localized; bytes per row shown [T-D18] · Verify: `UT` "rarity" enum = 1 B per row
-- [ ] P9.03 New Table from empty / CSV / copy of a table; localize text fields; keep in ROM as const [T-D17] · Verify: `UT`
-- [ ] P9.04 Import CSV: column mapping, type check, skip column, per-row warnings with defaults [T-D19] · Verify: `UT` the fixture CSV warns on rows 7 and 15
-- [ ] P9.05 "Used by" references (shop slot, chest, script drop table) [T-P07] · Verify: `UT`
-- [ ] P9.06 Script-typed fields (e.g. `Heal(power)`) compiled into callable code [T-P07 effect column] · Verify: `RT`
+- [x] P9.01 Tables with enum key field `id`, rows add / edit / filter, record panel [T-P07] · Verify: `UT` — evidence: test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_EditCellsInPlaceAndSaveWritesTheDbFile, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, commit:d802a71 (2026-10-31)
+- [x] P9.02 Field types int, fixed, bool, text, enum (with values), sprite, sound, script, reference; default; localized; bytes per row shown [T-D18] · Verify: `UT` "rarity" enum = 1 B per row — evidence: test:DatabaseTests.FieldBytesMatchAddField, test:DatabaseWindowTests.P11_40_AddFieldRarityEnumIsOneBytePerRow, commit:d802a71 (2026-10-31)
+- [x] P9.03 New Table from empty / CSV / copy of a table; localize text fields; keep in ROM as const [T-D17] · Verify: `UT` — evidence: test:DatabaseWindowTests.P11_40_NewTableFromEmptyCsvAndCopy_UndoRemovesTheFile, test:DatabaseBuildTests.TablesBuildIntoTheRomAsData, commit:d802a71 (2026-10-31)
+- [x] P9.04 Import CSV: column mapping, type check, skip column, per-row warnings with defaults [T-D19] · Verify: `UT` the fixture CSV warns on rows 7 and 15 — evidence: test:DatabaseTests.ImportCsvMapsColumnsAndReportsBadRows, test:DatabaseWindowTests.P11_40_ImportCsvWarnsOnRows7And15ThenImports, commit:d802a71 (2026-10-31)
+- [x] P9.05 "Used by" references (shop slot, chest, script drop table) [T-P07] · Verify: `UT` — evidence: test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, commit:d802a71 (2026-10-31)
+- [x] P9.06 Script-typed fields (e.g. `Heal(power)`) compiled into callable code [T-P07 effect column] · Verify: `RT` — evidence: test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, test:FrameworkPlayTests.BuildMakesPrefabTemplatesSharesMapsAndKeepsFlagIds, test:TranslatorTests.SceneEventsLinkConditionsAndDatabaseScriptCells, commit:d802a71 (2026-10-31)
 - [ ] P9.07 ROM size per table in the status bar [T-P07] · Verify: `BUD`
 
 Localization:
-- [ ] P9.08 String keys, source language, one table per language [T-P14] · Verify: `UT`
-- [ ] P9.09 Languages with progress, fallback language, Add Language with "translate from", font, mark all missing, fall back until translated [T-S05, T-D20] · Verify: `UT`
-- [ ] P9.10 Fit check in px against the box width and line count (fits 2 lines, max 3), "long" flag, auto-check [T-P14] · Verify: `UT` uses the runtime layout engine
-- [ ] P9.11 Missing strings: list, "Missing only" filter, `[key]` shown in Debug, fail the build on missing [T-S05, T-P14] · Verify: `UT`
-- [ ] P9.12 Groups (Dialogue, UI & menus, Items), notes and speaker per string [T-P14] · Verify: `UT`
-- [ ] P9.13 Export .csv through the save dialog [T-P14, T-Y02] · Verify: `UT`
-- [ ] P9.14 `Text.Show(key)` and dialogue lines pick the current language at runtime · Verify: `RT` switch language, same scene
+- [x] P9.08 String keys, source language, one table per language [T-P14] · Verify: `UT` — evidence: test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:FixtureTests.CountsMatchTheFigmaFrames, commit:d802a71 (2026-10-31)
+- [x] P9.09 Languages with progress, fallback language, Add Language with "translate from", font, mark all missing, fall back until translated [T-S05, T-D20] · Verify: `UT` — evidence: test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, test:PipelineTests.MissingStringsUseTheLanguageFallbackOrShowTheKeyInDebug, commit:d802a71 (2026-10-31)
+- [x] P9.10 Fit check in px against the box width and line count (fits 2 lines, max 3), "long" flag, auto-check [T-P14] · Verify: `UT` uses the runtime layout engine — evidence: test:LocalizationWindowTests.P11_41_FitCheckSaysHowManyLinesTheBoxNeeds, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:ThaiWrapTests.BuiltTextRunsHaveTheLinesTheFitCheckShows, commit:d802a71 (2026-10-31)
+- [x] P9.11 Missing strings: list, "Missing only" filter, `[key]` shown in Debug, fail the build on missing [T-S05, T-P14] · Verify: `UT` — evidence: test:LocalizationWindowTests.P11_41_SearchGroupsAndMissingOnly, test:PipelineTests.MissingStringsUseTheLanguageFallbackOrShowTheKeyInDebug, test:LimitTests.MissingStringsWarnOrFailAsLocalizationSays, commit:d802a71 (2026-10-31)
+- [x] P9.12 Groups (Dialogue, UI & menus, Items), notes and speaker per string [T-P14] · Verify: `UT` — evidence: test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, commit:d802a71 (2026-10-31)
+- [x] P9.13 Export .csv through the save dialog [T-P14, T-Y02] · Verify: `UT` — evidence: test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, commit:d802a71 (2026-10-31)
+- [x] P9.14 `Text.Show(key)` and dialogue lines pick the current language at runtime · Verify: `RT` switch language, same scene — evidence: test:RuntimeTextAudioTests.TextShowUsesTheLanguageChosenInOptionsInTheSameScene, test:hud_label_comes_back_after_pause_and_options, test:FixtureBuildTests.FixtureBuildsInEnglishAndThaiAndJapaneseShowsTheFallback, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P9.X1 Fixture builds in English and Thai, Japanese shows fallback · Verify: `RT`, `USER`
@@ -1312,10 +1312,10 @@ Items (each template: `RT` builds, `EMU` 60 fps, `HW` where possible, `E2E` New 
 - [ ] P15.06 Visual Novel: portraits, choices, flags and Thai text [T-P20, T-D01]
 - [ ] P15.07 Beat 'em up: side-scrolling fights, combos, enemy waves [T-P20]
 - [ ] P15.08 Racing (Mode 7): rotating ground plane, laps, timer [T-P20]
-- [ ] P15.09 Template content is original (art, music, text) · Verify: `REV` per G-LEGAL
-- [ ] P15.10 Tutorials: Your first platformer (8 steps), Scripting in C# for GBA, Making fonts with Thai, Palettes & VRAM, Sound & music [T-P21, T-O13] · Verify: `DOC`; `E2E` steps tick themselves
+- [x] P15.09 Template content is original (art, music, text) · Verify: `REV` per G-LEGAL — evidence: doc:docs/evidence/legal-review.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
+- [x] P15.10 Tutorials: Your first platformer (8 steps), Scripting in C# for GBA, Making fonts with Thai, Palettes & VRAM, Sound & music [T-P21, T-O13] · Verify: `DOC`; `E2E` steps tick themselves — evidence: doc:docs/user/tutorials/README.md, test:TutorialTests.P11_04_FirstPlatformerStep3_SubStepsTickThemselves_BackSkipNext, test:TutorialTests.P11_04_FinishingTheLastStepMarksTheTutorialDone, test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, commit:d802a71 (2026-10-31)
 - [ ] P15.11 Sample projects: Sky Hopper demo, Cave Quest, Snow Run, Dusk Story [T-P21] · Verify: `RT` each builds and boots
-- [ ] P15.12 Documentation hub: Scripting API, GBA hardware guide, Keyboard shortcuts, Release notes, Community, Report a bug [T-P21] · Verify: `DOC`
+- [x] P15.12 Documentation hub: Scripting API, GBA hardware guide, Keyboard shortcuts, Release notes, Community, Report a bug [T-P21] · Verify: `DOC` — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:ScriptingApiTests.HelpScriptingApi_F1_ShowsTheTreeAndTheInputPage, test:MenuActionTests.ReportABug_OpensTheConfiguredPage, doc:docs/user/gba-hardware-guide.md, doc:docs/RELEASE-NOTES.md, commit:d802a71 (2026-10-31)
 
 Exit gate:
 - [ ] P15.X1 Every chosen template plays start to finish on emulator (and hardware if available) · Verify: `USER`
@@ -1329,8 +1329,8 @@ Entry gate:
 
 Items:
 - [ ] P16.01 Windows package per D-19; first run detects or guides the devkitPro install; uninstall keeps user projects · Verify: install on a clean Windows user account
-- [ ] P16.02 About: version, date, credits text, Licenses list (every third-party item), Website [T-D11] · Verify: `REV` against `docs/THIRD_PARTY.md`
-- [ ] P16.03 Check for Updates and Report a Bug per D-13 [T-M07] · Verify: `E2E`
+- [x] P16.02 About: version, date, credits text, Licenses list (every third-party item), Website [T-D11] · Verify: `REV` against `docs/THIRD_PARTY.md` — evidence: test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:PackagingTests.EveryShippedLibraryHasALicenceRow, doc:docs/THIRD_PARTY.md, commit:d802a71 (2026-10-31)
+- [x] P16.03 Check for Updates and Report a Bug per D-13 [T-M07] · Verify: `E2E` — evidence: test:MenuActionTests.CheckForUpdates_NoSourceNewerSameAndOffline, test:MenuActionTests.ReportABug_OpensTheConfiguredPage, test:AboutTests.EditorJson_IsReadWithItsD13Keys, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 - [ ] P16.04 Brand applied: icon, wordmark, Launcher brand block, About icon, banners [T-R01..T-R03] · Verify: `SHOT`
 - [ ] P16.05 Release notes for the version, shown in Launcher "What's new" · Verify: `DOC`
 - [ ] P16.06 Release candidate passes every section 4 box and every gate; sample ROMs boot on hardware if available · Verify: CI report, `HW`
@@ -1348,62 +1348,62 @@ Exit gate:
 ### G-HW · GBA hardware limits
 
 - [ ] G-HW.01 VRAM: BG <= 64 KB in tile modes, OBJ <= 32 KB (16 KB in bitmap modes), char block and screen block accounting matches hardware · Verify: `BUD` limit checks fail the build with a clear message; `RT` limits test ROM
-- [ ] G-HW.02 OAM <= 128 sprites and <= 32 affine matrices; per-scanline sprite overload warned · Verify: `BUD`, `RT`
-- [ ] G-HW.03 Palettes <= 16 BG + 16 OBJ banks of 16 colours, index 0 transparent · Verify: `BUD`
+- [x] G-HW.02 OAM <= 128 sprites and <= 32 affine matrices; per-scanline sprite overload warned · Verify: `BUD`, `RT` — evidence: test:hundred_twenty_eight_sprites_share_frames, test:thirty_third_affine_matrix_is_refused, test:overloaded_screen_line_is_reported, test:four_layers_128_sprites_and_music_at_60_fps, test:DebuggerE2ETests.P13_03_OamTable_ActorXYSizeTilePalPrioFlags_InUse, commit:d802a71 (2026-10-31)
+- [x] G-HW.03 Palettes <= 16 BG + 16 OBJ banks of 16 colours, index 0 transparent · Verify: `BUD` — evidence: test:LimitTests.TooManyBackgroundPalettesFailTheBuild, test:LimitTests.TooManySpritePalettesFailTheBuildUnlessSpritesShareThem, test:ArtLibraryTests.LockIndex0_KeepsItTransparentUntilUnlocked, commit:d802a71 (2026-10-31)
 - [ ] G-HW.04 IWRAM <= 32 KB including stack, EWRAM <= 256 KB, split per blueprint 10 defaults · Verify: `BUD` from the map file
-- [ ] G-HW.05 ROM <= 32 MB with the warning threshold from Project Settings · Build · Verify: `BUD`
-- [ ] G-HW.06 Save data fits the chosen save type [T-S02 "189 B / 32 KB"] · Verify: `UT`
-- [ ] G-HW.07 60 fps: work fits in 280,896 cycles per frame, commit fits in VBlank, each staged-load step fits in one frame · Verify: `BUD` profiler on the worst scene of each template
-- [ ] G-HW.08 Audio channel use is within maxmod settings and DMG channels do not clash · Verify: `UT`
+- [x] G-HW.05 ROM <= 32 MB with the warning threshold from Project Settings · Build · Verify: `BUD` — evidence: test:BuildReportTests.RomSizeWarningComesFromProjectSettingsAndOver32MbFails, commit:d802a71 (2026-10-31)
+- [x] G-HW.06 Save data fits the chosen save type [T-S02 "189 B / 32 KB"] · Verify: `UT` — evidence: test:LimitTests.SaveDataThatDoesNotFitTheSaveTypeFailsTheBuild, test:FixtureBuildTests.SaveSlotSizeIsTheCompiledGameState, test:capacity_and_crc, commit:d802a71 (2026-10-31)
+- [x] G-HW.07 60 fps: work fits in 280,896 cycles per frame, commit fits in VBlank, each staged-load step fits in one frame · Verify: `BUD` profiler on the worst scene of each template — evidence: test:TemplateTests.PlatformerPlaysThroughToTheGoal, test:TemplateTests.TopDownAdventureTalksPushesUnlocksAndEnters, test:TemplateTests.VisualNovelTellsTheStoryAndRemembersTheChoice, test:TemplateTests.PuzzleDropsPairsClearsLinesAndEnds, test:TemplateTests.ShootEmUpScrollsFiresAndClearsTheStage, test:TemplateTests.RpgShopsAndWinsABattle, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, test:TemplateTests.BeatEmUpFightsThroughTheWavesWithCombos, test:staged_load_steps_fit_in_a_frame, test:four_layers_128_sprites_and_music_at_60_fps, commit:d802a71 (2026-10-31)
+- [x] G-HW.08 Audio channel use is within maxmod settings and DMG channels do not clash · Verify: `UT` — evidence: test:AudioChannelTests.ModulesMustFitTheMixingChannels, test:AudioChannelTests.BuildStopsWhenMusicNeedsMoreChannelsThanTheSettings, test:AudioChannelTests.ModuleChannelCountsAreReadFromTheFiles, test:channel_use_within_maxmod_settings_and_dmg_channels_do_not_clash, commit:d802a71 (2026-10-31)
 
 ### G-THAI · Thai text rendering
 
-- [ ] G-THAI.01 Every consonant with every upper vowel, tone mark and lower vowel renders correctly, including ascender and descender consonants, sara am, mai yamok, Thai digits, mixed Thai / Latin lines · Verify: `UT` corpus vs golden bitmaps, `RT` ROM capture
-- [ ] G-THAI.02 Dictionary wrap never splits a word and matches the Localization fit check · Verify: `UT`
-- [ ] G-THAI.03 Editor preview equals the ROM output pixel for pixel · Verify: P8.09
-- [ ] G-THAI.04 Thai works in every surface shown in Figma: dialogue box, Localization, Database localized fields, Dialogue Editor, Font Manager, New Speaker (TH name) · Verify: `E2E`
-- [ ] G-THAI.05 Thai font and word list licences recorded (D-17) · Verify: `REV`
+- [x] G-THAI.01 Every consonant with every upper vowel, tone mark and lower vowel renders correctly, including ascender and descender consonants, sara am, mai yamok, Thai digits, mixed Thai / Latin lines · Verify: `UT` corpus vs golden bitmaps, `RT` ROM capture — evidence: test:ThaiCorpusTests.EveryClusterStacksItsMarksWithoutCollisions, test:ThaiCorpusTests.DigitsMaiYamokAndMixedLinesLayOutWithoutMissingGlyphs, test:ThaiCorpusTests.CorpusMatchesTheReviewedGoldenSheet, test:ThaiCorpusTests.CorpusLinesInTheRomMatchThePreview, commit:d802a71 (2026-10-31)
+- [x] G-THAI.02 Dictionary wrap never splits a word and matches the Localization fit check · Verify: `UT` — evidence: test:ThaiWrapTests.EveryLineBreakFallsOnADictionaryWordStart, test:ThaiWrapTests.BuiltTextRunsHaveTheLinesTheFitCheckShows, test:ThaiWrapTests.KnownSentencesWrapAtTheirWords, commit:d802a71 (2026-10-31)
+- [x] G-THAI.03 Editor preview equals the ROM output pixel for pixel · Verify: P8.09 — evidence: test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, test:FontModelTests.DialoguePreview_TextPixelsAreTheRomRenderer, test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, commit:d802a71 (2026-10-31)
+- [x] G-THAI.04 Thai works in every surface shown in Figma: dialogue box, Localization, Database localized fields, Dialogue Editor, Font Manager, New Speaker (TH name) · Verify: `E2E` — evidence: test:ShellE2ETests.Thai_TypingIntoTextFieldsAndSearch, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:ThaiCorpusTests.CorpusLinesInTheRomMatchThePreview, commit:d802a71 (2026-10-31)
+- [x] G-THAI.05 Thai font and word list licences recorded (D-17) · Verify: `REV` — evidence: doc:docs/THIRD_PARTY.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 - [ ] G-THAI.06 Thai on real hardware photo or flash-cart capture · Verify: `HW` (or `n/a until hardware`)
 
 ### G-ERR · Error handling
 
 - [ ] G-ERR.01 Every user-facing error says what happened, why, and how to fix it, in plain words (pattern of T-D24 and T-D23) · Verify: `REV` of all error strings
-- [ ] G-ERR.02 Every compile or build error links to `file(line,col)` · Verify: `E2E`
-- [ ] G-ERR.03 No silent failure: pool full, budget exceeded, missing string, missing glyph, failed import all reach the Console (and fail the build where a setting says so) · Verify: `UT` per case
+- [x] G-ERR.02 Every compile or build error links to `file(line,col)` · Verify: `E2E` — evidence: test:PipelineTests.GccErrorsBecomeClickableDiagnostics, test:BuildRomTests.GoToFirstError_OpensTheScriptAtItsLine, test:BottomPanelTests.Console_LinesFiltersCountsAndClickToCode, test:BackendTests.ScriptErrorsStopTheBuildWithFileLineColumn, commit:d802a71 (2026-10-31)
+- [x] G-ERR.03 No silent failure: pool full, budget exceeded, missing string, missing glyph, failed import all reach the Console (and fail the build where a setting says so) · Verify: `UT` per case — evidence: test:LimitTests.AFullActorPoolIsReportedInTheConsole, test:LimitTests.TooMuchBackgroundVramFailsTheBuildWithTheScene, test:LimitTests.MissingStringsWarnOrFailAsLocalizationSays, test:LimitTests.MissingGlyphsAreReported, test:RobustnessTests.FailedImport_ReachesTheConsole, commit:d802a71 (2026-10-31)
 - [ ] G-ERR.04 Long operations can be cancelled and leave a consistent state (open project, build, flash, import) · Verify: `E2E`
-- [ ] G-ERR.05 Missing or wrong tool paths show which path and point to Preferences · Paths · Verify: `E2E`
-- [ ] G-ERR.06 Editor crash keeps the user's work through autosave and writes a crash log (infra) · Verify: `E2E` forced crash
-- [ ] G-ERR.07 Runtime Debug builds: asserts log the file and line to the Console and stop; Release behaviour per "Keep asserts" · Verify: `RT`
+- [x] G-ERR.05 Missing or wrong tool paths show which path and point to Preferences · Paths · Verify: `E2E` — evidence: test:ToolchainHelpTests.Build_WithAToolMissing_NamesItsPathAndOffersPaths, test:ToolchainHelpTests.FirstRun_WithoutDevkitPro_NamesTheFoldersSearched_InstallerPage_AndPaths, commit:d802a71 (2026-10-31)
+- [x] G-ERR.06 Editor crash keeps the user's work through autosave and writes a crash log (infra) · Verify: `E2E` forced crash — evidence: test:RobustnessTests.ForcedCrash_SavesTheWorkAndWritesACrashLog, test:ServiceTests.Autosave_SavesDirtyDocumentsEveryNMinutes, commit:d802a71 (2026-10-31)
+- [x] G-ERR.07 Runtime Debug builds: asserts log the file and line to the Console and stop; Release behaviour per "Keep asserts" · Verify: `RT` — evidence: test:PipelineTests.FailedAssertsLogFileAndLineAndStopTheGame, test:RuntimeRomTests.PoolAssertsCatchStaleHandlesAndDoubleFrees, commit:d802a71 (2026-10-31)
 
 ### G-PERF · Performance budgets
 
-- [ ] G-PERF.01 Every template holds 60 fps on mGBA (and hardware if available) in its heaviest scene · Verify: `BUD`
-- [ ] G-PERF.02 Incremental build of the fixture after a one-line change finishes in under 1 s ("Usually under a second", T-D06) · Verify: `BUD` CI timing
+- [x] G-PERF.01 Every template holds 60 fps on mGBA (and hardware if available) in its heaviest scene · Verify: `BUD` — evidence: test:TemplateTests.PlatformerPlaysThroughToTheGoal, test:TemplateTests.TopDownAdventureTalksPushesUnlocksAndEnters, test:TemplateTests.VisualNovelTellsTheStoryAndRemembersTheChoice, test:TemplateTests.PuzzleDropsPairsClearsLinesAndEnds, test:TemplateTests.ShootEmUpScrollsFiresAndClearsTheStage, test:TemplateTests.RpgShopsAndWinsABattle, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, test:TemplateTests.BeatEmUpFightsThroughTheWavesWithCombos, commit:d802a71 (2026-10-31)
+- [x] G-PERF.02 Incremental build of the fixture after a one-line change finishes in under 1 s ("Usually under a second", T-D06) · Verify: `BUD` CI timing — evidence: test:PipelineTests.FixtureRebuildsAfterAOneLineScriptChangeInUnderASecond, commit:d802a71 (2026-10-31)
 - [ ] G-PERF.03 Clean build, project open and Play start times have targets agreed in Phase 1 and are met · Verify: `BUD`
-- [ ] G-PERF.04 Editor stays responsive while building and playing (UI thread never blocked by build or emulator) · Verify: `E2E` timing
+- [x] G-PERF.04 Editor stays responsive while building and playing (UI thread never blocked by build or emulator) · Verify: `E2E` timing — evidence: test:LongOperationTests.Build_CancelledFromBuildRom_LeavesTheProjectConsistent_UiStaysResponsive, test:LongOperationTests.Play_TheGameTicksLeaveTheUiThreadFree, commit:d802a71 (2026-10-31)
 - [ ] G-PERF.05 Audio mixer CPU stays near the Figma value (6% for 8 ch at 21 kHz) · Verify: `BUD`
 
 ### G-DOCS · Documentation
 
-- [ ] G-DOCS.01 Scripting API docs generated from source, offline, cover 100% of public members · Verify: `UT` doc coverage
-- [ ] G-DOCS.02 One user page per editor window, starting from its Figma caption text · Verify: `DOC`
-- [ ] G-DOCS.03 Tutorials and the GBA hardware guide listed in Launcher · Learn · Verify: `DOC`
+- [x] G-DOCS.01 Scripting API docs generated from source, offline, cover 100% of public members · Verify: `UT` doc coverage — evidence: test:IdeTests.ApiDocsCoverEveryPublicMember, test:IdeTests.ReferenceAssemblyShipsWithXmlDocs, test:ScriptingApiTests.WorksOffline_NoNetworkNeeded, commit:d802a71 (2026-10-31)
+- [x] G-DOCS.02 One user page per editor window, starting from its Figma caption text · Verify: `DOC` — evidence: doc:docs/user/windows/README.md, commit:d802a71 (2026-10-31)
+- [x] G-DOCS.03 Tutorials and the GBA hardware guide listed in Launcher · Learn · Verify: `DOC` — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, doc:docs/user/tutorials/README.md, doc:docs/user/gba-hardware-guide.md, commit:d802a71 (2026-10-31)
 - [ ] G-DOCS.04 Developer docs: ARCHITECTURE, BUILD, file formats, DECISIONS, TOOLCHAIN, THIRD_PARTY kept current · Verify: `REV` at each phase exit
 - [ ] G-DOCS.05 Release notes per release · Verify: `DOC`
 
 ### G-LEGAL · Legal and IP
 
-- [ ] G-LEGAL.01 No code, assets, text, map data, data tables, music, names or opcodes copied from pokeemerald; references cite file names only · Verify: `REV` plus a scan for distinctive pokeemerald identifiers (for example `gMain`, `gSaveBlock1Ptr`, `VAR_RESULT`, `MUS_`) in the repo
-- [ ] G-LEGAL.02 No Nintendo assets, BIOS files or commercial ROMs in the repo, tests or installer · Verify: `REV`
-- [ ] G-LEGAL.03 Product name is "AGB Studio"; "GBA" and "Game Boy" never appear in the product name, app id, installer name, window title or icon; descriptive use only (for example "for Game Boy Advance"); never "GB Studio" or "GBA Studio" · Verify: `REV` + string scan
-- [ ] G-LEGAL.04 Every third-party component and font licence recorded and shown in About › Licenses (mGBA, libtonc, maxmod, libgba if linked, Roslyn, Inter, JetBrains Mono, IBM Plex Sans Thai, Noto Sans Thai, Nunito, Press Start 2P, Thai word list) · Verify: `REV`
-- [ ] G-LEGAL.05 Butano and other engines used as reference only, no code copied unless its licence is followed and recorded · Verify: `REV`
-- [ ] G-LEGAL.06 Template, sample and tutorial content is original · Verify: `REV`
-- [ ] G-LEGAL.07 Runtime licence for user games decided (D-05) and shown in docs · Verify: `DOC`
+- [x] G-LEGAL.01 No code, assets, text, map data, data tables, music, names or opcodes copied from pokeemerald; references cite file names only · Verify: `REV` plus a scan for distinctive pokeemerald identifiers (for example `gMain`, `gSaveBlock1Ptr`, `VAR_RESULT`, `MUS_`) in the repo — evidence: test:LintTests.PokeemeraldNamesAndWrongProductNamesAreReported, test:LintTests.RepositoryIsClean, doc:docs/evidence/legal-review.md, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.02 No Nintendo assets, BIOS files or commercial ROMs in the repo, tests or installer · Verify: `REV` — evidence: doc:docs/evidence/legal-review.md, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.03 Product name is "AGB Studio"; "GBA" and "Game Boy" never appear in the product name, app id, installer name, window title or icon; descriptive use only (for example "for Game Boy Advance"); never "GB Studio" or "GBA Studio" · Verify: `REV` + string scan — evidence: test:LintTests.PokeemeraldNamesAndWrongProductNamesAreReported, test:LintTests.RepositoryIsClean, doc:Directory.Build.props, doc:docs/evidence/audit-p0-p9-gates.md, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.04 Every third-party component and font licence recorded and shown in About › Licenses (mGBA, libtonc, maxmod, libgba if linked, Roslyn, Inter, JetBrains Mono, IBM Plex Sans Thai, Noto Sans Thai, Nunito, Press Start 2P, Thai word list) · Verify: `REV` — evidence: doc:docs/THIRD_PARTY.md, test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:PackagingTests.EveryShippedLibraryHasALicenceRow, test:DesignSystemTests.Fonts_BundledWithOflLicences, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.05 Butano and other engines used as reference only, no code copied unless its licence is followed and recorded · Verify: `REV` — evidence: doc:docs/evidence/legal-review.md, doc:docs/THIRD_PARTY.md, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.06 Template, sample and tutorial content is original · Verify: `REV` — evidence: doc:docs/evidence/legal-review.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
+- [x] G-LEGAL.07 Runtime licence for user games decided (D-05) and shown in docs · Verify: `DOC` — evidence: doc:LICENSE, doc:docs/user/licence-for-your-games.md, doc:docs/RELEASE-NOTES.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 
 ### G-EMOJI · No emoji (user rule)
 
-- [ ] G-EMOJI.01 No emoji in code, UI strings, docs, commit messages, release notes, templates · Verify: CI codepoint scan (P1.07)
+- [x] G-EMOJI.01 No emoji in code, UI strings, docs, commit messages, release notes, templates · Verify: CI codepoint scan (P1.07) — evidence: test:LintTests.PlantedViolationsAreReported, test:LintTests.RepositoryIsClean, test:DesignSystemTests.Sources_NoEmoji, doc:tools/check-commit-emoji.ps1, doc:ci.cmd, commit:d802a71 (2026-10-31)
 
 ### G-SCOPE · Scope kept to Figma
 

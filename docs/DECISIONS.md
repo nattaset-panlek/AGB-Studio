@@ -42,7 +42,7 @@ Every entry has the same parts: **Date** (when the answer was taken), **Question
 - AGB Studio (editor and toolchain): MIT.
 - Runtime that ships inside user games: MIT, so games can be sold; the only obligation is the third-party notices that the build writes next to the ROM (`THIRD_PARTY.txt`).
 - Third-party compliance is tracked in `docs/THIRD_PARTY.md`.
-- Note (2026-10-31): the MIT text is in `LICENSE` at the repository root, and `docs/user/licence-for-your-games.md` tells users what applies to their games. `THIRD_PARTY.txt` holds the libtonc and maxmod notices but not yet the MIT notice of the runtime itself.
+- Note (2026-10-31): the MIT text is in `LICENSE` at the repository root, and `docs/user/licence-for-your-games.md` tells users what applies to their games. `THIRD_PARTY.txt` holds the MIT notice of the runtime itself, then the libtonc and maxmod notices.
 
 ## D-06 Emulator integration · decided (user, 2026-10-31)
 - Date: 2026-10-31

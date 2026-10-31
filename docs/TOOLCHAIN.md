@@ -22,6 +22,17 @@ Package versions are from the devkitPro package database (`D:\devkitPro\msys2\va
 | padbin | general-tools 1.4.4 | `tools/bin/padbin.exe` | not used: Export ROM pads to a power of two itself (`ExportRomDialog.PadRom`, 0xFF fill) |
 | bin2s | general-tools 1.4.4 (banner "general-tools 1.4.4") | `tools/bin/bin2s.exe` | not used: the build writes assets as C++ arrays |
 
+### Compiler version (P0.01)
+
+Output of `D:\devkitPro\devkitARM\bin\arm-none-eabi-gcc --version`, saved on 2026-10-31:
+
+```
+arm-none-eabi-gcc.exe (devkitARM) 16.1.0
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
 ### Each tool runs (P0.04)
 
 Run on 2026-10-31 from `D:\devkitPro\tools\bin` in an empty folder; first line of output and exit code:

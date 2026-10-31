@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio build report (build/report.json)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "rom": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "gameCode": {
+      "type": "string"
+    },
+    "maker": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "saveType": {
+      "type": "string"
+    },
+    "configuration": {
+      "type": "string"
+    },
+    "builtAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "romBytes": {
+      "type": "integer"
+    },
+    "romCapacity": {
+      "type": "integer"
+    },
+    "buildSeconds": {
+      "type": "number"
+    },
+    "stepSeconds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "breakdown": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "largestAssets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "share": {
+            "type": "number"
+          },
+          "vram": {
+            "type": "string"
+          },
+          "vramBytes": {
+            "type": "integer"
+          },
+          "vramTileBytes": {
+            "type": "integer"
+          },
+          "vramMapBytes": {
+            "type": "integer"
+          },
+          "paletteBytes": {
+            "type": "integer"
+          },
+          "ramBytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "bytes",
+          "share"
+        ]
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/properties/largestAssets/items"
+      }
+    },
+    "iwramBytes": {
+      "type": "integer"
+    },
+    "ewramBytes": {
+      "type": "integer"
+    },
+    "iwramCapacity": {
+      "type": "integer"
+    },
+    "ewramCapacity": {
+      "type": "integer"
+    },
+    "ramSplit": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "budget": {
+            "type": "integer"
+          },
+          "holds": {
+            "type": "string"
+          },
+          "overBudget": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "region",
+          "name",
+          "bytes",
+          "budget",
+          "holds"
+        ]
+      }
+    },
+    "saveBytes": {
+      "type": "integer"
+    },
+    "saveCapacity": {
+      "type": "integer"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "type": "integer"
+    },
+    "assetsConverted": {
+      "type": "integer"
+    },
+    "assetsCached": {
+      "type": "integer"
+    },
+    "scenes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "vramBgBytes": {
+            "type": "integer"
+          },
+          "vramObjBytes": {
+            "type": "integer"
+          },
+          "vramTextBytes": {
+            "type": "integer"
+          },
+          "bgPalettes": {
+            "type": "integer"
+          },
+          "objPalettes": {
+            "type": "integer"
+          },
+          "actors": {
+            "type": "integer"
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,24 +2,32 @@ using System.Buffers.Binary;
 
 namespace AgbStudio.Build.Fonts;
 
-/// <summary>Minimal TrueType (glyf) reader: cmap, metrics and outlines. Enough to rasterize game fonts.</summary>
+/// <summary>Minimal TrueType / OpenType reader: cmap, metrics and outlines, from TrueType outlines ('glyf', .ttf) or
+/// PostScript outlines ('CFF ', most .otf files, see <see cref="CffOutlines"/>). Enough to rasterize game fonts.</summary>
 public sealed class TrueType
 {
     readonly byte[] _d;
     readonly Dictionary<string, (int Offset, int Length)> _tables = new();
     readonly Dictionary<int, int> _cmap = new();
+    readonly CffOutlines? _cff;
     int _numGlyphs, _numHMetrics, _locaFormat;
 
     public int UnitsPerEm { get; private set; }
     public int Ascender { get; private set; }
     public int Descender { get; private set; }
     public string Name { get; }
+    /// <summary>True for an OpenType font with PostScript (CFF) outlines.</summary>
+    public bool IsCff => _cff != null;
 
     public TrueType(byte[] data, string name)
     {
         _d = data;
         Name = name;
-        if (U32(0) != 0x00010000 && U32(0) != 0x74727565) throw new InvalidDataException($"{name} is not a TrueType font: it is an OpenType font with CFF outlines, or not a font file, and AGB Studio reads only TrueType outlines. Use the .ttf version of the font.");
+        var tag0 = data.Length >= 4 ? U32(0) : 0;
+        var cff = tag0 == 0x4F54544F;  // 'OTTO': OpenType with CFF outlines
+        if (tag0 == 0x74746366) throw new InvalidDataException($"{name} is a font collection (.ttc), which AGB Studio does not read. Save one font of it as .ttf or .otf.");
+        if (tag0 is 0x774F4646 or 0x774F4632) throw new InvalidDataException($"{name} is a web font (WOFF), which AGB Studio does not read. Use the .ttf or .otf version of the font.");
+        if (tag0 != 0x00010000 && tag0 != 0x74727565 && !cff) throw new InvalidDataException($"{name} is not a TrueType or OpenType font, so it can't be read. Use a .ttf or .otf font file.");
         var n = U16(4);
         for (var i = 0; i < n; i++)
         {
@@ -27,8 +35,10 @@ public sealed class TrueType
             var tag = System.Text.Encoding.ASCII.GetString(_d, rec, 4);
             _tables[tag] = ((int)U32(rec + 8), (int)U32(rec + 12));
         }
-        foreach (var t in new[] { "head", "maxp", "cmap", "hhea", "hmtx", "loca", "glyf" })
-            if (!_tables.ContainsKey(t)) throw new InvalidDataException($"{name} is damaged or incomplete (its '{t}' table is missing), so it can't be read. Download the font again, or use another one.");
+        if (cff && !_tables.ContainsKey("CFF ") && _tables.ContainsKey("CFF2"))
+            throw new InvalidDataException($"{name} has CFF2 outlines (an OpenType variable font), which AGB Studio does not read. Use a static .otf or .ttf version of the font.");
+        foreach (var t in cff ? ["head", "maxp", "cmap", "hhea", "hmtx", "CFF "] : new[] { "head", "maxp", "cmap", "hhea", "hmtx", "loca", "glyf" })
+            if (!_tables.ContainsKey(t)) throw new InvalidDataException($"{name} is damaged or incomplete (its '{t.TrimEnd()}' table is missing), so it can't be read. Download the font again, or use another one.");
         var head = _tables["head"].Offset;
         UnitsPerEm = U16(head + 18);
         _locaFormat = S16(head + 50);
@@ -38,6 +48,11 @@ public sealed class TrueType
         Descender = S16(hhea + 6);
         _numHMetrics = U16(hhea + 34);
         ReadCmap();
+        if (cff)
+        {
+            var (offset, length) = _tables["CFF "];
+            _cff = new CffOutlines(_d, offset, length, UnitsPerEm, name);
+        }
     }
 
     public static TrueType Load(string path) => new(File.ReadAllBytes(path), Path.GetFileName(path));
@@ -61,7 +76,7 @@ public sealed class TrueType
             if (!unicode) continue;
             if (format == 12 || (format == 4 && bestFormat != 12)) { best = off; bestFormat = format; }
         }
-        if (best < 0) throw new InvalidDataException($"{Name} has no Unicode character map, so its letters can't be found. Use a Unicode .ttf font.");
+        if (best < 0) throw new InvalidDataException($"{Name} has no Unicode character map, so its letters can't be found. Use a Unicode .ttf or .otf font.");
         if (bestFormat == 4)
         {
             var segX2 = U16(best + 6);
@@ -119,9 +134,10 @@ public sealed class TrueType
         return _tables["glyf"].Offset + a;
     }
 
-    /// <summary>Contours as closed polylines in font units (quadratics flattened), y up.</summary>
+    /// <summary>Contours as closed polylines in font units (quadratics, or the cubics of CFF outlines, flattened), y up.</summary>
     public List<List<(double X, double Y)>> Outline(int glyph, int depth = 0)
     {
+        if (_cff != null) return glyph >= 0 && glyph < _numGlyphs ? _cff.Outline(glyph) : [];
         var result = new List<List<(double, double)>>();
         if (glyph < 0 || glyph >= _numGlyphs || depth > 8) return result;
         var o = GlyphOffset(glyph, out var len);

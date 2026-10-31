@@ -381,10 +381,10 @@ public sealed class DebuggerModel
     public IReadOnlyList<string> EffectsOn(int index)
     {
         if (_s.Project.Current is null) return [];
-        Palette.PaletteEffectsData effects;
+        PaletteEffectsData effects;
         try { effects = Palette.ArtLibrary.For(_s).Effects; }
         catch (Exception e) when (e is IOException or System.Text.Json.JsonException or InvalidOperationException) { return []; }
-        var kind = index < 256 ? Palette.BankKind.Bg : Palette.BankKind.Obj;
+        var kind = index < 256 ? BankKind.Bg : BankKind.Obj;
         int bank = index / 16 % 16, entry = index % 16;
         return new[] { effects.Fade, effects.Cycle, effects.Flash }
             .Where(e => e.Enabled && e.Bank >= 0 && e.BankKind == kind && e.Bank == bank && entry >= e.First && entry <= e.Last)

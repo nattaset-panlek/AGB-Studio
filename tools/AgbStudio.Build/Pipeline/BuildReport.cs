@@ -4,13 +4,19 @@ using AgbStudio.Core.Project;
 
 namespace AgbStudio.Build.Pipeline;
 
-/// <summary>build/report.json (Build Report T-P11, Budget Details T-O06): ROM breakdown, largest assets, RAM use,
-/// build times and warnings. ROM and RAM numbers come from the linker map file (<see cref="LinkerMap"/>), so they are
-/// the linker's numbers: the breakdown adds up to the ROM size and IWRAM / EWRAM are the static use the map shows.</summary>
+/// <summary>build/report.json (Build Report T-P11, Budget Details T-O06): ROM breakdown, ROM / VRAM / palette / RAM per
+/// asset, largest assets, RAM use, scene budgets, build times and warnings. ROM and RAM numbers come from the linker map
+/// file (<see cref="LinkerMap"/>), so they are the linker's numbers: the breakdown adds up to the ROM size and IWRAM /
+/// EWRAM are the static use the map shows. Schema: docs/schemas/report.schema.json (report-history.schema.json for the
+/// history), checked against a real build by BuildReportTests.</summary>
 public sealed class BuildReport
 {
     public const long RomLimit = 32 * 1024 * 1024;  // the GBA cartridge address space (0x08000000-0x09FFFFFF)
 
+    /// <summary>How report.json and report-history.json are written and read.</summary>
+    public static readonly JsonSerializerOptions Json = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    public int Format { get; set; } = 1;
     public string Rom { get; set; } = "";
     public string Title { get; set; } = "";
     public string GameCode { get; set; } = "";
@@ -25,7 +31,7 @@ public sealed class BuildReport
     public Dictionary<string, double> StepSeconds { get; set; } = new();
     public Dictionary<string, long> Breakdown { get; set; } = new();  // Graphics, Code, Audio, Data
     public List<ReportAsset> LargestAssets { get; set; } = new();
-    public List<ReportAsset> Assets { get; set; } = new();  // every asset in the ROM, largest first
+    public List<ReportAsset> Assets { get; set; } = new();  // every asset in the ROM, largest ROM first
     public long IwramBytes { get; set; }
     public long EwramBytes { get; set; }
     public long IwramCapacity { get; set; } = 32 * 1024;
@@ -40,7 +46,21 @@ public sealed class BuildReport
     public int AssetsCached { get; set; }
     public Dictionary<string, SceneBudget> Scenes { get; set; } = new();
 
-    public sealed record ReportAsset(string Name, string Type, long Bytes, double Share);
+    /// <summary>One asset: <see cref="Bytes"/> in ROM (from the linker map) and its <see cref="Share"/> of the ROM in
+    /// percent, then what it takes when a scene loads it (GameBuilder AssetInfo): tile and map bytes in BG or OBJ VRAM,
+    /// palette RAM bytes (32 per 16-colour bank) and RAM buffer bytes (map shadows in the screen arena; tiles are
+    /// decompressed straight into VRAM, and sprites, sounds, music, fonts, text and tables are read from ROM).</summary>
+    public sealed record ReportAsset(string Name, string Type, long Bytes, double Share)
+    {
+        /// <summary>"BG", "OBJ", or "" when the asset puts nothing in VRAM.</summary>
+        public string Vram { get; init; } = "";
+        /// <summary>Tile and map bytes in VRAM (a sprite: one frame, for each actor that shows it).</summary>
+        public long VramBytes { get; init; }
+        public long VramTileBytes { get; init; }
+        public long VramMapBytes { get; init; }
+        public long PaletteBytes { get; init; }
+        public long RamBytes { get; init; }
+    }
 
     public sealed class SceneBudget
     {
@@ -77,7 +97,7 @@ public sealed class BuildReport
             SaveCapacity = assets.SaveCapacity,
         };
         var mapPath = result.ElfPath + ".map";
-        var perAsset = new Dictionary<string, (string Type, long Bytes)>();
+        var perAsset = new Dictionary<(string Type, string Name), long>();
         long graphics = 0, audio = 0, data = 0, code = 0, soundbank = 0, dmg = 0;
         if (File.Exists(mapPath))
         {
@@ -96,7 +116,7 @@ public sealed class BuildReport
                     }
                     if (o.Type == "Soundbank") soundbank += bytes;
                     else if (o.Type == "Dmg") dmg += bytes;
-                    else if (o.Asset.Length > 0) perAsset[o.Asset] = (o.Type, perAsset.GetValueOrDefault(o.Asset).Bytes + bytes);
+                    else if (o.Asset.Length > 0) perAsset[(o.Type, o.Asset)] = perAsset.GetValueOrDefault((o.Type, o.Asset)) + bytes;
                 }
                 else if (IsCode(section)) code += bytes;
                 else data += bytes;
@@ -110,12 +130,12 @@ public sealed class BuildReport
         var sampled = assets.Audio.Values.Where(a => !a.File.EndsWith(".sfx", StringComparison.OrdinalIgnoreCase)).ToList();
         var total = sampled.Sum(x => (long)x.RomBytes);
         foreach (var a in sampled)
-            perAsset[a.Name] = (a.Type == "Music" ? "Music" : "Sound", total > 0 ? soundbank * a.RomBytes / total : 0);
+            perAsset[(a.Type == "Music" ? "Music" : "Sound", a.Name)] = total > 0 ? soundbank * a.RomBytes / total : 0;
         var effects = assets.Audio.Values.Where(a => a.File.EndsWith(".sfx", StringComparison.OrdinalIgnoreCase)).ToList();
-        foreach (var a in effects) perAsset[a.Name] = ("Sound", dmg / effects.Count);
+        foreach (var a in effects) perAsset[("Sound", a.Name)] = dmg / effects.Count;
         r.Breakdown = new() { ["Graphics"] = graphics, ["Code"] = code, ["Audio"] = audio, ["Data"] = data };
-        r.Assets = perAsset.OrderByDescending(kv => kv.Value.Bytes).ThenBy(kv => kv.Key, StringComparer.Ordinal)
-            .Select(kv => new ReportAsset(kv.Key, kv.Value.Type, kv.Value.Bytes, r.RomBytes > 0 ? Math.Round(100.0 * kv.Value.Bytes / r.RomBytes, 1) : 0)).ToList();
+        r.Assets = perAsset.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key.Name, StringComparer.Ordinal).ThenBy(kv => kv.Key.Type, StringComparer.Ordinal)
+            .Select(kv => Asset(kv.Key.Name, kv.Key.Type, kv.Value, r.RomBytes, Loaded(assets, kv.Key.Type, kv.Key.Name))).ToList();
         r.LargestAssets = r.Assets.Take(10).ToList();
         r.Warnings.AddRange(result.Diagnostics.Where(d => d.Severity == Severity.Warning).Select(d => d.ToString()));
         if (RomSizeWarning(r.RomBytes, s.Build.WarnRomMegabytes) is { } romWarning) r.Warnings.Add(romWarning);
@@ -131,6 +151,30 @@ public sealed class BuildReport
         r.Scenes = SceneBudgets(p, assets);
         return r;
     }
+
+    static ReportAsset Asset(string name, string type, long bytes, long romBytes, AssetInfo? loaded) =>
+        new(name, type, bytes, romBytes > 0 ? Math.Round(100.0 * bytes / romBytes, 1) : 0)
+        {
+            Vram = loaded?.Vram ?? "",
+            VramBytes = (loaded?.VramTileBytes ?? 0) + (loaded?.VramMapBytes ?? 0),
+            VramTileBytes = loaded?.VramTileBytes ?? 0,
+            VramMapBytes = loaded?.VramMapBytes ?? 0,
+            PaletteBytes = loaded?.PaletteBytes ?? 0,
+            RamBytes = loaded?.RamBytes ?? 0,
+        };
+
+    /// <summary>What the build recorded for an asset of the report (its VRAM, palette and RAM use when loaded).</summary>
+    static AssetInfo? Loaded(BuildAssetInfo assets, string type, string name) => type switch
+    {
+        "Sprite" => assets.Sprites.GetValueOrDefault(name),
+        "Tileset" => assets.Tilesets.GetValueOrDefault(name),
+        "Map" => assets.Maps.GetValueOrDefault(name),
+        "Font" => assets.Fonts.GetValueOrDefault(name),
+        "Data" => assets.Data.GetValueOrDefault(name),
+        "Music" or "Sound" => assets.Audio.GetValueOrDefault(name),
+        "Image" => assets.Splash,
+        _ => null,
+    };
 
     /// <summary>G-HW.05: the warning above the size set in Project Settings · Build ("Warn when ROM is over N MB").</summary>
     public static string? RomSizeWarning(long romBytes, int warnMegabytes) =>
@@ -177,6 +221,7 @@ public sealed class BuildReport
                 ("text", _) when stem.StartsWith("font_", StringComparison.Ordinal) => ("Data", "Font", Name(assets.Fonts.Keys, stem[5..])),
                 ("text", _) when stem.StartsWith("strings_", StringComparison.Ordinal) => ("Data", "Text", "strings." + stem[8..]),
                 ("data", _) when stem.StartsWith("db_", StringComparison.Ordinal) => ("Data", "Data", Name(assets.Data.Keys, stem[3..])),
+                ("maps", _) when stem.StartsWith("map_", StringComparison.Ordinal) => ("Data", "Map", Name(assets.Maps.Keys, stem[4..])),
                 _ => null,
             };
             if (o != null) map[NativeBuild.ObjName(Path.GetFullPath(f))] = o.Value;
@@ -227,34 +272,31 @@ public sealed class BuildReport
 
     public void Save(string buildDir)
     {
-        var opts = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        File.WriteAllText(Path.Combine(buildDir, "report.json"), JsonSerializer.Serialize(this, opts));
+        File.WriteAllText(Path.Combine(buildDir, "report.json"), JsonSerializer.Serialize(this, Json));
         AddHistory(buildDir, new HistoryEntry(BuiltAt, RomBytes, BuildSeconds, Warnings.Count, Errors, ""));
     }
 
     /// <summary>Build Report "History": newest first, the last 20 builds, failed builds included (no ROM size, the first error).</summary>
     public static void AddHistory(string buildDir, HistoryEntry entry)
     {
-        var opts = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         Directory.CreateDirectory(buildDir);
         var historyPath = Path.Combine(buildDir, "report-history.json");
-        var history = File.Exists(historyPath) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(historyPath), opts) ?? new() : new();
+        var history = File.Exists(historyPath) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(historyPath), Json) ?? new() : new();
         history.Insert(0, entry);
-        File.WriteAllText(historyPath, JsonSerializer.Serialize(history.Take(20).ToList(), opts));
+        File.WriteAllText(historyPath, JsonSerializer.Serialize(history.Take(20).ToList(), Json));
     }
 
     public static List<HistoryEntry> LoadHistory(string buildDir)
     {
         var path = Path.Combine(buildDir, "report-history.json");
-        var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        return File.Exists(path) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(path), opts) ?? new() : new();
+        return File.Exists(path) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(path), Json) ?? new() : new();
     }
 
     public static BuildReport? Load(string buildDir)
     {
         var path = Path.Combine(buildDir, "report.json");
         return File.Exists(path)
-            ? JsonSerializer.Deserialize<BuildReport>(File.ReadAllText(path), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+            ? JsonSerializer.Deserialize<BuildReport>(File.ReadAllText(path), Json)
             : null;
     }
 

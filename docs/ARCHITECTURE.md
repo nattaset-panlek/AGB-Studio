@@ -103,7 +103,9 @@ attribute ROM bytes per asset.
 
 Not built from blueprint 08: primary / secondary tilesets (a map has one tileset), two-layer metatiles, a separate
 layout file shared between maps (layers live in `maps/<Name>.map`), and seamless map streaming (out of scope,
-checklist 1.2). Links fire on any player overlap; the Door and Respawn kinds are stored but behave like On touch.
+checklist 1.2). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on that overlap
+while Up is pressed; Respawn fires on the overlap or when the player is lost (destroyed, out of hearts or fallen below
+the map) (`game.cpp` `checkLinks`).
 
 ## Build pipeline (blueprint 11)
 
@@ -125,9 +127,10 @@ checklist 1.2). Links fire on any player overlap; the Door and Respawn kinds are
    `gbafix` writes the header (title, game code, maker, version, checksum). The step name switches from Compile to
    Link + gbafix when the first link line appears.
 
-After a successful build: `build/report.json` (ROM by category, largest assets, IWRAM / EWRAM from `nm`, per-scene
-budgets, warnings), `build/report-history.json` (failed builds included), and `THIRD_PARTY.txt` next to the ROM with
-the libtonc and maxmod notices. Generated files are written only when their content changes.
+After a successful build: `build/report.json` (ROM by category, per asset ROM bytes from the linker map with the VRAM,
+palette and RAM buffer bytes it takes when loaded, largest assets, IWRAM / EWRAM from the linker map, per-scene
+budgets, warnings; schema `docs/schemas/report.schema.json`), `build/report-history.json` (failed builds included;
+`report-history.schema.json`), and `THIRD_PARTY.txt` next to the ROM with the libtonc and maxmod notices. Generated files are written only when their content changes.
 
 **Native build with or without Ninja** (`NativeBuild.cs`): the build always writes `build.ninja`. When `ninja.exe` is on
 `PATH` it runs Ninja; otherwise it runs the same graph in-process: objects older than their source or any header in
@@ -141,8 +144,8 @@ converts assets first.
 
 | Where | What is checked |
 |---|---|
-| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text) (`GameBuilder.CheckHardwareLimits`) |
-| Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack; per scene: OBJ tiles over 32 KB, more than 16 OBJ palettes |
+| Build, fails the build | Per scene: background VRAM of its map layers, image layers, affine layers and text layer against 64 KB; background palette banks against the 14 free banks (two hold the menus and text); OBJ VRAM of the sprite frames its actors show at once against 32 KB (16 KB in bitmap modes); sprite palettes against 16 (`GameBuilder.CheckHardwareLimits`) |
+| Build report, warnings | ROM size over the Project Settings · Build warning; IWRAM leaving less than 8 KB for the stack |
 | Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 
@@ -169,8 +172,9 @@ see D-24.
 
 ## Text (blueprint 13)
 
-Text is laid out at build time (`Fonts/TextLayout.cs`): fonts come from TrueType, BDF or image sheets
-(`Fonts/GameFont.cs`; OpenType CFF fonts are refused), Thai upper vowels, tone marks and lower vowels are stacked from
+Text is laid out at build time (`Fonts/TextLayout.cs`): fonts come from TrueType or OpenType (`.ttf` / `.otf`, TrueType
+outlines or CFF outlines with Type 2 charstrings, `Fonts/TrueType.cs` and `Fonts/Cff.cs`), BDF or image sheets
+(`Fonts/GameFont.cs`), Thai upper vowels, tone marks and lower vowels are stacked from
 the font's metrics so marks clear tall consonants, lines break at dictionary word boundaries (ICU word list,
 `Fonts/ThaiText.cs`, never inside a word), and each string becomes a `TextRun` per language. The runtime only places
 the glyphs (`render/text.cpp`, 1bpp or 2bpp with drop shadow). The C# `TextRenderer` draws runs exactly like the

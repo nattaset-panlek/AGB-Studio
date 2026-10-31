@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio Palette Manager library (assets/palettes/palettes.json)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "banks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "Bg",
+              "Obj"
+            ]
+          },
+          "slot": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "colors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lockTransparent": {
+            "type": "boolean"
+          },
+          "mergeNear": {
+            "type": "boolean"
+          },
+          "sortByHue": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "effects": {
+      "type": "object",
+      "properties": {
+        "fade": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "Fade",
+                "Cycle",
+                "Flash"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "bankKind": {
+              "enum": [
+                "Bg",
+                "Obj"
+              ]
+            },
+            "bank": {
+              "type": "integer"
+            },
+            "first": {
+              "type": "integer"
+            },
+            "last": {
+              "type": "integer"
+            },
+            "frames": {
+              "type": "integer"
+            },
+            "direction": {
+              "enum": [
+                "Left",
+                "Right",
+                "PingPong"
+              ]
+            },
+            "color": {
+              "type": "integer"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "cycle": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "Fade",
+                "Cycle",
+                "Flash"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "bankKind": {
+              "enum": [
+                "Bg",
+                "Obj"
+              ]
+            },
+            "bank": {
+              "type": "integer"
+            },
+            "first": {
+              "type": "integer"
+            },
+            "last": {
+              "type": "integer"
+            },
+            "frames": {
+              "type": "integer"
+            },
+            "direction": {
+              "enum": [
+                "Left",
+                "Right",
+                "PingPong"
+              ]
+            },
+            "color": {
+              "type": "integer"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "flash": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "Fade",
+                "Cycle",
+                "Flash"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "bankKind": {
+              "enum": [
+                "Bg",
+                "Obj"
+              ]
+            },
+            "bank": {
+              "type": "integer"
+            },
+            "first": {
+              "type": "integer"
+            },
+            "last": {
+              "type": "integer"
+            },
+            "frames": {
+              "type": "integer"
+            },
+            "direction": {
+              "enum": [
+                "Left",
+                "Right",
+                "PingPong"
+              ]
+            },
+            "color": {
+              "type": "integer"
+            },
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}

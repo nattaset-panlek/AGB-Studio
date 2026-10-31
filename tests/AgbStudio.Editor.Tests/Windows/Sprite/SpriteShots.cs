@@ -1,3 +1,4 @@
+using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;

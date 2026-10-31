@@ -264,6 +264,7 @@ public sealed class BuildReportPage : DockPanel
             "Tileset" => p.TilesetFiles().Concat(p.ImageFiles()),
             "Font" => p.FontFiles(),
             "Data" => p.TableFiles(),
+            "Map" => p.MapFiles(),
             _ => [],
         };
         var match = files.FirstOrDefault(f => string.Equals(GameProject.AssetName(f), a.Name, StringComparison.OrdinalIgnoreCase));

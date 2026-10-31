@@ -32,8 +32,8 @@
 Reference only, no code copied: pokeemerald (pret), Butano (zlib), Poryscript.
 
 The build writes `THIRD_PARTY.txt` next to every ROM with the libtonc and maxmod notices, and Export ROM copies it
-next to the exported ROM. It does not yet include the MIT notice of the AGB Studio runtime itself (D-05);
-`docs/user/licence-for-your-games.md` tells users what to add.
+next to the exported ROM. It starts with the MIT notice of the AGB Studio runtime itself (D-05, `GameBuilder`
+`WriteNotices`); `docs/user/licence-for-your-games.md` tells users what the file is for.
 
 AGB Studio's own code is under the MIT licence (`LICENSE` at the repository root, D-05).
 

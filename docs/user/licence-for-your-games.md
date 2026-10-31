@@ -31,37 +31,12 @@ can turn off.)
 
 Every build writes `THIRD_PARTY.txt` next to the ROM in the project's `build` folder, and Export ROM copies it into the
 export folder next to the `.gba` file. It starts with "<your game title> was made with AGB Studio and contains the
-following libraries" and holds the full libtonc and maxmod notices. When you share or sell the game, ship this file
-with the ROM (for example in the same zip, or in the manual or credits).
+following libraries" and holds the MIT notice of the AGB Studio runtime and the full libtonc and maxmod notices.
+When you share or sell the game, ship this file with the ROM (for example in the same zip, or in the manual or
+credits).
 
-At the moment `THIRD_PARTY.txt` does not include the AGB Studio runtime's own MIT notice. Until it does, add the text
-below to the same file or next to it:
-
-```
-AGB Studio runtime
-
-MIT License
-
-Copyright (c) 2026 AGB Studio contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+The AGB Studio runtime and libtonc share the MIT permission text, so the file prints it once under both names.
+You do not need to add anything to it.
 
 ## What is not covered here
 
