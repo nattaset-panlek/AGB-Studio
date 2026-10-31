@@ -93,17 +93,19 @@ public class FontModelTests : IDisposable
     [AvaloniaFact]
     public void SettingsEdits_AreUndoable_AndSavedWithDrawTo()
     {
+        // the fixture's thai_vwf draws to BG 2 (Figma Font Manager)
+        Assert.Equal(2, _thai.DrawTo);
         _thai.Edit("Font size", f => f.Size = 14);
-        _thai.SetDrawTo(2);
+        _thai.SetDrawTo(3);
         Assert.Equal(14, _thai.File.Size);
         _thai.Save();
         var text = File.ReadAllText(_thai.Path);
-        Assert.Contains("\"drawTo\": 2", text);
+        Assert.Contains("\"drawTo\": 3", text);
         Assert.Equal(14, GameProject.Load<FontFile>(_thai.Path).Size);
-        Assert.Equal(2, FontEntry.Load(_thai.Project, _thai.Path, new AgbStudio.Editor.Services.UndoService(5)).DrawTo);
+        Assert.Equal(3, FontEntry.Load(_thai.Project, _thai.Path, new AgbStudio.Editor.Services.UndoService(5)).DrawTo);
         _fx.Services.Undo.Undo();
         _fx.Services.Undo.Undo();
-        Assert.Equal((12, 0), (_thai.File.Size, _thai.DrawTo));
+        Assert.Equal((12, 2), (_thai.File.Size, _thai.DrawTo));
     }
 
     [AvaloniaFact]
@@ -137,7 +139,7 @@ public class FontModelTests : IDisposable
     public void NewFont_DefaultsBuildAPreviewAndCreateTheFile()
     {
         var dlg = new NewFontDialog(_lib, _thai.Project);
-        Assert.Equal(["NotoSansThai-Regular.ttf", "NotoSans.ttf", "NotoSansThai.ttf"], dlg.Files());
+        Assert.Equal(["NotoSans.ttf", "NotoSansThai-Regular.ttf"], dlg.Files());
         Assert.Equal("NotoSansThai-Regular.ttf", dlg.File.Selected);
         var f = dlg.Settings();
         Assert.Equal(("notosansthai_regular_12", 12, true), (f.Name, f.Size, f.Variable));
@@ -248,8 +250,8 @@ public class FontE2ETests : IDisposable
         Assert.Equal(1, font.File.Bpp);
         _h.Click(_h.Find<InspectorField>("ShadowField").GetVisualDescendants().OfType<AgbSwitch>().First());
         Assert.False(font.File.DropShadow);
-        _h.Choose(_h.Find<InspectorField>("DrawToField"), "BG 2 text layer");
-        Assert.Equal(2, font.DrawTo);
+        _h.Choose(_h.Find<InspectorField>("DrawToField"), "BG 3 text layer");
+        Assert.Equal(3, font.DrawTo);
         _h.Choose(_h.Find<InspectorField>("FromField"), "NotoSans.ttf");
         Assert.Equal("NotoSans.ttf", font.File.Source);
         // a pixel of the selected glyph
@@ -262,7 +264,7 @@ public class FontE2ETests : IDisposable
         Assert.Equal((14, false, 2, false, 1, false, "NotoSans.ttf"), (saved.Size, saved.Variable, saved.Spacing, saved.PlaceLowerVowels, saved.Bpp, saved.DropShadow, saved.Source));
         Assert.Contains("Japanese kana", saved.CharacterSets);
         Assert.True(saved.Glyphs.ContainsKey("U+0E01"));
-        Assert.Contains("\"drawTo\": 2", File.ReadAllText(font.Path));
+        Assert.Contains("\"drawTo\": 3", File.ReadAllText(font.Path));
         Assert.True(_h.Find<StatusItem>("Status_Saved").IsVisible);
         _h.Key(PhysicalKey.Z, RawInputModifiers.Control);
         Assert.False(font.File.Glyphs.ContainsKey("U+0E01"));
@@ -312,7 +314,7 @@ public class FontE2ETests : IDisposable
         Assert.Equal([0x00BD, 0x00B7], dlg.Missing);
         Assert.Equal("2 characters are not in thai_vwf yet", _h.Find<StackPanel>("MissingWarning").Children.OfType<TextBlock>().Single().Text);
         Assert.Equal(["Missing_00BD", "Missing_00B7"], _h.All<GlyphCell>().Where(c => c.Name!.StartsWith("Missing_")).Select(c => c.Name));
-        Assert.Equal("Render the new glyphs from NotoSansThai.ttf", dlg.RenderFromSource.Content);
+        Assert.Equal("Render the new glyphs from NotoSansThai-Regular.ttf", dlg.RenderFromSource.Content);
         var confirm = dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm");
         Assert.Equal("Add 2 glyphs", confirm.Content);
         _h.Click(confirm);

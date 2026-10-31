@@ -88,8 +88,9 @@ public sealed class ScriptToolsTests : IDisposable
         find.SetScope(FindScope.AllScripts);
         find.Query.Text = "lastScore";
         find.Replacement.Text = "previousScore";
-        Assert.Equal(1, find.ReplaceEverything());
+        Assert.Equal(3, find.ReplaceEverything());   // HUD.cs declares, compares and sets it
         Assert.Contains("previousScore", File.ReadAllText(SkyHopperProject.Script(_h.Fx, "HUD")));
+        Assert.DoesNotContain("lastScore", File.ReadAllText(SkyHopperProject.Script(_h.Fx, "HUD")));
     }
 
     [AvaloniaFact]

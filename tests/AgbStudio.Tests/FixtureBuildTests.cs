@@ -67,7 +67,9 @@ public sealed class FixtureBuildTests(EmulatorFixture emu, FixtureBuild fixture)
     {
         Assert.True(fixture.Clean.Success, string.Join('\n', fixture.Clean.Diagnostics));
         Assert.True(File.Exists(fixture.Clean.RomPath));
-        Assert.EndsWith("skyhopper.gba", fixture.Clean.RomPath);
+        // Export ROM, Build ROM and the Console of Figma name it so (T-D05, T-D06, T-P05)
+        Assert.Equal("sky_hopper.gba", Path.GetFileName(fixture.Clean.RomPath));
+        Assert.Equal(("mini_platformer.gba", "game.gba", "_2_player_quest.gba"), (GameBuilder.RomFileName("Mini Platformer"), GameBuilder.RomFileName("เกม"), GameBuilder.RomFileName("2-Player Quest!")));
         Assert.True(fixture.Clean.AssetsConverted > 0);
         Assert.Equal("SKYHOPPER", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(fixture.Clean.RomPath), 0xA0, 9));
         Record("clean build", fixture.CleanTime);

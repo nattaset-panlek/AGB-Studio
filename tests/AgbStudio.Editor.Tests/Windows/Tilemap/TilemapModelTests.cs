@@ -75,7 +75,7 @@ public class TilemapModelTests : IDisposable
         Assert.Equal(graphics.Sum(g => g.Tiles), plan.UniqueTiles);
         Assert.Equal(6, plan.ScreenBlocks);
         Assert.Equal(3, plan.PaletteBanks);
-        Assert.Equal(10, VramPlan.OamEntries(Doc.Scene));
+        Assert.Equal(13, VramPlan.OamEntries(Doc.Scene));   // with the three HUD hearts
     }
 
     // ---- renderer (D-18: the converted data the ROM uses) -------------------------------------------
@@ -112,13 +112,13 @@ public class TilemapModelTests : IDisposable
         // parallax 0.5: hills scroll half as far as the camera
         Assert.Equal(40, MapRenderer.Scroll(80, 0.5));
         Assert.Equal(15, MapRenderer.Scroll(80, 0.2));  // 0.2 is 51/256 in the ROM
-        // a sprite (OBJ priority 1, Player) is drawn over BG2 (priority 1)
+        // a sprite (OBJ priority 1, Player) is drawn over BG2 (priority 1); the Player stands on the start screen
         var player = Doc.Scene!.Actors.First(a => a.Name == "Player");
-        var withSprites = _s.Renderer.Render(Doc, 0, 0, 240, 160, null, true);
-        var without = _s.Renderer.Render(Doc, 0, 0, 240, 160, null, false);
+        var withSprites = _s.Renderer.Render(Doc, 0, 160, 240, 160, null, true);
+        var without = _s.Renderer.Render(Doc, 0, 160, 240, 160, null, false);
         var diff = Enumerable.Range(0, 240 * 160).Count(i => withSprites[i] != without[i]);
         Assert.InRange(diff, 20, 240 * 160);
-        Assert.NotEqual(withSprites[(player.Y - 8) * 240 + player.X], without[(player.Y - 8) * 240 + player.X]);
+        Assert.NotEqual(withSprites[(player.Y - 8 - 160) * 240 + player.X], without[(player.Y - 8 - 160) * 240 + player.X]);
     }
 
     // ---- P11.28 brush, stamp, random; editing with undo; the .map round trip ----------------------------
@@ -195,28 +195,29 @@ public class TilemapModelTests : IDisposable
     public void AutoTile_PaintingAMemberResolvesTheGrassEdgesRules()
     {
         var set = Doc.Meta.AutoTiles.Single();
-        Assert.Equal("Grass edges (4)", MapDocument.SetLabel(set));
+        Assert.Equal("Grass edges (5)", MapDocument.SetLabel(set));
         _s.Layer = Ground;
         _s.SetAutoTile(true);
         _s.SelectTile(set.Rules[0].Tile);
-        // a 3 x 2 block of the set in an empty area: the top row takes edge tiles, the inside the "Inner" tile
+        // a 3 x 3 block of the set in an empty area: the Figma rules (T-P26) give the top row, the left and right
+        // edges, the top-left corner and the inside their tiles
         _s.BeginStroke();
-        for (var y = 3; y <= 4; y++)
+        for (var y = 3; y <= 5; y++)
             for (var x = 4; x <= 6; x++) _s.PaintAt(x, y);
         _s.EndStroke();
-        var expected = new int[Doc.Width * Doc.Height];
         var cells = Doc.Map.Layers[Ground].Cells;
-        for (var y = 3; y <= 4; y++)
+        for (var y = 3; y <= 5; y++)
             for (var x = 4; x <= 6; x++) Assert.Equal(AutoTile.Resolve(cells, Doc.Width, Doc.Height, x, y, set), cells[y * Doc.Width + x]);
-        Assert.Equal(PixelArtTiles.GrassTop, Doc.Cell(Ground, 5, 3));
-        Assert.Equal(PixelArtTiles.GrassLeft, Doc.Cell(Ground, 4, 3));
-        Assert.Equal(PixelArtTiles.GrassRight, Doc.Cell(Ground, 6, 3));
-        Assert.Equal(PixelArtTiles.Dirt, Doc.Cell(Ground, 5, 4));
+        Assert.Equal(PixelArtTiles.Grass, Doc.Cell(Ground, 5, 3));     // Top edge
+        Assert.Equal(PixelArtTiles.Bush, Doc.Cell(Ground, 4, 3));      // Corner
+        Assert.Equal(PixelArtTiles.Dirt, Doc.Cell(Ground, 4, 4));      // Left edge
+        Assert.Equal(PixelArtTiles.Bricks, Doc.Cell(Ground, 6, 4));    // Right edge
+        Assert.Equal(PixelArtTiles.Leaves, Doc.Cell(Ground, 5, 4));    // Inner
         // with auto-tile off the tile is painted as is
         _s.SetAutoTile(false);
-        _s.SelectTile(PixelArtTiles.GrassRight);
+        _s.SelectTile(PixelArtTiles.Bricks);
         _s.PaintAt(10, 3);
-        Assert.Equal(PixelArtTiles.GrassRight, Doc.Cell(Ground, 10, 3));
+        Assert.Equal(PixelArtTiles.Bricks, Doc.Cell(Ground, 10, 3));
     }
 
     // ---- P11.29 tile properties ---------------------------------------------------------------------
@@ -241,10 +242,10 @@ public class TilemapModelTests : IDisposable
         Assert.Equal(0, Doc.AnimationFrames(4));
         Undo.Undo();
         Undo.Undo();
-        Assert.Equal(CollisionType.Ladder, Doc.Props(4)!.Collision);
+        Assert.Equal(CollisionType.None, Doc.Props(4)!.Collision);   // the bush tile
         // counts of the collision section follow the cells
         var solid = Doc.CountCollision(CollisionType.Solid);
-        Doc.SetCollision(PixelArtTiles.GrassTop, CollisionType.OneWay);
+        Doc.SetCollision(PixelArtTiles.Grass, CollisionType.OneWay);
         Assert.True(Doc.CountCollision(CollisionType.Solid) < solid);
     }
 
@@ -345,9 +346,10 @@ public class TilemapModelTests : IDisposable
     }
 }
 
-/// <summary>Forest tileset indices of the fixture art (AgbStudio.Build.Content.PixelArt).</summary>
+/// <summary>Forest tileset indices of the Sky Hopper fixture art (AgbStudio.Build.Content.SkyHopperArt).</summary>
 static class PixelArtTiles
 {
-    public const int GrassTop = AgbStudio.Build.Content.PixelArt.TGrassTop, Dirt = AgbStudio.Build.Content.PixelArt.TDirt,
-        GrassLeft = AgbStudio.Build.Content.PixelArt.TGrassLeft, GrassRight = AgbStudio.Build.Content.PixelArt.TGrassRight;
+    public const int Grass = AgbStudio.Build.Content.SkyHopperArt.TGrass, Dirt = AgbStudio.Build.Content.SkyHopperArt.TDirt,
+        Bricks = AgbStudio.Build.Content.SkyHopperArt.TBricks, Bush = AgbStudio.Build.Content.SkyHopperArt.TBush,
+        Leaves = AgbStudio.Build.Content.SkyHopperArt.TLeaves;
 }

@@ -27,9 +27,11 @@ public sealed class HierarchyTests : IDisposable
             ("Forest_01", null, 0, "map"), ("Main Camera", "follow", 1, "camera"), ("Backgrounds", null, 1, "layers"),
             ("BG0 · Sky", "×0.2", 2, "image"), ("BG1 · Hills", "×0.5", 2, "image"), ("BG2 · Ground", "tilemap", 2, "tiles"),
             ("Player", "Actor", 1, "user"), ("Enemies", "2", 1, "folder"), ("Slime", null, 2, "cube"), ("Slime (1)", null, 2, "cube"),
-            ("Coins", "5", 1, "coin"), ("Question Block", null, 1, "cube"), ("Goal Flag", null, 1, "flag"),
-            ("Exit → Cave_01", "trigger", 1, "link"), ("HUD · Score", "text", 1, "type"),
+            // the HUD folder holds HUD · Score and its three hearts (the HUD of the Figma picture)
+            ("HUD", "4", 1, "folder"), ("Coins", "5", 1, "coin"), ("Question Block", null, 1, "cube"), ("Goal Flag", null, 1, "flag"),
+            ("Exit → Cave_01", "trigger", 1, "link"),
         ], rows);
+        Assert.Equal(TreeToggle.Closed, Row("group:HUD").Toggle);
         Assert.Equal(TreeToggle.Closed, Row("group:Coins").Toggle);
         Assert.True(Row("actor:0").IsSelected);
         // opening the Coins folder shows its five actors

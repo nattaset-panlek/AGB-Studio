@@ -76,13 +76,14 @@ public class TilemapE2ETests : IDisposable
         var swatch = page.Swatch!;
         Point TileCenter(int t) => swatch.TranslatePoint(swatch.CellRect(t).Center, _h.Win)!.Value;
         _h.Click(_h.Find<IconButton>("Tool_pencil"));
-        _h.ClickAt(TileCenter(7));
-        Assert.Equal((7, 1, 1), (s.SelectedTile, s.StampWidth, s.StampHeight));
-        Assert.Contains("Tile #7 · stone", _h.Texts(page));
-        _h.Drag(TileCenter(4), TileCenter(5));
-        Assert.Equal([4, 5], s.Stamp);
+        _h.ClickAt(TileCenter(6));
+        Assert.Equal((6, 1, 1), (s.SelectedTile, s.StampWidth, s.StampHeight));
+        Assert.Contains("Tile #6 · stone", _h.Texts(page));
+        // stone and water, side by side in the tileset panel
+        _h.Drag(TileCenter(6), TileCenter(7));
+        Assert.Equal([6, 7], s.Stamp);
         Assert.Equal("2 × 1 tiles", _h.Find<InspectorField>("StampField").Value);
-        Assert.Equal("Brush 2×1 · ladder", _h.Find<Chip>("BrushChip").Content);
+        Assert.Equal("Brush 2×1 · stone", _h.Find<Chip>("BrushChip").Content);
         // Stamp field
         _h.Type(_h.Find<InspectorField>("StampField"), "1 × 1");
         Assert.Equal((1, 1), (s.StampWidth, s.StampHeight));
@@ -93,9 +94,9 @@ public class TilemapE2ETests : IDisposable
         _h.Pump();
         var ground = s.Layer;
         _h.ClickAt(CellPoint(page, 2, 1));
-        Assert.Equal(4, s.Doc.Cell(ground, 2, 1));
+        Assert.Equal(6, s.Doc.Cell(ground, 2, 1));
         Assert.Contains("tile 2, 1", (string?)_h.Find<Chip>("HoverChip").Content);
-        Assert.Contains("BG2 Ground · tile 2, 1 · id 4 ladder", (string?)_h.Find<StatusItem>("Status_Hover").Content);
+        Assert.Contains("BG2 Ground · tile 2, 1 · id 6 stone", (string?)_h.Find<StatusItem>("Status_Hover").Content);
         Assert.True(_h.S.Documents.Active!.IsDirty);
         Assert.False(_h.Find<StatusItem>("Status_Saved").IsVisible);
         // Random: drag the slider fully right, paint a row
@@ -103,18 +104,18 @@ public class TilemapE2ETests : IDisposable
         _h.Drag(_h.Center(slider), _h.Center(slider) + new Point(slider.Bounds.Width, 0));
         Assert.Equal(100, s.Random);
         Assert.Equal("100%", _h.Find<InspectorField>("RandomField").Value);
-        s.SelectTile(4, 2, 1);
+        s.SelectTile(6, 2, 1);
         s.Seed(3);
         _h.Drag(CellPoint(page, 0, 3), CellPoint(page, 9, 3), 9);
         var row = Enumerable.Range(0, 10).Select(x => s.Doc.Cell(ground, x, 3)).ToList();
-        Assert.All(row, c => Assert.Contains(c, new[] { 4, 5 }));
+        Assert.All(row, c => Assert.Contains(c, new[] { 6, 7 }));
         // Ctrl+S saves the .map; Ctrl+Z undoes the last stroke
         _h.Key(PhysicalKey.S, RawInputModifiers.Control);
         Assert.False(_h.S.Documents.Active!.IsDirty);
         Assert.Equal(row, Enumerable.Range(0, 10).Select(x => Reload(page).Cell(ground, x, 3)));
         _h.Key(PhysicalKey.Z, RawInputModifiers.Control);
         Assert.All(Enumerable.Range(0, 10), x => Assert.Equal(0, s.Doc.Cell(ground, x, 3)));
-        Assert.Equal(4, s.Doc.Cell(ground, 2, 1));
+        Assert.Equal(6, s.Doc.Cell(ground, 2, 1));
     }
 
     // P11.29 Tile properties: collision type, flip H, tag, animation, auto-tile set; collision view
@@ -124,23 +125,23 @@ public class TilemapE2ETests : IDisposable
         var page = OpenFromTab();
         var s = page.Session!;
         var doc = s.Doc;
-        s.SelectTile(4);
+        s.SelectTile(7);   // water: not in the Grass edges set yet
         _h.Pump();
-        Assert.Equal(ChipStyle.Accent, _h.Find<Chip>("Collision_Ladder").Style);
+        Assert.Equal(ChipStyle.Accent, _h.Find<Chip>("Collision_Water").Style);
         _h.Click(_h.Find<Chip>("Collision_Hazard"));
-        Assert.Equal(CollisionType.Hazard, doc.Props(4)!.Collision);
+        Assert.Equal(CollisionType.Hazard, doc.Props(7)!.Collision);
         Assert.Equal(ChipStyle.Danger, _h.Find<Chip>("Collision_Hazard").Style);
         _h.Type(_h.Find<InspectorField>("TagField"), "climb");
-        Assert.Equal("climb", doc.Props(4)!.Tag);
+        Assert.Equal("climb", doc.Props(7)!.Tag);
         _h.Choose(_h.Find<InspectorField>("AnimationField"), "2 frames");
-        Assert.Equal([4, 5], doc.Props(4)!.Animation);
+        Assert.Equal([7, 8], doc.Props(7)!.Animation);
         Assert.Equal("2 frames", _h.Find<InspectorField>("AnimationField").Value);
-        _h.Choose(_h.Find<InspectorField>("AutoTileField"), "Grass edges (4)");
-        Assert.Equal("Grass edges", doc.SetOf(4)?.Name);
-        Assert.Equal("Grass edges (5)", _h.Find<InspectorField>("AutoTileField").Value);
+        _h.Choose(_h.Find<InspectorField>("AutoTileField"), "Grass edges (5)");
+        Assert.Equal("Grass edges", doc.SetOf(7)?.Name);
+        Assert.Equal("Grass edges (6)", _h.Find<InspectorField>("AutoTileField").Value);
         _h.Key(PhysicalKey.S, RawInputModifiers.Control);
         var meta = GameProject.Load<TilesetMeta>(GameProject.MetaPath(doc.TilesetPath!));
-        Assert.Equal((CollisionType.Hazard, "climb"), (meta.Tiles[4].Collision, meta.Tiles[4].Tag));
+        Assert.Equal((CollisionType.Hazard, "climb"), (meta.Tiles[7].Collision, meta.Tiles[7].Tag));
         // Flip H: the switch flips what the brush paints
         var flip = _h.Find<InspectorField>("FlipField");
         _h.Click(flip.GetVisualDescendants().OfType<AgbSwitch>().First());
@@ -177,7 +178,8 @@ public class TilemapE2ETests : IDisposable
         Assert.Equal(["BG0 · Sky", "Image", "3", "× 0.20", "char block 0 · screen 30"], table.RowTexts(0));
         Assert.Equal(["BG1 · Hills", "Image", "2", "× 0.50", "char block 0 · screen 28"], table.RowTexts(1));
         Assert.Equal(["BG2 · Ground", "Tilemap", "1", "× 1.00", "char block 0 · screen 26"], table.RowTexts(2));
-        Assert.Equal(["OBJ · Actors", "Sprites", "–", "–", "OAM 10 / 128"], table.RowTexts(3));
+        // the Player, two slimes, the ? block, the flag, five coins and the three HUD hearts
+        Assert.Equal(["OBJ · Actors", "Sprites", "–", "–", "OAM 13 / 128"], table.RowTexts(3));
         Assert.True(page.BgToggles[2].IsActive);
         // click a row: that layer is edited
         _h.Click(_h.Find<TableCell>("Layer2_0"));
@@ -267,9 +269,11 @@ public class TilemapE2ETests : IDisposable
         Assert.Equal(("T-P26", "Tab_AutoTile"), _h.S.Windows.Requests[^1]);
         var panel = page.Bottom!;
         Assert.True(panel.RuleSetField.IsVisible);
-        Assert.Equal("Grass edges (4)", panel.RuleSetField.Value);
+        // the Figma rule set: five rules, every neighbour filled or empty
+        Assert.Equal("Grass edges (5)", panel.RuleSetField.Value);
         var labels = panel.RuleCards.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        Assert.Equal(["Top edge", "Left edge", "Right edge", "Inner", "Add rule"], labels);
+        Assert.Equal(["Top edge", "Left edge", "Right edge", "Corner", "Inner", "Add rule"], labels);
+        Assert.DoesNotContain(s.Doc.Meta.AutoTiles[0].Rules, r => r.Mask.Contains(2));
         // mask cell 1 (above) of "Top edge" is "not the set": a click makes it "any"
         Assert.Equal(0, s.Doc.Meta.AutoTiles[0].Rules[0].Mask[1]);
         _h.Click(_h.Find<Border>("Mask0_1"));
@@ -280,14 +284,14 @@ public class TilemapE2ETests : IDisposable
         s.SelectTile(7);
         _h.Pump();
         _h.Click(_h.Find<Border>("AddRule"));
-        Assert.Equal(5, s.Doc.Meta.AutoTiles[0].Rules.Count);
+        Assert.Equal(6, s.Doc.Meta.AutoTiles[0].Rules.Count);
         Assert.Equal(7, s.Doc.Meta.AutoTiles[0].Rules[0].Tile);
-        Assert.Equal("Grass edges (5)", panel.RuleSetField.Value);
+        Assert.Equal("Grass edges (6)", panel.RuleSetField.Value);
         // Delete removes the selected rule
         panel.Focus();
         _h.Key(PhysicalKey.Delete);
-        Assert.Equal(4, s.Doc.Meta.AutoTiles[0].Rules.Count);
-        _h.Choose(panel.RuleSetField, "Grass edges (4)");
+        Assert.Equal(5, s.Doc.Meta.AutoTiles[0].Rules.Count);
+        _h.Choose(panel.RuleSetField, "Grass edges (5)");
         Assert.Equal("Grass edges", s.RuleSet);
         _h.Key(PhysicalKey.S, RawInputModifiers.Control);
         var meta = GameProject.Load<TilesetMeta>(GameProject.MetaPath(s.Doc.TilesetPath!));

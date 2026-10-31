@@ -58,6 +58,10 @@ public sealed class Fixture : IDisposable
         return root;
     }
 
+    /// <summary>The language the game screen shows in this session only (the project file keeps its default): the Figma
+    /// Scene Editor and Play Mode frames draw the English HUD, while Project Settings (T-S01) shows ไทย as the default.</summary>
+    public void GameLanguage(string code) => Services.Project.Current!.Settings.General.DefaultLanguage = code;
+
     public void Dispose()
     {
         // a Play started by the test stops (also one still building), then the editor lets go of the process core
