@@ -58,6 +58,22 @@ public sealed class PlatformerBody : Behaviour
     /// <summary>Jumps with <see cref="jumpForce"/>.</summary>
     [Cpp("{this.}jump()")]
     public void Jump() { }
+
+    /// <summary>Sets both speeds at once (Logic Graph "Set Velocity").</summary>
+    /// <param name="x">Horizontal speed.</param>
+    /// <param name="y">Vertical speed (negative = up).</param>
+    [Cpp("{this.}setVelocity({0}, {1})")]
+    public void SetVelocity(@fixed x, @fixed y) { }
+
+    /// <summary>Adds to both speeds (Logic Graph "Add Force"): a push, a knock-back.</summary>
+    /// <param name="x">Added to <see cref="vx"/>.</param>
+    /// <param name="y">Added to <see cref="vy"/>.</param>
+    [Cpp("{this.}addForce({0}, {1})")]
+    public void AddForce(@fixed x, @fixed y) { }
+
+    /// <summary>Both speeds as a vector (Logic Graph "Get Velocity").</summary>
+    [Cpp("{this.}velocity()")]
+    public fixed2 Velocity => default;
 }
 
 /// <summary>8-way movement with the D-pad, or from a script when <see cref="playerControlled"/> is false.</summary>

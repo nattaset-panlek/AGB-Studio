@@ -142,4 +142,73 @@ public sealed class GraphTests
         var back = GraphFromCode.Parse(code);
         Assert.Equal(code, GraphCodeGen.Generate(back, "AllNodes"));
     }
+
+    [Fact]
+    public void TagButtonsTargetsAndVelocityNodesGenerateCompileAndRoundTrip()
+    {
+        // Figma T-P17 / T-O08: On Touch with a Tag, On Button, Target inputs, Set Velocity Y modes, Set Velocity, Add Force.
+        var g = new LogicGraph { Class = "PhysicsLogic" };
+        GraphNode Add(string type, params (string, string)[] props)
+        {
+            var n = new GraphNode { Id = "n" + (g.Nodes.Count + 1), Type = type };
+            foreach (var (k, v) in props) n.Props[k] = v;
+            g.Nodes.Add(n);
+            return n;
+        }
+        void Link(GraphNode a, string pa, GraphNode b, string pb) => g.Links.Add(new GraphLink(a.Id + "." + pa, b.Id + "." + pb));
+        var touch = Add("OnTouch", ("tag", "Spring"));
+        var up = Add("SetVelocityY", ("value", "-1.50"), ("mode", "Add"));
+        Link(touch, "out", up, "in");
+        Link(touch, "other", up, "target");
+        var push = Add("AddForce", ("x", "1"), ("y", "0"));
+        Link(up, "out", push, "in");
+        var stop = Add("SetVelocity", ("x", "0"), ("y", "-2"));
+        Link(push, "out", stop, "in");
+        Link(touch, "other", stop, "target");
+        var button = Add("OnButton", ("button", "B"));
+        var clamp = Add("SetVelocityY", ("value", "2"), ("mode", "Clamp"));
+        Link(button, "out", clamp, "in");
+        var update = Add("OnUpdate");
+        var br = Add("Branch");
+        Link(update, "out", br, "in");
+        var ground = Add("IsOnGround");
+        Link(ground, "value", br, "condition");
+        var log = Add("DebugLog", ("text", "landed"));
+        Link(br, "true", log, "in");
+
+        var code = GraphCodeGen.Generate(g, "PhysicsLogic");
+        Assert.Contains(Squash("void OnTouch(Actor other) { if (other.tag != \"Spring\") return; other.Get<PlatformerBody>().vy += -1.50; body.AddForce(1, 0); other.Get<PlatformerBody>().SetVelocity(0, -2); }"), Squash(code));
+        Assert.Contains(Squash("if (Input.Pressed(Key.B)) OnButtonB();"), Squash(code));
+        Assert.Contains(Squash("void OnButtonB() { body.vy = fixed.Min(body.vy, 2); }"), Squash(code));
+        Assert.Contains(Squash("void Update() { if (body.OnGround) { Debug.Log(\"landed\"); }"), Squash(code));
+
+        // C# -> graph -> C#: the same nodes and links, and the same code.
+        var back = GraphFromCode.Parse(code);
+        Assert.Equal(g.Nodes.Select(n => n.Type).Order(), back.Nodes.Select(n => n.Type).Order());
+        Assert.Equal("Spring", back.Nodes.Single(n => n.Type == "OnTouch").Props["tag"]);
+        Assert.Equal(["Add", "Clamp"], back.Nodes.Where(n => n.Type == "SetVelocityY").Select(n => n.Props["mode"]).Order());
+        Assert.Equal(code, GraphCodeGen.Generate(back, "PhysicsLogic"));
+
+        // Get Velocity and Vector from Velocity are in the Add Node list (Figma T-O08).
+        Assert.Equal(PinKind.Vector, NodeCatalog.Find("GetVelocity")!.Pin("value")!.Kind);
+        Assert.Equal("Math", NodeCatalog.Find("VectorFromVelocity")!.Category);
+    }
+
+    [Fact]
+    public void TargetNodesCompileToTheRuntime()
+    {
+        var g = new LogicGraph { Class = "Springy" };
+        g.Nodes.Add(new GraphNode { Id = "n1", Type = "OnTouch", Props = { ["tag"] = "Player" } });
+        g.Nodes.Add(new GraphNode { Id = "n2", Type = "SetVelocity", Props = { ["x"] = "0", ["y"] = "-4" } });
+        g.Nodes.Add(new GraphNode { Id = "n3", Type = "AddForce", Props = { ["x"] = "1", ["y"] = "0" } });
+        g.Nodes.Add(new GraphNode { Id = "n4", Type = "OnButton", Props = { ["button"] = "A" } });
+        g.Nodes.Add(new GraphNode { Id = "n5", Type = "SetVelocityY", Props = { ["value"] = "3", ["mode"] = "Clamp" } });
+        g.Links.Add(new GraphLink("n1.out", "n2.in"));
+        g.Links.Add(new GraphLink("n1.other", "n2.target"));
+        g.Links.Add(new GraphLink("n2.out", "n3.in"));
+        g.Links.Add(new GraphLink("n4.out", "n5.in"));
+        var r = TestSupport.Compile("graph-targets", TestSupport.Context(), TestSupport.Inline("Springy.graph", g.ToJson()));
+        Assert.Empty(r.Diagnostics);
+        Assert.Equal("", TestSupport.CompileCpp(r));
+    }
 }
