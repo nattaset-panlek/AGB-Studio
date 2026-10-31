@@ -97,6 +97,37 @@ public sealed class PlayAcrossEditorTests : EditorDriver
         Assert.Contains(panel.Visible, e => e.Text == "Slime.cs(42): pool full");
     }
 
+    // P14.04 / P12.07: a script saved in an external editor while the game runs is hot-reloaded into the running game,
+    // and the new code's Debug.Log line reaches the Console panel
+    [AvaloniaFact]
+    public void ExternalSave_WhileTheGameRuns_HotReloads_AndItsDebugLogReachesTheConsolePanel()
+    {
+        OpenPlayMode();
+        var ws = AgbStudio.Editor.Windows.Scripts.ScriptWorkspace.Of(Fx.Services);
+        var script = Path.Combine(Path.GetDirectoryName(PlayTestSupport.ProjectPath)!, "scripts", "PlayerController.cs");
+        var original = File.ReadAllText(script);
+        try
+        {
+            File.WriteAllText(script, original.Replace("void Start() => body = Get<PlatformerBody>();",
+                "void Start() { body = Get<PlatformerBody>(); Debug.Log(\"saved in an external editor\"); }"));
+            // what the scripts folder watcher reports when VS Code saves the file
+            ws.OnExternalSave(script);
+            PlayTestSupport.WaitUntil(() => Play.PendingReload != null || Play.Console.Entries.Any(e => e.Text.StartsWith("Hot reload: PlayerController updated", StringComparison.Ordinal)), 300);
+            if (Play.PendingReload is { } reload) PlayTestSupport.Wait(reload);
+            PlayTestSupport.WaitUntil(() => Play.Console.Entries.Any(e => e.Text == "Hot reload: PlayerController updated in the running game"), 300);
+            Play.RunFrames(60);
+            Capture.Pump();
+            Assert.True(Play.IsRunning);
+            Assert.Equal("Forest_01", Play.World.SceneName);
+            Assert.Contains(Play.Console.Entries, e => e.Text == "saved in an external editor");
+            Assert.Contains(ConsoleLog.Of(Fx.Services).Entries, e => e.Text == "saved in an external editor" && e.Level == ConsoleLevel.Info);
+        }
+        finally
+        {
+            File.WriteAllText(script, original);
+        }
+    }
+
     // T-D09 / P12.01: Preferences · Emulator saved in the dialog change the running game
     [AvaloniaFact]
     public void EmulatorPreferences_TakeEffectInPlayMode()
