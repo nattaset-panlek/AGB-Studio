@@ -225,7 +225,7 @@ public:
                     g_scene.camY = g_scene.follow->pos.y.floor() - 80;
                 }
                 confineToZone();
-                // Each layer draws its whole window (about 70k cycles): one layer per frame keeps the frame rate.
+                // Each layer draws its whole window (about 25k cycles) and copies its map to VRAM: one layer per frame.
                 if (d->layerCount > 0) {
                     g_scene.drawnLayers = 0;
                     holdLoadStep();
@@ -319,9 +319,14 @@ public:
         debug::tracePhase(debug::Phase::PaletteFade);
         render::palettes::update();
         // Map rows and columns that came into view are drawn into the shadow maps and queued for VBlank. A row the
-        // DMA budget cannot take this frame stays dirty and goes next frame (commit::queueCopy).
+        // DMA budget cannot take this frame stays dirty and goes next frame (commit::queueCopy). The collision layer
+        // goes first: after a big camera move (respawn, Camera.SetPosition) the views redraw at most two whole windows
+        // a frame, so the gameplay layer moves with the sprites and a background layer may follow a frame later.
         debug::tracePhase(debug::Phase::Tilemaps);
-        for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+        const int layers = d->layerCount < kMaxLayers ? d->layerCount : kMaxLayers;
+        const int ground = d->collisionLayer >= 0 && d->collisionLayer < layers ? d->collisionLayer : 0;
+        for (int k = 0; k < layers; ++k) {
+            const int i = k == 0 ? ground : k <= ground ? k - 1 : k;
             g_scene.views[i].setCamera(cx, cy);
             g_scene.views[i].commit();
         }

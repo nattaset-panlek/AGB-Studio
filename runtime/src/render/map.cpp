@@ -5,6 +5,7 @@
 #include "agb/memory.hpp"
 #include "agb/render/affine.hpp"
 #include "agb/render/effects.hpp"
+#include "agb/system.hpp"
 
 namespace agb::render {
 
@@ -13,6 +14,23 @@ namespace {
 constexpr int kViewTilesX = 32, kViewTilesY = 22;
 
 int floorDiv8(int v) { return v >> 3; }
+
+// Whole-window redraws (a respawn, a teleport or Camera.SetPosition across the map) allowed per frame. A layer over the
+// limit keeps showing its old position and redraws on a later frame, so a jump of every layer at once never makes the
+// frame overrun (each redraw costs about a tenth of a frame).
+constexpr int kRedrawsPerFrame = 2;
+u32 g_redrawFrame = 0xFFFFFFFFu;
+int g_redraws = 0;
+
+bool takeRedraw() {
+    if (system::frame() != g_redrawFrame) {
+        g_redrawFrame = system::frame();
+        g_redraws = 0;
+    }
+    if (g_redraws >= kRedrawsPerFrame) return false;
+    ++g_redraws;
+    return true;
+}
 }  // namespace
 
 bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
@@ -25,6 +43,9 @@ bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
     if (layer.type == data::LayerType::Affine) return affine::load(layer.bg, layer);
     if (layer.tileset) placement_ = bg::loadTileset(layer.tileset);
     if (layer.tileset && !placement_.valid()) return false;
+    // The build's entries are relative to the tileset: valid ones fit their fields after the layer's offsets.
+    const data::Palette* pal = layer.tileset ? layer.tileset->palette : nullptr;
+    placeByAdd_ = layer.tileset && placement_.firstTile + layer.tileset->gfx.tileCount <= 1024 && placement_.paletteBank + (pal ? pal->banks : 1) <= 16;
     screenBlock_ = bg::allocScreenBlocks(size);
     if (screenBlock_ < 0) return false;
     const int cells = (widthMask_ + 1) * (heightMask_ + 1);
@@ -39,9 +60,9 @@ bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
     bg::configure(layer.bg, c);
     bg::setVisible(layer.bg, true);
     // Nothing drawn yet: an empty window (x1 < x0) makes the first setCamera draw everything on the fast
-    // path, also when this view is reused for the next scene.
-    drawnX0_ = drawnY0_ = 0;
-    drawnX1_ = drawnY1_ = -1;
+    // path, also when this view is reused for the next scene.
+    drawnX0_ = drawnY0_ = 0;
+    drawnX1_ = drawnY1_ = -1;
     return true;
 }
 
@@ -67,19 +88,22 @@ void MapLayerView::setCamera(int x, int y) {
     if (!layer_ || layer_->type == data::LayerType::CollisionOnly) return;
     cameraX_ = x;
     cameraY_ = y;
-    scrollX_ = (x * layer_->parallaxX) >> 8;
-    scrollY_ = (y * layer_->parallaxY) >> 8;
+    const int sx = (x * layer_->parallaxX) >> 8, sy = (y * layer_->parallaxY) >> 8;
     if (layer_->type == data::LayerType::Affine) {
+        scrollX_ = sx;
+        scrollY_ = sy;
         // While Scene.Mode7 runs, the per-line table sets the matrix instead.
         if (!effects::scanlineActive()) affine::setTransform(layer_->bg, fixed(1), 0, fixed(scrollX_), fixed(scrollY_), 0, 0);
         return;
     }
-    bg::setScroll(layer_->bg, scrollX_, scrollY_);
-    const int nx0 = floorDiv8(scrollX_) - 1, ny0 = floorDiv8(scrollY_) - 1;
+    const int nx0 = floorDiv8(sx) - 1, ny0 = floorDiv8(sy) - 1;
     const int nx1 = nx0 + kViewTilesX, ny1 = ny0 + kViewTilesY;
-    // A big jump (respawn, Camera.SetPosition) redraws whole rows on the fast path rather than many columns.
+    // A move of more than a few tiles (respawn, teleport, Camera.SetPosition) redraws the window row by row on the fast
+    // path rather than column by column; past the frame's redraw limit the layer stays where it was until a later frame.
     const int dx = nx0 - drawnX0_, dy = ny0 - drawnY0_;
-    if (drawnX1_ < drawnX0_ || dx > 16 || dx < -16 || dy > 10 || dy < -10) {
+    const bool first = drawnX1_ < drawnX0_;
+    if (first || dx > 4 || dx < -4 || dy > 4 || dy < -4) {
+        if (!first && !takeRedraw()) return;
         for (int ty = ny0; ty <= ny1; ++ty) drawRow(ty, nx0, nx1);
     } else {
         // Only the columns and rows that entered the window.
@@ -88,6 +112,9 @@ void MapLayerView::setCamera(int x, int y) {
         for (int ty = ny0; ty < drawnY0_; ++ty) drawRow(ty, nx0, nx1);
         for (int ty = drawnY1_ + 1; ty <= ny1; ++ty) drawRow(ty, nx0, nx1);
     }
+    scrollX_ = sx;
+    scrollY_ = sy;
+    bg::setScroll(layer_->bg, sx, sy);
     drawnX0_ = nx0;
     drawnX1_ = nx1;
     drawnY0_ = ny0;
