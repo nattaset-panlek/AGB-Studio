@@ -28,6 +28,20 @@ public sealed class RuntimeRomTests(EmulatorFixture emu)
         Assert.True(result.Passed, $"{name}: {result.Error}\n{string.Join('\n', result.Log)}");
     }
 
+    // P2.10 EMU: the options block and a slot are saved to and reloaded from the emulated chip of every save type.
+    [Theory]
+    [InlineData("core_save_sram", "Sram32K")]
+    [InlineData("core_save_flash64", "Flash64K")]
+    [InlineData("core_save_flash128", "Flash128K")]
+    [InlineData("core_save_eeprom", "Eeprom8K")]
+    public void OptionsBlockAndSlotSurviveAReloadOnEachSaveType(string rom, string type)
+    {
+        Assert.True(s_build.Value.Success, s_build.Value.Log);
+        var result = RomTestRunner.Run(emu.Core, RuntimeTests.RomPath(rom), new RomTestOptions { MaxFrames = 3000 });
+        Assert.True(result.Passed, $"{rom}: {result.Error}\n{string.Join('\n', result.Log)}");
+        Assert.Contains(result.Log, l => l.Contains("save options+slot ok " + type, StringComparison.Ordinal));
+    }
+
     // P2.08: the whole sequence of every stream (and bounded values) equals the host copy of the generator.
     [Fact]
     public void RngMatchesHostReference()

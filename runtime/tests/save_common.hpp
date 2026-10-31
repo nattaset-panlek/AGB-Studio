@@ -6,6 +6,10 @@
 
 using namespace agb;
 
+#define AGB_SAVE_STR2(x) #x
+#define AGB_SAVE_STR(x) AGB_SAVE_STR2(x)
+#define AGB_SAVE_TEST_NAME AGB_SAVE_STR(AGB_SAVE_TYPE)
+
 namespace {
 struct Payload {
     u32 score;
@@ -143,6 +147,46 @@ AGB_TEST(save_type_none_stores_nothing) {
     CHECK_EQ(save::maxPayload(), 0u);
     CHECK_EQ(save::capacityBytes(save::Type::None), 0u);
     configure();
+}
+
+AGB_TEST(options_block_and_a_slot_survive_a_reload) {
+    // P2.10, per save type (this ROM's chip): the options block and slot 1 are written to the emulated chip, the
+    // driver forgets everything it knows (configure again with another layout, then back) and both read back
+    // exactly, and writing the slot leaves the block alone. The log line names the type for the host test.
+    configure();
+    save::erase(1);
+    save::Options o;
+    o.music = 7;
+    o.effects = 3;
+    o.language = 2;
+    o.remap[1] = 0x35;
+    CHECK(save::writeOptions(o));
+    Payload p{4321, 2, 0, 55, {}};
+    p.flags[15] = 0x3C;
+    CHECK(save::write(1, &p));
+    save::Config other = save::config();
+    other.slots = 1;
+    other.payloadSize = 4;
+    save::configure(other);  // forget the layout
+    configure();             // reload it from the chip
+    save::Options r;
+    CHECK(save::readOptions(r));
+    CHECK_EQ(r.music, 7);
+    CHECK_EQ(r.effects, 3);
+    CHECK_EQ(r.language, 2);
+    CHECK_EQ(r.remap[1], 0x35);
+    Payload q{};
+    CHECK(save::read(1, &q));
+    CHECK_EQ(q.score, 4321u);
+    CHECK_EQ(q.coins, 55);
+    CHECK_EQ(q.flags[15], 0x3C);
+    // the block lies outside the slots: erasing and rewriting a slot leaves it alone
+    save::erase(1);
+    CHECK(save::write(1, &p));
+    save::Options again;
+    CHECK(save::readOptions(again));
+    CHECK_EQ(again.music, 7);
+    debug::logf("save options+slot ok %s", AGB_SAVE_TEST_NAME);
 }
 
 AGB_TEST(capacity_and_crc) {
