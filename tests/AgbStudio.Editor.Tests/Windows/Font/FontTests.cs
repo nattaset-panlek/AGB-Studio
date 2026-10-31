@@ -297,6 +297,52 @@ public class FontE2ETests : IDisposable
         Assert.Contains(_h.All<TreeItem>(), t => t.Label == "notosans_8" && t.IsSelected);
     }
 
+    /// <summary>
+    /// 4.9 "Warning: missing glyphs" on T-P09: an English string of the project (English is drawn with thai_vwf) uses ½
+    /// and →, which thai_vwf has no glyph for. The status says so with the warning icon; clicking it shows the
+    /// "Missing from project text" group with two Missing glyph cells. Add Characters, scanning the project's strings,
+    /// adds them and the warning goes.
+    /// </summary>
+    [AvaloniaFact]
+    public void FontManager_FlagsTheGlyphsTheProjectTextNeeds_StatusAndMissingCells()
+    {
+        var path = Path.Combine(_h.S.Project.Current!.TextDir, "strings.en.json");
+        var en = GameProject.Load<StringTable>(path);
+        en.Strings["hud.bonus"] = "BONUS ½ → NEXT";
+        GameProject.Save(path, en);
+        var page = Open();
+        Assert.Equal("thai_vwf", page.Font!.Name);
+        var status = _h.Find<StatusItem>("Status_Glyphs");
+        Assert.Equal("196 glyphs · 2 missing", status.Content);
+        Assert.Equal("warn", status.Glyph);
+        // the grid opens on Thai consonants as before; the group menu has the missing ones last
+        Assert.Equal("Thai consonants", page.Group!.Name);
+        Assert.Equal(FontEntry.TextMissingGroup, page.Groups[^1].Name);
+        _h.Click(status);
+        Assert.Equal("Missing from project text · click a glyph to edit", ((TextBlock)_h.Find<Button>("GlyphGroupButton").Content!).Text);
+        var cells = _h.Find<WrapPanel>("GlyphGrid").Children.OfType<GlyphCell>().ToList();
+        Assert.Equal(["Glyph_00BD", "Glyph_2192"], cells.Select(c => c.Name));
+        Assert.Equal(["½", "→"], cells.Select(c => c.Char));
+        Assert.All(cells, c => Assert.Equal(GlyphCellState.Missing, c.State));
+        // as in the build: Japanese (font jp_kana, not in fonts/) is drawn with the first font, pixel8, and falls back to
+        // the English text; title_big draws no project text
+        var fonts = FontLibrary.Of(_h.S).Fonts;
+        Assert.Equal([0x00BD, 0x2192], fonts.First(f => f.Name == "pixel8").TextMissing.Order());
+        Assert.Empty(fonts.First(f => f.Name == "title_big").TextMissing);
+
+        // Add Characters › Also scan all dialogue and localization strings, as empty glyphs to draw: no warning any more
+        _h.Click(_h.Find<Button>("AddCharacters"));
+        var dlg = Assert.IsType<AddCharactersDialog>(_h.Win.Overlays.Open.Single());
+        _h.Click(dlg.Scan);
+        _h.Click(dlg.RenderFromSource);
+        Assert.Equal([0x00BD, 0x2192], dlg.Missing.Order());
+        _h.Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Assert.False(_h.Win.Overlays.IsOpen);
+        Assert.Equal("196 glyphs · 0 missing", status.Content);
+        Assert.Equal("type", status.Glyph);
+        Assert.DoesNotContain(page.Groups, g => g.Name == FontEntry.TextMissingGroup);
+    }
+
     [AvaloniaFact]
     public void AddCharacters_PasteTextAddMissingGlyphs()
     {

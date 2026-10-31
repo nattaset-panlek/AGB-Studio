@@ -95,6 +95,7 @@ public sealed class FontEntry
     void Touched()
     {
         _built = null;
+        _textMissing = null;
         SetDirty(true);
         Changed?.Invoke();
     }
@@ -171,8 +172,69 @@ public sealed class FontEntry
         key.StartsWith("U+", StringComparison.OrdinalIgnoreCase) && int.TryParse(key[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var cp) ? cp
         : key.Length > 0 ? char.ConvertToUtf32(key, 0) : -1;
 
-    /// <summary>Glyphs in the font (character sets and extras, built or missing).</summary>
-    public int GlyphCount => Font.Glyphs.Count + Font.Missing.Count;
+    /// <summary>Glyphs of the font: built, and missing (from its sets and extras, or needed by the project's text).</summary>
+    public int GlyphCount => Font.Glyphs.Count + AllMissing.Count;
+
+    // ---- missing glyphs from the project's text (4.9 "Warning: missing glyphs") ------------------------------
+
+    IReadOnlyList<int>? _textMissing;
+
+    /// <summary>The Font Manager grid group of <see cref="TextMissing"/>.</summary>
+    public const string TextMissingGroup = "Missing from project text";
+
+    /// <summary>
+    /// Characters of the project's strings this font draws and has no glyph for. A font draws the string tables of
+    /// the Localization languages it is the font of (a language without a font uses the project's default font, one
+    /// whose font is not in fonts/ the first font, as the build does), with the fallback language's text for the keys
+    /// a language lacks.
+    /// </summary>
+    public IReadOnlyList<int> TextMissing => _textMissing ??= MissingIn(DrawnText());
+
+    /// <summary>Every missing glyph: those of its sets and extras the source font lacks, then those of the project's text.</summary>
+    public IReadOnlyList<int> AllMissing => Font.Missing.Order().Concat(TextMissing).Distinct().ToList();
+
+    /// <summary>Reads the project's strings again (Localization may have changed them).</summary>
+    public void ReloadText() => _textMissing = null;
+
+    /// <summary>The grid groups (<see cref="Groups(FontFile)"/>), then the characters of the project's text this font lacks.</summary>
+    public IReadOnlyList<GlyphGroup> GroupsWithText()
+    {
+        var groups = Groups(File);
+        return TextMissing.Count == 0 ? groups : [.. groups, new GlyphGroup(TextMissingGroup, "", TextMissing.Order().ToList())];
+    }
+
+    string DrawnText()
+    {
+        var tables = new List<StringTable>();
+        foreach (var file in Project.StringTables())
+        {
+            try { tables.Add(GameProject.Load<StringTable>(file)); }
+            catch (Exception e) when (e is JsonException or IOException) { }
+        }
+        if (tables.Count == 0) return "";
+        var fonts = new List<string>();
+        foreach (var file in Project.FontFiles())
+        {
+            var name = GameProject.AssetName(file);
+            try { if (GameProject.Load<FontFile>(file).Name is { Length: > 0 } n) name = n; }
+            catch (Exception e) when (e is JsonException or IOException) { }
+            fonts.Add(name);
+        }
+        var loc = Project.Settings.Localization;
+        var sb = new System.Text.StringBuilder();
+        foreach (var t in tables)
+        {
+            var info = loc.Languages.FirstOrDefault(l => l.Code == t.Language);
+            var font = info?.Font is { Length: > 0 } f ? f : Project.Settings.General.DefaultFont;
+            if (!fonts.Contains(font)) font = fonts.FirstOrDefault() ?? "";
+            if (font != Name) continue;
+            foreach (var v in t.Strings.Values) sb.Append(v).Append('\n');
+            if (t.Language != loc.Source && info?.Fallback is { Length: > 0 } fb && fb != t.Language && tables.FirstOrDefault(x => x.Language == fb) is { } fallback)
+                foreach (var (k, v) in fallback.Strings)
+                    if (!t.Strings.ContainsKey(k)) sb.Append(v).Append('\n');
+        }
+        return sb.ToString();
+    }
 
     /// <summary>Characters of <paramref name="text"/> the font has no glyph for (Add Characters; spaces and line breaks excluded).</summary>
     public IReadOnlyList<int> MissingIn(string text)
