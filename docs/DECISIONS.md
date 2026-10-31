@@ -81,3 +81,18 @@ Status key: **decided (default)** = taken under the goal; **decided (user)** = a
 ## D-23 Menu / UI kit · decided (default)
 - Question: the blueprint lists a "Menu / UI kit" and Figma refers to a boot splash, title screen, pause menu and an options menu for button remap, but none of them was designed (checklist 1.3 and 1.4 item 6).
 - Answer: the four screens were designed in Figma section "AGB Studio · Screens", In-game row (frames "In-game · Boot splash", "In-game · Title screen", "In-game · Pause menu", "In-game · Options"), then built to match: `agb::ui` in the runtime, `ProjectFile.Ui` (pause menu, colours, font) and `SceneFile.Menu` (title screens) in the project files. Labels come from string keys `ui.*` when the Localization tables have them.
+
+## D-24 Performance targets: clean build, project open, Play start · decided (default)
+- Question: G-PERF.03 asks for targets for a clean build, opening a project and starting Play, agreed in Phase 1. None were recorded, so nothing was measured against them.
+- Options: (a) wall-clock targets for the Sky Hopper fixture on the build machine; (b) targets per asset count; (c) no targets.
+- Answer: **(a)**, for Sky Hopper (5 scenes, 12 sprites, 12 scripts, 3 fonts, 9 audio files, 6 tables, 340 strings) on the build machine (16 GB, devkitARM with Ninja, `AGB_BUILD_JOBS=2`, other builds running):
+  - clean build (build folder deleted, devkitARM compiles the runtime and every generated file, links, gbafix): **under 60 s**;
+  - project open (the Opening Project steps: read the project and its scenes, load every asset, compile the scripts; the UI work of showing the scene is not included): **under 5 s**;
+  - Play start (a build with no changes, load the ROM into the embedded mGBA core, run to the first game frame): **under 3 s**.
+  The one-value script edit stays at under 1 s (G-PERF.02, T-D06). Tests: `FixtureBuildTests.FixtureBuildsCleanWithinTheTarget`, `ProjectOpensWithinTheTarget`, `PlayStartsWithinTheTarget`; each run appends its times to `build/perf-targets.txt`.
+- Measured 2026-10-31: clean build 14.6 s, project open 0.2 s (scripting compiler already loaded in the process), Play start 0.4 s.
+- Audio mixer (G-PERF.05), measured with the runtime profiler (Audio share of the 280,896-cycle frame, maxmod at 21 kHz with 8 mixing channels, a Release ROM, `RuntimeTextAudioTests.MixerShareFor8ChannelsAt21kHzIsMeasured`): **14.5%** with 8 channels playing, 5.6% with 1 channel (about 1.3% per channel on a base of about 4.3%). Figma's Audio window shows **6%** for 8 channels at 21 kHz, so the runtime is well above the Figma figure; the loop length of the samples does not change it. Getting near 6% needs fewer channels or a lower mixing rate (the runtime always mixes at 21 kHz and ignores Project Settings · Audio "mixing rate") or a faster mixer: a decision for the user.
+
+## D-25 "Split into N palettes" for a 48-colour image · decided (default)
+- Question: Figma's Import Asset · Errors card offers "Split into 3 palettes" for an image with 48 colours; the importer says "Split into 4 palettes".
+- Answer: **4**. A 4bpp GBA palette has 16 entries and entry 0 is transparent (for sprites, and for background tiles), so one palette holds 15 colours: 3 palettes hold at most 45, and every colour must be in at least one palette, so 48 colours need ceil(48 / 15) = 4. The message keeps "Split into 4 palettes"; 31 to 45 colours give "Split into 3 palettes". Test: `ImageConverterTests.FortyEightColoursNeedFourPalettesNotThree`. The Figma frame text is the one to change (Scope log).
