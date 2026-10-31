@@ -23,7 +23,7 @@ public class LauncherE2ETests
         var page = h.Page;
         Assert.Equal("T-P12", h.Win.CurrentPageId);
         Assert.False(h.Win.TitleBar.IsVisible);   // the Launcher has its own top bar
-        Assert.Equal("v0.1 · devkitARM 16.1 found", h.Find<TextBlock>("LauncherStatus").Text);
+        Assert.Equal($"{EditorVersion.Short} · devkitARM 16.1 found", h.Find<TextBlock>("LauncherStatus").Text);
         Assert.Equal(["Sky Hopper", "Cave Quest RPG", "Snow Run", "Dusk Novel"], page.ProjectCards.Select(c => c.NameText));
         Assert.Equal(["2 h ago", "yesterday", "3 days ago", "last week"], page.ProjectCards.Select(c => c.Meta));
         Assert.Equal(["art/scene/day", "art/scene/cave", "art/scene/snow", "art/scene/dusk"], page.ProjectCards.Select(c => c.Preview));
