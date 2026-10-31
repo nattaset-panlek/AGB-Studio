@@ -221,8 +221,7 @@ layout.
   table `script_ops.def` is the single source for the VM and the compiler; natives are declared with `[ScriptNative]`.
   Map scripts (Scene Settings OnLoad / OnEnter / OnExit) and link conditions are not bytecode: they become static
   methods of a C# class `SceneEvents_<Scene>` (`ScriptCompiler.cs`), are translated to C++ like tier 1 and are called
-  as functions (`SceneDef::onLoad`, `onEnter`, `onExit`). The header comment of `script.hpp` still says map scripts
-  run on the VM.
+  as functions (`SceneDef::onLoad`, `onEnter`, `onExit`).
 - Tier 3: Database tables become generated C++ (one unit per table, enums and `Items.Get(ItemId.X)`); script cells
   compile through `Translation/DbScripts.cs`.
 - Logic Graph (`Graph/LogicGraph.cs`, `Graph/GraphCodeGen.cs`): a `.graph` file generates C# (D-11). Node catalog:

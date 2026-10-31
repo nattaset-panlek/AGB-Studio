@@ -1,6 +1,7 @@
-// Event Script VM (blueprint 07): runs the bytecode compiled from `[Cutscene] async` C# methods, the
-// Dialogue Editor and map scripts. Several contexts run side by side by priority; instructions can
-// yield across frames; natives (Say, Move, Choice, ...) can make a context wait until they finish.
+// Event Script VM (blueprint 07): runs the bytecode compiled from `[Cutscene] async` C# methods and the
+// Dialogue Editor (map scripts are C++ functions, SceneDef::onLoad / onEnter / onExit). Several contexts run
+// side by side by priority; instructions can yield across frames; natives (Say, Move, Choice, ...) can make a
+// context wait until they finish.
 #pragma once
 #include "agb/types.hpp"
 
