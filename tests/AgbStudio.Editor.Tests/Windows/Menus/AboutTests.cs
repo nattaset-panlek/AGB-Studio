@@ -43,8 +43,8 @@ public sealed class AboutTests : IDisposable
         var about = Assert.IsType<AboutDialog>(win.Overlays.Open.Single());
         Assert.Equal(("T-D11", "help.about"), _fx.Services.Windows.Requests[^1]);
         Assert.Equal((460, 304), ((int)about.Bounds.Width, (int)about.Bounds.Height));
-        Assert.Equal("0.1.0", About.Version);
-        Assert.Equal($"Version 0.1.0 · {About.BuildDate:yyyy-MM-dd}", about.VersionLine);
+        Assert.Equal("1.0.0", About.Version);   // Directory.Build.props
+        Assert.Equal($"Version {About.Version} · {About.BuildDate:yyyy-MM-dd}", about.VersionLine);
         var texts = about.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         Assert.Contains("AGB Studio", texts);
         Assert.Contains(AboutDialog.Credits, texts);

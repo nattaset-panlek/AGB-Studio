@@ -74,7 +74,7 @@ public sealed class ScriptingApiTests : IDisposable
         {
             _h.Open("T-P18");
             var page = _h.Page<ScriptingApiPage>();
-            Assert.Equal("Docs v0.1", page.StatusVersion);
+            Assert.Equal("Docs v1.0", page.StatusVersion);   // the API reference assembly, version 1.0.0 (Directory.Build.props)
             Assert.Equal("Offline", _h.Find<StatusItem>("Status_Offline").Content);
             Assert.True(File.Exists(AgbStudio.Scripting.ApiReference.ApiDocumentationPath));
             Assert.Equal(5, page.Rows.Count);

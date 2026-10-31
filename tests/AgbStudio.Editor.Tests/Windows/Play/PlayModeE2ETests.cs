@@ -322,6 +322,7 @@ public class PlayModeE2ETests : EditorDriver
         // breakpoint (the jump at PlayerController.cs:19); the engine reports the frame once the game continues
         var debug = AgbStudio.Editor.Windows.Debugger.DebuggerModel.Of(Fx.Services);
         var bp = debug.AddBreakpoint("PlayerController.cs", 19);
+        Play.RunFrames(2);  // the Debugger hands the breakpoint to the game after a frame
         Play.KeyDown(Key.Z);
         for (var i = 0; i < 10 && !debug.AtBreakpoint; i++) Play.RunFrames(1);
         Play.KeyUp(Key.Z);

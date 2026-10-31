@@ -333,15 +333,18 @@ public sealed class MenuActionTests : IDisposable
 
         var links = new EditorLinks { Config = new EditorConfig { UpdateFeed = "https://feed.example/latest.json" }, Open = _opened.Add, Fetch = (url, _) => { asked.Add(url); return feed is null ? throw new HttpRequestException("offline") : Task.FromResult(feed); } };
         s.Set(links);
-        feed = """{ "version": "0.2.0", "url": "https://agb.example/releases/0.2.0" }""";
+        // versions relative to this build (Directory.Build.props): a newer minor, then this version
+        var current = Version.Parse(About.Version);
+        var newer = $"{current.Major}.{current.Minor + 1}.0";
+        feed = $$"""{ "version": "{{newer}}", "url": "https://agb.example/releases/{{newer}}" }""";
         r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal(("AGB Studio 0.2.0 is available", true), (r.Message, r.Available));
-        Assert.Equal("https://agb.example/releases/0.2.0", _opened[^1]);
+        Assert.Equal(($"AGB Studio {newer} is available", true), (r.Message, r.Available));
+        Assert.Equal($"https://agb.example/releases/{newer}", _opened[^1]);
         Assert.Equal(["https://feed.example/latest.json"], asked);
 
-        feed = """[{ "tag_name": "v0.1.0", "html_url": "https://agb.example/r/0.1.0" }]""";
+        feed = $$"""[{ "tag_name": "v{{About.Version}}", "html_url": "https://agb.example/r/{{About.Version}}" }]""";
         r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal(("AGB Studio is up to date (0.1.0)", false), (r.Message, r.Available));
+        Assert.Equal(($"AGB Studio is up to date ({About.Version})", false), (r.Message, r.Available));
 
         feed = null;
         r = await MenuActions.CheckUpdatesAsync(s);
