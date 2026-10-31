@@ -41,7 +41,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     [Fact]
     public void CatalogListsTheEightFigmaTemplates()
     {
-        Assert.Equal(["Platformer"], TemplateCatalog.All.Select(t => t.Name).Take(1));
+        Assert.Equal(["Platformer", "Top-down Adventure", "Visual Novel", "Puzzle", "Shoot 'em up", "Turn-based RPG", "Racing (Mode 7)", "Beat 'em up"], TemplateCatalog.All.Select(t => t.Name));
         Assert.All(TemplateCatalog.All, t => Assert.Contains(t.Genre, new[] { "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing" }));
     }
 
@@ -358,6 +358,140 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.True(Field(0) > 10, $"gold {Field(0)}");  // the slime's gold
         Assert.True(Field(1) > 0, $"exp {Field(1)}");
         Assert.DoesNotContain(s.Log, l => GameplayOverrun(l));
+        s.Stop();
+    }
+
+    [Fact]
+    public void RacingDrivesTheMode7CircuitAndCountsLaps()
+    {
+        var (p, r) = Build("racing");
+        Assert.Equal("Mode 1 · 2 BG layers · 7 actors · 2 scripts", TemplateInfo.Stats(p));
+        // The Mode 7 line table (161 lines x PA, PC, X, Y): the floor point under the kart sprite (120, 136) and the
+        // heading come from line 136, so the test can steer like a player looking at the screen.
+        var table = (uint)BuildReport.Symbols(new Toolchain(), r.ElfPath).Single(x => x.Name == "g_table" && x.Size == 161 * 16).Address;
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 40; i++) s.Step();
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        uint Best() => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8);
+        var circuit = SceneIndex();
+        var (mode, bg, _) = Inspector.Display(s.Core);
+        Assert.Equal(1, mode);
+        Assert.True(bg[2], "the floor (BG2) shows");
+        (double X, double Y, double Heading) Kart()
+        {
+            var e = table + 136 * 16;
+            var pa = (short)(s.Core.ReadU32(e) & 0xFFFF);
+            var pc = (short)(s.Core.ReadU32(e + 4) & 0xFFFF);
+            var x = (int)s.Core.ReadU32(e + 8) + pa * 120;
+            var y = (int)s.Core.ReadU32(e + 12) + pc * 120;
+            return (x / 256.0, y / 256.0, Math.Atan2(-pa, pc) * 128 / Math.PI);
+        }
+        // Centre line of the circuit (RacingTemplate.Circuit): a rounded rectangle round (512, 512).
+        var path = new List<(double X, double Y)>();
+        for (var i = 0; i < 128; i++)
+        {
+            var t = i / 128.0 * 4;
+            var side = (int)t;
+            var f = t - side;
+            double u = -352 + 704 * f;
+            var (x, y) = side switch { 0 => (-352.0, -u), 1 => (u, -352.0), 2 => (352.0, u), _ => (-u, 352.0) };
+            // Pull the corners onto the radius-160 arcs.
+            double cx = Math.Clamp(x, -192, 192), cy = Math.Clamp(y, -192, 192), dx = x - cx, dy = y - cy, d = Math.Sqrt(dx * dx + dy * dy);
+            if (d > 0) (x, y) = (cx + dx / d * 160, cy + dy / d * 160);
+            path.Add((512 + x, 512 + y));
+        }
+        var shot = false;
+        for (var f = 0; f < 5000 && Best() == 0; f++)
+        {
+            var k = Kart();
+            var near = Enumerable.Range(0, path.Count).MinBy(i => Math.Pow(path[i].X - k.X, 2) + Math.Pow(path[i].Y - k.Y, 2));
+            var target = path[(near + 6) % path.Count];
+            var want = Math.Atan2(target.Y - k.Y, target.X - k.X) * 128 / Math.PI;
+            var diff = (want - k.Heading + 384) % 256 - 128;
+            s.Keys = GbaKeys.A | (diff > 3 ? GbaKeys.Right : diff < -3 ? GbaKeys.Left : 0);
+            var before = s.Profiler()?.Overruns ?? 0;
+            s.Step();
+            var pr = s.Profiler();
+            if (pr != null && pr.Overruns != before) Overruns.Add($"frame {f} at {k.X:0},{k.Y:0} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
+            if (!shot && k.Y < 200)
+            {
+                // The first corner: the floor turns and a rival is on screen.
+                AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "race.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
+                shot = true;
+            }
+        }
+        s.Keys = 0;
+        var best = Best();
+        Assert.True(best > 0, "three laps were not finished");
+        Assert.InRange(best / 60.0, 30, 120);  // seconds for three laps of about 2540 px
+        for (var i = 0; i < 300 && SceneIndex() == circuit; i++) s.Step();
+        Assert.NotEqual(circuit, SceneIndex());  // back to the title after the finish
+        Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
+        s.Stop();
+    }
+
+    [Fact]
+    public void BeatEmUpFightsThroughTheWavesWithCombos()
+    {
+        var (p, r) = Build("brawler");
+        Assert.Equal("Mode 0 · 3 BG layers · 7 actors · 3 scripts", TemplateInfo.Stats(p));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 40; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 200 && !s.Actors().Any(a => a.Name == "Fighter"); i++) s.Step();
+        int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
+        uint Score() => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8);
+        var pier = SceneIndex();
+        var most = 0;
+        var shot = false;
+        // Walk right; when thugs are on screen, line up beside the nearest one, face it and press A in rhythm
+        // (jab, jab, kick).
+        for (var f = 0; f < 9000 && SceneIndex() == pier; f++)
+        {
+            var actors = s.Actors();
+            var me = actors.SingleOrDefault(a => a.Name == "Fighter");
+            if (me == null)
+            {
+                s.Step();  // the scene is changing
+                continue;
+            }
+            var thugs = actors.Where(a => a.Name == "Thug" && a.Alive && a.Visible && a.Y > 0).ToList();
+            most = Math.Max(most, thugs.Count);
+            GbaKeys keys = 0;
+            if (thugs.Count == 0) keys = GbaKeys.Right;
+            else
+            {
+                var t = thugs.MinBy(a => Math.Abs(a.X - me.X) + Math.Abs(a.Y - me.Y))!;
+                var standX = t.X + (me.X < t.X ? -18 : 18);
+                if (t.Y > me.Y + 3) keys |= GbaKeys.Down;
+                else if (t.Y < me.Y - 3) keys |= GbaKeys.Up;
+                if (standX > me.X + 3) keys |= GbaKeys.Right;
+                else if (standX < me.X - 3) keys |= GbaKeys.Left;
+                else if (t.X < me.X != me.FacingLeft) keys |= t.X < me.X ? GbaKeys.Left : GbaKeys.Right;
+                else if (Math.Abs(t.Y - me.Y) <= 6 && f % 16 == 0) keys = GbaKeys.A;
+                if (!shot && thugs.Count >= 2 && Math.Abs(t.X - me.X) < 30)
+                {
+                    AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "brawl.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
+                    shot = true;
+                }
+            }
+            s.Keys = keys;
+            var before = s.Profiler()?.Overruns ?? 0;
+            s.Step();
+            var pr = s.Profiler();
+            if (pr != null && pr.Overruns != before) Overruns.Add($"frame {f} thugs {thugs.Count} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
+        }
+        s.Keys = 0;
+        var lives = s.Core.Memory(s.Core.ReadU32(s.Channel!.Game + 8) + 12, 1)[0];
+        Assert.True(Score() >= 9 * 100, $"score {Score()}, lives {lives}");  // all nine thugs of the three waves
+        Assert.True(lives > 0, "the fighter lost every life");
+        Assert.True(most >= 4, $"at most {most} thugs at once");
+        Assert.NotEqual(pier, SceneIndex());  // stage clear returns to the title
+        Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
         s.Stop();
     }
 }

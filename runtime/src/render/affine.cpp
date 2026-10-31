@@ -10,6 +10,8 @@
 
 namespace agb::render::affine {
 
+void buildMap(u16* vram, int mapSide, const u8* cells, int width, int height, int add);  // affine_map.iwram.cpp
+
 namespace {
 AGB_EWRAM_BSS s32 g_table[161 * 4];
 
@@ -43,17 +45,28 @@ bool load(int bg, const data::MapLayer& layer) {
     }
     const auto placement = bg::loadTiles(layer.tileset->gfx, charBlock);
     if (layer.tileset->palette) {
-        // 8bpp tiles use the whole BG palette; the build stores their colours as full banks.
-        for (int b = 0; b < layer.tileset->palette->banks; ++b) palettes::setBank(false, b, layer.tileset->palette->colors + b * 16);
+        // 8bpp tiles index the whole BG palette: colour bank * 16 + n, with the build's banks counted from 0. When
+        // another layer already holds bank 0, the colours go where the palette manager puts them and the tile
+        // pixels move by the same number of banks.
+        const int base = palettes::acquire(layer.tileset->palette, false);
+        if (base > 0) {
+            u16* px = reinterpret_cast<u16*>(reinterpret_cast<u8*>(commit::bgTiles(charBlock)) + placement.firstTile * 64);
+            const u16 add = static_cast<u16>(base * 16);
+            for (u32 i = 0; i < static_cast<u32>(layer.tileset->gfx.tileCount) * 32; ++i) {
+                const u16 v = px[i];
+                const u16 lo = v & 0xFF, hi = v >> 8;
+                px[i] = static_cast<u16>((lo ? lo + add : 0) | ((hi ? hi + add : 0) << 8));
+            }
+        }
     }
     const int sb = bg::allocAffineScreenBlocks(size);
     if (sb < 0) return false;
-    u8* map = static_cast<u8*>(screenArena().alloc(static_cast<u32>(mapSide * mapSide), 4));
-    if (!map) return false;
-    for (int y = 0; y < mapSide; ++y)
-        for (int x = 0; x < mapSide; ++x)
-            map[y * mapSide + x] = x < layer.width && y < layer.height ? static_cast<u8>(layer.cells[y * layer.width + x] + placement.firstTile) : 0;
-    commit::copyNow(commit::bgMap(sb), map, static_cast<u32>(mapSide * mapSide));
+    // The build pads maps to the hardware size, so they copy as they are; other sizes are padded here.
+    const u8* bytes = reinterpret_cast<const u8*>(layer.cells);
+    if (layer.width == mapSide && layer.height == mapSide && placement.firstTile == 0)
+        commit::copyNow(commit::bgMap(sb), bytes, static_cast<u32>(mapSide * mapSide));
+    else
+        buildMap(commit::bgMap(sb), mapSide, bytes, layer.width, layer.height, placement.firstTile);
     bg::Config c;
     c.charBlock = static_cast<u8>(charBlock);
     c.screenBlock = static_cast<u8>(sb);

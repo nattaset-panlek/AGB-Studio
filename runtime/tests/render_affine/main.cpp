@@ -13,7 +13,7 @@ using namespace agb::render;
 
 namespace {
 AGB_EWRAM_BSS u32 g_tiles8[2 * 16];  // two 8bpp tiles
-u16 g_cells[32 * 32];
+alignas(4) u8 g_cells[32 * 32];  // one tile byte per cell
 const u16 kColors[16] = {0, 0x7FFF, 0x001F, 0x03E0, 0x7C00};
 const data::Palette kPal{kColors, 1};
 data::Tileset g_ts;
@@ -25,11 +25,11 @@ void setup() {
         g_tiles8[16 + i] = 0x03030303u;  // tile 1: colour 3 (green)
     }
     for (int y = 0; y < 32; ++y)
-        for (int x = 0; x < 32; ++x) g_cells[y * 32 + x] = static_cast<u16>(((x / 2) + (y / 2)) & 1);
+        for (int x = 0; x < 32; ++x) g_cells[y * 32 + x] = static_cast<u8>(((x / 2) + (y / 2)) & 1);
     g_ts = {};
     g_ts.gfx = {g_tiles8, sizeof g_tiles8, 2, 8, false};
     g_ts.palette = &kPal;
-    g_layer = {2, data::LayerType::Affine, 0, true, 256, 256, 32, 32, g_cells, &g_ts};
+    g_layer = {2, data::LayerType::Affine, 0, true, 256, 256, 32, 32, reinterpret_cast<const u16*>(g_cells), &g_ts};
 }
 }  // namespace
 

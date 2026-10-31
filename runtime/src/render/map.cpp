@@ -3,6 +3,8 @@
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
 #include "agb/memory.hpp"
+#include "agb/render/affine.hpp"
+#include "agb/render/effects.hpp"
 
 namespace agb::render {
 
@@ -19,6 +21,8 @@ bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
     widthMask_ = bg::widthTiles(size) - 1;
     heightMask_ = bg::heightTiles(size) - 1;
     if (layer.type == data::LayerType::CollisionOnly) return true;
+    // Rotate / scale layers (Mode 1-2, the Mode 7 floor): the whole map is loaded once, the camera moves the matrix.
+    if (layer.type == data::LayerType::Affine) return affine::load(layer.bg, layer);
     if (layer.tileset) placement_ = bg::loadTileset(layer.tileset);
     if (layer.tileset && !placement_.valid()) return false;
     screenBlock_ = bg::allocScreenBlocks(size);
@@ -65,6 +69,11 @@ void MapLayerView::setCamera(int x, int y) {
     cameraY_ = y;
     scrollX_ = (x * layer_->parallaxX) >> 8;
     scrollY_ = (y * layer_->parallaxY) >> 8;
+    if (layer_->type == data::LayerType::Affine) {
+        // While Scene.Mode7 runs, the per-line table sets the matrix instead.
+        if (!effects::scanlineActive()) affine::setTransform(layer_->bg, fixed(1), 0, fixed(scrollX_), fixed(scrollY_), 0, 0);
+        return;
+    }
     bg::setScroll(layer_->bg, scrollX_, scrollY_);
     const int nx0 = floorDiv8(scrollX_) - 1, ny0 = floorDiv8(scrollY_) - 1;
     const int nx1 = nx0 + kViewTilesX, ny1 = ny0 + kViewTilesY;

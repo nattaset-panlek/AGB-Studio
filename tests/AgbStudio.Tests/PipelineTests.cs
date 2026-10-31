@@ -135,6 +135,39 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.Contains(r.Errors, d => d.Message.Contains("uses sprite 'missing_sprite', which is not in assets/sprites") && d.File.EndsWith("Forest_01.scene"));
         Assert.Contains(r.Errors, d => d.Message.Contains("behaviour 'NoSuchBehaviour' was not found"));
         Assert.Equal("Generate game", r.FailedStep);
+        // Failed builds are in the Build Report history too, with their first error.
+        var last = BuildReport.LoadHistory(p.BuildDir)[0];
+        Assert.Equal(0, last.RomBytes);
+        Assert.True(last.Errors >= 2);
+        Assert.Equal(r.Errors.First().ToString(), last.FirstError);
+    }
+
+    sealed class StepLog : IBuildObserver
+    {
+        public readonly List<string> Events = new();
+        public void StepStarted(string step, string detail) => Events.Add("start " + step);
+        public void StepFinished(string step, TimeSpan elapsed, bool ok, string detail) => Events.Add($"end {step} {ok}");
+        public void FileProgress(string step, int done, int total, string file) { }
+        public void Line(string text) { }
+        public void Message(Diagnostic d) { }
+    }
+
+    [Fact]
+    public void BuildRomStepsIncludeLinkAndGbafix()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_steps"));
+        var log = new StepLog();
+        var r = new GameBuilder(p, new Toolchain(), log).Build(new BuildOptions { Clean = true });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.Equal(
+        [
+            "start " + GameBuilder.StepAssets, "end " + GameBuilder.StepAssets + " True",
+            "start " + GameBuilder.StepScripts, "end " + GameBuilder.StepScripts + " True",
+            "start Generate game", "end Generate game True",
+            "start " + GameBuilder.StepCompile, "end " + GameBuilder.StepCompile + " True",
+            "start " + GameBuilder.StepLink, "end " + GameBuilder.StepLink + " True",
+        ], log.Events);
+        Assert.True(r.StepTimes.ContainsKey(GameBuilder.StepLink));
     }
 
     [Fact]

@@ -6,6 +6,7 @@
 #include "agb/debug.hpp"
 #include "agb/input.hpp"
 #include "agb/natives.hpp"
+#include "agb/render/affine.hpp"
 #include "agb/render/bg.hpp"
 #include "agb/render/palette.hpp"
 #include "agb/rng.hpp"
@@ -44,6 +45,8 @@ struct SceneState {
     u32 loadStartFrame = 0, lastLoadFrames = 0;
     bool loaded = false;
     s8 drawnLayers = -1;  // layers drawn by the spawn step so far (-1 = actors not spawned yet)
+    s8 loadedLayers = 0;  // layers loaded by the tiles / map steps so far
+    bool labelsMade = false;  // the OnLoad step made the Text Labels (Start and OnLoad may run a frame later)
     data::MapLayer ramLayers[kMaxLayers];  // layers edited at run time (cells in the screen arena)
     bool edited[kMaxLayers] = {};
 };
@@ -82,6 +85,20 @@ void followCamera() {
     clampCamera();
 }
 
+// Text Label actors of the scene: their text drawn on the text layer (load step 6).
+void makeLabels(const SceneDef* d) {
+    for (int i = 0; i < d->actorCount; ++i) {
+        const ActorDef& ad = d->actors[i];
+        if (ad.kind != ActorKind::TextLabel) continue;
+        Actor* a = actors::at(i);
+        const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
+        if (a && label) {
+            a->label = label;
+            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+        }
+    }
+}
+
 class SceneScreen final : public Screen {
 public:
     const char* name() const override { return g_scene.def ? g_scene.def->name : "scene"; }
@@ -94,6 +111,8 @@ public:
                 return false;
             case 1:  // 2 free + reset the previous scene's arena and hardware state
                 g_scene.drawnLayers = -1;
+                g_scene.loadedLayers = 0;
+                g_scene.labelsMade = false;
                 for (bool& e : g_scene.edited) e = false;
                 actors::reset();
                 render::sprites::reset();
@@ -110,9 +129,20 @@ public:
                 return false;
             case 2:  // 3 tiles -> VRAM (tileset loads happen in init)
             case 3: {  // 4 map + palette
+                // Two layers per step; after a heavy layer (a 128 x 128 affine map, a large image) the next one waits
+                // for the next frame.
                 const int first = step == 2 ? 0 : 2;
-                for (int i = first; i < d->layerCount && i < kMaxLayers && i < first + 2; ++i)
+                const int end = first + 2 < d->layerCount ? first + 2 : d->layerCount;
+                if (g_scene.loadedLayers < first) g_scene.loadedLayers = static_cast<s8>(first);
+                const u32 t0 = profile::cyclesNow();
+                while (g_scene.loadedLayers < end && g_scene.loadedLayers < kMaxLayers) {
+                    const int i = g_scene.loadedLayers++;
                     if (!g_scene.views[i].init(d->layers[i])) debug::logf("warning: layer %d of %s could not be loaded", i, d->name);
+                    if (g_scene.loadedLayers < end && profile::cyclesNow() - t0 > profile::kCyclesPerFrame / 2) {
+                        holdLoadStep();
+                        break;
+                    }
+                }
                 return false;
             }
             case 4: {  // 5 spawn actors near the camera, then draw one layer per frame
@@ -141,14 +171,14 @@ public:
                 return false;
             }
             case 5:  // 6 Text Label actors (drawn here, a frame after the actors), then the OnLoad script
-                for (int i = 0; i < d->actorCount; ++i) {
-                    const ActorDef& ad = d->actors[i];
-                    if (ad.kind != ActorKind::TextLabel) continue;
-                    Actor* a = actors::at(i);
-                    const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
-                    if (a && label) {
-                        a->label = label;
-                        a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+                if (!g_scene.labelsMade) {
+                    g_scene.labelsMade = true;
+                    const u32 t0 = profile::cyclesNow();
+                    makeLabels(d);
+                    // Many labels in a large font: OnLoad and the Start methods get the next frame.
+                    if (profile::cyclesNow() - t0 > profile::kCyclesPerFrame / 3) {
+                        holdLoadStep();
+                        return false;
                     }
                 }
                 if (d->onLoad) d->onLoad();
@@ -559,6 +589,18 @@ void setTile(int layer, int tx, int ty, u16 metatile) {
     const_cast<u16*>(g_scene.ramLayers[layer].cells)[ty * src.width + tx] = metatile;
     g_scene.views[layer].redrawMetatile(tx, ty);
 }
+
+void mode7(fixed x, fixed y, int angle, int height, int horizon) {
+    render::affine::Mode7 m;
+    m.camX = x;
+    m.camY = y;
+    m.angle = static_cast<u8>(angle);
+    m.camHeight = height;
+    m.horizon = horizon;
+    render::affine::mode7(m);
+}
+
+void stopMode7() { render::affine::stopMode7(); }
 
 Actor* spawn(const char* name, int x, int y) {
     const SceneDef* d = g_scene.def;

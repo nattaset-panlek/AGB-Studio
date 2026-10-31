@@ -128,12 +128,23 @@ public sealed class GameBuilder
         _result.Elapsed = sw.Elapsed;
         _result.AssetsCached = _cache.Hits;
         _result.AssetsConverted = _cache.Misses;
+        if (!_result.Success)
+        {
+            var errors = _result.Errors.ToList();
+            BuildReport.AddHistory(_p.BuildDir, new BuildReport.HistoryEntry(DateTime.Now, 0, sw.Elapsed.TotalSeconds,
+                _result.Diagnostics.Count(d => d.Severity == Severity.Warning), errors.Count, errors.FirstOrDefault()?.ToString() ?? ""));
+        }
         return _result;
     }
 
+    // The step running now: the compile step hands over to "Link + gbafix" when ninja starts linking.
+    string _step = "";
+    Stopwatch _stepWatch = new();
+
     bool Step(string name, Func<string> body)
     {
-        var sw = Stopwatch.StartNew();
+        _step = name;
+        _stepWatch = Stopwatch.StartNew();
         _obs.StepStarted(name, "");
         string detail;
         try
@@ -146,9 +157,9 @@ public sealed class GameBuilder
             detail = e.Message;
         }
         var ok = !_result.Errors.Any();
-        _result.StepTimes[name] = sw.Elapsed;
-        _obs.StepFinished(name, sw.Elapsed, ok, detail);
-        if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = name;
+        _result.StepTimes[_step] = _stepWatch.Elapsed;
+        _obs.StepFinished(_step, _stepWatch.Elapsed, ok, detail);
+        if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = _step;
         return ok;
     }
 
@@ -630,6 +641,24 @@ public sealed class GameBuilder
                     layers.Append($"{size.W}, {size.H}, agbasset_tileset_{imgId}_cells, &agbasset_tileset_{imgId}}},\n");
                     continue;
                 }
+                if (l.Type == LayerType.Affine)
+                {
+                    // 8bpp tiles with flips and banks baked in, one tile per 8x8 cell (affine maps have neither).
+                    var ts = _tilesets[map.Tileset];
+                    var af = AffineConverter.Convert(ts, l.Cells, map.Width, map.Height);
+                    if (af.Problem != null) Add(new Diagnostic(Severity.Warning, mapPath, 0, 0, "", $"Layer {l.Name}: {af.Problem}"));
+                    sb.Append("alignas(4) ");
+                    Cpp.Bytes(sb, $"const unsigned int agbasset_map_{id}_l{i}_tiles", af.Tiles);
+                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}_colors", ts.Palette.Flatten().Select(c => (int)c));
+                    sb.Append($"const agb::data::Palette agbasset_map_{id}_l{i}_pal{{agbasset_map_{id}_l{i}_colors, {ts.Palette.Banks.Count}}};\n");
+                    sb.Append($"const agb::data::Tileset agbasset_map_{id}_l{i}_ts{{{{agbasset_map_{id}_l{i}_tiles, {af.Tiles.Length}, {af.TileCount}, 8, false}}, ");
+                    sb.Append($"&agbasset_map_{id}_l{i}_pal, nullptr, nullptr, nullptr, 0, nullptr, 0}};\n");
+                    sb.Append("alignas(4) ");
+                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", af.PackedCells);
+                    layers.Append($"    {{{l.Bg}, agb::data::LayerType::Affine, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+                    layers.Append($"{af.Width}, {af.Height}, agbasset_map_{id}_l{i}, &agbasset_map_{id}_l{i}_ts}},\n");
+                    continue;
+                }
                 Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", l.Cells);
                 layers.Append($"    {{{l.Bg}, agb::data::LayerType::{type}, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
                 layers.Append($"{map.Width}, {map.Height}, agbasset_map_{id}_l{i}, &agbasset_tileset_{tsId}}},\n");
@@ -922,6 +951,14 @@ public sealed class GameBuilder
         var total = target.Sources.Count;
         var r = new NativeBuild(_tc, Path.Combine(_p.BuildDir, "obj")).Build([target], line =>
         {
+            if (_step == StepCompile && line.StartsWith('[') && line.Contains("] LINK ", StringComparison.Ordinal))
+            {
+                _result.StepTimes[StepCompile] = _stepWatch.Elapsed;
+                _obs.StepFinished(StepCompile, _stepWatch.Elapsed, true, $"{compiled} files");
+                _step = StepLink;
+                _stepWatch = Stopwatch.StartNew();
+                _obs.StepStarted(StepLink, "");
+            }
             _obs.Line(line);
             if (line.StartsWith('[') && line.Contains("CXX "))
                 _obs.FileProgress(StepCompile, ++compiled, total, Path.GetFileName(line[(line.IndexOf("CXX ", StringComparison.Ordinal) + 4)..]));
@@ -938,7 +975,7 @@ public sealed class GameBuilder
         File.Copy(r.RomPath, RomPath, true);
         _result.RomPath = RomPath;
         _result.ElfPath = Path.ChangeExtension(r.RomPath, ".elf");
-        return $"{compiled} files";
+        return _step == StepLink ? Path.GetFileName(RomPath) : $"{compiled} files";
     }
 
     /// <summary>Turns "file:line:col: error: message" into a diagnostic (and maps generated C++ back via #line).</summary>

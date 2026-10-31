@@ -535,7 +535,7 @@ internal sealed partial class CppTranslator
         return new CppExpr($"{left.At(Eq)} {sym} {right.At(Eq + 1)}", Eq);
     }
 
-    /// <summary>Asset kind of a property / field reference marked [Asset] (Actor.tag).</summary>
+    /// <summary>Asset kind of a property / field reference or a method result marked [Asset] (Actor.tag, Scene.TagAt).</summary>
     static AssetKind? AssetKindOf(IOperation op)
     {
         while (op is IConversionOperation c) op = c.Operand;
@@ -543,6 +543,7 @@ internal sealed partial class CppTranslator
         {
             IPropertyReferenceOperation p => ScriptModel.Asset(p.Property),
             IFieldReferenceOperation f => ScriptModel.Asset(f.Field),
+            IInvocationOperation i => ScriptModel.Asset(i.TargetMethod),
             _ => null,
         };
     }
