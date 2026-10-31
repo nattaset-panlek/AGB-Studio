@@ -224,7 +224,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 14.09 | 14.09 | 0,0 | 0 | 15.02 |
 | T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 14.26 | 14.26 | 0,0 | 0 | 15.31 |
 | T-O07 | frame Command Palette | 640x325 | 640x325 | 0.87 | 0.87 | 0,0 | 0 | 1.08 |
-| T-D10 | frame Keyboard Shortcuts | 760x390 | 760x390 | 1.18 | 1.18 | 0,0 | 0 | 1.30 |
+| T-D10 | frame Keyboard Shortcuts | 760x390 | 760x390 | 1.16 | 1.16 | 0,0 | 0 | 1.28 |
 | T-D12 | frame Unsaved Changes | 460x262 | 460x262 | 2.22 | 2.22 | 0,0 | 0 | 2.42 |
 | T-M01 | menu File menu | 264x306 | 264x306 | 2.23 | 2.23 | 0,0 | 0 | 2.68 |
 | T-M02 | menu Edit menu | 264x297 | 264x297 | 1.40 | 1.40 | 0,0 | 0 | 1.74 |
@@ -235,22 +235,22 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M07 | menu Help menu | 264x184 | 264x184 | 3.22 | 3.22 | 0,0 | 0 | 3.77 |
 | T-M08 | menu Open Recent | 264x123 | 264x123 | 2.16 | 2.16 | 0,0 | 0 | 2.47 |
 | T-P15 | frame Audio | 1440x900 | 1440x900 | 5.29 | 5.29 | 0,0 | 0 | 5.41 |
-| T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 2.95 | 2.95 | 0,0 | 0 | 2.94 |
+| T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 2.94 | 2.94 | 0,0 | 0 | 2.94 |
 | T-P11 | frame Build Report | 1440x900 | 1440x900 | 1.47 | 1.47 | 0,0 | 0 | 1.85 |
 | T-D06 | frame Build ROM | 600x440 | 600x440 | 2.32 | 2.32 | 0,0 | 0 | 2.76 |
 | T-D23 | frame Build ROM · Failed | 600x382 | 600x382 | 1.32 | 1.32 | 0,0 | 0 | 1.43 |
-| T-D05 | frame Export ROM | 560x488 | 560x488 | 2.45 | 2.45 | 0,0 | 0 | 2.82 |
-| T-D07 | frame Flash to Cartridge | 560x368 | 560x368 | 3.15 | 3.15 | 0,0 | 0 | 3.64 |
+| T-D05 | frame Export ROM | 560x488 | 560x488 | 1.87 | 1.87 | 0,0 | 0 | 2.03 |
+| T-D07 | frame Flash to Cartridge | 560x368 | 560x368 | 3.11 | 3.11 | 0,0 | 0 | 3.60 |
 | T-D04 | frame Import Asset | 900x460 | 900x460 | 3.33 | 2.92 | -1,0 | 1 | 3.85 |
-| T-D24 | frame Import Asset · Errors | 720x436 | 720x436 | 4.46 | 4.46 | 0,0 | 0 | 6.02 |
+| T-D24 | frame Import Asset · Errors | 720x436 | 720x436 | 2.62 | 2.45 | -1,0 | 1 | 3.08 |
 | T-P07 | frame Database | 1440x900 | 1440x900 | 1.75 | 1.75 | 0,0 | 0 | 2.07 |
 | T-D17 | frame New Table | 520x440 | 520x440 | 1.80 | 1.80 | 0,0 | 0 | 2.10 |
-| T-D18 | frame Add Field | 520x516 | 520x516 | 1.32 | 1.32 | 0,0 | 0 | 1.38 |
-| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.69 | 2.69 | 0,0 | 0 | 4.23 |
+| T-D18 | frame Add Field | 520x516 | 520x516 | 1.14 | 1.14 | 0,0 | 0 | 1.21 |
+| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.25 | 2.25 | 0,0 | 0 | 3.48 |
 | T-P14 | frame Localization | 1440x900 | 1440x900 | 3.74 | 3.74 | 0,0 | 0 | 5.47 |
 | T-D20 | frame Add Language | 520x416 | 520x416 | 1.82 | 1.82 | 0,0 | 0 | 1.89 |
 | T-P16 | frame Dialogue Editor | 1440x900 | 1440x900 | 2.09 | 2.09 | 0,0 | 0 | 2.76 |
-| T-D21 | frame New Speaker | 520x438 | 520x438 | 2.76 | 2.76 | 0,0 | 0 | 3.37 |
+| T-D21 | frame New Speaker | 520x438 | 520x438 | 2.24 | 2.24 | 0,0 | 0 | 2.72 |
 | T-M23 | menu Add to Dialogue | 264x149 | 264x149 | 1.16 | 1.16 | 0,0 | 0 | 1.35 |
 | T-M24 | menu Command | 264x166 | 264x166 | 2.44 | 2.44 | 0,0 | 0 | 2.80 |
 | T-P12 | frame Launcher | 1440x900 | 1440x900 | 1.47 | 1.47 | 0,0 | 0 | 1.72 |
@@ -259,8 +259,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-O13 | frame Tutorial Steps | 380x466 | 380x466 | 2.00 | 2.00 | 0,0 | 0 | 2.43 |
 | T-M17 | menu Project Context Menu | 264x175 | 264x175 | 2.18 | 2.18 | 0,0 | 0 | 2.26 |
 | T-D22 | frame Opening Project | 480x322 | 480x322 | 0.86 | 0.86 | 0,0 | 0 | 1.17 |
-| T-D01 | frame New Project | 1180x668 | 1180x668 | 2.16 | 2.16 | 0,0 | 0 | 2.59 |
-| T-L02 | frame New Project · Light | 1180x668 | 1180x668 | 2.28 | 2.28 | 0,0 | 0 | 2.79 |
+| T-D01 | frame New Project | 1180x668 | 1180x668 | 2.07 | 2.07 | 0,0 | 0 | 2.54 |
+| T-L02 | frame New Project · Light | 1180x668 | 1180x668 | 2.27 | 2.27 | 0,0 | 0 | 2.78 |
 | T-P22 | frame Scene Editor · Empty project | 1440x900 | 1440x900 | 1.20 | 1.20 | 0,0 | 0 | 1.58 |
 | T-P02 | frame Play Mode | 1440x900 | 1440x900 | 13.07 | 13.07 | 0,0 | 0 | 12.45 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
@@ -270,13 +270,13 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 5.03 | 4.57 | 0,-2 | 2 | 7.46 |
 | T-D02 | frame New Scene | 520x470 | 520x470 | 1.77 | 1.77 | 0,0 | 0 | 1.73 |
-| T-D03 | frame Scene Settings | 600x646 | 600x646 | 2.15 | 1.52 | 0,1 | 1 | 3.69 |
-| T-O01 | frame Scene Switcher | 320x356 | 320x356 | 7.18 | 6.97 | 0,-1 | 1 | 6.70 |
-| T-O02 | frame Video Mode | 380x400 | 380x400 | 2.63 | 2.63 | 0,0 | 0 | 2.68 |
-| T-O03 | frame Grid & Snap | 300x328 | 300x328 | 1.43 | 1.43 | 0,0 | 0 | 1.74 |
-| T-O04 | frame Asset Picker | 440x368 | 440x368 | 4.50 | 4.50 | 0,0 | 0 | 5.61 |
-| T-O05 | frame Component Picker | 400x464 | 400x464 | 3.88 | 3.63 | 1,0 | 1 | 4.55 |
-| T-O06 | frame Budget Details | 420x398 | 420x398 | 4.66 | 4.66 | 0,0 | 0 | 5.87 |
+| T-D03 | frame Scene Settings | 600x646 | 600x646 | 2.12 | 1.48 | 0,1 | 1 | 3.63 |
+| T-O01 | frame Scene Switcher | 320x356 | 320x356 | 7.19 | 6.98 | 0,-1 | 1 | 6.70 |
+| T-O02 | frame Video Mode | 380x400 | 380x400 | 1.88 | 1.88 | 0,0 | 0 | 2.12 |
+| T-O03 | frame Grid & Snap | 300x328 | 300x328 | 0.99 | 0.99 | 0,0 | 0 | 1.31 |
+| T-O04 | frame Asset Picker | 440x368 | 440x368 | 4.40 | 4.40 | 0,0 | 0 | 5.50 |
+| T-O05 | frame Component Picker | 400x464 | 400x464 | 3.49 | 3.49 | 0,0 | 0 | 4.20 |
+| T-O06 | frame Budget Details | 420x398 | 420x398 | 3.04 | 3.04 | 0,0 | 0 | 3.37 |
 | T-M09 | menu Create | 264x270 | 264x270 | 2.07 | 2.07 | 0,0 | 0 | 2.38 |
 | T-M10 | menu Add Actor | 264x192 | 264x192 | 2.07 | 2.07 | 0,0 | 0 | 2.38 |
 | T-M11 | menu Add to Scene | 264x253 | 264x253 | 2.41 | 2.41 | 0,0 | 0 | 2.84 |
@@ -286,39 +286,39 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
 | T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.74 | 2.74 | 0,0 | 0 | 3.24 |
-| T-D14 | frame New Script | 560x564 | 560x564 | 3.01 | 3.01 | 0,0 | 0 | 3.57 |
-| T-O11 | frame Find & Replace | 540x124 | 540x124 | 5.47 | 5.47 | 0,0 | 0 | 7.36 |
+| T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
+| T-O11 | frame Find & Replace | 540x124 | 540x124 | 2.18 | 2.18 | 0,0 | 0 | 2.75 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.34 | 1.34 | 0,0 | 0 | 1.60 |
 | T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 5.77 | 5.77 | 0,0 | 0 | 8.95 |
-| T-O08 | frame Add Node | 380x269 | 380x269 | 5.85 | 5.85 | 0,0 | 0 | 6.73 |
+| T-O08 | frame Add Node | 380x269 | 380x269 | 4.26 | 4.26 | 0,0 | 0 | 4.80 |
 | T-M21 | menu Node Context Menu | 264x175 | 264x175 | 2.05 | 2.05 | 0,0 | 0 | 2.22 |
 | T-P13 | frame World Map | 1440x900 | 1440x900 | 1.64 | 1.64 | 0,0 | 0 | 2.16 |
-| T-O09 | frame Link Settings | 360x330 | 360x330 | 2.73 | 2.73 | 0,0 | 0 | 4.56 |
+| T-O09 | frame Link Settings | 360x330 | 360x330 | 2.75 | 2.75 | 0,0 | 0 | 4.59 |
 | T-M22 | menu Scene Context Menu | 264x149 | 264x149 | 1.94 | 1.94 | 0,0 | 0 | 2.25 |
-| T-D08 | frame Project Settings | 900x620 | 900x620 | 1.54 | 1.54 | 0,0 | 0 | 1.99 |
+| T-D08 | frame Project Settings | 900x620 | 900x620 | 1.02 | 1.02 | 0,0 | 0 | 1.23 |
 | T-S01 | frame Project Settings · General | 900x620 | 900x620 | 0.92 | 0.92 | 0,0 | 0 | 1.05 |
-| T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.26 | 1.26 | 0,0 | 0 | 1.48 |
-| T-S03 | frame Project Settings · Build | 900x620 | 900x620 | 1.03 | 1.03 | 0,0 | 0 | 1.30 |
-| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 2.07 | 2.07 | 0,0 | 0 | 2.46 |
+| T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.23 | 1.23 | 0,0 | 0 | 1.46 |
+| T-S03 | frame Project Settings · Build | 900x620 | 900x620 | 0.85 | 0.85 | 0,0 | 0 | 1.04 |
+| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 1.86 | 1.86 | 0,0 | 0 | 2.15 |
 | T-S05 | frame Project Settings · Localization | 900x620 | 900x620 | 0.80 | 0.80 | 0,0 | 0 | 0.97 |
-| T-D09 | frame Preferences | 900x620 | 900x620 | 0.67 | 0.67 | 0,0 | 0 | 0.78 |
-| T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.87 | 0.87 | 0,0 | 0 | 1.52 |
+| T-D09 | frame Preferences | 900x620 | 900x620 | 0.55 | 0.55 | 0,0 | 0 | 0.63 |
+| T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.57 | 0.57 | 0,0 | 0 | 0.64 |
 | T-S07 | frame Preferences · Editor | 900x620 | 900x620 | 1.44 | 1.44 | 0,0 | 0 | 1.78 |
-| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.39 | 1.39 | 0,0 | 0 | 1.78 |
-| T-S09 | frame Preferences · Shortcuts | 900x620 | 900x620 | 0.98 | 0.98 | 0,0 | 0 | 1.11 |
-| T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.84 | 0.84 | 0,0 | 0 | 1.53 |
+| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.32 | 1.32 | 0,0 | 0 | 1.68 |
+| T-S09 | frame Preferences · Shortcuts | 900x620 | 900x620 | 0.89 | 0.89 | 0,0 | 0 | 1.01 |
+| T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.54 | 0.54 | 0,0 | 0 | 0.65 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.42 |
-| T-O12 | frame Record Shortcut | 340x264 | 340x264 | 1.95 | 1.95 | 0,0 | 0 | 2.17 |
+| T-O12 | frame Record Shortcut | 340x264 | 340x264 | 1.41 | 1.41 | 0,0 | 0 | 1.61 |
 | T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 2.63 | 2.63 | 0,0 | 0 | 2.92 |
 | T-P10 | frame Palette Manager | 1440x900 | 1440x900 | 2.41 | 2.41 | 0,0 | 0 | 3.31 |
 | T-D13 | frame New Sprite | 520x506 | 520x506 | 1.55 | 1.55 | 0,0 | 0 | 1.65 |
 | T-M19 | menu OAM Size | 264x175 | 264x175 | 3.70 | 3.70 | 0,0 | 0 | 4.30 |
-| T-O10 | frame Palette Effect | 380x372 | 380x372 | 12.45 | 12.45 | 0,0 | 0 | 12.88 |
+| T-O10 | frame Palette Effect | 380x372 | 380x372 | 12.05 | 12.05 | 0,0 | 0 | 12.34 |
 | T-P03 | frame Tilemap Editor | 1440x900 | 1440x900 | 14.48 | 14.48 | 0,0 | 0 | 13.27 |
 | T-P26 | frame Auto-tile Rules panel | 860x250 | 860x250 | 6.46 | 6.36 | 0,-1 | 1 | 6.25 |
 | T-M20 | menu Add Layer | 264x123 | 264x123 | 4.02 | 4.02 | 0,0 | 0 | 4.60 |
 | T-P09 | frame Font Manager | 1440x900 | 1440x900 | 11.53 | 11.53 | 0,0 | 0 | 14.43 |
-| T-D15 | frame New Font | 560x506 | 560x506 | 1.98 | 1.98 | 0,0 | 0 | 2.91 |
+| T-D15 | frame New Font | 560x506 | 560x506 | 1.66 | 1.66 | 0,0 | 0 | 2.10 |
 | T-D16 | frame Add Characters | 600x388 | 600x388 | 3.97 | 3.97 | 0,0 | 0 | 4.78 |
 | type/brand-13 | Type specimen Brand/13 | 209x16 | 209x16 | 20.93 | 19.80 | 0,1 | 1 | 26.37 |
 | type/title-18 | Type specimen Title/18 | 68x24 | 68x24 | 6.86 | 6.86 | 0,0 | 0 | 8.29 |

@@ -25,7 +25,8 @@ public sealed class RecordShortcutPopover : Border, IOverlayContent
 {
     readonly RecordShortcutRequest _req;
     readonly StackPanel _keys = new() { Orientation = Orientation.Horizontal, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Name = "RecordedKeys" };
-    readonly TextBlock _conflictText = UI.Text("", "Body/12", "text/secondary");
+    // Figma: the conflict line is 11 px (Label/11)
+    readonly TextBlock _conflictText = UI.Text("", "Label/11", "text/secondary");
     readonly Border _conflict;
     readonly AgbButton _replace = new() { Kind = ButtonKind.Primary, Content = "Replace", Name = "Replace", IsEnabled = false };
     TopLevel? _top;

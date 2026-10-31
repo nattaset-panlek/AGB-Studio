@@ -23,8 +23,9 @@ whether it needs a condition.
 - **Transition**: Cut, Fade or Slide.
 - **Duration**: how long the transition takes, from 0 to 1.25 seconds in steps of 0.05; the time is shown beside the
   slider.
-- **Only if**: a condition the game must meet before the link works, for example `Game.coins ≥ 10`. Press Enter or
-  leave the box to keep it. Leave it empty to always allow the link.
+- **Only if**: a condition the game must meet before the link works, for example `Game.coins >= 10` (the code font
+  draws `>=` as one sign; typing `≥` works too). Press Enter or leave the box to keep it. Leave it empty to always
+  allow the link.
 
 Each change is saved to the scene at once and can be undone.
 

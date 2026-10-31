@@ -91,7 +91,9 @@ public sealed class PaletteEffectPopover : Border, IOverlayContent
             _speed,
             Row("Direction", Group(_directions)),
             UI.Frame(_preview, "bg/base", radius: 8).Named("PreviewStrip"));
+        // Figma: the strip is a GBA screen (#1B1630) with 80 px frames 5 px apart, the last gap at the right end too
         ((Border)body.Children[^1]).ClipToBounds = true;
+        ((Border)body.Children[^1]).Background = PageParts.DataBrush(0xFF1B1630);
         body.Margin = new Thickness(20, 20, 20, 21);
         var dock = new DockPanel();
         DockPanel.SetDock(_header, Dock.Top);
@@ -309,11 +311,11 @@ public sealed class PaletteEffectPopover : Border, IOverlayContent
         _preview.ColumnDefinitions.Clear();
         for (var i = 0; i < colours.Count; i++)
         {
-            if (i > 0) _preview.ColumnDefinitions.Add(new ColumnDefinition(5, GridUnitType.Pixel));
             _preview.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
             var block = new Border { Height = 60, Background = PageParts.DataBrush(Colour15.Argb(colours[i])), Name = "PreviewBlock_" + i };
             Grid.SetColumn(block, _preview.ColumnDefinitions.Count - 1);
             _preview.Children.Add(block);
+            _preview.ColumnDefinitions.Add(new ColumnDefinition(5, GridUnitType.Pixel));
         }
         if (colours.Count == 0) _preview.Children.Add(new Border { Height = 60 });
     }
