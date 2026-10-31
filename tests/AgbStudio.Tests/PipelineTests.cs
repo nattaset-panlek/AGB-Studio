@@ -102,6 +102,35 @@ public sealed class PipelineTests(EmulatorFixture emu)
     }
 
     [Fact]
+    public void FixtureRebuildsAfterAOneLineScriptChangeInUnderASecond()
+    {
+        // G-PERF.02 / T-D06 "Usually under a second": the editor keeps one process, so the timed build is a warm one.
+        var p = SkyHopper.Create(Path.Combine(Root, "perf_fixture"));
+        var backend = new AgbStudio.Scripting.ScriptBackend();
+        var first = new GameBuilder(p, new Toolchain()) { Scripts = backend }.Build();
+        Assert.True(first.Success, string.Join('\n', first.Diagnostics));
+        var warm = new GameBuilder(p, new Toolchain()) { Scripts = backend }.Build();
+        Assert.True(warm.Success);
+        // Two edits of one value each (C# -> C++, g++ and the linker run); timing on a shared machine is noisy, so the
+        // better of the two counts.
+        var script = Path.Combine(p.ScriptsDir, "PlayerController.cs");
+        var times = new List<(double Seconds, string Steps)>();
+        foreach (var add in new[] { "0.25", "0.5" })
+        {
+            var text = File.ReadAllText(script);
+            var line = text.Split('\n').First(l => l.Contains("public fixed jumpPower", StringComparison.Ordinal));
+            File.WriteAllText(script, text.Replace(line, line.Replace(";", $" + {add};")));
+            var sw = Stopwatch.StartNew();
+            var r = new GameBuilder(p, new Toolchain()) { Scripts = backend }.Build();
+            sw.Stop();
+            Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+            times.Add((sw.Elapsed.TotalSeconds, string.Join(", ", r.StepTimes.Select(kv => $"{kv.Key} {kv.Value.TotalSeconds:0.00} s"))));
+        }
+        var best = times.MinBy(t => t.Seconds);
+        Assert.True(best.Seconds < 1, $"one-line change took {best.Seconds:0.00} s ({best.Steps})");
+    }
+
+    [Fact]
     public void ReportAttributesRomToAssets()
     {
         var (p, r) = BuildMini("mini_report");

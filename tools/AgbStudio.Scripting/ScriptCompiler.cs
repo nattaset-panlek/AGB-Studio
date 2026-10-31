@@ -251,6 +251,7 @@ public sealed class ScriptCompiler
         var registry = new RegistryWriter(model, ctx, tables, outputs, ops, vars);
         files.Write(ScriptCompileResult.RegistryHeader, registry.Header());
         result.Sources.Add(files.Write("agb_scripts.cpp", registry.Source()));
+        result.Sources.Add(files.Write("agb_defaults.cpp", registry.Defaults()));
         files.Write(ProjectApi.CSharpFileName, result.ProjectApiSource);
         if (ctx.EmitProjectHeaders)
             foreach (var (file, text) in ProjectApi.StandInHeaders(ctx))

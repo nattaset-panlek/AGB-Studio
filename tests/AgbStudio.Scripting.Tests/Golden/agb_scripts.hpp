@@ -12,23 +12,32 @@ constexpr agb::u16 Forest_RescueIntro = 1;
 
 // Behaviours: agb_make_<Class>(arena) uses the defaults of the C# field initializers;
 // agb_make_<Class>_with(arena, agb_init_<Class>{.field = value, ...}) applies Inspector values (declaration order).
+// The default values live in agb_defaults.cpp, so changing one recompiles that small file, not every scene and script.
+extern const agb::s32 agb_default_Coin_value;
+extern const bool agb_default_Coin_spin;
 struct agb_init_Coin {
-    agb::s32 value = 10;
-    bool spin = true;
+    agb::s32 value = agb_default_Coin_value;
+    bool spin = agb_default_Coin_spin;
 };
 agb::Behaviour* agb_make_Coin(agb::Arena& arena);
 agb::Behaviour* agb_make_Coin_with(agb::Arena& arena, const agb_init_Coin& init);
+extern const agb::fixed agb_default_PlayerController_speed;
+extern const agb::fixed agb_default_PlayerController_jumpPower;
+extern const agb::s32 agb_default_PlayerController_lives;
 struct agb_init_PlayerController {
-    agb::fixed speed = agb::fixed::lit(1.5);
-    agb::fixed jumpPower = agb::fixed::lit(3.5);
-    agb::s32 lives = 3;
+    agb::fixed speed = agb_default_PlayerController_speed;
+    agb::fixed jumpPower = agb_default_PlayerController_jumpPower;
+    agb::s32 lives = agb_default_PlayerController_lives;
 };
 agb::Behaviour* agb_make_PlayerController(agb::Arena& arena);
 agb::Behaviour* agb_make_PlayerController_with(agb::Arena& arena, const agb_init_PlayerController& init);
+extern const agb::fixed agb_default_SlimeController_speed;
+extern const agb::s32 agb_default_SlimeController_turnEvery;
+extern const ::SlimeMood agb_default_SlimeController_mood;
 struct agb_init_SlimeController {
-    agb::fixed speed = agb::fixed::lit(0.5);
-    agb::s32 turnEvery = 60;
-    ::SlimeMood mood = ::SlimeMood::Calm;
+    agb::fixed speed = agb_default_SlimeController_speed;
+    agb::s32 turnEvery = agb_default_SlimeController_turnEvery;
+    ::SlimeMood mood = agb_default_SlimeController_mood;
 };
 agb::Behaviour* agb_make_SlimeController(agb::Arena& arena);
 agb::Behaviour* agb_make_SlimeController_with(agb::Arena& arena, const agb_init_SlimeController& init);
