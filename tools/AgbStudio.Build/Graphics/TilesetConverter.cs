@@ -13,13 +13,33 @@ public sealed class ConvertedTileset
     public List<ImportProblem> Problems { get; } = new();
     public int MetatileColumns { get; init; }
     public List<(int BaseTile, byte[] FrameTiles, int Frames, int Ticks)> Anims { get; } = new();
+
+    /// <summary>P5.01: the primary tileset this one extends, or null. <see cref="Tiles"/> and <see cref="Palette"/> then
+    /// hold the primary's tiles and banks first, at the same indices, and this tileset's own after them; the metatiles'
+    /// screen entries count from the primary's first tile and bank, as the runtime places them (bg::loadTileset).</summary>
+    public ConvertedTileset? Primary { get; init; }
+    /// <summary>The first tile and bank that belong to this tileset (0 without a primary): the ROM stores only these.</summary>
+    public int OwnTileStart => Primary?.Tiles.Count ?? 0;
+    public int OwnBankStart => Primary?.Palette.Banks.Count ?? 0;
+    public int OwnTileCount => Tiles.Count - OwnTileStart;
+    public int OwnBankCount => Palette.Banks.Count - OwnBankStart;
+
+    /// <summary>Packed 4bpp data of this tileset's own tiles (all of them without a primary).</summary>
+    public byte[] OwnTileBytes() => Tiles.ToBytes()[(OwnTileStart * 32)..];
+
+    /// <summary>The colours of this tileset's own banks, 16 per bank.</summary>
+    public ushort[] OwnColors() => Palette.Banks.Skip(OwnBankStart).SelectMany(b => b).ToArray();
 }
 
 /// <summary>Converts a tileset image (16x16 editor tiles) or an image layer (8x8 tiles) to tiles, palettes and
 /// screen entries. Tiles that use more than 15 colours are reduced; banks are packed automatically.</summary>
 public static class TilesetConverter
 {
-    public static ConvertedTileset Convert(string name, ColorImage img, TilesetMeta meta, IReadOnlyList<string> tagNames, int maxBanks = 13, string file = "")
+    /// <summary>Converts a tileset. With a <paramref name="primary"/> (P5.01, TilesetMeta.Primary) the tiles go on from
+    /// the primary's: a tile the primary has (or a flip of it) in a bank of the primary is not stored again, and new
+    /// colours go into banks after the primary's (<paramref name="maxBanks"/> counts both).</summary>
+    public static ConvertedTileset Convert(string name, ColorImage img, TilesetMeta meta, IReadOnlyList<string> tagNames, int maxBanks = 13, string file = "",
+        ConvertedTileset? primary = null)
     {
         var mcols = img.Width / 16;
         var mrows = img.Height / 16;
@@ -49,17 +69,17 @@ public static class TilesetConverter
                 }
         if (reduced.Count > 0)
             problems.Add(new ImportProblem(file, $"{reduced.Count} tiles use more than 15 colours (a GBA tile has 15 plus transparent), so their colours were reduced. Check them, or redraw them with fewer colours.", ["Reduce to 16"]));
-        var packed = PaletteBanks.Pack(tileSets, maxBanks);
+        var packed = PaletteBanks.Pack(tileSets, maxBanks, primary?.Palette);
         if (packed == null)
         {
             // Too many distinct colour sets: reduce the whole image to one bank.
             problems.Add(new ImportProblem(file, $"The tiles need more than the {maxBanks} free palettes, so all colours were reduced to one palette of 16. Use fewer different colour sets, or split the tileset.", ["Reduce to 16"]));
             var all = Quantizer.Reduce(img.Histogram(), 15).ToHashSet();
-            packed = PaletteBanks.Pack(tileSets.Select(_ => all).ToList(), maxBanks)!;
+            packed = PaletteBanks.Pack(tileSets.Select(_ => all).ToList(), Math.Max(maxBanks, (primary?.Palette.Banks.Count ?? 0) + 1), primary?.Palette)!;
         }
         var (banks, assign) = packed.Value;
-        var tiles = new TileSet4();
-        var result = new ConvertedTileset { Name = name, Tiles = tiles, Palette = banks, MetatileColumns = mcols };
+        var tiles = primary?.Tiles.Extend() ?? new TileSet4();
+        var result = new ConvertedTileset { Name = name, Tiles = tiles, Palette = banks, MetatileColumns = mcols, Primary = primary };
         result.Problems.AddRange(problems);
         for (var m = 0; m < mcols * mrows; m++)
         {

@@ -118,6 +118,33 @@ public class TilemapE2ETests : IDisposable
         Assert.Equal(6, s.Doc.Cell(ground, 2, 1));
     }
 
+    // P5.01 Tileset panel: Primary names the shared tileset this one extends; saved in the tileset's meta file, undoable
+    [AvaloniaFact]
+    public void TilesetPanel_PrimaryField_PicksTheSharedTilesetSavesAndUndoes()
+    {
+        var page = OpenFromTab();
+        var doc = page.Session!.Doc;
+        Assert.Equal("none", _h.Find<InspectorField>("PrimaryField").Value);
+        var choices = doc.PrimaryChoices();
+        Assert.DoesNotContain(doc.Map.Tileset, choices, StringComparer.OrdinalIgnoreCase);
+        if (choices.Count == 0)
+        {
+            Assert.False(doc.SetPrimary("nothing"));
+            return;
+        }
+        Assert.False(doc.SetPrimary("not_a_tileset"));
+        Assert.False(doc.SetPrimary(doc.Map.Tileset));
+        Assert.True(doc.SetPrimary(choices[0]));
+        _h.Pump();
+        Assert.Equal(choices[0], _h.Find<InspectorField>("PrimaryField").Value);
+        _h.Key(PhysicalKey.S, RawInputModifiers.Control);
+        Assert.Equal(choices[0], GameProject.Load<TilesetMeta>(GameProject.MetaPath(doc.TilesetPath!)).Primary);
+        _h.Key(PhysicalKey.Z, RawInputModifiers.Control);
+        _h.Pump();
+        Assert.Equal("none", _h.Find<InspectorField>("PrimaryField").Value);
+        Assert.Null(doc.Meta.Primary);
+    }
+
     // P11.29 Tile properties: collision type, flip H, tag, animation, auto-tile set; collision view
     [AvaloniaFact]
     public void TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView()

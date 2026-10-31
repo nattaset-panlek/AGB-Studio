@@ -167,6 +167,14 @@ public sealed class TilemapEditorPage : DockPanel
             set.Margin = new Thickness(10, 8, 10, 0);
             PageChrome.OnDropdown(set, () => _ = PickTileset(set));
             stack.Children.Add(set);
+            var primary = PageChrome.Field("Primary", FieldKind.Dropdown, ses.Doc.Meta.Primary is { Length: > 0 } pr ? pr : "none", "PrimaryField");
+            primary.Margin = new Thickness(10, 8, 10, 0);
+            PageChrome.OnDropdown(primary, () =>
+            {
+                var names = ses.Doc.PrimaryChoices();
+                PageChrome.Choose(primary, ["none", .. names], primary.Value, i => ses.Doc.SetPrimary(i == 0 ? null : names[i - 1]));
+            });
+            stack.Children.Add(primary);
 
             _swatch = new TileSwatch(ses);
             var scroll = new ScrollViewer { Content = _swatch, Height = 118, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden, Name = "SwatchScroll" };
@@ -213,6 +221,7 @@ public sealed class TilemapEditorPage : DockPanel
                 anim.Value = frames == 0 ? "none" : $"{frames} frames";
                 auto.Value = ses.Doc.SetOf(t) is { } st ? MapDocument.SetLabel(st) : "none";
                 set.Value = ses.Doc.TilesetPath is { } p ? Path.GetFileName(p) : ses.Doc.Map.Tileset;
+                primary.Value = ses.Doc.Meta.Primary is { Length: > 0 } pr2 ? pr2 : "none";
             });
         }
         return PageChrome.SidePanel(header, stack, true, "TilesetPanel");

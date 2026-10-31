@@ -44,6 +44,10 @@ public sealed class TilesetMeta
     public Dictionary<int, TileProperties> Tiles { get; set; } = new();
     public List<AutoTileSet> AutoTiles { get; set; } = new();
     public bool Compress { get; set; } = true;
+    // P5.01: the primary tileset this one extends (its asset name; null or "" = none, left out of the file). The build
+    // stores only the tiles and palette banks the primary does not already have; the runtime keeps the primary in VRAM
+    // across scenes that share it.
+    public string? Primary { get; set; }
 }
 
 public sealed class TileProperties
