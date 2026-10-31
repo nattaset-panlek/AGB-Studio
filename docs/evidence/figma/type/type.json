@@ -1,0 +1,206 @@
+[
+ {
+  "style": "Brand/13",
+  "text": "The quick GBA game engine 0123",
+  "w": 209,
+  "h": 16,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "brand-13.png"
+ },
+ {
+  "style": "Title/18",
+  "text": "Colours",
+  "w": 68,
+  "h": 24,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "title-18.png"
+ },
+ {
+  "style": "Title/14",
+  "text": "The quick GBA game engine 0123",
+  "w": 228,
+  "h": 18,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "title-14.png"
+ },
+ {
+  "style": "Body/12",
+  "text": "Variables in the “AGB Studio” collection (mode: Dark). Bind fills and strokes to these instead of raw hex.",
+  "w": 1160,
+  "h": 16,
+  "fill": [
+   0.6392157077789307,
+   0.6509804129600525,
+   0.6823529601097107
+  ],
+  "file": "body-12.png"
+ },
+ {
+  "style": "Body/12 Medium",
+  "text": "The quick GBA game engine 0123",
+  "w": 194,
+  "h": 16,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "body-12-medium.png"
+ },
+ {
+  "style": "Body/12 Semibold",
+  "text": "The quick GBA game engine 0123",
+  "w": 196,
+  "h": 16,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "body-12-semibold.png"
+ },
+ {
+  "style": "Label/11",
+  "text": "The quick GBA game engine 0123",
+  "w": 176,
+  "h": 14,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "label-11.png"
+ },
+ {
+  "style": "Label/11 Medium",
+  "text": "bg/canvas",
+  "w": 55,
+  "h": 14,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "label-11-medium.png"
+ },
+ {
+  "style": "Caption/10",
+  "text": "The quick GBA game engine 0123",
+  "w": 160,
+  "h": 12,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "caption-10.png"
+ },
+ {
+  "style": "Overline/11",
+  "text": "The quick GBA game engine 0123",
+  "w": 207,
+  "h": 14,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "overline-11.png"
+ },
+ {
+  "style": "Mono/10",
+  "text": "#121316",
+  "w": 42,
+  "h": 12,
+  "fill": [
+   0.43529412150382996,
+   0.4470588266849518,
+   0.48235294222831726
+  ],
+  "file": "mono-10.png"
+ },
+ {
+  "style": "Mono/11",
+  "text": "Brand/13",
+  "w": 170,
+  "h": 14,
+  "fill": [
+   0.43529412150382996,
+   0.4470588266849518,
+   0.48235294222831726
+  ],
+  "file": "mono-11.png"
+ },
+ {
+  "style": "Mono/11 Bold",
+  "text": "body.vy = -jumpPower; // 0x35FF",
+  "w": 205,
+  "h": 14,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "mono-11-bold.png"
+ },
+ {
+  "style": "Mono/13",
+  "text": "body.vy = -jumpPower; // 0x35FF",
+  "w": 242,
+  "h": 20,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "mono-13.png"
+ },
+ {
+  "style": "Thai/13",
+  "text": "ยินดีต้อนรับสู่ Sky Hopper — กด A เพื่อเริ่ม",
+  "w": 229,
+  "h": 20,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "thai-13.png"
+ },
+ {
+  "style": "Thai/13 Medium",
+  "text": "ยินดีต้อนรับสู่ Sky Hopper — กด A เพื่อเริ่ม",
+  "w": 232,
+  "h": 20,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "thai-13-medium.png"
+ },
+ {
+  "style": "Pixel/10",
+  "text": "SCORE 0120",
+  "w": 100,
+  "h": 12,
+  "fill": [
+   0.9058823585510254,
+   0.9098039269447327,
+   0.9215686321258545
+  ],
+  "file": "pixel-10.png"
+ }
+]

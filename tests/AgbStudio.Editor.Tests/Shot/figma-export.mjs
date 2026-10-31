@@ -1,5 +1,6 @@
 // Read-only Figma export for the SHOT procedure (checklist 2.5) through the Talk To Figma fork relay.
-// Usage: node figma-export.mjs [tokens] [icons] [art] [menus] [shots] [brand]   (no argument = all but brand)
+// Usage: node figma-export.mjs [tokens] [icons] [art] [menus] [shots] [brand] [prototype] [type] [gameview]
+//        (no argument = tokens, icons, art, menus, shots)
 // Writes: docs/evidence/figma/tokens.json, menus.json, <id>.png + manifest.json,
 //         editor/AgbStudio.Editor/Assets/Icons/<name>.svg, editor/AgbStudio.Editor/Assets/Art/<name>.svg,
 //         brand: docs/brand/<banner>.png (T-R03) and docs/brand/app-icon-<size>.png (T-R01) from "AGB Studio · Brand"
@@ -151,6 +152,69 @@ return bytes.map(b => figma.base64Encode(b));`;
     const out = await run(code);
     items.forEach((it, i) => fs.writeFileSync(path.join(brandDir, it.file + ".png"), Buffer.from(out[i], "base64")));
     console.log("brand:", found.banners.length, "banners,", found.icons.length, "app icons");
+  }
+  if (steps.includes("prototype")) {
+    // T-X01..T-X03: the two flows and every prototype link of "AGB Studio · Screens" (source window, the clicked node's
+    // path inside it, trigger, action and destination window).
+    const proto = await run(`const pg = await figma.getNodeByIdAsync("${PAGE_ID}"); await pg.loadAsync();
+const scr = pg.children.find(s => s.name === "AGB Studio · Screens");
+const top = n => { let x = n; while (x.parent && x.parent !== scr) x = x.parent; return x; };
+const path = n => { const parts = []; let x = n; const t = top(n); while (x && x !== t) { parts.unshift(x.name); x = x.parent; } return parts.join(" / "); };
+const links = [];
+for (const n of scr.findAll(n => "reactions" in n && n.reactions && n.reactions.length)) {
+  for (const r of n.reactions) {
+    const acts = r.actions || (r.action ? [r.action] : []);
+    for (const a of acts) {
+      const dest = a.destinationId ? await figma.getNodeByIdAsync(a.destinationId) : null;
+      links.push({ from: top(n).name, node: path(n) || n.name, nodeName: n.name, trigger: r.trigger && r.trigger.type,
+        action: a.type === "NODE" ? a.navigation : a.type, to: dest ? dest.name : null });
+    }
+  }
+}
+const flows = [];
+for (const f of pg.flowStartingPoints) { const n = await figma.getNodeByIdAsync(f.nodeId); flows.push({ name: f.name, start: n && n.name }); }
+return { flows, links };`);
+    fs.writeFileSync(path.join(figDir, "prototype.json"), JSON.stringify(proto, null, 1) + "\n");
+    console.log("prototype:", proto.flows.length, "flows,", proto.links.length, "links");
+  }
+  if (steps.includes("type")) {
+    // P10.03 type specimen: one text node of the design per local text style, exported at 1x with its characters.
+    const typeDir = path.join(figDir, "type");
+    fs.mkdirSync(typeDir, { recursive: true });
+    const found = await run(`const pg = await figma.getNodeByIdAsync("${PAGE_ID}"); await pg.loadAsync();
+const out = [];
+for (const st of await figma.getLocalTextStylesAsync()) {
+  let hit = null;
+  for (const s of pg.children) {
+    hit = s.findOne(n => n.type === "TEXT" && n.textStyleId === st.id && n.visible && n.characters.trim().length > 2 && !n.characters.includes("\\n"));
+    if (hit) break;
+  }
+  if (hit) out.push({ style: st.name, id: hit.id, text: hit.characters, w: hit.width, h: hit.height, fill: hit.fills && hit.fills[0] && hit.fills[0].color ? [hit.fills[0].color.r, hit.fills[0].color.g, hit.fills[0].color.b] : null });
+}
+return out;`);
+    const code = `const ids = ${JSON.stringify(found.map(f => f.id))};
+const nodes = await Promise.all(ids.map(id => figma.getNodeByIdAsync(id)));
+const bytes = await Promise.all(nodes.map(n => n.exportAsync({ format: "PNG", useAbsoluteBounds: true, constraint: { type: "SCALE", value: 1 } })));
+return bytes.map(b => figma.base64Encode(b));`;
+    const pngs = await run(code);
+    found.forEach((f, i) => { f.file = slug(f.style) + ".png"; fs.writeFileSync(path.join(typeDir, f.file), Buffer.from(pngs[i], "base64")); delete f.id; });
+    fs.writeFileSync(path.join(typeDir, "type.json"), JSON.stringify(found, null, 1) + "\n");
+    console.log("type:", found.length, "styles");
+  }
+  if (steps.includes("gameview")) {
+    // P12.05: the Play Mode game view with its Hitboxes and Tile collision overlays.
+    const gv = await run(`const pg = await figma.getNodeByIdAsync("${PAGE_ID}"); await pg.loadAsync();
+const scr = pg.children.find(s => s.name === "AGB Studio · Screens");
+const f = scr.findChild(n => n.name === "Play Mode" && n.type === "FRAME");
+const g = f && f.findOne(n => n.name === "Game View");
+if (!g) return null;
+const b = await g.exportAsync({ format: "PNG", useAbsoluteBounds: true, constraint: { type: "SCALE", value: 1 } });
+return { png: figma.base64Encode(b), x: g.absoluteBoundingBox.x - f.absoluteBoundingBox.x, y: g.absoluteBoundingBox.y - f.absoluteBoundingBox.y, w: g.width, h: g.height };`);
+    if (gv) {
+      fs.writeFileSync(path.join(figDir, "T-P02-game-view.png"), Buffer.from(gv.png, "base64"));
+      fs.writeFileSync(path.join(figDir, "T-P02-game-view.json"), JSON.stringify({ x: gv.x, y: gv.y, w: gv.w, h: gv.h }, null, 1) + "\n");
+      console.log("gameview:", gv.w, "x", gv.h, "at", gv.x, gv.y);
+    }
   }
   if (steps.includes("shots")) {
     const items = [];

@@ -1,0 +1,974 @@
+{
+ "flows": [
+  {
+   "name": "AGB Studio · start",
+   "start": "Launcher"
+  },
+  {
+   "name": "AGB Studio · editor",
+   "start": "Scene Editor"
+  }
+ ],
+ "links": [
+  {
+   "from": "New Project",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Project",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Scene",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Scene",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Scene Settings",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Scene Settings",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import Asset",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import Asset",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Export ROM",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Export ROM",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Build ROM",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Build ROM",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Flash to Cartridge",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Flash to Cartridge",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Keyboard Shortcuts",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Keyboard Shortcuts",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "About",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "About",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Unsaved Changes",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Unsaved Changes",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Scene Switcher",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Video Mode",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Grid & Snap",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Asset Picker",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Component Picker",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Budget Details",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · General",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · General",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Save data",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Save data",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Build",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Build",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Scripting",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Scripting",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Localization",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Project Settings · Localization",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Appearance",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Appearance",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Editor",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Editor",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Paths",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Paths",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Shortcuts",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Shortcuts",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Script Editor",
+   "node": "Title Bar / Menus / Scene",
+   "nodeName": "Scene",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scene Editor"
+  },
+  {
+   "from": "Script Editor",
+   "node": "Body / Script / API quick reference / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scripting API"
+  },
+  {
+   "from": "World Map",
+   "node": "Toolbar / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "New Scene"
+  },
+  {
+   "from": "Launcher",
+   "node": "row / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "New Project"
+  },
+  {
+   "from": "Launcher",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher · Templates"
+  },
+  {
+   "from": "Launcher",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher · Learn"
+  },
+  {
+   "from": "Launcher",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Preferences"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Title Bar / Menus / Build",
+   "nodeName": "Build",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Build ROM"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Title Bar / Actions / Debug",
+   "nodeName": "Debug",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Debugger"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Toolbar / Play / Play Control",
+   "nodeName": "Play Control",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Play Mode"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Toolbar / Chip",
+   "nodeName": "Chip",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Video Mode"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / Doc Tabs / Doc Tab",
+   "nodeName": "Doc Tab",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Play Mode"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / Doc Tabs / Doc Tab",
+   "nodeName": "Doc Tab",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Tilemap Editor"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / Doc Tabs / Doc Tab",
+   "nodeName": "Doc Tab",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Script Editor"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / Viewport / overlay / Chip",
+   "nodeName": "Chip",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Scene Settings"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / Viewport / overlay / Chip",
+   "nodeName": "Chip",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Grid & Snap"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / column / Panel Tabs / Panel Tab",
+   "nodeName": "Panel Tab",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Database"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / column / row / Asset Grid / Asset Card",
+   "nodeName": "Asset Card",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Sprite Editor"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / column / row / Asset Grid / Asset Card",
+   "nodeName": "Asset Card",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Tilemap Editor"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / column / column / row / Asset Grid / Asset Card",
+   "nodeName": "Asset Card",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Font Manager"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / Inspector / Sprite / Field",
+   "nodeName": "Field",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Asset Picker"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / Inspector / column / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Component Picker"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Body / Inspector / GBA Budget",
+   "nodeName": "GBA Budget",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Budget Details"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Status Bar / Status Item",
+   "nodeName": "Status Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Build Report"
+  },
+  {
+   "from": "Scene Editor",
+   "node": "Status Bar / Status Item",
+   "nodeName": "Status Item",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Preferences"
+  },
+  {
+   "from": "Play Mode",
+   "node": "Title Bar / Menus / Scene",
+   "nodeName": "Scene",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scene Editor"
+  },
+  {
+   "from": "Play Mode",
+   "node": "Toolbar / Play / Play Control",
+   "nodeName": "Play Control",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scene Editor"
+  },
+  {
+   "from": "Sprite Editor",
+   "node": "Title Bar / Menus / Scene",
+   "nodeName": "Scene",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scene Editor"
+  },
+  {
+   "from": "Tilemap Editor",
+   "node": "Title Bar / Menus / Scene",
+   "nodeName": "Scene",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Scene Editor"
+  },
+  {
+   "from": "Font Manager",
+   "node": "Body / Fonts / column / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Add Characters"
+  },
+  {
+   "from": "Database",
+   "node": "Body / column / row / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Import CSV"
+  },
+  {
+   "from": "Build Report",
+   "node": "Toolbar / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Build ROM"
+  },
+  {
+   "from": "Build Report",
+   "node": "Body / Cartridge header / Export / column / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Play Mode"
+  },
+  {
+   "from": "Build Report",
+   "node": "Body / Cartridge header / Export / column / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Flash to Cartridge"
+  },
+  {
+   "from": "New Sprite",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Sprite",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Script",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Script",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Font",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Font",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Characters",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Characters",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Table",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Table",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Field",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Field",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import CSV",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import CSV",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Language",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Add Language",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Speaker",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Speaker",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Opening Project",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Build ROM · Failed",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Build ROM · Failed",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import Asset · Errors",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Import Asset · Errors",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Link Settings",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Palette Effect",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Record Shortcut",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Tutorial Steps",
+   "node": "Popover Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Launcher · Templates",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher"
+  },
+  {
+   "from": "Launcher · Templates",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher · Learn"
+  },
+  {
+   "from": "Launcher · Templates",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Preferences"
+  },
+  {
+   "from": "Launcher · Templates",
+   "node": "row / column / Button",
+   "nodeName": "Button",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "New Project"
+  },
+  {
+   "from": "Launcher · Learn",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher"
+  },
+  {
+   "from": "Launcher · Learn",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "NAVIGATE",
+   "to": "Launcher · Templates"
+  },
+  {
+   "from": "Launcher · Learn",
+   "node": "row / column / Nav Item",
+   "nodeName": "Nav Item",
+   "trigger": "ON_CLICK",
+   "action": "OVERLAY",
+   "to": "Preferences"
+  },
+  {
+   "from": "New Project · Light",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "New Project · Light",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Appearance · Light",
+   "node": "Dialog Header / Close",
+   "nodeName": "Close",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  },
+  {
+   "from": "Preferences · Appearance · Light",
+   "node": "Dialog Footer / Cancel",
+   "nodeName": "Cancel",
+   "trigger": "ON_CLICK",
+   "action": "CLOSE",
+   "to": null
+  }
+ ]
+}
