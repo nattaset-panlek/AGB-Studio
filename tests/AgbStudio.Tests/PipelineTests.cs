@@ -116,6 +116,10 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.True(report.EwramBytes > 0 && report.EwramBytes < 256 * 1024);
         Assert.True(report.Scenes.ContainsKey("Forest_01"));
         Assert.True(File.Exists(Path.Combine(p.BuildDir, "report-history.json")));
+        // The library notices travel next to the ROM.
+        var notices = File.ReadAllText(Path.Combine(Path.GetDirectoryName(r.RomPath)!, "THIRD_PARTY.txt"));
+        Assert.Contains("libtonc", notices);
+        Assert.Contains("Mukunda Johnson", notices);
         // ROM header written by gbafix from Project Settings · General.
         var rom = File.ReadAllBytes(r.RomPath);
         Assert.Equal("MINIPLAT", System.Text.Encoding.ASCII.GetString(rom, 0xA0, 8));
@@ -196,6 +200,88 @@ public sealed class PipelineTests(EmulatorFixture emu)
         p.Settings.Localization.Languages.Single(l => l.Code == "th").Fallback = "en";
         p.SaveSettings();
         Assert.Equal("5", Run1(BuildConfiguration.Release));  // "SCORE" from the Thai language's own fallback
+    }
+
+    sealed class LineLog : IBuildObserver
+    {
+        public readonly List<string> Lines = new();
+        public void StepStarted(string step, string detail) { }
+        public void StepFinished(string step, TimeSpan elapsed, bool ok, string detail) { }
+        public void FileProgress(string step, int done, int total, string file) { }
+        public void Line(string text) { lock (Lines) Lines.Add(text); }
+        public void Message(Diagnostic d) { }
+    }
+
+    [Fact]
+    public void BuildsWithoutNinjaAndSkipsUpToDateObjects()
+    {
+        // A packaged editor may run where only devkitPro is installed: the same build graph runs in-process.
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_no_ninja"));
+        var tc = new Toolchain { Ninja = "no-such-ninja.exe" };
+        var first = new LineLog();
+        var r = new GameBuilder(p, tc, first).Build(new BuildOptions { Clean = true });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.True(File.Exists(r.RomPath));
+        Assert.Contains(first.Lines, l => l.Contains("] CXX ", StringComparison.Ordinal));
+        Assert.Contains(first.Lines, l => l.Contains("] LINK ", StringComparison.Ordinal));
+        Assert.Equal("MINIPLAT", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(r.RomPath), 0xA0, 8));  // gbafix ran
+        var second = new LineLog();
+        r = new GameBuilder(p, tc, second).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.DoesNotContain(second.Lines, l => l.Contains("] CXX ", StringComparison.Ordinal));
+    }
+
+    public static IEnumerable<object[]> AssertModes =>
+    [
+        [BuildConfiguration.Debug, false, true],
+        [BuildConfiguration.Release, false, false],
+        [BuildConfiguration.Release, true, true],
+    ];
+
+    [Theory]
+    [MemberData(nameof(AssertModes))]
+    public void FailedAssertsLogFileAndLineAndStopTheGame(BuildConfiguration config, bool keepAsserts, bool stops)
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, $"mini_assert_{config}_{keepAsserts}"));
+        File.WriteAllText(Path.Combine(p.ScriptsDir, "Checker.cs"),
+            "using GBA;\n\npublic class Checker : Behaviour\n{\n    public int limit = 3;\n\n    void Update()\n    {\n" +
+            "        Debug.Assert(limit < 3, \"limit must stay below 3\");\n    }\n}\n");
+        var scenePath = Path.Combine(p.ScenesDir, "Forest_01.scene");
+        var scene = GameProject.Load<SceneFile>(scenePath);
+        scene.Actors[0].Components.Add(new ComponentData { Type = "Checker" });
+        GameProject.Save(scenePath, scene);
+        p.Settings.Build.KeepAsserts = keepAsserts;
+        p.Settings.Build.StripDebugLog = false;
+        p.SaveSettings();
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build(new BuildOptions { Configuration = config });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var core = emu.Core;
+        core.LoadRom(r.RomPath);
+        DebugChannel? ch = null;
+        var log = new List<string>();
+        for (var f = 0; f < 180; f++)
+        {
+            core.RunFrame();
+            ch ??= DebugChannel.Find(core);
+            if (ch != null) log.AddRange(ch.ReadNewLog());
+        }
+        var frame = ch!.GameFrame;
+        for (var f = 0; f < 30; f++) core.RunFrame();
+        var stopped = ch.GameFrame == frame;
+        core.UnloadRom();
+        var failed = log.FirstOrDefault(l => l.Contains("assert failed", StringComparison.Ordinal));
+        if (stops)
+        {
+            Assert.NotNull(failed);
+            Assert.Contains("Checker.cs(9)", failed);  // the C# file and line, through #line
+            Assert.Contains("limit must stay below 3", failed);
+            Assert.True(stopped, "the game kept running after the assert");
+        }
+        else
+        {
+            Assert.Null(failed);
+            Assert.False(stopped);
+        }
     }
 
     [Fact]

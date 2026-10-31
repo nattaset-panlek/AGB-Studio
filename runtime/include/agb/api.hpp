@@ -3,6 +3,7 @@
 // Members follow the Scripting API page (T-P18) and the Figma code samples.
 #pragma once
 #include "agb/actor.hpp"
+#include "agb/assert.hpp"
 #include "agb/behaviours.hpp"
 #include "agb/game.hpp"
 #include "agb/input.hpp"

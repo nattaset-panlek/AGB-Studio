@@ -19,14 +19,29 @@ public sealed class Toolchain
     public string LibtoncLib => Path.Combine(DevkitPro, "libtonc", "lib");
     public string LibgbaInclude => Path.Combine(DevkitPro, "libgba", "include");
     public string LibgbaLib => Path.Combine(DevkitPro, "libgba", "lib");
-    public string Ninja { get; }
+    public string Ninja { get; init; }  // when missing, NativeBuild runs the same graph in-process
 
     public Toolchain(string? devkitPro = null)
     {
-        DevkitPro = devkitPro ?? Environment.GetEnvironmentVariable("DEVKITPRO") ?? @"D:\devkitPro";
+        DevkitPro = devkitPro ?? Detect() ?? @"C:\devkitPro";
         if (DevkitPro.StartsWith('/') && DevkitPro.Length > 2 && DevkitPro[2] == '/')
             DevkitPro = $"{char.ToUpperInvariant(DevkitPro[1])}:{DevkitPro[2..].Replace('/', '\\')}";
         Ninja = FindOnPath("ninja.exe") ?? "ninja.exe";
+    }
+
+    /// <summary>The devkitPro folder: DEVKITPRO (the installer sets "/opt/devkitpro", its MSYS2 name for C:\devkitPro),
+    /// then C:\devkitPro and D:\devkitPro; null when none has devkitARM.</summary>
+    public static string? Detect()
+    {
+        var env = Environment.GetEnvironmentVariable("DEVKITPRO");
+        var candidates = new List<string>();
+        if (!string.IsNullOrEmpty(env))
+        {
+            if (env.StartsWith('/') && env.Length > 2 && env[2] == '/') candidates.Add($"{char.ToUpperInvariant(env[1])}:{env[2..].Replace('/', '\\')}");
+            else if (!env.StartsWith('/')) candidates.Add(env);
+        }
+        candidates.AddRange([@"C:\devkitPro", @"D:\devkitPro"]);
+        return candidates.FirstOrDefault(c => File.Exists(Path.Combine(c, "devkitARM", "bin", "arm-none-eabi-g++.exe")));
     }
 
     public IReadOnlyList<ToolStatus> Check()
@@ -52,7 +67,7 @@ public sealed class Toolchain
         return r.ExitCode == 0 ? $"devkitARM {r.Output.Trim().Split('.')[0]}.{r.Output.Trim().Split('.').ElementAtOrDefault(1) ?? "0"}" : null;
     }
 
-    static string? FindOnPath(string exe)
+    public static string? FindOnPath(string exe)
     {
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
         {

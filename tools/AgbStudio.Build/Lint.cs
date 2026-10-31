@@ -5,7 +5,8 @@ namespace AgbStudio.Build;
 public sealed record LintIssue(string Rule, string File, int Line, string Text);
 
 /// <summary>Repository rules checked in CI (P1.07): no emoji anywhere (user rule, G-EMOJI); runtime code writes
-/// hardware only through the commit queues (P2.04); no float / double in runtime C++ (no FPU).</summary>
+/// hardware only through the commit queues (P2.04); no float / double in runtime C++ (no FPU); no distinctive
+/// pokeemerald identifiers in code (G-LEGAL.01); the product is "AGB Studio", never a name built on "GB" (G-LEGAL.03).</summary>
 public static class Lint
 {
     // Modules allowed to touch hardware registers directly.
@@ -17,6 +18,10 @@ public static class Lint
 
     static readonly Regex HardwareWrite = new(@"\b(REG_[A-Z0-9_]+|pal_bg_mem|pal_obj_mem|oam_mem|vid_mem|tile_mem|se_mem)\s*(\[[^\]]*\])?(\.\w+)?\s*(=|\|=|&=)(?!=)", RegexOptions.Compiled);
     static readonly Regex FloatUse = new(@"\b(float|double)\b", RegexOptions.Compiled);
+    // Names that only appear in code copied from pokeemerald (pret); references cite its file names instead.
+    static readonly Regex PokeemeraldName = new(@"\b(gMain|gSaveBlock[12]Ptr|gSpecialVar_\w+|VAR_RESULT|gPlayerParty|FLAG_SYS_\w+|MUS_[A-Z]\w+|SPECIES_[A-Z]\w+)\b", RegexOptions.Compiled);
+    static readonly Regex WrongBrand = new(@"\bGBA? Studio\b", RegexOptions.Compiled);
+    static readonly string[] CodeExt = [".cs", ".cpp", ".hpp", ".h", ".def", ".axaml", ".xaml", ".json", ".csproj", ".props"];
 
     public static bool IsEmoji(int cp) =>
         cp is >= 0x1F000 and <= 0x1FAFF or >= 0x2600 and <= 0x27BF or 0xFE0F or >= 0x1F1E6 and <= 0x1F1FF or 0x200D
@@ -40,6 +45,11 @@ public static class Lint
                     var cp = Utf32At(line, k);
                     if (cp > 0xFFFF) k++;
                     if (IsEmoji(cp)) { issues.Add(new LintIssue("no-emoji", rel, i + 1, $"U+{cp:X4}")); break; }
+                }
+                if (CodeExt.Contains(Path.GetExtension(file).ToLowerInvariant()) && !rel.EndsWith("Lint.cs") && !rel.EndsWith("LintTests.cs"))
+                {
+                    if (PokeemeraldName.Match(line) is { Success: true } pm) issues.Add(new LintIssue("no-pokeemerald", rel, i + 1, pm.Value));
+                    if (WrongBrand.Match(line) is { Success: true } wb) issues.Add(new LintIssue("product-name", rel, i + 1, wb.Value));
                 }
                 if (!rel.StartsWith("runtime/src/") && !rel.StartsWith("runtime/include/")) continue;
                 var code = StripComments(line);

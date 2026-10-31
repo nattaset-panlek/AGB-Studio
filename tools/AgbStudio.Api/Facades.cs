@@ -237,6 +237,14 @@ public static class Debug
     [Cpp("agb::api::Debug::Log({0})")]
     [ScriptOp("native:Log")]
     public static void Log(string text) { }
+
+    /// <summary>When the condition is false, writes the message with this file and line to the Console and stops the
+    /// game. Debug builds only, and Release builds with Project Settings · Build "Keep asserts"; otherwise it does
+    /// nothing and costs nothing.</summary>
+    /// <param name="condition">What must be true here.</param>
+    /// <param name="message">What went wrong, for the Console.</param>
+    [Cpp("AGB_ASSERT({0}, {1})")]
+    public static void Assert(bool condition, string message) { }
 }
 
 /// <summary>Random numbers from the gameplay stream (replays give the same numbers).</summary>
