@@ -16,6 +16,7 @@ using SkiaSharp;
 namespace AgbStudio.Editor.Tests.Windows.Menus;
 
 /// <summary>P11.65-P11.67: every title bar menu item (T-M01..T-M08) acts or opens its window and is disabled when it cannot.</summary>
+[Collection(EmulatorCollection.Name)]
 public sealed class MenuActionTests : IDisposable
 {
     readonly Fixture _fx = new();
@@ -140,11 +141,20 @@ public sealed class MenuActionTests : IDisposable
                 case Opens o:
                     Assert.Equal(o.Window, cmd.Window);
                     Assert.True(cmd.CanExecute(), id + " is disabled with a project open");
+                    var before = s.Windows.Requests.Count;
                     s.Commands.Execute(id);
                     Capture.Pump();
-                    Assert.Equal((o.Window, (string?)id), s.Windows.Requests[^1]);
+                    // the command opens its Figma window first; Create › Sprite / C# Script then put their New dialog on top
+                    Assert.True(s.Windows.Requests.Count > before, id + " opened nothing");
+                    Assert.Equal((o.Window, (string?)id), s.Windows.Requests[before]);
                     if (o.Owner == Mine) Assert.True(s.Windows.IsRegistered(o.Window), id);
                     while (win.Overlays.IsOpen) win.Overlays.CloseTop();
+                    if (s.Build.IsBuilding)
+                    {
+                        // Play started a build: the game is not started, and Play / Build are enabled again when the build ends
+                        (s.GetService(typeof(AgbStudio.Editor.Windows.Play.PlayController)) as AgbStudio.Editor.Windows.Play.PlayController)?.Stop();
+                        Play.PlayTestSupport.WaitUntil(() => !s.Build.IsBuilding, 300);
+                    }
                     break;
                 case Acts:
                     Assert.True(cmd.IsImplemented, id + " has no handler");

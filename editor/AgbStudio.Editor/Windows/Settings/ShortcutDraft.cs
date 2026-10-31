@@ -23,8 +23,12 @@ public sealed class ShortcutDraft(CommandRegistry commands, Dictionary<string, s
         return Commands.Get(id).DefaultGesture;
     }
 
-    public IReadOnlyList<ShortcutConflict> FindConflicts(string id, KeyGesture g) =>
-        Commands.All.Where(c => c.Id != id && GestureOf(c.Id) is { } x && Same(x, g)).Select(c => new ShortcutConflict(c, g)).ToList();
+    public IReadOnlyList<ShortcutConflict> FindConflicts(string id, KeyGesture g)
+    {
+        var context = Commands.Get(id).Context;
+        return Commands.All.Where(c => c.Id != id && ShortcutService.CanConflict(c.Context, context) && GestureOf(c.Id) is { } x && Same(x, g))
+            .Select(c => new ShortcutConflict(c, g)).ToList();
+    }
 
     /// <summary>The commands that share the current gesture of <paramref name="id"/>.</summary>
     public IReadOnlyList<ShortcutConflict> ConflictsOf(string id) => GestureOf(id) is { } g ? FindConflicts(id, g) : [];

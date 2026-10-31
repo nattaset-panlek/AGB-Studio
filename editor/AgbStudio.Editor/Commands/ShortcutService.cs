@@ -35,24 +35,34 @@ public sealed class ShortcutService
 
     static bool Same(KeyGesture a, KeyGesture b) => a.Key == b.Key && a.KeyModifiers == b.KeyModifiers;
 
-    /// <summary>Commands other than <paramref name="commandId"/> that use <paramref name="gesture"/>. Shortcuts share one namespace, as in
-    /// Preferences · Shortcuts where Toggle grid (Scene) conflicts with Go to line (Script); contexts only decide which command a key runs.</summary>
+    static bool Workspace(ShortcutContext c) => c is ShortcutContext.Scene or ShortcutContext.Script or ShortcutContext.Graph;
+
+    /// <summary>
+    /// True when bindings of the two contexts can be active at the same time, so one gesture in both is a conflict: Global
+    /// with everything, and the editor workspace contexts (Scene, Script, Graph) with each other, as in Preferences ·
+    /// Shortcuts where Toggle grid (Scene) conflicts with Go to line (Script). The Launcher never meets the workspace.
+    /// </summary>
+    public static bool CanConflict(ShortcutContext a, ShortcutContext b) =>
+        a == b || a == ShortcutContext.Global || b == ShortcutContext.Global || (Workspace(a) && Workspace(b));
+
+    /// <summary>Commands other than <paramref name="commandId"/> that use <paramref name="gesture"/> where the command is active
+    /// (<see cref="CanConflict"/>); contexts then decide which command a key runs.</summary>
     public IReadOnlyList<ShortcutConflict> FindConflicts(string commandId, KeyGesture gesture)
     {
-        _ = _commands.Get(commandId);
+        var cmd = _commands.Get(commandId);
         return _commands.All
-            .Where(c => c.Id != commandId && GestureOf(c.Id) is { } g && Same(g, gesture))
+            .Where(c => c.Id != commandId && CanConflict(c.Context, cmd.Context) && GestureOf(c.Id) is { } g && Same(g, gesture))
             .Select(c => new ShortcutConflict(c, gesture)).ToList();
     }
 
-    /// <summary>All pairs of commands that currently share a gesture.</summary>
+    /// <summary>All pairs of commands that currently share a gesture and can be active at the same time.</summary>
     public IReadOnlyList<(EditorCommand A, EditorCommand B)> AllConflicts()
     {
         var list = new List<(EditorCommand, EditorCommand)>();
         var bound = _commands.All.Select(c => (c, g: GestureOf(c.Id))).Where(x => x.g != null).ToList();
         for (var i = 0; i < bound.Count; i++)
             for (var j = i + 1; j < bound.Count; j++)
-                if (Same(bound[i].g!, bound[j].g!)) list.Add((bound[i].c, bound[j].c));
+                if (Same(bound[i].g!, bound[j].g!) && CanConflict(bound[i].c.Context, bound[j].c.Context)) list.Add((bound[i].c, bound[j].c));
         return list;
     }
 

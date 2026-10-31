@@ -112,8 +112,9 @@ public sealed class MainWindow : Window, IShellHost
 
     public EditRouter Edit => _edit;
 
-    /// <summary>Active shortcut context from the active document (Scene by default, Script for .cs).</summary>
-    public ShortcutContext ActiveContext => _s.Documents.Active?.Name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) == true ? ShortcutContext.Script : ShortcutContext.Scene;
+    /// <summary>Active shortcut context: the shown page's own (the Launcher), else from the active document (Scene by default, Script for .cs).</summary>
+    public ShortcutContext ActiveContext => CurrentPage is IShortcutScope scope ? scope.ShortcutContext
+        : _s.Documents.Active?.Name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) == true ? ShortcutContext.Script : ShortcutContext.Scene;
 
     void OnShortcutKey(object? sender, KeyEventArgs e)
     {

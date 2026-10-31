@@ -25,22 +25,22 @@ public static class ProjectContextMenu
 
     // The handlers below run until the Launcher service exists; it then replaces them with ones that are enabled only
     // while a project card is selected on a Launcher page.
-    [EditorCommand("launcher.open", "Open", Category = "Launcher", Glyph = "folder", Keys = "Enter", InPalette = false)]
+    [EditorCommand("launcher.open", "Open", Category = "Launcher", Glyph = "folder", Keys = "Enter", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void Open(EditorServices s) => _ = LauncherService.Of(s).OpenSelectedAsync("ProjectContextMenu");
 
-    [EditorCommand("launcher.showInExplorer", "Show in Explorer", Category = "Launcher", Glyph = "folder", InPalette = false)]
+    [EditorCommand("launcher.showInExplorer", "Show in Explorer", Category = "Launcher", Glyph = "folder", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void ShowInExplorer(EditorServices s) => LauncherService.Of(s).ShowSelectedInExplorer();
 
-    [EditorCommand("launcher.duplicate", "Duplicate", Category = "Launcher", InPalette = false)]
+    [EditorCommand("launcher.duplicate", "Duplicate", Category = "Launcher", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void Duplicate(EditorServices s) => LauncherService.Of(s).DuplicateSelected();
 
-    [EditorCommand("launcher.rename", "Rename", Category = "Launcher", Glyph = "pencil", Keys = "F2", InPalette = false)]
+    [EditorCommand("launcher.rename", "Rename", Category = "Launcher", Glyph = "pencil", Keys = "F2", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void Rename(EditorServices s) => LauncherService.Of(s).RenameSelected();
 
-    [EditorCommand("launcher.removeFromList", "Remove from list", Category = "Launcher", InPalette = false)]
+    [EditorCommand("launcher.removeFromList", "Remove from list", Category = "Launcher", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void RemoveFromList(EditorServices s) => LauncherService.Of(s).RemoveSelected();
 
-    [EditorCommand("launcher.deleteProject", "Delete project…", Category = "Launcher", InPalette = false)]
+    [EditorCommand("launcher.deleteProject", "Delete project…", Category = "Launcher", Context = ShortcutContext.Launcher, InPalette = false)]
     public static void Delete(EditorServices s) => _ = LauncherService.Of(s).DeleteSelectedAsync();
 }
 

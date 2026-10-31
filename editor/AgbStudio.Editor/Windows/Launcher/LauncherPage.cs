@@ -1,3 +1,4 @@
+using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
@@ -21,7 +22,7 @@ namespace AgbStudio.Editor.Windows.Launcher;
 [EditorWindow("T-P12")]
 [EditorWindow("T-P20")]
 [EditorWindow("T-P21")]
-public sealed class LauncherPage : DockPanel
+public sealed class LauncherPage : DockPanel, IShortcutScope
 {
     readonly EditorServices _s;
     readonly LauncherService _launcher;
@@ -40,6 +41,9 @@ public sealed class LauncherPage : DockPanel
 
     /// <summary>"T-P12" Projects, "T-P20" Templates or "T-P21" Learn.</summary>
     public string Tab { get; }
+
+    /// <summary>Keys run the Launcher's commands (F2 Rename, Enter Open), never the Scene Editor's.</summary>
+    public ShortcutContext ShortcutContext => ShortcutContext.Launcher;
 
     public LauncherPage(WindowContext ctx) : this(ctx.Services, ctx.Info.Id, ctx.Args as string) { }
 
