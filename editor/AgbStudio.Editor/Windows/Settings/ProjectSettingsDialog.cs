@@ -134,7 +134,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
 
     // ---- Input (T-D08) -------------------------------------------------------------------------------
 
-    const string InputColumns = "150,200,180,*";
+    // Figma: ACTION NAME at x 372, KEYBOARD 572, GAMEPAD 752 (table at 232)
+    const string InputColumns = "140,200,180,*";
 
     Control InputTab()
     {
@@ -215,6 +216,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
             table.Children.Insert(table.Children.Count - 1, TableRow(SaveColumns, 30, name, type, size));
         }
         var add = new AgbButton { Kind = ButtonKind.Ghost, Glyph = "plus", Content = "Add field", Name = "AddField", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
+        // Figma draws "+ Add field" in text/muted, quieter than a plain Ghost button
+        add.Token(Avalonia.Controls.Primitives.TemplatedControl.ForegroundProperty, "text/muted");
         table.Children.Add(add);
         foreach (var f in save.Fields) AddRow(f);
         add.Click += (_, _) =>
@@ -282,7 +285,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
     Control BuildSettingsTab()
     {
         var b = D.Build;
-        var config = new DockPanel { HorizontalSpacing = 8 };
+        // Figma: the segment at x 308, 2 px after the 86 px label (not lined up with the fields under it)
+        var config = new DockPanel { HorizontalSpacing = 2 };
         var configLabel = UI.Text("Configuration", "Body/12", "text/secondary", 86);
         DockPanel.SetDock(configLabel, Dock.Left);
         config.Children.AddRange([configLabel, Segments(["Debug", "Release"], (int)b.Configuration, i => Edit(() => b.Configuration = (BuildConfiguration)i), "Configuration")]);
@@ -363,7 +367,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
             var chip = new Chip { Content = Model.Severity(rule), IsHitTestVisible = false, VerticalAlignment = VerticalAlignment.Center };
             StyleChip(chip);
             var chevron = new Icon { Glyph = "down", Size = 12, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted");
-            var pick = new Button { Theme = Bare, Content = UI.Row(8, chip, chevron), Name = "Severity_" + rule, HorizontalAlignment = HorizontalAlignment.Left };
+            // Figma: the chevron 6 px after the chip
+            var pick = new Button { Theme = Bare, Content = UI.Row(6, chip, chevron), Name = "Severity_" + rule, HorizontalAlignment = HorizontalAlignment.Left };
             Dropdown.Attach(pick, () => ProjectSettingsModel.Severities, Model.Severity(rule), v => { chip.Content = v; StyleChip(chip); }, v => Edit(() => sc.AnalyzerRules[rule] = v));
             table.Children.Add(TableRow(RuleColumns, 30, Cell(id, true), Cell(catches), pick));
         }
