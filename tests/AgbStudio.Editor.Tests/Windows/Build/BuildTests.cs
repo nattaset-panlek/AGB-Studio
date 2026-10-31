@@ -215,6 +215,19 @@ public class BuildReportTests
             Assert.Equal(["Graphics · 182 KB", "Code · 128 KB", "Audio · 96 KB", "Data · 6 KB"], legend);
             var cells = win.GetVisualDescendants().OfType<Grid>().First(g => g.Name == "LargestAssets").Children.OfType<TableCell>().Select(c => c.Text).Where(t => t != null).ToList();
             Assert.Equal(["Asset", "Type", "Size", "Share", "bgm_forest.xm", "Music", "41 KB", "forest_tiles.png", "Tileset", "32 KB", "thai_vwf.font", "Font", "6.2 KB", "hero.png", "Sprite", "4 KB", "items.db", "Data", "1.1 KB"], cells);
+            // scope log T-P11: the share bars are drawn to one scale, the asset's share of the 412 KB ROM (the whole track
+            // is the whole ROM), the percentages of the report, which the tips name
+            var report = BuildReport.Load(p.BuildDir)!;
+            var bars = Enumerable.Range(0, 5).Select(i => win.GetVisualDescendants().OfType<AgbProgress>().Single(b => b.Name == "Share_" + i)).ToList();
+            Assert.All(bars, b => Assert.Equal((0.0, 100.0), (b.Minimum, b.Maximum)));
+            Assert.Equal(report.LargestAssets.Select(a => 100.0 * a.Bytes / report.RomBytes), bars.Select(b => b.Value));
+            Assert.Equal(report.LargestAssets.Select(a => a.Share), bars.Select(b => Math.Round(b.Value, 1)));
+            Assert.Equal(["10.0 % of the ROM", "7.8 % of the ROM", "1.5 % of the ROM", "1.0 % of the ROM", "0.3 % of the ROM"], bars.Select(b => ToolTip.GetTip(b) as string));
+            // the lengths: the 41 KB bar is 41 / 32 of the 32 KB one, and a tenth of the ROM is a tenth of the track
+            Capture.Pump();
+            double Fill(AgbProgress b) => b.Bounds.Width * b.Value / 100;
+            Assert.Equal(41.0 / 32, Fill(bars[0]) / Fill(bars[1]), 3);
+            Assert.InRange(Fill(bars[0]) / bars[0].Bounds.Width, 0.099, 0.1);
             var history = win.GetVisualDescendants().OfType<StackPanel>().First(s => s.Name == "History").Children.OfType<StackPanel>()
                 .Select(r => string.Join(" ", r.Children.OfType<TextBlock>().Select(t => t.Text))).ToList();
             Assert.Equal(["12:06:03 412 KB · 0.80 s · 1 warning", "11:58:40 409 KB · 0.77 s", "11:52:12 PlayerController.cs(22): ';' expected", "11:40:05 401 KB · 0.91 s"], history);

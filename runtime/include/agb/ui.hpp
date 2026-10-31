@@ -114,6 +114,9 @@ Menu& sceneMenu();
 bool pauseRequested();  // the pause action was pressed in a scene that may pause
 void openPause();
 void openOptions();
+// Saved options (save::Options on the save chip): loadOptions applies them at game::boot (volumes, language, button
+// remap); the Options screen writes them when it closes after a change.
+void loadOptions();
 bool overlayOpen();
 // Name shown for a key mask in the options screen ("A", "START", "L+R").
 const char* keyName(u16 keys);

@@ -28,21 +28,22 @@ is empty) and **Browse…** to pick it. Paths can use Windows variables such as 
   was found; it is used when Script editor is External on the Editor tab.
 - **Image editor**: the program, for example Aseprite, that opens `.aseprite` files and the background images in
   `assets/images` when you double-click them in the Assets panel or pick them in the Command Palette. Sprite and
-  tileset images still open in the Sprite Editor and the Tilemap Editor.
+  tileset images still open in the Sprite Editor and the Tilemap Editor, as the line below the box says.
 - **Tiled**: optional. When set, `.tmx` and `.tsx` files open in Tiled, for example when you pick one in the Command
   Palette.
 - When the image editor or Tiled is not set, or its program is not found, AGB Studio opens those files itself.
-- **Build cache card**: the open project's cache folder and its size. **Clear cache** empties it (and the compiled
-  files), so the next build converts every asset again. Greyed out when no project is open.
+- **Build cache card** ("Build cache · per project"): the open project's cache folder, named from the project folder
+  (for example `SkyHopper\build\cache`), and its size. **Clear cache** empties it (and the compiled files), so the next
+  build converts every asset again. Greyed out when no project is open.
 - **Footer**: Cancel (or Esc) drops the changes; Save keeps them. A changed devkitPro folder is checked again at once.
 
 Differs from Figma: the build cache is per project (the `cache` and `obj` folders in the project's build output
-folder, `build` unless Project Settings › Build sets another), not the one shared cache folder under `%LOCALAPPDATA%`
-that the Figma frame shows.
+folder, `build` unless Project Settings › Build sets another), so a cache never mixes two projects; the Figma frame
+shows one shared cache folder under `%LOCALAPPDATA%`. The card says "per project" and names the project's folder.
 
-Differs from Figma: the hint under Image editor says it opens `.png` / `.aseprite` on double-click; AGB Studio opens
-only `.aseprite` files and the background images in `assets/images` with it. Sprite and tileset PNG files still open in
-the Sprite Editor and the Tilemap Editor.
+Differs from Figma: the frame's hint under Image editor says it opens `.png` / `.aseprite` on double-click; AGB Studio
+opens only `.aseprite` files and the background images in `assets/images` with it, and its hint says so. Sprite and
+tileset PNG files open in the Sprite Editor and the Tilemap Editor.
 
 ## Related
 

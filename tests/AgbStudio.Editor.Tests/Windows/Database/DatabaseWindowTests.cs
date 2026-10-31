@@ -55,8 +55,12 @@ public class DatabaseWindowTests : DataE2E
         Assert.Equal(["id", "name", "icon", "type", "price", "power", "stackable", "effect", "description"], page.SchemaItems.Select(t => t.Label));
         Assert.Equal(["enum", "text · loc", "sprite", "enum", "int", "fixed", "bool", "script", "text · loc"], page.SchemaItems.Select(t => t.Meta));
         Assert.Equal("Items · 24 rows · 9 fields", page.StatusText);
-        // name 2 + icon 4 + type 1 + price 4 + power 4 + stackable 1 + effect 4 + description 2 = 22 B per row
-        Assert.Equal("ROM 528 B", page.RomText);
+        // P9.07: the table's ROM size, not the field sum: name 2 + icon 4 + type 1 + price 4 + power 4 + stackable 1 +
+        // effect 4 + description 2 = 22 B, padded to the 4-byte fields = 24 B per row, x 24 rows = 576 B, the bytes the
+        // build writes for the table (DatabaseCodegen.TableBytes)
+        Assert.Equal("ROM 576 B", page.RomText);
+        Assert.Equal(576, AgbStudio.Build.Data.DatabaseCodegen.TableBytes(Items));
+        Assert.Equal(24 * 22, Items.Rows.Count * Items.Fields.Where(f => f.Name != Items.KeyField).Sum(AgbStudio.Build.Data.DatabaseCodegen.FieldBytes));
         Assert.True(Find<Chip>("RomChip").IsVisible);
         Assert.Equal(["#", "icon", "id", "name", "type", "price", "power", "stackable", "effect"], page.Grid.Columns.Select(c => c.Field?.Name ?? "#"));
         Assert.Equal(24, page.Grid.VisibleRowIndices.Count);
@@ -411,7 +415,8 @@ public class DatabaseWindowTests : DataE2E
         Assert.Equal(("rarity", "enum", "Common"), (f.Name, f.Type, f.Default));
         Assert.Equal(["Common", "Rare", "Epic"], f.EnumValues);
         Assert.Equal("rarity", page.SchemaItems[^1].Label);
-        Assert.Equal("ROM 552 B", page.RomText);
+        // the 1-byte enum fills one of the 2 padding bytes of each 24-byte row, so the ROM size stays 576 B
+        Assert.Equal("ROM 576 B", page.RomText);
         // fixed costs 4 bytes; a duplicate name is refused
         dlg = Dialog<AddFieldDialog>("T-D18", page);
         dlg.NameField.Text = "speed";

@@ -229,7 +229,9 @@ public sealed class ProjectSettingsTests : IDisposable
         Assert.Equal(["340 / 340", "326 / 340", "0 / 340"], new[] { "en", "th", "ja" }.Select(c => d.Find<Meter>("Lang_" + c).ValueText));
         Assert.Equal(ProgressStatus.Warn, d.Find<Meter>("Lang_th").Status);
         win.Click(d.Find<NavItem>("Nav_T-S02"));
-        Assert.Equal(("3 slots", "189 B / 32 KB"), (d.Find<Meter>("SlotsMeter").Label, d.Find<Meter>("SlotsMeter").ValueText));
+        // scope log T-D08, P4.12, P2.10: the meter counts the 3 x 63 B slots and the 8 B options block outside them (Figma: 189 B)
+        Assert.Equal(("3 slots", "197 B / 32 KB"), (d.Find<Meter>("SlotsMeter").Label, d.Find<Meter>("SlotsMeter").ValueText));
+        Assert.Equal(3 * 63 + 8, d.Model.TotalSaveBytes);
         Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
         // T-S02: the size of each field follows its type, as Figma lists them (score 4 B, lives 1 B, coins 2 B ...)
         Assert.Equal(["4 B", "1 B", "2 B", "16 B", "32 B", "8 B"], Enumerable.Range(0, 6).Select(i => d.Find<TableCell>("SaveFieldSize_" + i).Text));
@@ -242,7 +244,7 @@ public sealed class ProjectSettingsTests : IDisposable
         Assert.Equal("1 B", d.Find<TableCell>("SaveFieldSize_1").Text);
         Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
         win.Click(d.Find<Segment>("SaveType_4"));
-        Assert.Equal("189 B / 8 KB", d.Find<Meter>("SlotsMeter").ValueText);
+        Assert.Equal("197 B / 8 KB", d.Find<Meter>("SlotsMeter").ValueText);
         win.Click(d.Find<NavItem>("Nav_T-S01"));
         Assert.Equal(SkyHopper.SceneNames.Order(), Dropdown.Of(d.Find<SelectField>("StartScene"))!.Options.Order());
         Assert.Equal(["pixel8", "thai_vwf", "title_big"], Dropdown.Of(d.Find<SelectField>("DefaultFont"))!.Options);

@@ -34,6 +34,20 @@ void erase(int slot);
 int lastSlot();  // the slot last read or written (0 at boot): Project Settings Â· Save data "Autosave" writes it
 bool lastReadMigrated();
 
+// The global options block (Options screen: music and effects volume, language, button remap), kept on the
+// chip outside the slots: Flash reserves its last 4 KB sector, SRAM and EEPROM their last 8 bytes, so the
+// slots never overlap it. kOptionsBytes (8) is counted in Project Settings · Save data.
+constexpr u32 kOptionsBytes = 8;
+struct Options {
+    u8 music = 10;       // 0..10
+    u8 effects = 10;     // 0..10
+    u8 language = 0;
+    u8 remap[4] = {0xFF, 0xFF, 0xFF, 0xFF};  // 8 nibbles, one per action: index of the key (0 A, 1 B, 2 Select, 3 Start, 4 R, 5 L) or 0xF = default
+};
+// readOptions: false when no options were saved (or the chip has no save type); `o` is then left unchanged.
+bool readOptions(Options& o);
+bool writeOptions(const Options& o);
+
 u32 crc32(const void* data, u32 size, u32 crc = 0);
 
 // Raw device access (tests and the hand-over snapshot of hot reload).

@@ -103,8 +103,8 @@ public sealed partial class BuildReportTests(EmulatorFixture emu)
         // P8.11: the Font Manager / New Font estimate ("about N KB of ROM") is within 10% of the built font.
         var font = b.Assets.Fonts["thai_vwf"].RomBytes;
         Assert.InRange(font, all["thai_vwf"].Report * 0.9, all["thai_vwf"].Report * 1.1);
-        // P9.07: the table's size from DatabaseCodegen.TableBytes is its bytes in the ROM. The Database status bar adds
-        // the Add Field bytes per row (4 + 4 + 1 + 1 = 10), which leaves out the 2 bytes that pad each row to 12.
+        // P9.07: the table's size from DatabaseCodegen.TableBytes, which the Database status bar shows, is its bytes in
+        // the ROM. The Add Field bytes per row (4 + 4 + 1 + 1 = 10) leave out the 2 bytes that pad each row to 12.
         var rom = AgbStudio.Build.Data.DatabaseCodegen.TableBytes(table);
         Assert.Equal(12 * 12, rom);
         Assert.Equal(rom, b.Assets.Data["Enemies"].RomBytes);

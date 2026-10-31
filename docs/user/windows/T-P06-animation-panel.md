@@ -26,6 +26,8 @@ frame order without opening the Sprite Editor.
   (or press Ctrl + Left / Right) to change the frame order.
 - **Saving**: speed and frame order changes are saved to the sprite at once and show in the Sprite Editor too. Each
   change is one undo step.
+- The wheel, drag and keys above are listed in Keyboard Shortcuts (group "Animation panel") and found by the search
+  in Preferences › Shortcuts. They are fixed: they cannot be given other keys.
 - When no actor with a sprite is selected the panel says "Select an actor with a sprite".
 
 ## Related
@@ -33,5 +35,6 @@ frame order without opening the Sprite Editor.
 - [Scene Editor](T-P01-scene-editor.md)
 - [Sprite Editor](T-P08-sprite-editor.md)
 - [Play Mode](T-P02-play-mode.md)
+- [Keyboard Shortcuts](T-D10-keyboard-shortcuts.md)
 - [GBA hardware guide: sprites](../gba-hardware-guide.md#sprites)
 - [GBA hardware guide: the frame](../gba-hardware-guide.md#the-frame)

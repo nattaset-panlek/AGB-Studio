@@ -250,7 +250,7 @@ public sealed class ProjectSettingsDialog : SettingsDialog
         if (_slotsMeter is null || _perSlot is null) return;
         var s = D.Save;
         var per = Model.BytesPerSlot;
-        var total = per * Math.Max(0, s.Slots);
+        var total = Model.TotalSaveBytes;  // the slots and the 8 B options block (outside the slots)
         var cap = ProjectSettingsModel.SaveCapacity(s.Type);
         _slotsMeter.Label = $"{s.Slots} slots";
         _slotsMeter.ValueText = cap == 0 ? "no save chip" : $"{ProjectSettingsModel.Kb(total)} / {ProjectSettingsModel.Kb(cap)}";

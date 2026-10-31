@@ -87,6 +87,10 @@ public class DialogueWindowTests : DataE2E
         // the preview is the ROM's dialogue box: the line, then its choices with the cursor
         var expected = page.Gba!.RenderBox("th", "เจ้าสไลม์ขโมยไปไว้ในถ้ำน่ะสิ!", ["ไปที่ถ้ำ", "ถามอีกครั้ง"])!;
         Assert.Equal(expected.Argb, page.Inspector.Screen.Box!.Argb);
+        // scope log T-P14, T-P16: the line sits on the runtime's light paper (0x7BDE, as IG-03), on one line as the ROM
+        // breaks it; Figma's frame draws a dark box with two lines and "flags.metOwl"
+        Assert.Equal(1, page.Gba.Layout("th", "เจ้าสไลม์ขโมยไปไว้ในถ้ำน่ะสิ!")!.Lines);
+        Assert.Equal(AgbStudio.Build.Graphics.Gba.ToArgb(0x7BDE), page.Inspector.Screen.Box!.Argb[223]);
         // speaker from the dropdown; undo
         Click(f["Speaker"].GetVisualDescendants().OfType<Button>().First(b => b.Name == "PART_Dropdown"));
         Assert.True(Dropdown.Choose("Hopper"));

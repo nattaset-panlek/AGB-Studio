@@ -35,6 +35,10 @@ and previews whether a text is too long for its box on the GBA.
 The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
 moves it one frame (F10). They are greyed out while no game runs.
 
+Differs from Figma: the frame previews the text in a dark box on two lines; AGB Studio previews what the ROM shows,
+the game's light text box (as in the in-game frame IG-03) with the text broken into lines as the ROM breaks it, so
+"ต้องรีบตามหาก่อนพระอาทิตย์ตก!" fits one line.
+
 ## Related
 
 - [Add Language](T-D20-add-language.md)

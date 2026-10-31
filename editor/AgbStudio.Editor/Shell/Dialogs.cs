@@ -37,6 +37,7 @@ public abstract class FigmaDialog : Border, IOverlayContent
 /// Keyboard Shortcuts (T-D10, 760 x 390; Help › Keyboard Shortcuts). Every command that has a shortcut, with its
 /// current binding, by group (General, Scene, Script, Logic Graph, Launcher) in two scrolling columns that start
 /// with the Figma rows; search filters by name or keys. "Edit in Preferences › Shortcuts" opens T-S09 to change them.
+/// After the commands, the Animation panel's gestures that are not commands (FixedGestures) as a fixed group.
 /// </summary>
 [EditorWindow("T-D10")]
 public sealed class KeyboardShortcutsDialog : FigmaDialog
@@ -112,30 +113,57 @@ public sealed class KeyboardShortcutsDialog : FigmaDialog
     /// <summary>Group titles in each column, top to bottom.</summary>
     public IEnumerable<string> GroupTitles => _columns.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "GroupTitle").Select(t => t.Text ?? "");
 
+    /// <summary>The fixed gestures listed after the commands (the Animation panel's wheel, drag and keys).</summary>
+    public static IReadOnlyList<Commands.FixedGestures.Gesture> FixedRows => Commands.FixedGestures.All;
+
+    static DockPanel Row(string label, IEnumerable<string> keys, string? name = null, string? where = null)
+    {
+        var row = new DockPanel { Height = 30, HorizontalSpacing = 6, Tag = label, Name = name };
+        var caps = UI.Row(6, keys.Select(p => (Control)new Keycap { Label = p, VerticalAlignment = VerticalAlignment.Center }).ToArray());
+        // a mouse gesture names where the pointer is ("on the speed line") left of its keycap
+        if (where != null) caps.Children.Insert(0, KeysWhere(where));
+        caps.VerticalAlignment = VerticalAlignment.Center;
+        DockPanel.SetDock(caps, Dock.Right);
+        row.Children.AddRange([caps, UI.Text(label, "Body/12", "text/primary")]);
+        return row;
+    }
+
     void Fill()
     {
         _columns.Children.Clear();
         var q = Search.Text?.Trim() ?? "";
+        bool Shown(string label, string keys) => q.Length == 0 || label.Contains(q, StringComparison.OrdinalIgnoreCase) || keys.Contains(q, StringComparison.OrdinalIgnoreCase);
         var columns = new[] { UI.Column(24), UI.Column(24) };
         var i = 0;
+        StackPanel Group(string name)
+        {
+            var title = UI.Text(name, "Overline/11", "text/secondary");
+            title.Name = "GroupTitle";
+            return UI.Column(6, title);
+        }
         foreach (var g in _all.GroupBy(r => r.Group))
         {
-            var title = UI.Text(g.Key, "Overline/11", "text/secondary");
-            title.Name = "GroupTitle";
-            var stack = UI.Column(6, title);
+            var stack = Group(g.Key);
             foreach (var (_, label, cmd) in g)
             {
                 var keys = _shortcuts.GestureOf(cmd) is { } k ? AgbStudio.Editor.Theme.Shortcuts.Format(k) : "";
-                if (q.Length > 0 && !label.Contains(q, StringComparison.OrdinalIgnoreCase) && !keys.Contains(q, StringComparison.OrdinalIgnoreCase)) continue;
-                var row = new DockPanel { Height = 30, HorizontalSpacing = 6, Tag = label };
-                var caps = UI.Row(6, KeyParts(keys).Select(p => (Control)new Keycap { Label = p, VerticalAlignment = VerticalAlignment.Center }).ToArray());
-                caps.VerticalAlignment = VerticalAlignment.Center;
-                DockPanel.SetDock(caps, Dock.Right);
-                row.Children.AddRange([caps, UI.Text(label, "Body/12", "text/primary")]);
-                stack.Children.Add(row);
+                if (Shown(label, keys)) stack.Children.Add(Row(label, KeyParts(keys)));
             }
             if (stack.Children.Count == 1) continue;
             // General and Script on the left, Scene and Logic Graph on the right, as Figma starts them
+            columns[i++ % 2].Children.Add(stack);
+        }
+        // the gestures that are not commands, after every command group (out of the first view the frame draws), with a
+        // caption that they cannot be changed
+        foreach (var g in FixedRows.GroupBy(r => r.Group))
+        {
+            var stack = Group(g.Key);
+            var note = UI.Text(Commands.FixedGestures.FixedNote, "Label/11", "text/muted");
+            note.Name = "FixedNote";
+            stack.Children.Add(note);
+            foreach (var r in g.Where(r => Shown(r.Label, r.KeyText) || r.Matches(q)))
+                stack.Children.Add(Row(r.Label, r.Keys, "Fixed_" + r.Id, r.Where));
+            if (stack.Children.Count == 2) continue;
             columns[i++ % 2].Children.Add(stack);
         }
         for (var c = 0; c < 2; c++)
@@ -143,6 +171,15 @@ public sealed class KeyboardShortcutsDialog : FigmaDialog
             Grid.SetColumn(columns[c], c * 2);
             _columns.Children.Add(columns[c]);
         }
+    }
+
+    /// <summary>Where the pointer is for a mouse gesture, muted, before its keycap ("on a frame [Wheel]").</summary>
+    public static TextBlock KeysWhere(string where)
+    {
+        var t = UI.Text(where, "Label/11", "text/muted");
+        t.VerticalAlignment = VerticalAlignment.Center;
+        t.Name = "GestureWhere";
+        return t;
     }
 
     /// <summary>"Ctrl+Shift+S" -> Ctrl, Shift, S; "Ctrl+," -> Ctrl, ",".</summary>

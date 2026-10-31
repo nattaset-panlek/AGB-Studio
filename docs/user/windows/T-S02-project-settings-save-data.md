@@ -24,9 +24,13 @@ saved and how big they are.
 - **Add field**: adds a new `int` field named `field1`, `field2` and so on.
 - **Slots**: how many save slots the game has, 1 to 16.
 - **Autosave**: saves on every scene change.
-- **Slots meter**: the space all slots need against the size of the save chip, for example `189 B / 32 KB`. It turns
+- **Slots meter**: the space all slots need against the size of the save chip, for example `197 B / 32 KB` (three slots of 63 B plus the 8 B options block). It turns
   yellow above 90% and red when the slots do not fit; then Save is greyed out. With save type None it says
   "no save chip".
+- **Options block**: besides the slots the chip keeps 8 bytes for what the player sets in the game's Options screen:
+  music volume, sound effects volume, language and the remapped buttons. The game loads them when it starts and writes
+  them when the Options screen closes after a change. They are not part of a slot, so saving or erasing a slot leaves
+  them alone; the Slots meter counts them (on Flash they take the chip's last 4 KB sector).
 - **Bytes per slot**: the total size of one slot.
 - **Checksum each slot**: stores a check value so a damaged save can be found.
 - **Code sample**: shows how a script writes and reads a slot.
@@ -42,3 +46,6 @@ always follows the type, so an `int` is always 4 B; the sample project gets the 
 - [Project Settings · Build](T-S03-project-settings-build.md)
 - [Database](T-P07-database.md) (tables that `Items[16]` style fields refer to)
 - [GBA hardware guide: Save data](../gba-hardware-guide.md#save-data)
+
+Differs from Figma: the frame's Slots meter shows `189 B / 32 KB` (the slots only); AGB Studio adds the 8 B options
+block, so the same project shows `197 B / 32 KB`.

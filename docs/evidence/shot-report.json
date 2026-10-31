@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 11:12:56Z",
+  "generated": "2026-10-31 17:08:41Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3458,15 +3458,15 @@
       "set": "frame Build Report",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.45,
-      "BestShiftDiffPercent": 1.45,
+      "DiffPercent": 1.54,
+      "BestShiftDiffPercent": 1.54,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.76,
-      "ColourDiffPercent": 3.32
+      "MeanChannelError": 1.85,
+      "ColourDiffPercent": 3.41
     },
     {
       "Id": "T-D06",
@@ -4463,30 +4463,30 @@
       "set": "frame Preferences \u00B7 Editor",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.44,
-      "BestShiftDiffPercent": 1.44,
+      "DiffPercent": 1.45,
+      "BestShiftDiffPercent": 1.45,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.78,
-      "ColourDiffPercent": 3.69
+      "MeanChannelError": 1.8,
+      "ColourDiffPercent": 3.8
     },
     {
       "Id": "T-S08",
       "set": "frame Preferences \u00B7 Paths",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.34,
-      "BestShiftDiffPercent": 1.34,
+      "DiffPercent": 1.45,
+      "BestShiftDiffPercent": 1.45,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.7,
-      "ColourDiffPercent": 2.96
+      "MeanChannelError": 1.85,
+      "ColourDiffPercent": 3.12
     },
     {
       "Id": "T-S09",

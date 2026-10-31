@@ -16,6 +16,7 @@ struct Header {
 };
 static_assert(sizeof(Header) == 16);
 constexpr u32 kMagic = 0x53424741;  // "AGBS"
+constexpr u8 kOptionsMagic = 0xA1;  // options block: magic and format version in one byte
 
 Config g_config;
 MigrateFn g_migrate = nullptr;
@@ -124,9 +125,12 @@ void eepromWriteBlock(u32 block, const u8* data) {
 
 // Bytes reserved per copy. It depends only on the save type and slot count, never on the payload
 // size, so a newer format version still finds the copies an older version wrote.
+// Bytes at the end of the chip kept for the options block: a whole sector on Flash, else 8 bytes.
+u32 optionsReserve() { return g_config.type == Type::Flash64K || g_config.type == Type::Flash128K ? 4096 : kOptionsBytes; }
+
 u32 copyBytes() {
     const u32 copies = static_cast<u32>(g_config.slots ? g_config.slots : 1) * 2;
-    u32 per = capacityBytes(g_config.type) / copies;
+    u32 per = (capacityBytes(g_config.type) - optionsReserve()) / copies;
     switch (g_config.type) {
         case Type::Flash64K:
         case Type::Flash128K: per &= ~0xFFFu; break;  // whole 4 KB sectors
@@ -177,7 +181,7 @@ u32 capacityBytes(Type t) {
     }
 }
 
-u32 bytesUsed() { return g_config.type == Type::None ? 0 : (sizeof(Header) + g_config.payloadSize) * 2 * g_config.slots; }
+u32 bytesUsed() { return g_config.type == Type::None ? 0 : (sizeof(Header) + g_config.payloadSize) * 2 * g_config.slots + kOptionsBytes; }
 u32 maxPayload() { return g_config.type == Type::None ? 0 : copyBytes() - sizeof(Header); }
 
 void deviceRead(u32 offset, void* out, u32 size) {
@@ -299,5 +303,27 @@ void erase(int slot) {
 }
 
 bool lastReadMigrated() { return g_migrated; }
+
+bool readOptions(Options& o) {
+    if (g_config.type == Type::None) return false;
+    u8 b[kOptionsBytes];
+    deviceRead(capacityBytes(g_config.type) - optionsReserve(), b, sizeof b);
+    if (b[0] != kOptionsMagic || b[1] > 10 || b[2] > 10) return false;
+    o.music = b[1];
+    o.effects = b[2];
+    o.language = b[3];
+    for (int i = 0; i < 4; ++i) o.remap[i] = b[4 + i];
+    return true;
+}
+
+bool writeOptions(const Options& o) {
+    if (g_config.type == Type::None) return false;
+    const u8 b[kOptionsBytes] = {kOptionsMagic, o.music, o.effects, o.language, o.remap[0], o.remap[1], o.remap[2], o.remap[3]};
+    const u32 at = capacityBytes(g_config.type) - optionsReserve();
+    deviceWrite(at, b, sizeof b);
+    u8 check[kOptionsBytes];
+    deviceRead(at, check, sizeof check);
+    return __builtin_memcmp(b, check, sizeof b) == 0;
+}
 
 }  // namespace agb::save
