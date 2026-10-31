@@ -265,7 +265,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P02 | frame Play Mode | 1440x900 | 1440x900 | 13.07 | 13.07 | 0,0 | 0 | 12.45 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
 | T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.27 | 5.27 | 0,0 | 0 | 6.39 |
-| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.14 | 3.14 | 0,0 | 0 | 3.55 |
+| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.16 | 3.16 | 0,0 | 0 | 3.56 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.51 | 2.51 | 0,0 | 0 | 3.03 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 5.03 | 4.57 | 0,-2 | 2 | 7.46 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.75 | 2.75 | 0,0 | 0 | 3.26 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.74 | 2.74 | 0,0 | 0 | 3.24 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 3.01 | 3.01 | 0,0 | 0 | 3.57 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 5.47 | 5.47 | 0,0 | 0 | 7.36 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.34 | 1.34 | 0,0 | 0 | 1.60 |
@@ -304,7 +304,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D09 | frame Preferences | 900x620 | 900x620 | 0.67 | 0.67 | 0,0 | 0 | 0.78 |
 | T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.87 | 0.87 | 0,0 | 0 | 1.52 |
 | T-S07 | frame Preferences · Editor | 900x620 | 900x620 | 1.44 | 1.44 | 0,0 | 0 | 1.78 |
-| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.39 | 1.39 | 0,0 | 0 | 1.79 |
+| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.39 | 1.39 | 0,0 | 0 | 1.78 |
 | T-S09 | frame Preferences · Shortcuts | 900x620 | 900x620 | 0.98 | 0.98 | 0,0 | 0 | 1.11 |
 | T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.84 | 0.84 | 0,0 | 0 | 1.53 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.42 |

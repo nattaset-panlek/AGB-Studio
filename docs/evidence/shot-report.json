@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 05:28:11Z",
+  "generated": "2026-10-31 06:05:14Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3893,15 +3893,15 @@
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.14,
-      "BestShiftDiffPercent": 3.14,
+      "DiffPercent": 3.16,
+      "BestShiftDiffPercent": 3.16,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.55,
-      "ColourDiffPercent": 5.56
+      "MeanChannelError": 3.56,
+      "ColourDiffPercent": 5.57
     },
     {
       "Id": "T-P24",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.75,
-      "BestShiftDiffPercent": 2.75,
+      "DiffPercent": 2.74,
+      "BestShiftDiffPercent": 2.74,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.26,
-      "ColourDiffPercent": 4.98
+      "MeanChannelError": 3.24,
+      "ColourDiffPercent": 4.96
     },
     {
       "Id": "T-D14",
@@ -4485,8 +4485,8 @@
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.79,
-      "ColourDiffPercent": 3.03
+      "MeanChannelError": 1.78,
+      "ColourDiffPercent": 3.02
     },
     {
       "Id": "T-S09",
