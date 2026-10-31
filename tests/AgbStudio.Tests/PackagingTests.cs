@@ -16,7 +16,7 @@ public sealed class PackagingTests
         Assert.Equal($"AGB-Studio-{Packager.Version}-win-x64.zip", Path.GetFileName(zip));
         foreach (var f in new[]
                  {
-                     Packager.RootMarker, "README.txt", "bin/editor.json", "runtime/include/agb/game.hpp", "runtime/src/framework/game.cpp",
+                     Packager.RootMarker, "README.txt", "bin/editor.json", "bin/release-notes.md", "runtime/include/agb/game.hpp", "runtime/src/framework/game.cpp",
                      "third_party/mgba/mgba_libretro.dll", "third_party/mgba/LICENSE-mgba.txt", "third_party/fonts/NotoSansThai-Regular.ttf",
                      "third_party/icu/thaidict.txt", "docs/THIRD_PARTY.md", "docs/RELEASE-NOTES.md", "docs/user/gba-hardware-guide.md",
                  })
