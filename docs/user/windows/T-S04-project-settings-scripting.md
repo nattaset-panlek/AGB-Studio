@@ -19,8 +19,9 @@ rules count as an Error or a Warning.
 - **Namespace**: the C# namespace for your scripts, for example `SkyHopper`. Leave it empty or use a valid C# name.
 - **Hot reload in Play mode**: script changes are applied while the game runs in Play mode.
 - **Treat warnings as errors**: any Analyzer warning stops the build.
-- **Show inline hints in the editor**: meant to show Analyzer hints next to the code in the Script Editor. It is
-  saved with the project, but the Script Editor does not read it yet.
+- **Show inline hints in the editor** (on by default): clicking an underlined Analyzer message in the Script Editor,
+  or pressing Ctrl+. on it, opens its hint next to the code. When it is off, the underline stays and the message is
+  still in the Problems list, but no hint opens.
 - **Analyzer rules table**: each rule with what it catches and its severity:
   - **GAE001**: a class allocated in Update / OnTouch (there is no garbage collector).
   - **GAE002**: `float` or `double` (the GBA has no FPU; use `fixed`).
@@ -31,8 +32,6 @@ rules count as an Error or a Warning.
 - **Severity**: click the chip to choose Error, Warning, Info or None. New projects start with GAE001, GAE003 and
   GAE004 as Error and the others as Warning.
 - **Footer**: Cancel (or Esc) drops the changes; Save writes them to the project.
-
-Differs from Figma: "Show inline hints in the editor" is stored but has no effect yet.
 
 ## Related
 

@@ -17,6 +17,7 @@ assets from the bottom panel.
 - **Title bar**: the menus, the breadcrumb (project / scene; click it for the Scene Switcher), **Debug** (opens the
   Debugger, Ctrl+Shift+D) and **Build** (Build ROM, Ctrl+B).
 - **Tools**: Select (V), Move (M), Paint tiles (B), Fill, Erase, and the grid button (G) that shows or hides the grid.
+  Select and Move pick and drag actors; Paint tiles, Fill and Erase edit the scene's map in the scene view.
 - **Layer toggles**: BG0, BG1, BG2, BG3 and OBJ show or hide each layer in the scene view. BG3 starts hidden.
 - **Play, Pause, Step**: Play (F5) runs the game in Play Mode.
 - **Video mode chip** ("GBA · Mode 0 · 240×160"): opens Video Mode. **Undo / Redo** buttons on the right.
@@ -28,6 +29,11 @@ assets from the bottom panel.
   the Script Editor.
 - **Scene view**: the GBA screen, 240×160, drawn the way the game draws it.
   - Click an actor to select it, drag to move it (it snaps to the grid when snapping is on). Arrow keys nudge it.
+  - With Paint tiles, click or drag to paint map cells; with Erase, to empty them; with Fill, click to fill the
+    connected cells that match the clicked one. The brush is the tile (or stamp) chosen in the Tilemap Editor when it
+    has this map open, otherwise the first named tile of the tileset. The painted layer is the layer selected in the
+    Hierarchy, otherwise the ground (collision) layer. Each stroke or fill is one undo step, and the selection stays
+    as it was.
   - Right click an actor for the Actor Context Menu.
   - Pan with the middle mouse button, Space + drag, or the mouse wheel. Ctrl + wheel zooms from 100% to 800%.
   - Chips at the bottom: scene name and size (opens Scene Settings), cursor position, Grid (opens Grid & Snap), zoom
@@ -40,6 +46,7 @@ assets from the bottom panel.
   - Scene: number of actors and a Scene Settings… button. Camera: dead zone and clamp to map. Layer: parallax and
     Open in Tilemap Editor.
   - GBA Budget: VRAM BG, VRAM OBJ and OAM meters with "all good" or "over budget". Click it for Budget Details.
+    It is hidden when Preferences › Editor › Show GBA budget in Inspector is off.
   - Every change can be undone.
 - **Bottom panel**: Assets, Console (with a message count), Animation and Database tabs. Drag the edge to resize.
   - Assets: categories with counts (Sprites, Tilesets, Maps, Fonts, Audio, Scripts, Data) and cards with the real
@@ -48,9 +55,6 @@ assets from the bottom panel.
   - Database opens the Database page.
 - **Status bar**: Ready, last build (click for the Build Report), ROM size, speed, and emulator (click for
   Preferences).
-
-Differs from Figma: the Paint tiles, Fill and Erase tools only change the highlighted tool; clicking in the scene view
-always selects and moves actors. Paint tiles in the Tilemap Editor.
 
 ## Related
 

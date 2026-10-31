@@ -38,7 +38,8 @@ a preview, and see how many of the GBA sound channels are in use.
 - **Audio ROM and Mixer CPU** (bottom right, also in the status bar): the ROM space of all audio and the share of the
   CPU the music mixer needs.
 
-The Pause and Step buttons in the toolbar do nothing on this page; they act only on a running game in Play Mode.
+The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
+moves it one frame (F10). They are greyed out while no game runs.
 
 ## Related
 

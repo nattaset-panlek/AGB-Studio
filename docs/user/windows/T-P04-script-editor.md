@@ -19,8 +19,9 @@ or press Open externally to use VS Code or Rider as set in Preferences.
 ## What is on it
 
 - **Toolbar**: Find (Ctrl+F), the Code view button, and Debug, which opens the Debugger. Play (F5) runs the game;
-  Pause and Step have no action on this page. Undo and Redo are on the right.
-- **Analyzer: GBA rules on**: a chip that opens Project Settings. The Analyzer rules themselves are on its Scripting tab.
+  Pause pauses and resumes a running game and Step moves it one frame (F10); both are greyed out while no game runs.
+  Undo and Redo are on the right.
+- **Analyzer: GBA rules on**: a chip that opens Project Settings on its Scripting tab, where the Analyzer rules are.
 - **Open externally**: opens the current script in the external editor set in Preferences, at the caret line. If that
   editor is not found, a message tells you to set it in Preferences › Paths.
 - **C# → C++ → devkitARM**: a chip that opens the Build Report.

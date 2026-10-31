@@ -14,8 +14,9 @@ it to plan the levels and the order of the story.
 ## What is on it
 
 - **Toolbar**: Select, Hand (drag to move the view) and Link (drag from one card to another to link them) tools, and
-  New Scene. Play (F5) runs the game; Pause and Step have no action on this page. The "5 scenes · 6 links" chip fits
-  every card into view. Undo and Redo are on the right.
+  New Scene. Play (F5) runs the game; Pause pauses and resumes a running game and Step moves it one frame (F10); both
+  are greyed out while no game runs. The "5 scenes · 6 links" chip fits every card into view. Undo and Redo are on the
+  right.
 - **Scenes**: every scene with its size in tiles, or "menu" / "boss". Click to select, double-click to open it in the
   Scene Editor. The + button opens New Scene.
 - **Links from (scene)**: the links of the selected scene, such as "Goal Flag → Forest_02", with their kind: on touch

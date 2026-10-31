@@ -16,12 +16,11 @@ Click the scene name in the title bar breadcrumb to jump quickly to another scen
 - **Find scene…**: type part of a name to filter the list. The search box has the keyboard when the popover opens.
 - **Scene list**: every scene of the project in story order. It starts at the start scene, then follows the links
   between scenes and the "load scene" items of menu scenes; scenes that nothing leads to come last, by name.
-- **Scene row**: a small preview drawn the way the game draws it, the scene name, and its size in tiles (for example
-  "30×20"), or "menu" for a menu scene. The scene that is open now is highlighted.
+- **Scene row**: a small preview drawn the way the game draws it, the scene name, and a tag: "menu" for a menu scene,
+  "boss" for a scene with an enemy that has Health (for example the Slime King in Summit), otherwise its size in tiles
+  (for example "30×20"). The World Map uses the same tags. The scene that is open now is highlighted.
 - **Click a row**: opens that scene in the Scene Editor and closes the popover.
 - **New Scene…**: closes the popover and opens the New Scene dialog.
-
-Differs from Figma: Figma shows a "boss" tag on one row; AGB Studio only shows the size in tiles or "menu".
 
 ## Related
 

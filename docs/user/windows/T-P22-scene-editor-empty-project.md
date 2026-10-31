@@ -15,7 +15,8 @@ dropping in images, adding a player, painting tiles or choosing a template.
 ## What is on it
 
 The page looks like the Scene Editor, with the same title bar, toolbar and bottom panel tabs. Each empty panel says
-what to do. In the toolbar, Play (F5) and the video mode chip work; Pause and Step have nothing to act on yet.
+what to do. In the toolbar, Play (F5) and the video mode chip work; Pause and Step act on a running game (Pause
+pauses and resumes it, Step moves it one frame, F10) and are greyed out while no game runs.
 
 - **Hierarchy**: the scene and Main Camera only, with the hint "Nothing else here yet. Press + or drag a sprite from
   Assets into the scene." The + opens Add to Scene.

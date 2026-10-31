@@ -25,11 +25,9 @@ Press Ctrl+K to search for a command, file, scene or asset and jump straight to 
   bottom show these keys.
 - **Opening a file**: each file opens in its own editor: sprites in the Sprite Editor, maps and tilesets in the Tilemap
   Editor, scripts in the Script Editor, fonts in the Font Manager, data tables in the Database, dialogue in the Dialogue
-  Editor, logic graphs in the Logic Graph, and sounds and music in Audio. Other files, scenes included, bring up the
-  Scene Editor.
-
-Differs from Figma: the caption says you can jump to a scene; picking a `.scene` file shows the Scene Editor but keeps
-the scene that is open. Use the Scene Switcher to change scene.
+  Editor, logic graphs in the Logic Graph, and sounds and music in Audio. A `.scene` file opens the Scene Editor on that
+  scene. Other files bring up the Scene Editor. When Preferences › Paths sets Tiled or an image editor, `.tmx` maps,
+  `.aseprite` files and background images open in that program instead.
 
 ## Related
 

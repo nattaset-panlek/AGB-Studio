@@ -18,15 +18,14 @@ Choose an asset for a field in the Inspector (for example the Sheet of a sprite)
   opened from Add to Scene › Prefab…. It has a close button.
 - **Search assets…**: type part of a file name to filter the cards. The search box has the keyboard when the popover
   opens.
-- **Type tabs**: Sprites, Tilesets and Fonts. Click a tab to list that type. The tabs are hidden when choosing a prefab.
+- **Type tabs**: Sprites, Tilesets and Fonts. The picker opens on the tab of the field that opened it (Sprites from
+  the Inspector's Sheet, Tilesets from the Tilemap Editor's Tileset dropdown). Click a tab to list that type. The tabs
+  are hidden when choosing a prefab.
 - **Asset cards**: each card shows the real pixels, the file name and a short note such as "16×16 · 8f" (size and
   frame count). The sprite the selected actor uses now is highlighted.
 - **Click a card**: picks that asset for the field that opened the picker and closes the popover.
 - **Prefab mode**: lists the project's saved prefabs. Picking one adds a copy of it to the scene at the spawn point
   (this can be undone).
-
-Differs from Figma: from the Tilemap Editor's Tileset dropdown the picker opens on the Sprites tab, not on Tilesets;
-click Tilesets to switch.
 
 ## Related
 

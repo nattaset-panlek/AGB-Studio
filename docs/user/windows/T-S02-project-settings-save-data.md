@@ -32,8 +32,9 @@ saved and how big they are.
 - **Code sample**: shows how a script writes and reads a slot.
 - **Footer**: Cancel (or Esc) drops the changes; Save writes them to the project.
 
-Differs from Figma: Size is always worked out from the type, so every `int` shows 4 B; Figma shows the `int` fields
-`lives` and `coins` as 1 B and 2 B.
+Differs from Figma: Figma gives `lives` and `coins` the type `int` with sizes 1 B and 2 B. In AGB Studio the size
+always follows the type, so an `int` is always 4 B; the sample project gets the Figma sizes by giving `lives` the type
+`byte` and `coins` the type `short`.
 
 ## Related
 

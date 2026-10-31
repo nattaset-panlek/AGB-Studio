@@ -11,7 +11,8 @@ edges for you, and see how much video memory (VRAM) each layer uses.
 
 - The map's document tab, for example `Forest_01.map` (#16)
 - Scene › Background Layers…
-- Create › Tileset / Tilemap (opens the map of the current scene; it does not make a new map)
+- Create › Tileset / Tilemap (makes a new 30 x 20 map, `Map_01.map` or the next free number, on the project's first
+  tileset, and opens it; a project with no tileset also gets a blank one, `tiles.png`)
 - Also: the layer row in the Scene Editor Hierarchy and the Inspector's open-layer button
 
 ## What is on it

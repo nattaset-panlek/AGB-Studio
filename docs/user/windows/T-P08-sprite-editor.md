@@ -25,8 +25,11 @@ animations are made on the timeline at the bottom.
 - **Play, video mode chip, undo / redo**: as on the other editor pages.
 - **Sprites panel (left)**: search and list every sprite with its size and frame count. Click to open one; **+** opens
   New Sprite.
-- **Import**: drop images on the drop zone or click it to pick a PNG. Options: **Auto-reduce to 16 colours**, **Split
-  sheet into frames** (the current frame size) and **Share palette with** the current OBJ palette.
+- **Import**: drop PNG or Aseprite files on the drop zone ("Drop PNG / Aseprite here"), or click it to pick one. The
+  files open in Import Asset with these options already set on PNG files: **Auto-reduce to 16 colours**, **Split
+  sheet into frames** (the current frame size) and **Share palette with** the current OBJ palette. Aseprite files
+  keep their own frame size and tags. After Import, the first new PNG sprite opens here; a sprite that shares the
+  palette joins the current OBJ palette.
 - **Canvas**: the current frame on a checkerboard, with chips for the animation and frame, the tile grid, the pixel
   and colour under the pointer, Mirror X and zoom. Ctrl + mouse wheel zooms; click the zoom chip to fit again.
 - **Previews**: the frame at 1x, 2x and 4x.
@@ -41,8 +44,6 @@ animations are made on the timeline at the bottom.
   (read-only: the tiles and bytes one frame uses).
 - **Status bar**: the sprite's size, frame count and colour depth; VRAM used by sprites out of 32 KB; "Saved" or
   "Unsaved changes".
-
-Differs from Figma: the drop zone says "Drop PNG / Aseprite here", but only PNG files are imported here.
 
 ## Related
 

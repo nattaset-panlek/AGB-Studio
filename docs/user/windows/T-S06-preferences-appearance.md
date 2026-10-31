@@ -18,13 +18,12 @@ display options.
 - **Accent colour**: five swatches (blue, violet, green, orange, pink) for buttons, selections and highlights.
 - **UI scale**: the size of the whole interface, from 75% to 200%.
 - **Code font**: the size of the code text in pixels, 8 to 32.
-- **Reduce motion**: meant to turn down animations. It is saved, but nothing in AGB Studio reads it yet.
-- **Show pixel grid at 400% zoom and above**: meant to outline each pixel when you zoom in far. It is saved, but no
-  window reads it yet.
-- **Footer**: Cancel (or Esc) drops the changes. Save applies the theme, accent, UI scale and code font size at once
-  and keeps them for next time. Choosing a theme or accent does not preview it until you press Save.
-
-Differs from Figma: Reduce motion and Show pixel grid are stored but have no effect yet.
+- **Reduce motion**: previews that would play by themselves stay still: the Palette Effect preview does not start
+  playing when it opens, and the Logic Graph's Preview stays on its first frame.
+- **Show pixel grid at 400% zoom and above**: at 400% zoom and above, lines are drawn between the pixels in the Scene
+  Editor's scene view, the Tilemap Editor and the Sprite Editor. Turn it off to hide them.
+- **Footer**: Cancel (or Esc) drops the changes. Save applies the settings at once and keeps them for next time.
+  Choosing a theme or accent does not preview it until you press Save.
 
 ## Related
 

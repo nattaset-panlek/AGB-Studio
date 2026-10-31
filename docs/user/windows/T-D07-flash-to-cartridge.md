@@ -16,7 +16,10 @@ Writes your game to a real cartridge through a USB cartridge writer, or copies i
 - **Device**: the devices found on this PC: a GBxCart RW on a USB port, and removable drives shown as flash cart SD
   cards (named EverDrive GBA, EZ-Flash or Flash cart, with the drive letter). Pick one from the list.
 - **Cartridge info**: what the chosen device reports, for example "SD card detected · 12.3 GB free · FAT32" with
-  "Writes the .gba to the card root", or for a GBxCart RW "Cartridge detected" with the game now on the cartridge. With
+  "Writes the .gba to the card root", or for a GBxCart RW "Cartridge detected · 32 MB flash · SRAM 32 KB" with the
+  game now on the cartridge below it ("Current game: …"). The flash size is measured on the cartridge; the save part
+  is the save type of your project (Project Settings › Save data) and is left out when that is None. If the flash size
+  cannot be measured, the line shows the cartridge's game code instead, for example "Cartridge detected · SKYH". With
   no device it says "No device found · Connect a GBxCart RW or insert a flash cart's SD card".
 - **Back up the save file first** (on by default): copies the save from the card to the project's
   `build/save-backups` folder, named with the date and time.
@@ -32,9 +35,6 @@ Writes your game to a real cartridge through a USB cartridge writer, or copies i
 Differs from Figma: Figma shows writing through a GBxCart RW over USB; in the code a GBxCart RW can be detected and
 its cartridge read, but writing (and save backup) through it is refused with "verified on hardware later". Only flash
 cart SD cards can be written.
-
-Differs from Figma: Figma's cartridge line shows flash and save sizes ("32 MB flash · SRAM 32 KB"); the code shows the
-game code from the cartridge header.
 
 ## Related
 

@@ -15,9 +15,12 @@ an external editor (VS Code, Rider, Visual Studio) whose path is set on the Path
 
 - **Autosave**: off, or save every 1, 2, 5 or 10 minutes.
 - **Undo history**: how many steps Undo keeps, 1 to 10000.
-- **Default snap**: 8, 16 or 32 px. Saved, but not used by the Scene Editor yet.
+- **Default snap**: 8, 16 or 32 px: the grid size the Scene Editor uses, with snapping on, when a project opens.
 - **Open last project on start**: opens the project you had open last time instead of the Launcher.
-- **Show collision overlay in Scene** and **Show GBA budget in Inspector**: saved, but not used by any window yet.
+- **Show collision overlay in Scene**: when it is off, the Scene Editor does not draw tile collision, and Grid & Snap ›
+  Tile collision is greyed out with the tip "Turned off in Preferences › Editor".
+- **Show GBA budget in Inspector**: shows or hides the GBA Budget meters at the bottom of the Scene Editor's
+  Inspector.
 - **Script editor (Built-in / External)**: where scripts are edited.
 - **Editor**: Visual Studio Code, JetBrains Rider, Visual Studio or Custom….
 - **Executable**: read only. Shows the program file and where it came from: "set in Paths", "detected" (found where
@@ -27,14 +30,13 @@ an external editor (VS Code, Rider, Visual Studio) whose path is set on the Path
 - **Generate .csproj for IntelliSense**: writes a project file so the external editor can offer completions.
 - **Hot reload when an external save is detected**: when you save a script in the external editor, the change is
   loaded again (if hot reload is on in Project Settings · Scripting).
-- **Built-in code editor**: Font (JetBrains Mono), Tab size (1 to 16) and Theme (Studio Dark or Studio Light). Font and
-  Theme are saved but the Script Editor does not change with them yet.
+- **Built-in code editor**: Font (JetBrains Mono, built into AGB Studio), Tab size (1 to 16) and Theme (Studio Dark or
+  Studio Light) of the Script Editor's code. Theme changes only the code area; the rest of AGB Studio keeps its own
+  theme.
 - **Format on save**, **Autocomplete as you type**, **Underline analyzer warnings**: options for the built-in Script
   Editor.
-- **Footer**: Cancel (or Esc) drops the changes; Save keeps them and applies autosave and undo history at once.
-
-Differs from Figma: Default snap, Show collision overlay in Scene, Show GBA budget in Inspector, and the built-in
-editor Font and Theme are stored but have no effect yet.
+- **Footer**: Cancel (or Esc) drops the changes; Save keeps them and applies them at once. Default snap is used the
+  next time a project opens.
 
 ## Related
 
