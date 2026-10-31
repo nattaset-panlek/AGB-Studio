@@ -192,7 +192,7 @@ public sealed class PaletteManagerPage : DockPanel
 
         foreach (var (box, option) in new[] { (_merge, nameof(PaletteBank.MergeNear)), (_sort, nameof(PaletteBank.SortByHue)), (_lock, nameof(PaletteBank.LockTransparent)) })
             box.IsCheckedChanged += (_, _) => { if (!_updating && Bank != null) _lib?.SetOption(Bank, option, box.IsChecked == true); };
-        _import.Click += async (_, _) => { if (await PickImportFile() is { } path) Import(path); };
+        _import.Click += async (_, _) => { if (await PickImportFile() is { } path) await ImportThroughDialogAsync(path); };
         _export.Click += async (_, _) => { if (Bank != null && await PickExportFile(GameProjectName(Bank) + ".pal") is { } path) Export(path); };
         var buttons = UI.Row(8, _import, _export);
         var tools = PageParts.Section(new SectionHeader { Title = "Tools", Glyph = "spark", Name = "ToolsHeader" }, UI.Column(6, _merge, _sort, _lock, buttons));
@@ -345,6 +345,18 @@ public sealed class PaletteManagerPage : DockPanel
         if (_lib?.AddBank(Bank?.Kind ?? BankKind.Obj) is not { } b) return null;
         SelectBank(b, 0);
         return b;
+    }
+
+    /// <summary>
+    /// Import .pal / .gpl (T-C29): the picked file goes through Import Asset (T-D04), which copies it into
+    /// assets/palettes; its colours then go into the selected bank (one undo step).
+    /// </summary>
+    public async Task<bool> ImportThroughDialogAsync(string path)
+    {
+        var written = await _s.Windows.Open("T-D04", new AgbStudio.Editor.Windows.Import.ImportAssetDialog.ImportRequest([path]), _import, source: "PaletteImport") as IReadOnlyList<string>;
+        if (written?.FirstOrDefault(f => System.IO.Path.GetExtension(f).ToLowerInvariant() is ".pal" or ".gpl") is not { } copied) return false;
+        Import(copied);
+        return true;
     }
 
     public void Import(string path)

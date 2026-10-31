@@ -32,13 +32,17 @@ public sealed class ImportAssetDialog : FigmaDialog
     readonly List<ImportItem> _items = [];
 
     public IReadOnlyList<ImportItem> Items => _items;
+    readonly Action<ImportItem>? _adjust;
     public ImportItem? Selected { get; private set; }
 
-    public ImportAssetDialog(WindowContext ctx) : this(ctx.Services, ctx.Args as IEnumerable<string>) { }
+    public ImportAssetDialog(WindowContext ctx) : this(ctx.Services, ctx.Args switch { ImportRequest r => r.Files, IEnumerable<string> l => l, _ => null }, (ctx.Args as ImportRequest)?.Adjust) { }
 
-    public ImportAssetDialog(EditorServices s, IEnumerable<string>? files = null)
+    /// <param name="adjust">Sets the options of each file as the window that opened Import Asset chose them (the Sprite
+    /// Editor drop zone: reduce colours, frame size, shared palette).</param>
+    public ImportAssetDialog(EditorServices s, IEnumerable<string>? files = null, Action<ImportItem>? adjust = null)
     {
         _s = s;
+        _adjust = adjust;
         Name = "ImportAssetDialog";
         var drop = new Border
         {
@@ -84,11 +88,17 @@ public sealed class ImportAssetDialog : FigmaDialog
         foreach (var f in files)
         {
             if (_items.Any(i => string.Equals(i.Source, f, StringComparison.OrdinalIgnoreCase))) continue;
-            _items.Add(AssetImporter.Inspect(f, _s.Project.Current));
+            var item = AssetImporter.Inspect(f, _s.Project.Current);
+            _adjust?.Invoke(item);
+            _items.Add(item);
         }
         Selected ??= _items.FirstOrDefault();
         Refresh();
     }
+
+    /// <summary>Import Asset opened by another window (Sprite Editor › Drop zone, Palette Manager › Import .pal / .gpl):
+    /// the files, and how that window sets their options. Import completes with the written files.</summary>
+    public sealed record ImportRequest(IReadOnlyList<string> Files, Action<ImportItem>? Adjust = null);
 
     public void Select(ImportItem item)
     {
