@@ -35,6 +35,9 @@ public:
     bool climbing = false;      // set by scripts while on a ladder
 
     void jump() { vy = -jumpForce; onGround = false; }
+    void setVelocity(fixed x, fixed y) { vx = x; vy = y; }
+    void addForce(fixed x, fixed y) { vx += x; vy += y; }
+    fixed2 velocity() const { return {vx, vy}; }
 };
 
 // 8-way movement with the D-pad (or set vx / vy from a script when playerControlled is false).

@@ -312,7 +312,7 @@ public sealed class GameBuilder
         _cache.Store("tileset:" + name, hash);
     }
 
-    readonly Dictionary<string, (int W, int H)> _images = new(StringComparer.Ordinal);
+    readonly Dictionary<string, (int W, int H, int Tiles, int Banks)> _images = new(StringComparer.Ordinal);
 
     // Image layers (sky, hills, title art): 8x8 tiles and screen entries, wrapped as a tileset without metatiles.
     void ConvertImage(string file)
@@ -322,7 +322,7 @@ public sealed class GameBuilder
         var outFile = Path.Combine(GenDir, "assets", $"image_{id}.cpp");
         var img = ColorImage.Load(file);
         var (t, cells, w, h) = TilesetConverter.ConvertImage(name, img);
-        _images[name] = (w, h);
+        _images[name] = (w, h, t.Tiles.Count, t.Palette.Banks.Count);
         var tiles = t.Tiles.ToBytes();
         var compress = _p.Settings.Build.CompressGraphics;
         var stored = compress ? Lz77.Compress(tiles) : tiles;
@@ -533,10 +533,61 @@ public sealed class GameBuilder
         var scenes = _p.SceneFiles().Select(f => (File: f, Scene: GameProject.Load<SceneFile>(f))).ToList();
         var names = scenes.Select(s => s.Scene.Name.Length > 0 ? s.Scene.Name : GameProject.AssetName(s.File)).ToList();
         foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
+        foreach (var (file, scene) in scenes) CheckHardwareLimits(file, scene);
         var splash = GenerateSplash();
         var ui = GenerateUiKit(names, scenes.Any(s => s.Scene.Menu != null));
         GenerateGameDef(names, splash, ui);
         return $"{scenes.Count} scenes";
+    }
+
+    public const int BgVramBytes = 64 * 1024;
+    public const int SceneBgBanks = 14;  // banks 14 and 15 hold the menus and the text
+
+    /// <summary>G-HW.01 / G-HW.03: what a scene's map puts in background VRAM and palette RAM at once, against the
+    /// hardware. Over the limit the build fails, naming the scene, the numbers and what to change.</summary>
+    void CheckHardwareLimits(string file, SceneFile scene)
+    {
+        if (scene.Map.Length == 0) return;
+        var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
+        if (!File.Exists(mapPath)) return;
+        var map = GameProject.Load<MapFile>(mapPath);
+        var tiles = 0L;
+        var banks = 0;
+        var tilesets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var l in map.Layers)
+        {
+            switch (l.Type)
+            {
+                case LayerType.CollisionOnly:
+                    continue;
+                case LayerType.Image when _images.TryGetValue(l.Image, out var img):
+                    tiles += img.Tiles * 32L;
+                    banks += img.Banks;
+                    tiles += 4096;  // screen blocks
+                    continue;
+                case LayerType.Affine when _tilesets.TryGetValue(map.Tileset, out var ats):
+                    var side = 16;
+                    while (side < Math.Max(map.Width, map.Height) * 2 && side < 128) side *= 2;
+                    tiles += 16 * 1024 + side * side;  // a whole character block for 8bpp tiles, then the map
+                    banks += ats.Palette.Banks.Count;
+                    continue;
+                default:
+                    if (_tilesets.TryGetValue(map.Tileset, out var ts) && tilesets.Add(map.Tileset))
+                    {
+                        tiles += ts.Tiles.Count * 32L;
+                        banks += ts.Palette.Banks.Count;
+                    }
+                    tiles += 4096;
+                    continue;
+            }
+        }
+        tiles += 2048 + 32;  // the text layer's map and blank tile
+        if (tiles > BgVramBytes)
+            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {tiles / 1024} KB of background VRAM; the GBA has 64 KB. " +
+                "Use fewer layers, a smaller tileset, or image layers with more repeated tiles."));
+        if (banks > SceneBgBanks)
+            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {banks} background palettes; {SceneBgBanks} are free " +
+                "(of 16, two hold the menus and text). Reduce the colours of its tileset or images (Import Asset \"Reduce to 16\")."));
     }
 
     // Project Settings · General · Boot splash: the AGB Studio splash image (Content/SplashArt).

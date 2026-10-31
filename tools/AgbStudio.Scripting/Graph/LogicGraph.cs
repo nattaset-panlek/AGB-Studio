@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace AgbStudio.Scripting.Graph;
 
 /// <summary>Pin kinds of the Logic Graph (pin colours in Figma).</summary>
-public enum PinKind { Exec, Bool, Fixed, Actor, Text }
+public enum PinKind { Exec, Bool, Fixed, Actor, Text, Vector }
 
 public enum NodeRole
 {
@@ -20,10 +20,11 @@ public enum NodeRole
 
 public sealed record PinDef(string Name, PinKind Kind, bool Output);
 
-/// <summary>A property shown on the node; Number props keep the text the user typed ("-3.50").</summary>
-public sealed record PropDef(string Name, PropKind Kind, string Default);
+/// <summary>A property shown on the node; Number props keep the text the user typed ("-3.50"). Choice props list their
+/// values in <paramref name="Options"/> (Set Velocity Y "Mode": Set / Add / Clamp).</summary>
+public sealed record PropDef(string Name, PropKind Kind, string Default, IReadOnlyList<string>? Options = null);
 
-public enum PropKind { Number, Text, Key, Bool, Compare }
+public enum PropKind { Number, Text, Key, Bool, Compare, Choice }
 
 /// <summary>One node type of the palette (category as in the Figma Logic Graph sidebar).</summary>
 public sealed record NodeDef(string Type, string Category, string Title, NodeRole Role, IReadOnlyList<PinDef> Pins, IReadOnlyList<PropDef> Props)
@@ -192,7 +193,9 @@ public static class NodeCatalog
         new("OnStart", "Events", "On Start", NodeRole.Event, [ExecOut], []),
         new("OnUpdate", "Events", "On Update", NodeRole.Event, [ExecOut], []),
         new("OnLateUpdate", "Events", "On Late Update", NodeRole.Event, [ExecOut], []),
-        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], []),
+        // A Tag on On Touch runs the chain only for actors with that tag (Figma "Tag  Coin").
+        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], [Txt("tag", "")]),
+        new("OnButton", "Events", "On Button", NodeRole.Event, [ExecOut], [new("button", PropKind.Key, "A")]),
         new("OnDestroy", "Events", "On Destroy", NodeRole.Event, [ExecOut], []),
         // Input
         new("ButtonPressed", "Input", "Button Pressed", NodeRole.Value, [Out("value", PinKind.Bool)], [new("button", PropKind.Key, "A")]),
@@ -202,11 +205,18 @@ public static class NodeCatalog
         new("AxisY", "Input", "Axis Y", NodeRole.Value, [Out("value", PinKind.Fixed)], []),
         new("AnyKey", "Input", "Any Key", NodeRole.Value, [Out("value", PinKind.Bool)], []),
         // Physics (PlatformerBody of the actor)
-        new("IsOnGround", "Physics", "Is On Ground", NodeRole.Value, [Out("value", PinKind.Bool)], []),
+        // Physics nodes act on the actor of the graph unless an actor is wired to Target (Figma "Target  Self").
+        new("IsOnGround", "Physics", "Is On Ground", NodeRole.Value, [In("target", PinKind.Actor), Out("value", PinKind.Bool)], []),
         new("VelocityX", "Physics", "Velocity X", NodeRole.Value, [Out("value", PinKind.Fixed)], []),
         new("VelocityY", "Physics", "Velocity Y", NodeRole.Value, [Out("value", PinKind.Fixed)], []),
         new("SetVelocityX", "Physics", "Set Velocity X", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [Num("value", "0")]),
-        new("SetVelocityY", "Physics", "Set Velocity Y", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [Num("value", "0")]),
+        new("SetVelocityY", "Physics", "Set Velocity Y", NodeRole.Action, [ExecIn, ExecOut, In("target", PinKind.Actor), In("value", PinKind.Fixed)],
+            [Num("value", "0"), new("mode", PropKind.Choice, "Set", ["Set", "Add", "Clamp"])]),
+        new("SetVelocity", "Physics", "Set Velocity", NodeRole.Action, [ExecIn, ExecOut, In("target", PinKind.Actor), In("x", PinKind.Fixed), In("y", PinKind.Fixed)],
+            [Num("x", "0"), Num("y", "0")]),
+        new("AddForce", "Physics", "Add Force", NodeRole.Action, [ExecIn, ExecOut, In("target", PinKind.Actor), In("x", PinKind.Fixed), In("y", PinKind.Fixed)],
+            [Num("x", "0"), Num("y", "0")]),
+        new("GetVelocity", "Physics", "Get Velocity", NodeRole.Value, [In("target", PinKind.Actor), Out("value", PinKind.Vector)], []),
         new("Jump", "Physics", "Jump", NodeRole.Action, [ExecIn, ExecOut], []),
         // Flow
         new("Branch", "Flow", "Branch", NodeRole.Flow, [ExecIn, In("condition", PinKind.Bool), Out("true", PinKind.Exec), Out("false", PinKind.Exec)], []),
@@ -217,6 +227,8 @@ public static class NodeCatalog
         new("Add", "Math", "Add", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Fixed)], [Num("a", "0"), Num("b", "0")]),
         new("Subtract", "Math", "Subtract", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Fixed)], [Num("a", "0"), Num("b", "0")]),
         new("Multiply", "Math", "Multiply", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Fixed)], [Num("a", "0"), Num("b", "1")]),
+        new("VectorFromVelocity", "Math", "Vector from Velocity", NodeRole.Value, [In("vx", PinKind.Fixed), In("vy", PinKind.Fixed), Out("value", PinKind.Vector)],
+            [Num("vx", "0"), Num("vy", "0")]),
         new("Compare", "Math", "Compare", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Bool)], [Num("a", "0"), Num("b", "0"), new("op", PropKind.Compare, ">")]),
         // Actor
         new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [Txt("tag", "Player")]),

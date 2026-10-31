@@ -1,0 +1,478 @@
+[
+ {
+  "type": "Page",
+  "name": "Scene Editor",
+  "note": "หน้าหลักของ editor: จัดฉาก วาง actor ดู/แก้ค่าใน Inspector และเปิด asset จากแถบล่าง (สร้างใหม่จาก component ทั้งหมด)",
+  "from": "default workspace",
+  "file": "06-pages-a.js"
+ },
+ {
+  "type": "Page",
+  "name": "Play Mode",
+  "note": "กด Play แล้วเกมรันใน emulator (mGBA core) ในแท็บ Game: เห็น hitbox, ความเร็ว, FPS และค่าตัวแปรสดใน Inspector · Console แสดง log จากสคริปต์",
+  "from": "",
+  "file": "06-pages-a.js"
+ },
+ {
+  "type": "Page",
+  "name": "Sprite Editor",
+  "note": "วาด pixel art หรือนำเข้า PNG/Aseprite ระบบลดสีเหลือ 16 สีตาม palette ของ GBA เห็นเส้น tile 8×8 ทำ animation ที่ timeline ด้านล่าง",
+  "from": "",
+  "file": "06-pages-a.js"
+ },
+ {
+  "type": "Page",
+  "name": "Tilemap Editor",
+  "note": "ระบาย tile ลงฉากทีละเลเยอร์ (BG0–BG3) ตั้งค่าการชนที่ตัว tile ได้เลย auto-tile ต่อขอบให้อัตโนมัติ และเห็นการใช้ VRAM ของแต่ละเลเยอร์",
+  "from": "",
+  "file": "06-pages-a.js"
+ },
+ {
+  "type": "Page",
+  "name": "Script Editor",
+  "note": "เขียนสคริปต์เป็น C# (ชุดย่อยที่เหมาะกับ GBA) มี autocomplete และตัวตรวจ (Analyzer) ที่เตือนทันทีเมื่อใช้สิ่งที่ GBA ทำไม่ได้ เช่น float หรือการสร้าง object ระหว่างเกม พร้อมปุ่มแก้ให้อัตโนมัติ · แก้ในตัวนี้ หรือกด Open externally เพื่อเปิดใน VS Code / Rider ตามที่ตั้งไว้ใน Preferences ก็ได้",
+  "from": "",
+  "file": "07-pages-b.js"
+ },
+ {
+  "type": "Page",
+  "name": "Logic Graph",
+  "note": "เขียน logic แบบต่อกล่องไม่ต้องพิมพ์โค้ด กล่องแยกสีตามหมวด และแปลงเป็น C# ให้ดูข้าง ๆ ได้ตลอด (Graph ⇄ C#) เหมาะกับมือใหม่หรือ logic ง่าย ๆ",
+  "from": "",
+  "file": "07-pages-b.js"
+ },
+ {
+  "type": "Page",
+  "name": "World Map",
+  "note": "เห็นทุกฉากของเกมเป็นการ์ด ลากเส้นเชื่อมทางไปฉากถัดไปได้ (ประตู / trigger / จบด่าน) ใช้วางโครงด่านและลำดับเรื่อง",
+  "from": "",
+  "file": "07-pages-b.js"
+ },
+ {
+  "type": "Page",
+  "name": "Launcher",
+  "note": "หน้าแรกเมื่อเปิดโปรแกรม: เปิดโปรเจกต์ล่าสุด เริ่มโปรเจกต์ใหม่จาก template ตามแนวเกม และดูบทเรียน",
+  "from": "",
+  "file": "07-pages-b.js"
+ },
+ {
+  "type": "Page",
+  "name": "Palette Manager",
+  "note": "จัดการ palette ของ GBA (BG 16 ชุด + OBJ 16 ชุด ชุดละ 16 สี) ดูว่า sprite ไหนใช้ชุดไหน รวมสีที่ซ้ำ และตั้ง effect เช่น fade / cycle สีน้ำ",
+  "from": "",
+  "file": "08-pages-c.js"
+ },
+ {
+  "type": "Page",
+  "name": "Font Manager",
+  "note": "สร้างฟอนต์สำหรับ GBA จาก TTF / BDF / ภาพ sprite sheet รองรับภาษาไทยแบบ variable width วางสระบน-ล่างและวรรณยุกต์ซ้อนให้ถูกตำแหน่ง ตัดคำภาษาไทยอัตโนมัติ และพรีวิวในกล่องข้อความจริง",
+  "from": "",
+  "file": "08-pages-c.js"
+ },
+ {
+  "type": "Page",
+  "name": "Database",
+  "note": "เก็บข้อมูลเกมเป็นตาราง (ไอเทม ศัตรู ร้านค้า เควสต์ ข้อความ) แก้แบบ spreadsheet แล้วเรียกใช้ในสคริปต์แบบมี type เช่น Items.Get(ItemId.Potion) ข้อมูลถูกเก็บเป็น const ใน ROM ไม่กิน RAM",
+  "from": "",
+  "file": "08-pages-c.js"
+ },
+ {
+  "type": "Page",
+  "name": "Localization",
+  "note": "แปลข้อความทั้งเกม (ไทย / อังกฤษ / ภาษาอื่น) เห็นข้อความที่ยังไม่แปล และพรีวิวว่าข้อความยาวเกินกล่องบน GBA หรือไม่",
+  "from": "",
+  "file": "08-pages-c.js"
+ },
+ {
+  "type": "Page",
+  "name": "Audio",
+  "note": "จัดการเพลง (.mod / .xm ผ่าน Maxmod) และเสียงเอฟเฟกต์ ดู pattern แบบ tracker ฟังพรีวิว และดูว่าใช้ channel ของ GBA ไปเท่าไร",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Dialogue Editor",
+  "note": "เขียนบทสนทนาเป็นลำดับบรรทัด มีผู้พูด รูปหน้า ตัวเลือกแตกเส้นทาง และคำสั่ง (เช่น ไปฉากถัดไป / ตั้ง flag) พรีวิวในกล่องข้อความของ GBA ได้ทันที",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Debugger",
+  "note": "ส่องการทำงานของเกมขณะรัน: VRAM (tile ที่โหลดอยู่), OAM (sprite 128 ช่อง), palette, หน่วยความจำ, Profiler เวลาต่อเฟรม และ breakpoint ในสคริปต์",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Build Report",
+  "note": "สรุปผลการ build: ขนาด ROM แยกตามประเภท, asset ที่ใหญ่ที่สุด, การใช้หน่วยความจำ, คำเตือน และประวัติการ build",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Scripting API",
+  "note": "คู่มือ API สำหรับเขียนสคริปต์ C# ในตัว editor ค้นหาได้ มีตัวอย่างโค้ดคัดลอกได้ทันที",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Console panel",
+  "note": "แผงล่างของ Scene Editor เมื่อกดแท็บ Console: log จากสคริปต์และการ build กรองตามระดับได้ คลิกบรรทัดเพื่อไปที่โค้ด",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Page",
+  "name": "Animation panel",
+  "note": "แผงล่างเมื่อกดแท็บ Animation: เลือก animation ของ sprite ที่เลือกอยู่ ปรับความเร็วและลำดับเฟรมได้โดยไม่ต้องเปิด Sprite Editor",
+  "from": "",
+  "file": "09-pages-d.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Project",
+  "note": "เลือก template ตามแนวเกม ระบบจะใส่ตัวละคร ศัตรู ฉากตัวอย่าง HUD และสคริปต์พื้นฐานของแนวนั้นมาให้ แล้วตั้งชื่อเกมและข้อมูลบนหัวตลับ",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Scene",
+  "note": "สร้างฉากใหม่จากแบบสำเร็จหรือฉากว่าง",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Scene Settings",
+  "note": "ตั้งค่าของฉาก: ขนาด กล้อง ฉากหลัง เพลง และ event ตอนเข้า-ออกฉาก",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Import Asset",
+  "note": "ลากไฟล์มาวาง ระบบตรวจชนิดให้ (PNG, Aseprite, Tiled .tmx, WAV, MOD/XM, TTF) แล้วแปลงเป็นรูปแบบของ GBA ปรับตัวเลือกได้ทีละไฟล์",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Export ROM",
+  "note": "ส่งออกไฟล์ .gba สำหรับเล่นบน emulator หรือเครื่องจริง พร้อมข้อมูลหัวตลับ",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Build ROM",
+  "note": "หน้าต่างแสดงความคืบหน้าตอนกด Build ROM ทุกขั้นตอนเห็นได้ (C# → C++ → asset → คอมไพล์ → ลิงก์) ถ้ามี error คลิกเพื่อไปที่บรรทัดนั้น",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Flash to Cartridge",
+  "note": "เขียนเกมลงตลับจริงผ่านเครื่องเขียนตลับ USB หรือคัดลอกลง SD ของ flash cart",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings",
+  "note": "ตั้งค่าทั้งโปรเจกต์: ปุ่มควบคุม, ระบบ save, การ build, สคริปต์ และภาษา (ตัวอย่างนี้คือแท็บ Input)",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Preferences",
+  "note": "ตั้งค่าของตัว editor (ไม่ผูกกับโปรเจกต์): หน้าตา, path ของ devkitPro, emulator และปุ่มลัด (ตัวอย่างนี้คือแท็บ Emulator)",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Keyboard Shortcuts",
+  "note": "รวมปุ่มลัดทั้งหมด ค้นหาได้ และแก้ไขได้ใน Preferences › Shortcuts",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "About",
+  "note": "ข้อมูลเวอร์ชันและเครดิตของเครื่องมือที่ใช้",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Unsaved Changes",
+  "note": "ขึ้นเมื่อปิดโปรแกรมหรือเปิดโปรเจกต์อื่นขณะที่ยังมีไฟล์ไม่ได้บันทึก",
+  "from": "",
+  "file": "10-dialogs.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Scene Switcher",
+  "note": "กดชื่อฉากบน breadcrumb เพื่อสลับไปฉากอื่นได้เร็ว",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Video Mode",
+  "note": "เลือกโหมดภาพของ GBA สำหรับฉากนี้ แต่ละโหมดมีจำนวนเลเยอร์และความสามารถต่างกัน",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Grid & Snap",
+  "note": "ตั้งขนาดตาราง การ snap และสิ่งที่แสดงซ้อนบน viewport",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Asset Picker",
+  "note": "เลือก asset ให้ช่องใน Inspector (เช่น Sheet ของ sprite) มีค้นหาและกรองตามชนิด",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Component Picker",
+  "note": "เพิ่มความสามารถให้ actor (Add Component) แบ่งหมวด มีคำอธิบายสั้น ๆ และสร้างสคริปต์ C# ใหม่ได้จากตรงนี้",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Budget Details",
+  "note": "รายละเอียดการใช้ทรัพยากรของ GBA ทั้งหมด พร้อมคำแนะนำว่าลดตรงไหนได้",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Command Palette",
+  "note": "กด Ctrl+K เพื่อค้นหาคำสั่ง ไฟล์ ฉาก หรือ asset แล้วกระโดดไปได้ทันที",
+  "from": "",
+  "file": "11-popovers.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings · General",
+  "note": "แท็บ General ของ Project Settings: ชื่อเกม ข้อมูลบนหัวตลับ ฉากเริ่มต้น ฟอนต์และภาษาเริ่มต้น และ splash ตอนเปิดเกม",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings · Save data",
+  "note": "แท็บ Save data: เลือกชนิดหน่วยความจำ save บนตลับ จำนวนช่อง save และกำหนดว่าจะเก็บตัวแปรอะไร ขนาดเท่าไร",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings · Build",
+  "note": "แท็บ Build: ตั้งค่าการ build แยก Debug / Release ระดับ optimise การบีบอัดภาพ และสิ่งที่ทำหลัง build เสร็จ",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings · Scripting",
+  "note": "แท็บ Scripting: ภาษาสคริปต์ (C# ชุดย่อยสำหรับ GBA), hot reload และกฎของตัวตรวจโค้ด (Analyzer) ว่าข้อไหนเป็น Error หรือ Warning",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Project Settings · Localization",
+  "note": "แท็บ Localization: ภาษาต้นฉบับ ภาษาที่รองรับและความคืบหน้าการแปล การตัดคำภาษาไทย และฟอนต์ของแต่ละภาษา",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Preferences · Appearance",
+  "note": "แท็บ Appearance ของ Preferences: ธีม (มืด / สว่าง / ตามระบบ) สีหลัก ขนาด UI และตัวเลือกการแสดงผล",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Preferences · Editor",
+  "note": "แท็บ Editor: การบันทึกอัตโนมัติ ประวัติ undo ค่า snap และเลือกได้ว่าจะแก้สคริปต์ใน Script Editor ในตัว หรือเปิดด้วย editor ภายนอก (VS Code, Rider, Visual Studio) ที่ตั้ง path ไว้ในแท็บ Paths",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Preferences · Paths",
+  "note": "แท็บ Paths: ที่อยู่ของ devkitPro, โฟลเดอร์โปรเจกต์ และโปรแกรมภายนอก (script editor, Aseprite, Tiled) พร้อมสถานะว่าพบหรือไม่ และล้าง build cache",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Preferences · Shortcuts",
+  "note": "แท็บ Shortcuts: แก้ปุ่มลัดได้ทีละคำสั่ง เตือนเมื่อปุ่มชนกับคำสั่งอื่น และกลับเป็นค่าเริ่มต้นได้",
+  "from": "",
+  "file": "12-settings-tabs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Sprite",
+  "note": "สร้าง sprite ใหม่: ตั้งชื่อ ขนาดตามที่ GBA รองรับ จำนวนเฟรม และเลือกชุดสี (palette) ที่จะใช้ร่วม",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Script",
+  "note": "สร้างสคริปต์ C# ใหม่จากแม่แบบ ระบบใส่โครงที่ถูกต้องสำหรับ GBA มาให้ และติดเข้ากับ actor ได้ทันที",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Font",
+  "note": "สร้างฟอนต์ใหม่จากไฟล์ TTF / BDF หรือภาพ sprite sheet เลือกขนาด ความกว้างแบบตายตัวหรือแปรผัน และชุดตัวอักษร",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Add Characters",
+  "note": "วางข้อความจากเกม (บทพูด เมนู) ระบบหาตัวอักษรที่ฟอนต์ยังไม่มี แล้วสร้าง glyph ให้จากฟอนต์ต้นฉบับ",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Table",
+  "note": "สร้างตารางข้อมูลใหม่ (เช่น ศัตรู อาวุธ เควสต์) เริ่มจากว่าง จาก CSV หรือ copy โครงจากตารางเดิม",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Add Field",
+  "note": "เพิ่มคอลัมน์ให้ตาราง เลือกชนิดข้อมูล ค่าเริ่มต้น และดูว่าใช้หน่วยความจำต่อแถวเท่าไร",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Import CSV",
+  "note": "นำเข้าข้อมูลจาก CSV / Google Sheets: จับคู่คอลัมน์กับ field ตรวจชนิดข้อมูล และแจ้งแถวที่มีปัญหาก่อนนำเข้า",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Add Language",
+  "note": "เพิ่มภาษาใหม่ให้เกม เลือกภาษาต้นทางที่จะใช้แปล และฟอนต์ที่รองรับตัวอักษรของภาษานั้น",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "New Speaker",
+  "note": "เพิ่มตัวละครที่พูดในบทสนทนา: ชื่อ (ไทย/อังกฤษ) รูปหน้า สีป้ายชื่อ และเสียงตอนข้อความขึ้น",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Opening Project",
+  "note": "สถานะกำลังโหลด: เห็นทุกขั้นตอนตอนเปิดโปรเจกต์ (อ่านไฟล์ โหลด asset คอมไพล์สคริปต์) และยกเลิกได้",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Build ROM · Failed",
+  "note": "สถานะ build ไม่ผ่าน: บอกว่าล้มที่ขั้นไหน รายการ error ที่คลิกไปยังบรรทัดในโค้ดได้ และปุ่มไปที่ error แรก",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Dialog",
+  "name": "Import Asset · Errors",
+  "note": "สถานะนำเข้าไม่ผ่าน: บอกปัญหาของแต่ละไฟล์เป็นภาษาคน (สีเกิน 16 สี ไฟล์ชนิดที่ไม่รองรับ) พร้อมทางแก้ให้กดได้ทันที",
+  "from": "",
+  "file": "18-more-dialogs.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Add Node",
+  "note": "ค้นหาแล้วเพิ่มกล่อง logic ตรงตำแหน่งที่คลิก แสดงหมวดด้วยสี และบอกสั้น ๆ ว่ากล่องนั้นทำอะไร",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Link Settings",
+  "note": "ตั้งค่าเส้นทางระหว่างฉาก: ไปฉากไหน เกิดที่จุดไหน ใช้ transition แบบไหน และมีเงื่อนไขหรือไม่",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Palette Effect",
+  "note": "ตั้ง effect ของ palette เช่นหมุนสี (น้ำไหล ลาวา) เลือกช่วงสี ความเร็ว และดูพรีวิวทันที ไม่กินพลังเครื่องเพราะเปลี่ยนแค่ palette",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Find & Replace",
+  "note": "แถบค้นหาและแทนที่ในตัวแก้โค้ด เลือกได้ว่าจะค้นในไฟล์นี้หรือทั้งโปรเจกต์ รองรับตัวพิมพ์เล็กใหญ่ ทั้งคำ และ regex",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Record Shortcut",
+  "note": "กดปุ่มที่ต้องการเพื่อตั้งปุ่มลัดใหม่ ถ้าชนกับคำสั่งอื่นจะเตือนและให้เลือกว่าจะแทนที่หรือไม่",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Popover",
+  "name": "Tutorial Steps",
+  "note": "แผงบทเรียนที่ลอยข้าง editor ขณะทำตาม: บอกขั้นตอน มีภาพประกอบ ติ๊กเองอัตโนมัติเมื่อทำเสร็จ และย้อน/ถัดไปได้",
+  "from": "",
+  "file": "19-more-popovers.js"
+ },
+ {
+  "type": "Page",
+  "name": "Scene Editor · Empty project",
+  "note": "สถานะโปรเจกต์ว่าง (เพิ่งสร้างแบบไม่มี template): ทุกแผงบอกว่าทำอะไรต่อได้ เช่น ลากรูปมาวาง เพิ่มผู้เล่น ระบาย tile หรือเลือก template",
+  "from": "File › New Project (Empty)",
+  "file": "20-more-pages.js"
+ },
+ {
+  "type": "Page",
+  "name": "SFX Designer",
+  "note": "สร้างเสียงเอฟเฟกต์จาก channel ของเครื่อง GBA โดยตรง (Square / Wave / Noise) ปรับ duty, envelope, sweep แล้วฟังทันที ไม่กิน ROM เพราะเล่นจากค่ารีจิสเตอร์ หรือ bake เป็น .wav ก็ได้",
+  "from": "Audio › Sound effects + › New SFX",
+  "file": "20-more-pages.js"
+ },
+ {
+  "type": "Page",
+  "name": "Auto-tile Rules panel",
+  "note": "แผงล่างของ Tilemap Editor แท็บ Auto-tile rules: กฎ 3×3 ว่าเมื่อรอบ ๆ เป็น tile แบบไหน ให้ใช้ tile ไหน ระบบจะต่อขอบหญ้า มุม และปลายให้เองตอนระบาย",
+  "from": "Tilemap Editor › Auto-tile rules tab",
+  "file": "20-more-pages.js"
+ }
+]
