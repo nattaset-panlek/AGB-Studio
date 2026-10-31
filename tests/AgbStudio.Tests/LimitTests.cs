@@ -176,6 +176,9 @@ public sealed class LimitTests(EmulatorFixture emu)
         Assert.Equal(4096, SaveLayout.SlotCapacity(SaveType.Flash128K, 4));  // 16 KB a copy, capped
         Assert.Equal(0, SaveLayout.SlotCapacity(SaveType.Flash64K, 9));   // 3640 B a copy: less than a 4 KB sector
         Assert.Equal(0, SaveLayout.SlotCapacity(SaveType.None, 3));
+        // the options block is kept outside the slots: 8 B at the end of SRAM and EEPROM, the last sector on Flash
+        Assert.Equal([0, 8, 4096, 4096, 8], new[] { SaveType.None, SaveType.Sram32K, SaveType.Flash64K, SaveType.Flash128K, SaveType.Eeprom8K }.Select(SaveLayout.OptionsReserve));
+        Assert.Equal(8, SaveLayout.OptionsBytes);
 
         var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "limit_save"));
         p.Settings.Save.Type = SaveType.Eeprom8K;
@@ -192,7 +195,7 @@ public sealed class LimitTests(EmulatorFixture emu)
         p.SaveSettings();
         var b = new GameBuilder(p, new Toolchain());
         Assert.True(b.Build(new BuildOptions { GenerateOnly = true }).Success);
-        Assert.Equal((1416L, 4080L), (b.Assets.SaveBytes, b.Assets.SaveCapacity));
+        Assert.Equal((1416L, 4072L), (b.Assets.SaveBytes, b.Assets.SaveCapacity));
         // Flash 64 KB cannot hold 9 slots of whole sectors at all.
         p.Settings.Save.Type = SaveType.Flash64K;
         p.Settings.Save.Slots = 9;

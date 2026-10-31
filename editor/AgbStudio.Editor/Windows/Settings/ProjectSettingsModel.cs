@@ -139,6 +139,12 @@ public sealed partial class ProjectSettingsModel
         return (t is null ? 0 : keys.Count(k => t.Strings.TryGetValue(k, out var v) && v.Length > 0), keys.Count);
     }
 
+    /// <summary>Bytes the global options block takes on the save chip, outside the slots (agb::save::kOptionsBytes).</summary>
+    public const int OptionsBytes = AgbStudio.Build.Pipeline.SaveLayout.OptionsBytes;
+
+    /// <summary>Bytes the save chip holds in all: every slot, plus the options block when the game has a save chip.</summary>
+    public int TotalSaveBytes => BytesPerSlot * Math.Max(0, Draft.Save.Slots) + (SaveCapacity(Draft.Save.Type) > 0 ? OptionsBytes : 0);
+
     /// <summary>Bytes of one save slot: the fields of Save data.</summary>
     public int BytesPerSlot => Draft.Save.Fields.Where(f => f.Name.Trim().Length > 0).Sum(f => SafeSize(f.Type) ?? 0);
 
@@ -187,10 +193,10 @@ public sealed partial class ProjectSettingsModel
         }
         if (Draft.Save.Slots is < 1 or > 16) return "Slots must be 1 to 16.";
         var cap = SaveCapacity(Draft.Save.Type);
-        if (cap > 0 && BytesPerSlot * Draft.Save.Slots > cap)
+        if (cap > 0 && TotalSaveBytes > cap)
         {
             var chip = SaveTypeOptions[Math.Max(0, SaveTypes.ToList().IndexOf(Draft.Save.Type))].Split(" · ")[0];
-            return $"{Draft.Save.Slots} slots of {Kb(BytesPerSlot)} need {Kb(BytesPerSlot * Draft.Save.Slots)}, but {chip} holds {Kb(cap)}. Use fewer slots or fields, or a bigger save type.";
+            return $"{Draft.Save.Slots} slots of {Kb(BytesPerSlot)} and the {OptionsBytes} B options block need {Kb(TotalSaveBytes)}, but {chip} holds {Kb(cap)}. Use fewer slots or fields, or a bigger save type.";
         }
         if (Draft.Build.WarnRomMegabytes is < 1 or > 32) return "Warn ROM must be 1 to 32 MB.";
         if (Draft.Build.Output.Trim().Length == 0) return "Build · Output folder is empty. Enter a folder for the ROM, like build/.";

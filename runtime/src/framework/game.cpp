@@ -502,6 +502,7 @@ void boot(const GameDef& def) {
         text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
         text::setLanguage(def.textLanguage);
     }
+    ui::loadOptions();  // the player's saved volumes, language and button remap (the save chip's options block)
     if (def.init) def.init();
     g_depth = 0;
     g_paused = false;

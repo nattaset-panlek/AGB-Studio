@@ -12,6 +12,7 @@
 #include "agb/render/bg.hpp"
 #include "agb/render/effects.hpp"
 #include "agb/render/palette.hpp"
+#include "agb/save.hpp"
 #include "agb/script.hpp"
 #include "agb/text.hpp"
 
@@ -462,6 +463,7 @@ public:
                 menu_.redraw();
                 drawHint();
             }
+            dirty_ = true;
         } else if (e == Event::Activate && items_[c].kind == ItemKind::Binding) {
             waiting_ = static_cast<s8>(c);
             menu_.setWaiting(c);
@@ -478,6 +480,8 @@ public:
         render::bg::setObjVisible(objShown_);
         render::palettes::setBackdrop(backdrop_);
         restore_.give();
+        if (dirty_) saveOptions();
+        dirty_ = false;
         debug::log("Options closed");
     }
 
@@ -526,10 +530,32 @@ private:
             if (a != action && (input::actionKeys(a) & key)) input::remapAction(a, static_cast<u16>((input::actionKeys(a) & ~key) | old));
         input::remapAction(action, key);
         debug::logf("Remapped action %d to %s", action, keyName(key));
+        dirty_ = true;
         waiting_ = -1;
         menu_.setWaiting(-1);
     }
 
+    // Writes the options block to the save chip (volumes, language, one nibble per action for the remap).
+    static void saveOptions() {
+        save::Options o;
+        o.music = static_cast<u8>((audio::musicVolume() * 10).round());
+        o.effects = g_effects;
+        o.language = text::language();
+        for (int a = 0; a < input::actionCount() && a < 8; ++a) {
+            const u16 keys = input::actionKeys(a);
+            u8 nib = 0xF;
+            for (u8 k = 0; k < 6; ++k)
+                if (keys == kBindKeys[k]) nib = k;
+            o.remap[a / 2] = static_cast<u8>((o.remap[a / 2] & ~(0xF << (a % 2 * 4))) | (nib << (a % 2 * 4)));
+        }
+        save::writeOptions(o);
+    }
+
+    static constexpr u16 kBindKeys[6] = {static_cast<u16>(Key::A), static_cast<u16>(Key::B), static_cast<u16>(Key::Select),
+                                         static_cast<u16>(Key::Start), static_cast<u16>(Key::R), static_cast<u16>(Key::L)};
+    friend void agb::ui::loadOptions();
+
+    bool dirty_ = false;
     Restore restore_;
     Kit kit_{};
     u16 backdrop_ = 0;
@@ -543,6 +569,22 @@ private:
 };
 u8 OptionsScreen::g_effects = 10;
 
+}  // namespace
+
+void loadOptions() {
+    save::Options o;
+    if (!save::readOptions(o)) return;
+    audio::setMusicVolume(fixed(o.music) / 10);
+    OptionsScreen::g_effects = o.effects;
+    audio::setEffectsVolume(fixed(o.effects) / 10);
+    if (o.language < text::languageCount()) text::setLanguage(o.language);
+    for (int a = 0; a < input::actionCount() && a < 8; ++a) {
+        const u8 nib = (o.remap[a / 2] >> (a % 2 * 4)) & 0xF;
+        if (nib < 6) input::remapAction(a, OptionsScreen::kBindKeys[nib]);
+    }
+}
+
+namespace {
 AGB_EWRAM_BSS u8 g_pauseStorage[sizeof(PauseScreen)] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_optionsStorage[sizeof(OptionsScreen)] AGB_ALIGN4;
 

@@ -11,6 +11,7 @@ public static class SaveLayout
     public const int CopyHeaderBytes = 16;
     public const int MaxSlotBytes = 4096;
     public const int SaveHeaderBytes = 8;      // agb::SaveHeader: scene, x, y, flags
+    public const int OptionsBytes = 8;         // agb::save::kOptionsBytes: the global options block outside the slots
     public const int ScriptStoreBytes = 160;   // agb::script::PersistentStore: 256 flag bits + 32 vars
 
     public static int ChipBytes(SaveType type) => type switch
@@ -73,12 +74,21 @@ public static class SaveLayout
         return (offset + align - 1) / align * align;
     }
 
+    /// <summary>Bytes at the end of the chip kept for the options block (music and effects volume, language, button
+    /// remap, scope log T-D08, P4.12, P2.10): a whole sector on Flash, else <see cref="OptionsBytes"/>.</summary>
+    public static int OptionsReserve(SaveType type) => type switch
+    {
+        SaveType.Flash64K or SaveType.Flash128K => 4096,
+        SaveType.None => 0,
+        _ => OptionsBytes,
+    };
+
     /// <summary>The bytes one slot can hold with this save type and slot count (0 when the chip has no room).</summary>
     public static int SlotCapacity(SaveType type, int slots)
     {
         var chip = ChipBytes(type);
         if (chip == 0) return 0;
-        var per = chip / (Math.Max(1, slots) * 2);
+        var per = (chip - OptionsReserve(type)) / (Math.Max(1, slots) * 2);
         per &= type switch
         {
             SaveType.Flash64K or SaveType.Flash128K => ~0xFFF,

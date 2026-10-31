@@ -11,6 +11,7 @@
 #include "agb/render/bg.hpp"
 #include "agb/render/effects.hpp"
 #include "agb/render/palette.hpp"
+#include "agb/save.hpp"
 #include "agb/text.hpp"
 #include "agb/ui.hpp"
 
@@ -291,6 +292,56 @@ AGB_TEST(options_remap_swaps_buttons_and_sets_volume) {
     press(Key::B);
     CHECK(topIs("Level"));
     CHECK_EQ(commit::reg(commit::BldCnt), 0);
+}
+
+AGB_TEST(options_persist_on_the_save_chip) {
+    // scope log T-D08, P4.12, P2.10: the 8 B options block outside the slots keeps volume and remap over a boot
+    setupData(false);
+    g_game.startScene = 1;
+    g_game.save.type = save::Type::Sram32K;
+    g_game.save.slots = 2;
+    g_game.save.payloadSize = sizeof g_state;
+    save::configure(g_game.save);
+    const u8 wipe[save::kOptionsBytes] = {};
+    save::deviceWrite(32 * 1024 - save::kOptionsBytes, wipe, sizeof wipe);
+    save::Options none;
+    CHECK(!save::readOptions(none));  // nothing saved yet
+    audio::setMusicVolume(fixed(10) / 10);
+    game::boot(g_game);
+    waitLoaded();
+    press(Key::Start);
+    frames(1);
+    press(Key::Down);
+    press(Key::A);  // pause > Options
+    frames(1);
+    CHECK(topIs("options"));
+    press(Key::Down);
+    press(Key::Down);
+    press(Key::A);
+    press(Key::R);  // Jump -> R
+    for (int i = 0; i < 2; ++i) press(Key::Up);
+    press(Key::Left);
+    press(Key::Left);
+    CHECK_EQ((audio::musicVolume() * 10).round(), 8);
+    press(Key::B);  // closing the screen writes the block
+    save::Options o;
+    CHECK(save::readOptions(o));
+    CHECK_EQ(o.music, 8);
+    CHECK_EQ(o.effects, 10);
+    CHECK_EQ(o.remap[0] & 0xF, 4);  // action 0 -> R
+    // the block lies outside the slots: writing a slot leaves it alone
+    save::erase(0);
+    CHECK(save::write(1, &g_state));
+    save::Options again;
+    CHECK(save::readOptions(again));
+    CHECK_EQ(again.music, 8);
+    // a new boot starts from the defaults, then applies the saved block
+    audio::setMusicVolume(fixed(1));
+    input::remapAction(0, static_cast<u16>(Key::A));
+    game::boot(g_game);
+    CHECK_EQ((audio::musicVolume() * 10).round(), 8);
+    CHECK_EQ(input::actionKeys(0), static_cast<u16>(Key::R));
+    CHECK(save::bytesUsed() >= save::kOptionsBytes);
 }
 
 AGB_TEST(hud_label_comes_back_after_pause_and_options) {
