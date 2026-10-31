@@ -78,6 +78,10 @@ public sealed class CodeEditor : Panel, IEditTarget
     public double FontSizeOverride { get; set; }
     public Thickness TextPadding { get; set; } = new(0, 12, 0, 12);
     public double GutterWidth { get; set; } = 60;
+    /// <summary>A click in the line-number gutter (1-based line): the Script Editor toggles a breakpoint there.</summary>
+    public event Action<int>? GutterClicked;
+    /// <summary>Lines (1-based) that show a breakpoint dot in the gutter.</summary>
+    public Func<int, bool>? HasBreakpoint { get; set; }
     public UndoService? Undo { get; set; }
     /// <summary>Autocomplete source: (text, caret offset) -> items. Runs off the UI thread.</summary>
     public Func<string, int, CancellationToken, IReadOnlyList<CompletionItem>>? CompletionProvider { get; set; }
@@ -89,9 +93,18 @@ public sealed class CodeEditor : Panel, IEditTarget
 
     TextStyle Style => TextStyles.Get(TextStyleName);
     double FontSize => FontSizeOverride > 0 ? FontSizeOverride : Style.Size;
-    public double LineHeight => Style.LineHeight ?? Math.Ceiling(FontSize * 1.5);
+    /// <summary>The style's line height, grown or shrunk with a font size override (Preferences › Code font size).</summary>
+    public double LineHeight => Style.LineHeight is { } lh ? (FontSizeOverride > 0 ? Math.Ceiling(lh * FontSize / Style.Size) : lh) : Math.Ceiling(FontSize * 1.5);
     double Gutter => ShowLineNumbers ? GutterWidth : 0;
-    Typeface Face => new(Style.FontFamily, FontStyle.Normal, Style.FontWeight);
+    Typeface Face => new(FontFamilyOverride ?? Style.FontFamily, FontStyle.Normal, Style.FontWeight);
+
+    /// <summary>Preferences › Editor › Font of the built-in code editor (null: the text style's font).</summary>
+    public FontFamily? FontFamilyOverride
+    {
+        get => _fontFamily;
+        set { if (Equals(_fontFamily, value)) return; _fontFamily = value; _layouts.Clear(); Redraw(); }
+    }
+    FontFamily? _fontFamily;
 
     // ---- text model ------------------------------------------------------------------------------------------
 
@@ -553,6 +566,13 @@ public sealed class CodeEditor : Panel, IEditTarget
         var props = e.GetCurrentPoint(this).Properties;
         if (!props.IsLeftButtonPressed) return;
         var offset = OffsetAt(p);
+        if (ShowLineNumbers && p.X < Gutter && GutterClicked != null)
+        {
+            GutterClicked(LineOf(offset) + 1);
+            Redraw();
+            e.Handled = true;
+            return;
+        }
         if (e.ClickCount == 2)
         {
             _anchor = WordStart(offset);
@@ -677,6 +697,8 @@ public sealed class CodeEditor : Panel, IEditTarget
                 var num = new TextLayout((line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), Face, FontSize, muted, TextAlignment.Right,
                     maxWidth: GutterWidth - 16, lineHeight: LineHeight);
                 num.Draw(ctx, new Point(0, LineTop(line)));
+                if (HasBreakpoint?.Invoke(line + 1) == true && Token("status/danger") is { } dot)
+                    ctx.DrawEllipse(dot, null, new Point(8, LineTop(line) + LineHeight / 2), 4, 4);
             }
         }
     }

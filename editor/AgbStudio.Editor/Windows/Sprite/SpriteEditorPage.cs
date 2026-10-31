@@ -4,6 +4,7 @@ using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
+using AgbStudio.Editor.Windows.Import;
 using AgbStudio.Editor.Windows.Palette;
 using Avalonia;
 using Avalonia.Controls;
@@ -87,6 +88,13 @@ public sealed class SpriteEditorPage : DockPanel
     public SpriteDoc? Doc => _doc;
     public ArtLibrary? Library => _lib;
     public PixelCanvas Canvas => _canvas;
+
+    /// <summary>Preferences › Appearance › "Show pixel grid at 400% zoom and above" for the sprite canvas.</summary>
+    void UsePixelGridPreference(EditorServices s)
+    {
+        _canvas.PixelGrid = z => s.Preferences.Current.PixelGridAt(z);
+        s.Preferences.Saved += _canvas.InvalidateVisual;
+    }
     public ColourEditor Colour => _colour;
     public int AnimationIndex => _anim;
     /// <summary>Position in the current animation (0-based); the canvas shows that frame.</summary>
@@ -109,7 +117,8 @@ public sealed class SpriteEditorPage : DockPanel
     {
         _s = s;
         Name = "SpriteEditor";
-        PickImportFiles = async () => await s.System.PickFileAsync("Import sprite", ("PNG", ["*.png"])) is { } f ? [f] : [];
+        UsePixelGridPreference(s);
+        PickImportFiles = async () => await s.System.PickFileAsync("Import sprite", ("PNG / Aseprite", ["*.png", "*.aseprite", "*.ase"])) is { } f ? [f] : [];
         _swatches = Enumerable.Range(0, 16).Select(i => new Swatch { Index = i.ToString(CultureInfo.InvariantCulture), Name = "Swatch_" + i, Cursor = new Cursor(StandardCursorType.Hand) }).ToArray();
         string[] glyphs = ["pencil", "eraser", "bucket", "line", "square", "pipette"];
         string[] tips = ["Pencil", "Eraser", "Fill", "Line", "Rectangle", "Pick colour"];
@@ -230,8 +239,8 @@ public sealed class SpriteEditorPage : DockPanel
         zone.Cursor = new Cursor(StandardCursorType.Hand);
         DragDrop.SetAllowDrop(zone, true);
         zone.AddHandler(DragDrop.DragOverEvent, (_, e) => { e.DragEffects = DroppedFiles(e).Any() ? DragDropEffects.Copy : DragDropEffects.None; e.Handled = true; });
-        zone.AddHandler(DragDrop.DropEvent, (_, e) => { ImportFiles(DroppedFiles(e)); e.Handled = true; });
-        zone.PointerPressed += async (_, e) => { e.Handled = true; ImportFiles(await PickImportFiles()); };
+        zone.AddHandler(DragDrop.DropEvent, (_, e) => { _ = ImportFilesAsync(DroppedFiles(e)); e.Handled = true; });
+        zone.PointerPressed += async (_, e) => { e.Handled = true; await ImportFilesAsync(await PickImportFiles()); };
         return zone;
     }
 
@@ -848,7 +857,41 @@ public sealed class SpriteEditorPage : DockPanel
         _lib.Assign(_doc.Path, bank);
     }
 
-    /// <summary>Imports PNG files dropped on (or picked from) the drop zone with the three import options, then opens the last one.</summary>
+    /// <summary>
+    /// Drop zone (T-C13): the dropped or picked PNG / Aseprite files open in Import Asset (T-D04), with this page's
+    /// options set on them (auto-reduce to 16 colours, split into frames of this sprite's size, share its palette);
+    /// after Import the first imported PNG sprite opens here. Completes with the written files.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> ImportFilesAsync(IEnumerable<string> files)
+    {
+        var list = files.ToList();
+        if (list.Count == 0 || _s.Project.Current is null) return [];
+        var reduce = _reduce.IsChecked == true;
+        var split = _split.IsChecked == true;
+        var share = _share.IsChecked == true && _doc != null ? GameProject.AssetName(_doc.Path) : null;
+        int fw = _doc?.FrameW ?? 16, fh = _doc?.FrameH ?? 16;
+        void Adjust(ImportItem item)
+        {
+            if (item.Kind != ImportKind.SpriteSheet || Path.GetExtension(item.Source).ToLowerInvariant() is ".aseprite" or ".ase") return;
+            if (split && item.Width % fw == 0 && item.Height % fh == 0) (item.FrameWidth, item.FrameHeight) = (fw, fh);
+            else if (!split) (item.FrameWidth, item.FrameHeight) = (item.Width, item.Height);
+            if (share != null) item.SharePalette = share;
+            if (reduce && item.Fixes.FirstOrDefault(x => x.StartsWith("Reduce", StringComparison.Ordinal)) is { } fix) { AssetImporter.ApplyFix(item, fix); item.Warning = null; }
+        }
+        var bank = _doc?.Bank;
+        var written = await _s.Windows.Open("T-D04", new ImportAssetDialog.ImportRequest(list, Adjust), _dropZone, source: "SpriteDropZone") as IReadOnlyList<string> ?? [];
+        var sprites = written.Where(f => _s.Project.Current?.SpriteFiles().Any(s => string.Equals(Path.GetFullPath(s), Path.GetFullPath(f), StringComparison.OrdinalIgnoreCase)) == true).ToList();
+        // a sprite that shares this sprite's palette goes into its bank
+        if (share != null && bank != null && _lib != null) foreach (var f in sprites) _lib.Assign(f, bank);
+        if (sprites.FirstOrDefault(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) is { } png)
+        {
+            _lib?.Forget(png);
+            Open(png);
+        }
+        return written;
+    }
+
+    /// <summary>The page's own import (no dialog): PNG files with the three import options, then opens the last one.</summary>
     public void ImportFiles(IEnumerable<string> files)
     {
         if (_lib is null) return;

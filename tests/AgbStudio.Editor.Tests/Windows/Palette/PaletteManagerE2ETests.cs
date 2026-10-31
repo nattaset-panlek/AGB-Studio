@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace AgbStudio.Editor.Tests.Windows.Palette;
 
@@ -125,6 +126,13 @@ public class PaletteManagerE2ETests : ArtWindowHarness
         File.WriteAllText(gpl, "GIMP Palette\nName: warm\nColumns: 16\n#\n255 0 255\tIndex\n255 0 0\tIndex\n255 128 0\tIndex\n255 255 0\tIndex\n");
         page.PickImportFile = () => Task.FromResult<string?>(gpl);
         Click(Find<AgbButton>("ImportPal"));
+        // T-C29: the file goes through Import Asset, which copies it into assets/palettes
+        Assert.Equal(("T-D04", "PaletteImport"), Fx.Services.Windows.Requests[^1]);
+        var dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
+        Assert.Equal("Palette", Assert.Single(dlg.Items).Detected);
+        Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Capture.Pump();
+        Assert.True(File.Exists(Path.Combine(Fx.Services.Project.Current!.PalettesDir, "warm.gpl")));
         var bank = page.Bank!;
         Assert.Equal(4, bank.Colors.Count);
         Assert.Equal(Colour15.Transparent, bank.Colors[0]);
@@ -147,7 +155,13 @@ public class PaletteManagerE2ETests : ArtWindowHarness
         File.WriteAllText(bad, "not a palette");
         page.PickImportFile = () => Task.FromResult<string?>(bad);
         Click(Find<AgbButton>("ImportPal"));
+        dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
+        Assert.False(Assert.Single(dlg.Items).IsReady);
+        Win.Overlays.CloseTop();
+        Capture.Pump();
         Assert.Equal(10, bank.Colors.Count);
+        // the page's own import still reports a broken file with a toast
+        page.Import(bad);
         Assert.Contains(Fx.Services.Toasts.Visible, t => t.Status == ToastStatus.Error);
     }
 

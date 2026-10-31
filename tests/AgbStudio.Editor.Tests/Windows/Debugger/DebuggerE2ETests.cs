@@ -126,6 +126,20 @@ public class DebuggerE2ETests : EditorDriver
         Assert.Equal($"0x{pal[used]:X4} (BGR555)", page.Colour.ValueText);
         Assert.Equal($"{pal[used] & 31}, {(pal[used] >> 5) & 31}, {(pal[used] >> 10) & 31}", page.Colour.RgbText);
         Assert.Contains(page.Colour.UsedByLines, l => l.StartsWith("BG1 Hills · tiles ", StringComparison.Ordinal));
+        // T-P24: the palette effect on the colour (the project's water cycle runs on BG 1, entries 6-9)
+        Click(page.Palettes.Cell(16 + 7));
+        Play.Publish();
+        Capture.Pump();
+        Assert.Equal("BG 1 · index 7", page.Colour.Title);
+        Assert.Contains("Palette effect · water cycle (6–9)", page.Colour.UsedByLines);
+        Assert.True(page.Colour.UsedByLines.ToList().IndexOf("Palette effect · water cycle (6–9)") < page.Colour.UsedByLines.Count - 1);   // before "Changed …"
+        Click(page.Palettes.Cell(16 + 3));
+        Play.Publish();
+        Capture.Pump();
+        Assert.DoesNotContain(page.Colour.UsedByLines, l => l.StartsWith("Palette effect", StringComparison.Ordinal));
+        Click(page.Palettes.Cell(used));
+        Play.Publish();
+        Capture.Pump();
         // a colour changed this frame gets the white outline
         BitConverter.TryWriteBytes(core.Memory(GbaMemory.Palette + (uint)used * 2, 2), (ushort)(pal[used] ^ 0x7FFF));
         Play.Publish();
@@ -198,7 +212,7 @@ public class DebuggerE2ETests : EditorDriver
         Model.AddSceneLoad(enabled: false);
         Capture.Pump();
         Assert.Equal(["PlayerController.cs:19", "Slime.cs:42", "On scene load"], page.BreakpointBoxes.Select(b => b.Content));
-        Assert.Equal((7, 20), Model.BindCSharp(Model.Breakpoints[0]));  // line 19 is the "{" of the jump: it stops at its first statement
+        Assert.Equal((7, 20), Model.BindCSharp(Model.Breakpoints.First(b => b.Label == "PlayerController.cs:19")));  // line 19 is the "{" of the jump: it stops at its first statement
         Play.RunFrames(2);
         page.Focus();
         Play.KeyDown(Key.Z);  // jump: enters the block at line 19

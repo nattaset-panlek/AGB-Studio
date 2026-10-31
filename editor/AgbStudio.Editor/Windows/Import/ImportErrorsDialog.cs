@@ -108,7 +108,12 @@ public sealed class ImportErrorsDialog : FigmaDialog
         var written = new List<string>();
         if (p is null) { s.Toasts.Show("Open a project before importing.", ToastStatus.Error); return written; }
         var count = 0;
-        foreach (var item in items.Where(i => i.IsReady))
+        var console = SceneEditor.ConsoleLog.Of(s);
+        var list = items.ToList();
+        // G-ERR.03: no silent failure, every file that is not imported is named in the Console with its reason
+        foreach (var item in list.Where(i => !i.IsReady))
+            console.Add(ConsoleLevel.Warning, $"Import: {item.FileName} was not imported: {item.Error ?? item.Warning}");
+        foreach (var item in list.Where(i => i.IsReady))
         {
             try
             {
@@ -118,6 +123,7 @@ public sealed class ImportErrorsDialog : FigmaDialog
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
             {
                 s.Toasts.Show($"{item.FileName} could not be imported: {e.Message}", ToastStatus.Error);
+                console.Add(ConsoleLevel.Error, $"Import: {item.FileName} could not be imported: {e.Message}", item.Source);
             }
         }
         if (count > 0) s.Toasts.Show(count == 1 ? "Imported 1 file" : $"Imported {count} files");

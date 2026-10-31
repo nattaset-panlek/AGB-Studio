@@ -319,6 +319,20 @@ public class ExportRomTests
 /// <summary>Flash to Cartridge per D-12 with a fake device (P11.60; hardware n/a until hardware).</summary>
 public class FlashTests
 {
+    // T-D07: the flash size comes from the cartridge's address mirrors (a 4 / 8 / 16 MB chip repeats itself)
+    [Fact]
+    public void FlashSize_FromAddressMirrors()
+    {
+        byte[] Rom(int mb, int offset) => Enumerable.Range(0, 64).Select(i => (byte)((offset % (mb * 1024 * 1024)) / (1024 * 1024) * 7 + i)).ToArray();
+        foreach (var mb in new[] { 4, 8, 16, 32 })
+            Assert.Equal(mb, CartridgeStatus.FlashSizeFromMirrors(o => Rom(mb, o)));
+        // the save part of the line follows Project Settings › Save data
+        var s = new CartridgeStatus(true, "Cartridge detected · SKYH", "", FlashMegabytes: 16);
+        Assert.Equal("Cartridge detected · 16 MB flash · Flash 128 KB", s.Line(AgbStudio.Core.Project.SaveType.Flash128K));
+        Assert.Equal("Cartridge detected · 16 MB flash", s.Line(AgbStudio.Core.Project.SaveType.None));
+        Assert.Equal("Cartridge detected · SKYH", (s with { FlashMegabytes = null }).Line(AgbStudio.Core.Project.SaveType.Sram32K));
+    }
+
     [AvaloniaFact]
     public void Detects_BacksUp_Writes_Verifies_WithProgress()
     {
@@ -328,6 +342,8 @@ public class FlashTests
         var dev = new FakeCartridge();
         var d = new FlashDialog(fx.Services, new FakeDevices(dev, new FakeCartridge("EverDrive GBA · SD card (E:)")));
         Assert.Equal(["GBxCart RW · USB (COM4)", "EverDrive GBA · SD card (E:)"], d.Device.Options);
+        // T-D07: the cartridge line shows the measured flash size and the save chip of the game (Save data: SRAM)
+        Assert.Equal(AgbStudio.Core.Project.SaveType.Sram32K, fx.Services.ProjectSettings.Settings.Save.Type);
         Assert.Equal("Cartridge detected · 32 MB flash · SRAM 32 KB", d.InfoTitle);
         Assert.True(d.CanFlash);
         Assert.Equal("0 / 412 KB", d.ProgressText);

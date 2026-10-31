@@ -12,6 +12,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace AgbStudio.Editor.Tests.Windows.Sprite;
 
@@ -221,16 +222,26 @@ public class SpriteEditorE2ETests : ArtWindowHarness
         data.Add(DataTransferItem.CreateText(src));
         zone.RaiseEvent(new DragEventArgs(DragDrop.DropEvent, data, zone, new Point(10, 10), KeyModifiers.None));
         Capture.Pump();
+        // T-C13: the drop opens Import Asset with this page's options set on the file (reduce, 16 x 16 frames, hero's palette)
+        Assert.Equal(("T-D04", "SpriteDropZone"), Fx.Services.Windows.Requests[^1]);
+        var dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
+        var item = Assert.Single(dlg.Items);
+        Assert.True(item.IsReady, item.Error ?? item.Warning);
+        Assert.Equal((16, 16, "hero"), (item.FrameWidth, item.FrameHeight, item.SharePalette));
+        Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Capture.Pump();
+        Assert.False(Win.Overlays.IsOpen);
 
         var doc = page.Doc!;
         Assert.Equal("walker.png", doc.FileName);
         Assert.True(File.Exists(doc.Path));
         Assert.Equal(2, doc.FrameCount);
         Assert.Equal((16, 16), (doc.FrameW, doc.FrameH));
-        var colours = Png.Read(doc.Path).Pixels.Where(p => p >> 24 != 0).Select(p => Colour15.Of(p)).Distinct().Count();
-        Assert.True(colours <= 15, $"{colours} colours");
+        // auto-reduce: Import Asset keeps the source and marks it for the build to reduce to the 15 colours of the palette
+        var walkerMeta = GameProject.Load<SpriteMeta>(GameProject.MetaPath(doc.Path));
+        Assert.True(walkerMeta.ReduceColors);
         Assert.Equal("OBJ 0", doc.Bank!.Id);
-        Assert.Equal("hero", GameProject.Load<SpriteMeta>(GameProject.MetaPath(doc.Path)).Palette);
+        Assert.Equal("hero", walkerMeta.Palette);
         Assert.Equal([0, 1], doc.Meta.Animations.Single().Frames);
         Assert.Contains(All<TreeItem>(), t => t.Label == "walker.png" && t.IsSelected);
 
@@ -242,7 +253,20 @@ public class SpriteEditorE2ETests : ArtWindowHarness
         Assert.Equal((32, 16), (page.Doc.FrameW, page.Doc.FrameH));
         Assert.NotEqual("OBJ 0", page.Doc.Bank!.Id);
 
-        // files that are not PNG are refused with an error toast
+        // an Aseprite file dropped here goes through Import Asset too and becomes a sprite of the project
+        var ase = Path.Combine(Fx.Folder, "jelly.aseprite");
+        File.Copy(Path.Combine(AgbStudio.Build.NativeBuild.RepoRoot, "tests", "AgbStudio.Tests", "Golden", "slime.aseprite"), ase, true);
+        var drop = new DataTransfer();
+        drop.Add(DataTransferItem.CreateText(ase));
+        zone.RaiseEvent(new DragEventArgs(DragDrop.DropEvent, drop, zone, new Point(10, 10), KeyModifiers.None));
+        Capture.Pump();
+        dlg = Assert.IsType<AgbStudio.Editor.Windows.Import.ImportAssetDialog>(Win.Overlays.Open[^1]);
+        Assert.Equal("Sprite sheet", Assert.Single(dlg.Items).Detected);
+        Click(dlg.GetVisualDescendants().OfType<AgbButton>().First(b => b.Name == "PART_Confirm"));
+        Capture.Pump();
+        Assert.Contains(Fx.Services.Project.Current!.SpriteFiles(), s => Path.GetFileName(s) == "jelly.aseprite");
+
+        // a file that is not an image is reported in Import Asset (the page's own import refuses it with a toast)
         var bad = Path.Combine(Fx.Folder, "sheet.aseprite");
         File.WriteAllText(bad, "");
         page.ImportFiles([bad]);

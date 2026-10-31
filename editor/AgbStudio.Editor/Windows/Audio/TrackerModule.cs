@@ -151,7 +151,7 @@ public sealed class TrackerModule
             "8CHN" or "FLT8" or "OCTA" => 8,
             _ when sig.EndsWith("CH", StringComparison.Ordinal) && int.TryParse(sig[..2], out var n) => n,
             _ when sig.EndsWith("CHN", StringComparison.Ordinal) && int.TryParse(sig[..1], out var n1) => n1,
-            _ => throw new InvalidDataException($"Unknown MOD signature '{sig}'."),
+            _ => throw new InvalidDataException($"This is a MOD variant AGB Studio can't read (signature '{sig}'). Save it again as a ProTracker .mod or as .xm."),
         };
         var songLength = d[950];
         Restart = d[951] < songLength ? d[951] : 0;

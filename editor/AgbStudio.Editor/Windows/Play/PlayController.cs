@@ -51,6 +51,7 @@ public sealed class PlayController : IDisposable
         s.Documents.Open.CollectionChanged += (_, _) => WatchDocuments();
         WatchDocuments();
         s.Build.Finished += OnBuildFinished;
+        s.Preferences.Saved += ApplyPreferences;
         Debugger.BuildHistory.Of(s);
         // Pause / Step / Stop act on a running game only (Scene Editor and Play Mode toolbars, F10)
         if (s.Commands.TryGet("play.pause", out var pause)) pause.Handle(TogglePause, () => IsRunning);
@@ -74,8 +75,24 @@ public sealed class PlayController : IDisposable
 
     public EditorServices Services => _s;
     public PlayConsole Console { get; }
+    /// <summary>The emulator settings of Play Mode, from Preferences · Emulator (updated when Preferences are saved).</summary>
     public EmulatorOptions Options => _s.GetService(typeof(EmulatorOptions)) as EmulatorOptions ?? SetDefaultOptions();
-    EmulatorOptions SetDefaultOptions() { var o = new EmulatorOptions(); _s.Set(o); return o; }
+    EmulatorOptions SetDefaultOptions() { var o = new EmulatorOptions().ReadFrom(_s.Preferences.Current); _s.Set(o); return o; }
+
+    /// <summary>Preferences were saved: the running game takes the new emulator settings at once (scale, filter,
+    /// audio on / off, pause when unfocused, fast-forward key and speed).</summary>
+    void ApplyPreferences()
+    {
+        var o = Options.ReadFrom(_s.Preferences.Current);
+        if (Session != null)
+        {
+            Session.FastForward = o.FastForwardSpeed;
+            if (!o.Audio && _audio != null) { _audio.Dispose(); _audio = null; }
+            else if (o.Audio && _audio == null && IsRunning) OpenAudio(Session.Core);
+            if (!o.PauseWhenUnfocused && _autoPaused) { _autoPaused = false; ApplyPause(); }
+        }
+        Changed?.Invoke();
+    }
 
     /// <summary>The running session (null when stopped).</summary>
     public PlaySession? Session { get; private set; }
@@ -211,7 +228,7 @@ public sealed class PlayController : IDisposable
               ?? ElfSymbols.TryLoad(Path.ChangeExtension(romPath, ".elf"));
         WorldReader = _s.Project.Current is { } p ? new LiveWorldReader(p, Elf) : null;
         Session = new PlaySession(core) { Speed = _speed, FastForward = Options.FastForwardSpeed };
-        Session.LogLine += OnGameLine;
+        Session.LogLine += ReceiveGameLine;
         Session.Start(romPath);
         LoadSaveFile();
         State = PlayState.Running;
@@ -272,7 +289,7 @@ public sealed class PlayController : IDisposable
         if (Session != null)
         {
             if (save) WriteSaveFile();
-            Session.LogLine -= OnGameLine;
+            Session.LogLine -= ReceiveGameLine;
             Session.Stop();
             Session = null;
         }
@@ -448,10 +465,13 @@ public sealed class PlayController : IDisposable
 
     // ---- per-frame publishing -------------------------------------------------------------------------
 
-    void OnGameLine(string line)
+    /// <summary>A line from the game's debug channel (Debug.Log, engine warnings, asserts): Play Mode's console and the Console panel.</summary>
+    public void ReceiveGameLine(string line)
     {
         if (_quietHandover && line.StartsWith("Hot reload: continued in ", StringComparison.Ordinal)) { _quietHandover = false; return; }
-        Console.AddGameLine(line);
+        // the game's own lines (Debug.Log, engine warnings, asserts) also go to the Console panel (T-P05)
+        var e = Console.AddGameLine(line);
+        SceneEditor.ConsoleLog.Of(_s).Add(new SceneEditor.ConsoleEntry(e.Time, e.Level, e.Text));
     }
 
     void ReadFrameState()

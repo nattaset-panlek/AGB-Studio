@@ -225,7 +225,7 @@ public static class AssetImporter
     static TmxMap ReadTmx(string file)
     {
         var doc = XDocument.Load(file);
-        var map = doc.Root ?? throw new InvalidDataException("Empty TMX file.");
+        var map = doc.Root ?? throw new InvalidDataException($"{Path.GetFileName(file)} is empty. Save the map again in Tiled.");
         int Int(XElement e, string a) => int.Parse(e.Attribute(a)?.Value ?? "0", CultureInfo.InvariantCulture);
         var ts = map.Element("tileset");
         string? image = null;
@@ -246,7 +246,7 @@ public static class AssetImporter
         var layers = new List<(string, int[])>();
         foreach (var l in map.Elements("layer"))
         {
-            var data = l.Element("data") ?? throw new InvalidDataException("A layer has no data.");
+            var data = l.Element("data") ?? throw new InvalidDataException($"Layer \"{l.Attribute("name")?.Value}\" of {Path.GetFileName(file)} has no tiles. Save the map again in Tiled.");
             var enc = data.Attribute("encoding")?.Value;
             int[] gids;
             if (enc == "csv") gids = data.Value.Split([',', '\n', '\r', ' '], StringSplitOptions.RemoveEmptyEntries).Select(v => (int)(uint.Parse(v, CultureInfo.InvariantCulture) & 0x1FFFFFFF)).ToArray();

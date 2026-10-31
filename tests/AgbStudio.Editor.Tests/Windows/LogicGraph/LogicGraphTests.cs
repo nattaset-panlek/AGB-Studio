@@ -159,6 +159,112 @@ public sealed class LogicGraphTests : IDisposable
         Assert.Contains("Save.Checkpoint();", page.Code.Text);
     }
 
+    // T-O08: Nodes › Add node… opens the Add Node popover for the middle of the view; typing goes to its search
+    [AvaloniaFact]
+    public void NodesAddNode_OpensTheAddNodePopover()
+    {
+        var page = Open();
+        _h.Click(page.Search);
+        Assert.Equal(("T-O08", "NodesAddNode"), _h.S.Windows.Requests[^1]);
+        var add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
+        add.Query.Focus();
+        _h.Type("veloc");
+        Assert.All(add.Items, d => Assert.Contains("Velocity", d.Title));
+        _h.Key(Key.Enter);
+        Assert.False(_h.Win.Overlays.IsOpen);
+        var added = page.Document.Graph.Nodes.Last();
+        Assert.Contains("Velocity", NodeCatalog.Find(added.Type)!.Title);
+        // typing into the box opens the popover with the text in its search
+        page.Search.Focus();
+        _h.Type("sou");
+        add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
+        Assert.Equal("sou", add.Query.Text);
+        Assert.Contains(add.Items, d => d.Title == "Play Sound");
+        _h.Key(Key.Escape);
+        Assert.False(_h.Win.Overlays.IsOpen);
+    }
+
+    // P10.11: the Edit menu on Logic Graph nodes: Select All, Copy / Paste, Cut, Duplicate, Delete, each undoable
+    [AvaloniaFact]
+    public void EditMenu_OnNodes_SelectAllCopyPasteCutDuplicateDelete()
+    {
+        var page = Open();
+        int Nodes() => page.Document.AllNodes.Count();
+        var n = Nodes();
+        page.Canvas.Focus();
+        _h.Key(Key.A, RawInputModifiers.Control);
+        Assert.Equal(n, page.Canvas.Selection.Count);
+        page.Canvas.Select(["n7"]);
+        _h.Key(Key.C, RawInputModifiers.Control);
+        _h.Key(Key.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Nodes());
+        var pasted = page.Canvas.Selection.Single();
+        Assert.Equal("PlaySound", page.Document.Node(pasted)!.Type);
+        _h.S.Commands.Execute("edit.duplicate");
+        Assert.Equal(n + 2, Nodes());
+        _h.S.Commands.Execute("edit.delete");
+        Assert.Equal(n + 1, Nodes());
+        // Cut removes the selected node and keeps it for Paste
+        page.Canvas.Select([pasted]);
+        _h.Key(Key.X, RawInputModifiers.Control);
+        Assert.Equal(n, Nodes());
+        Assert.Null(page.Document.Node(pasted));
+        _h.Key(Key.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Nodes());
+        Assert.Equal("PlaySound", page.Document.Node(page.Canvas.Selection.Single())!.Type);
+        _h.S.Commands.Execute("edit.undo");
+        Assert.Equal(n, Nodes());
+    }
+
+    // T-P17 toolbar: the Link tool wires a node to another by dragging between their bodies
+    [AvaloniaFact]
+    public void LinkTool_DragsAWireFromNodeToNode()
+    {
+        var page = Open();
+        // below and right of the Figma graph, at half zoom so both fit in the view
+        page.Canvas.SetView(0.5, default);
+        var start = page.AddNode("OnStart", new Point(1150, 1150), null);
+        var sound = page.AddNode("PlaySound", new Point(1450, 1150), null);
+        Capture.Pump();
+        _h.Click(_h.Find<IconButton>("Tool_Link"));
+        Assert.Equal(GraphTool.Link, page.Canvas.Tool);
+        Point Mid(string id) { var b = page.Document.Bounds(page.Document.Node(id)!); return Screen(page, b.Center.X, b.Center.Y); }
+        var wires = page.Document.AllLinks.Count();
+        _h.DragAt(Mid(start), Mid(sound));
+        Assert.Equal(wires + 1, page.Document.AllLinks.Count());
+        Assert.Contains(page.Document.Graph.Links, l => l.FromNode == start && l.ToNode == sound && l.ToPin == "in");
+        Assert.Contains("void Start()", page.Code.Text);
+        _h.S.Commands.Execute("edit.undo");
+        Assert.Equal(wires, page.Document.AllLinks.Count());
+        // dropping on empty space opens Add Node to connect from that node
+        _h.DragAt(Mid(start), Screen(page, 1200, 1450));
+        Assert.Equal("T-O08", _h.S.Windows.Requests[^1].Window);
+        _h.Key(Key.Escape);
+    }
+
+    // T-P17 Preview: the project's scene, its sprite animations playing (still with Reduce motion)
+    [AvaloniaFact]
+    public void Preview_PlaysTheSceneAnimations()
+    {
+        var page = Open();
+        var preview = page.Preview;
+        Assert.Equal("Forest_01", preview.SceneName);
+        Assert.True(preview.Playing);
+        var first = preview.Frame!;
+        Assert.Contains(first.Sprites, s => s.Frame >= 0);
+        // a second later every animated sprite has moved on in its animation
+        preview.SetTick(30);
+        var later = preview.Frame!;
+        Assert.NotEqual(first.Sprites.Select(s => s.Frame), later.Sprites.Select(s => s.Frame));
+        Assert.NotEqual(first.Bgr, later.Bgr);
+        // Reduce motion stops it on the first frame
+        _h.S.Preferences.Update(p => p.ReduceMotion = true);
+        Assert.False(preview.Playing);
+        Assert.Equal(0, preview.Tick);
+        _h.S.Preferences.Update(p => p.ReduceMotion = false);
+        Assert.True(preview.Playing);
+    }
+
     [AvaloniaFact]
     public void RightClickNode_ContextMenuDuplicateDisableGroupCollapseShowCodeDelete()
     {
@@ -168,6 +274,9 @@ public sealed class LogicGraphTests : IDisposable
         var menu = _h.OpenContextMenu()!;
         Assert.Equal(["Duplicate", "Disable", "Group into comment", "Collapse", "Show generated C#", "Delete"],
             menu.Items.OfType<MenuItem>().Select(i => (string?)i.Header));
+        // one separator, after Collapse, as in Figma
+        Assert.Equal(["Duplicate", "Disable", "Group into comment", "Collapse", "-", "Show generated C#", "Delete"],
+            menu.Items.Cast<object>().Select(i => i is MenuItem m ? (string?)m.Header : "-"));
         Assert.Equal("Ctrl+G", AgbStudio.Editor.Theme.Shortcuts.Format(menu.Items.OfType<MenuItem>().Single(i => (string?)i.Header == "Group into comment").InputGesture!));
         _h.RunMenuItem("Duplicate");
         Assert.Equal(11, page.Document.AllNodes.Count());

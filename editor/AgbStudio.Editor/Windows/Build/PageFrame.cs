@@ -30,8 +30,7 @@ public static class PageFrame
     {
         var play = UI.Row(4,
             new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
-            new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" },
-            new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+            PlayButtons.Pause(s), PlayButtons.Step(s));
         var chip = new Chip { Content = VideoModeText(s), Glyph = "chip", Name = "VideoModeChip" };
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: "VideoModeChip");
         var undo = new IconButton { Glyph = "undo", Command = s.Commands.Get("edit.undo"), Name = "UndoButton" };

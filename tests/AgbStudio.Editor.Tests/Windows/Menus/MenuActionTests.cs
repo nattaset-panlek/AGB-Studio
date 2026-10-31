@@ -171,6 +171,45 @@ public sealed class MenuActionTests : IDisposable
         foreach (var id in Table.Keys) Assert.Contains(items, m => m.Command is EditorCommand c && c.Id == id);
     }
 
+    // P11.65 / T-M09: Create › Tileset / Tilemap makes a new map (and a tileset when there is none); Create › Font opens New Font
+    [AvaloniaFact]
+    public void Create_TilesetTilemapMakesANewMap_FontOpensNewFont()
+    {
+        var p = _fx.OpenFigmaSkyHopper();
+        var win = Shell();
+        var s = _fx.Services;
+        var maps = p.MapFiles().Count();
+        s.Commands.Execute("assets.create.tileset");
+        Capture.Pump();
+        var created = Path.Combine(p.MapsDir, "Map_01.map");
+        Assert.True(File.Exists(created));
+        Assert.Equal(maps + 1, p.MapFiles().Count());
+        var map = AgbStudio.Core.Project.GameProject.Load<AgbStudio.Core.Project.MapFile>(created);
+        Assert.Equal(("Map_01", AgbStudio.Core.Project.GameProject.AssetName(p.TilesetFiles().First()), 30, 20, 0), (map.Name, map.Tileset, map.Width, map.Height, map.CollisionLayer));
+        Assert.Equal(600, Assert.Single(map.Layers).Cells.Count);
+        var page = Assert.IsType<AgbStudio.Editor.Windows.Tilemap.TilemapEditorPage>(win.CurrentPage);
+        Assert.Equal(Path.GetFullPath(created), page.Session!.Doc.Path);
+        Assert.Equal("Map_01.map", s.Documents.Active!.Name);
+        // a second one gets the next free name
+        s.Commands.Execute("assets.create.tileset");
+        Capture.Pump();
+        Assert.True(File.Exists(Path.Combine(p.MapsDir, "Map_02.map")));
+        // a project without tilesets gets a blank 4 x 4 tileset with the map
+        foreach (var t in p.TilesetFiles().ToList()) File.Delete(t);
+        var path = AgbStudio.Editor.Windows.Tilemap.NewTilemap.Create(p);
+        Assert.Equal("tiles", AgbStudio.Core.Project.GameProject.Load<AgbStudio.Core.Project.MapFile>(path).Tileset);
+        var png = Png.Read(Path.Combine(p.AssetsDir, "tilesets", "tiles.png"));
+        Assert.Equal((64, 64), (png.Width, png.Height));
+
+        // Create › Font: Font Manager with New Font on top
+        s.Commands.Execute("assets.create.font");
+        Capture.Pump();
+        Assert.Equal("T-P09", win.CurrentPageId);
+        Assert.Equal(("T-D15", "assets.create.font"), s.Windows.Requests[^1]);
+        Assert.IsType<AgbStudio.Editor.Windows.Font.NewFontDialog>(win.Overlays.Open[^1]);
+        win.Overlays.CloseTop();
+    }
+
     [AvaloniaFact]
     public void ProjectCommands_AreDisabledWithoutAProject_AndEnabledWhenOneOpens()
     {

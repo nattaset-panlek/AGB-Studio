@@ -44,7 +44,15 @@ public sealed class PaletteEffectPopover : Border, IOverlayContent
     public InspectorField Speed => _speed;
     public InspectorField BankField => _bank;
 
-    public PaletteEffectPopover(WindowContext ctx) : this(ctx.Services.Project.Current is null ? null : ArtLibrary.For(ctx.Services), ctx.Args as EffectKind? ?? EffectKind.Cycle) { }
+    public PaletteEffectPopover(WindowContext ctx) : this(ctx.Services.Project.Current is null ? null : ArtLibrary.For(ctx.Services), ctx.Args as EffectKind? ?? EffectKind.Cycle)
+    {
+        // Preferences › Appearance › Reduce motion: the preview does not play by itself (drag across it to see the effect)
+        AutoPlay = !ctx.Services.Preferences.Current.ReduceMotion;
+    }
+
+    /// <summary>The preview strip plays the effect on its own (off with Reduce motion).</summary>
+    public bool AutoPlay { get; set; } = true;
+    public bool PreviewPlaying => _timer.IsEnabled;
 
     public PaletteEffectPopover(ArtLibrary? lib, EffectKind kind)
     {
@@ -95,8 +103,8 @@ public sealed class PaletteEffectPopover : Border, IOverlayContent
         _preview.Cursor = new Cursor(StandardCursorType.SizeWestEast);
         _preview.PointerPressed += (_, e) => { _timer.Stop(); e.Pointer.Capture(_preview); ScrubPreview(e.GetPosition(_preview).X / Math.Max(1, _preview.Bounds.Width)); e.Handled = true; };
         _preview.PointerMoved += (_, e) => { if (e.Pointer.Captured == _preview) ScrubPreview(e.GetPosition(_preview).X / Math.Max(1, _preview.Bounds.Width)); };
-        _preview.PointerReleased += (_, e) => { e.Pointer.Capture(null); if (IsAttachedToVisualTree()) _timer.Start(); };
-        AttachedToVisualTree += (_, _) => { if (_lib != null) _lib.Changed += Refresh; _timer.Start(); };
+        _preview.PointerReleased += (_, e) => { e.Pointer.Capture(null); if (IsAttachedToVisualTree() && AutoPlay) _timer.Start(); };
+        AttachedToVisualTree += (_, _) => { if (_lib != null) _lib.Changed += Refresh; if (AutoPlay) _timer.Start(); };
         DetachedFromVisualTree += (_, _) => { if (_lib != null) _lib.Changed -= Refresh; _timer.Stop(); };
         Refresh();
     }

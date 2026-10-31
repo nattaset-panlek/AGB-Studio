@@ -26,9 +26,15 @@ public sealed class SystemShell(Func<TopLevel?> top, Action<string, string>? lau
 
     IStorageProvider? Storage => top()?.StorageProvider;
 
+    /// <summary>Replaces the operating-system folder picker (tests answer with a path instead of a window).</summary>
+    public Func<string, Task<string?>>? FolderPicker { get; set; }
+    /// <summary>Replaces the operating-system file picker (tests answer with a path instead of a window).</summary>
+    public Func<string, (string Name, string[] Patterns)[], Task<string?>>? FilePicker { get; set; }
+
     /// <summary>T-Y01 Launcher › Open…: folder picker.</summary>
     public async Task<string?> PickFolderAsync(string title)
     {
+        if (FolderPicker != null) return await FolderPicker(title);
         if (Storage is not { CanPickFolder: true } s) return null;
         var r = await s.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = title, AllowMultiple = false });
         return r.Count > 0 ? r[0].TryGetLocalPath() : null;
@@ -37,6 +43,7 @@ public sealed class SystemShell(Func<TopLevel?> top, Action<string, string>? lau
     /// <summary>T-Y04 Preferences › Paths › Browse…: file picker.</summary>
     public async Task<string?> PickFileAsync(string title, params (string Name, string[] Patterns)[] filters)
     {
+        if (FilePicker != null) return await FilePicker(title, filters);
         if (Storage is not { CanOpen: true } s) return null;
         var r = await s.OpenFilePickerAsync(new FilePickerOpenOptions
         {

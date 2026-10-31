@@ -281,6 +281,18 @@ public sealed class GraphCanvas : Panel, IEditTarget
 
     public GraphNode? NodeAt(Point world) => Doc.AllNodes.Reverse().FirstOrDefault(n => Doc.Bounds(n).Contains(world));
 
+    /// <summary>The pin a Link tool wire leaves a node from: its exec out, else its first output.</summary>
+    public static PinDef? LinkOutput(GraphNode n) =>
+        NodeCatalog.Find(n.Type) is { } def ? def.Pins.FirstOrDefault(p => p.Output && p.Kind == PinKind.Exec) ?? def.Pins.FirstOrDefault(p => p.Output) : null;
+
+    /// <summary>The input a Link tool wire of this kind lands on: the first one not wired yet, else the first one.</summary>
+    public PinDef? LinkInput(GraphNode n, PinKind kind)
+    {
+        if (NodeCatalog.Find(n.Type) is not { } def) return null;
+        var inputs = def.Pins.Where(p => !p.Output && p.Kind == kind).ToList();
+        return inputs.FirstOrDefault(p => kind == PinKind.Exec || !Doc.AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == p.Name)) ?? inputs.FirstOrDefault();
+    }
+
     GraphComment? CommentTitleAt(Point world) => Doc.Comments.LastOrDefault(c => new Rect(c.X, c.Y, c.W, 28).Contains(world));
 
     // ---- pointer ---------------------------------------------------------------------------------------------
@@ -315,6 +327,15 @@ public sealed class GraphCanvas : Panel, IEditTarget
         if (PinAt(world) is { } pin)
         {
             _wireFrom = (pin.Node, pin.Pin, pin.Output, pin.Kind);
+            _wireEnd = world;
+            StartDrag(Drag.Wire, screen, e);
+            return;
+        }
+        // Link tool: drag from anywhere on a node to another node; the wire leaves its exec out (else its first
+        // output) and lands on the first free input of the same kind
+        if (Tool == GraphTool.Link && NodeAt(world) is { } source && LinkOutput(source) is { } output)
+        {
+            _wireFrom = (source.Id, output.Name, true, output.Kind);
             _wireEnd = world;
             StartDrag(Drag.Wire, screen, e);
             return;
@@ -401,6 +422,8 @@ public sealed class GraphCanvas : Panel, IEditTarget
             case Drag.Wire when _wireFrom is { } from:
                 _wireFrom = null;
                 var target = PinAt(_wireEnd, 12);
+                if (target is null && Tool == GraphTool.Link && from.Output && NodeAt(_wireEnd) is { } onto && onto.Id != from.Node && LinkInput(onto, from.Kind) is { } input)
+                    target = new PinGeometry(onto.Id, input.Name, input.Kind, false, default);
                 if (target != null && target.Output != from.Output)
                 {
                     var (a, b) = from.Output ? ((from.Node, from.Pin), (target.Node, target.Pin)) : ((target.Node, target.Pin), (from.Node, from.Pin));

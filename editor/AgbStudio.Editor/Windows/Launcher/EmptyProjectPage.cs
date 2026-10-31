@@ -67,7 +67,7 @@ public sealed class EmptyProjectPage : DockPanel
         var layers = new[] { "BG0", "BG1", "BG2", "BG3", "OBJ" }.Select(l => (Control)new LayerToggle { Content = l, IsOn = l != "BG3", Name = "Layer_" + l }).ToArray();
         var play = new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" };
         Tip(play, "build.play");
-        var playRow = UI.Row(4, play, new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" }, new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+        var playRow = UI.Row(4, play, PlayButtons.Pause(s), PlayButtons.Step(s));
         var chip = new Chip { Content = "GBA · Mode 0 · 240×160", Glyph = "chip", Name = "VideoModeChip" };
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: "VideoModeChip");
         var undo = new IconButton { Glyph = "undo", Command = s.Commands.Get("edit.undo"), Name = "UndoButton" };

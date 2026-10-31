@@ -231,6 +231,16 @@ public sealed class ProjectSettingsTests : IDisposable
         win.Click(d.Find<NavItem>("Nav_T-S02"));
         Assert.Equal(("3 slots", "189 B / 32 KB"), (d.Find<Meter>("SlotsMeter").Label, d.Find<Meter>("SlotsMeter").ValueText));
         Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
+        // T-S02: the size of each field follows its type, as Figma lists them (score 4 B, lives 1 B, coins 2 B ...)
+        Assert.Equal(["4 B", "1 B", "2 B", "16 B", "32 B", "8 B"], Enumerable.Range(0, 6).Select(i => d.Find<TableCell>("SaveFieldSize_" + i).Text));
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "int");
+        Assert.Equal("4 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "66 bytes per slot");
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "short");
+        Assert.Equal("2 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "byte");
+        Assert.Equal("1 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
         win.Click(d.Find<Segment>("SaveType_4"));
         Assert.Equal("189 B / 8 KB", d.Find<Meter>("SlotsMeter").ValueText);
         win.Click(d.Find<NavItem>("Nav_T-S01"));
@@ -265,6 +275,35 @@ public sealed class ProjectSettingsTests : IDisposable
     }
 
     /// <summary>The settings reach the ROM: header (title, code, maker, version), save chip id, start scene, boot splash and button remap.</summary>
+    [AvaloniaFact]
+    public async Task BuildTab_FieldsChangeTheBuild()
+    {
+        // P11.61: Project Settings › Build (T-S03) set in the dialog reach the compiler and the build report
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(_fx.Folder, "minibuild"));
+        _fx.Services.Project.Open(p.ProjectPath);
+        var b = _fx.Services.Project.Current!.Settings.Build;
+        var win = Shell();
+        var d = OpenDialog(win);
+        win.Click(d.Find<NavItem>("Nav_T-S03"));
+        win.Click(d.Find<Segment>("Configuration_1"));
+        win.Pick(d, "Optimise", "-Os · size");
+        if (!b.KeepAsserts) win.Toggle(d, "KeepAsserts");
+        if (b.StripDebugLog) win.Toggle(d, "StripLogs");
+        win.Click(d.SaveButton());
+        Assert.Null(d.Error);
+        b = _fx.Services.Project.Current!.Settings.Build;
+        Assert.Equal((BuildConfiguration.Release, "-Os", true, false), (b.Configuration, b.Optimise, b.KeepAsserts, b.StripDebugLog));
+
+        var r = await _fx.Services.Build.BuildAsync();
+        Assert.True(r.Success, string.Join(" | ", r.Diagnostics));
+        var ninja = File.ReadAllText(Path.Combine(p.BuildDir, "obj", "build.ninja"));
+        Assert.Contains("-Os", ninja);
+        Assert.DoesNotContain("-O2", ninja);
+        Assert.Contains("AGB_KEEP_ASSERTS=1", ninja);
+        Assert.Contains("AGB_KEEP_LOGS=1", ninja);   // Release without "Strip Debug.Log"
+        Assert.Equal("Release", _fx.Services.Build.LoadReport()!.Configuration);
+    }
+
     [AvaloniaFact]
     public async Task Build_ReadsTheSettings_RomHeaderSaveTypeStartSceneSplashRemap()
     {

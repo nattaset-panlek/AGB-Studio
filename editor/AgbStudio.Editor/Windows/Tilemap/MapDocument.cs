@@ -95,6 +95,15 @@ public sealed class MapDocument
         TilesetVersion++;
     }
 
+    /// <summary>Reads the .map again after another editor wrote it (only while there are no unsaved edits here).</summary>
+    public void ReloadMap()
+    {
+        if (IsDirty || !File.Exists(Path)) return;
+        Map = JsonSerializer.Deserialize<MapFile>(File.ReadAllText(Path), GameProject.Json) ?? Map;
+        Version++;
+        Changed?.Invoke(MapChange.All);
+    }
+
     // ---- saving ------------------------------------------------------------------------------------
 
     public string Serialize()

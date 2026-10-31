@@ -211,6 +211,8 @@ public sealed class LauncherService
     public string DefaultLocationBase()
     {
         if (ProjectsFolder != null) return ProjectsFolder;
+        // Preferences › Paths › Projects folder
+        if (Preferences.Expand(Services.Preferences.Current.ProjectsFolder) is { Length: > 0 } chosen) return chosen;
         foreach (var r in Services.Recent.Items)
         {
             var root = System.IO.Path.GetDirectoryName(r.Path);
@@ -231,12 +233,12 @@ public sealed class LauncherService
 
     public Task<bool> OpenSelectedAsync(string source) => _selected is { } s ? OpenAsync(s.Path, source) : Task.FromResult(false);
 
-    /// <summary>Unsaved Changes (T-D12) before another project replaces the open one. False = stay.</summary>
-    public async Task<bool> ConfirmUnsavedAsync()
+    /// <summary>Unsaved Changes (T-D12) before another project replaces the open one (opened, or a new one created). False = stay.</summary>
+    public async Task<bool> ConfirmUnsavedAsync(UnsavedReason reason = UnsavedReason.OpenProject)
     {
         var docs = Services.Documents;
         if (!docs.HasUnsaved) return true;
-        var result = await Services.Windows.Open("T-D12", docs.Dirty, source: "OpenProject") as string;
+        var result = await Services.Windows.Open("T-D12", new UnsavedChangesArgs(docs.Dirty, reason), source: reason == UnsavedReason.OpenProject ? "OpenProject" : "NewProject") as string;
         if (result == "save") { await docs.SaveAllAsync(); return true; }
         return result == "discard";
     }
@@ -406,7 +408,7 @@ public sealed class LauncherService
         }
         if (Directory.Exists(root) && !DeleteFolder(root))
         {
-            Services.Toasts.Show($"Could not delete {root}.", ToastStatus.Error);
+            Services.Toasts.Show($"Could not move {root} to the Recycle Bin. Close programs that use files in it, then try again.", ToastStatus.Error);
             return false;
         }
         Services.Recent.Remove(s.Path);

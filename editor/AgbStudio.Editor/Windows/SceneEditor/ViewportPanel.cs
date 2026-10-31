@@ -31,7 +31,12 @@ public sealed class ViewportPanel : Panel
     public Chip GridChip { get; } = new() { Glyph = "grid", Name = "GridChip" };
     public Chip ZoomChip { get; } = new() { Name = "ZoomChip" };
 
-    public ViewportPanel(WindowContext ctx) : this(ctx.Services) { }
+    public ViewportPanel(WindowContext ctx) : this(ctx.Services)
+    {
+        // opened for a scene file (Command Palette, World Map › Open): show that scene
+        if (ctx.Args is string path && path.EndsWith(".scene", StringComparison.OrdinalIgnoreCase) && GameProject.AssetName(path) != _m.SceneName)
+            _m.OpenScene(GameProject.AssetName(path));
+    }
 
     public ViewportPanel(EditorServices s)
     {
@@ -110,6 +115,9 @@ public sealed class ViewportPanel : Panel
                 _m.Grid.ShowGrid = !_m.Grid.ShowGrid;
                 _m.GridChanged();
             };
+        // Select / Move / Paint tiles / Fill / Erase of the toolbar
+        _m.Tool = (SceneTool)Math.Max(0, ws.ActiveTool);
+        ws.ToolChanged += i => _m.Tool = (SceneTool)i;
         _videoChip = ws.GetVisualDescendants().OfType<Chip>().FirstOrDefault(c => c.Name == "VideoModeChip");
         UpdateVideoChip();
     }
@@ -137,6 +145,7 @@ public sealed class GbaScreenView : Control
     bool _panning;
     (int X, int Y) _panStart;
     bool _spaceDown;
+    bool _painting;
 
     public GbaScreenView(SceneEditorModel m)
     {
@@ -250,11 +259,43 @@ public sealed class GbaScreenView : Control
             ctx.DrawImage(_bitmap, new Rect(0, 0, 240, 160), screen);
         using (ctx.PushClip(screen))
         {
-            if (_m.Grid.TileCollision) DrawCollision(ctx, k);
+            if (_m.Grid.TileCollision && _m.CollisionOverlayAllowed) DrawCollision(ctx, k);
+            if (PixelGridShown) DrawPixelGrid(ctx, screen, k);
             if (_m.Grid.ShowGrid && _m.Grid.Size > 0) DrawGrid(ctx, screen, k);
             if (_m.Grid.CameraBounds) DrawCameraBounds(ctx, k);
-            DrawSelection(ctx, k);
+            if (_m.IsTileTool) DrawBrush(ctx, k);
+            else DrawSelection(ctx, k);
         }
+    }
+
+    /// <summary>Paint tiles / Fill / Erase: the brush outline on the cell under the pointer.</summary>
+    void DrawBrush(DrawingContext ctx, double k)
+    {
+        var layer = _m.PaintLayer;
+        if (_m.Cursor is not { } c || layer < 0) return;
+        var (cx, cy) = _m.CellAt(layer, c.X, c.Y);
+        var l = _m.Map!.Layers[layer];
+        var cam = _m.Camera;
+        // the cell's top-left back in scene pixels (the layer scrolls with its parallax)
+        int sx = cx * 16 - ((cam.X * AgbStudio.Build.Pipeline.Cpp.Parallax(l.ParallaxX)) >> 8) + cam.X;
+        int sy = cy * 16 - ((cam.Y * AgbStudio.Build.Pipeline.Cpp.Parallax(l.ParallaxY)) >> 8) + cam.Y;
+        var (_, w, h) = _m.Tool == SceneTool.Fill ? ([0], 1, 1) : _m.Brush;
+        var tl = ToView(sx, sy);
+        var pen = new Pen(_m.Tool == SceneTool.Erase ? Token("status/danger") : Token("accent/default"), 2);
+        ctx.DrawRectangle(null, pen, new Rect(Math.Round(tl.X) + 1, Math.Round(tl.Y) + 1, w * 16 * k - 2, h * 16 * k - 2));
+    }
+
+    /// <summary>The tile tool acts at a point of this control (scene pixel under it).</summary>
+    bool PaintAt(Point p)
+    {
+        var (x, y) = ToScene(p);
+        return _m.Tool switch
+        {
+            SceneTool.Paint => _m.PaintAt(x, y),
+            SceneTool.Erase => _m.EraseAt(x, y),
+            SceneTool.Fill => _m.FillAt(x, y),
+            _ => false,
+        };
     }
 
     /// <summary>The collision type of each tile of the collision layer (Grid &amp; Snap › Tile collision).</summary>
@@ -321,6 +362,17 @@ public sealed class GbaScreenView : Control
 
     IBrush? Token(string key) => this.FindResource(key) as IBrush ?? Application.Current?.FindResource(key) as IBrush;
 
+    /// <summary>Preferences › Appearance: the grid between game pixels at 400% and above.</summary>
+    public bool PixelGridShown => _m.Services.Preferences.Current.PixelGridAt(Scale);
+
+    void DrawPixelGrid(DrawingContext ctx, Rect screen, double k)
+    {
+        if (Token("lit/white") is not ISolidColorBrush b) return;
+        var pen = new Pen(new SolidColorBrush(b.Color, 0.06), 1);
+        for (var x = 1; x < 240; x++) { var vx = Math.Round(screen.X + x * k) + 0.5; ctx.DrawLine(pen, new Point(vx, screen.Top), new Point(vx, screen.Bottom)); }
+        for (var y = 1; y < 160; y++) { var vy = Math.Round(screen.Y + y * k) + 0.5; ctx.DrawLine(pen, new Point(screen.Left, vy), new Point(screen.Right, vy)); }
+    }
+
     void DrawGrid(DrawingContext ctx, Rect screen, double k)
     {
         var colour = _m.Grid.Colour switch { 1 => Token("accent/default"), 2 => Token("status/danger"), _ => Token("lit/white") };
@@ -381,6 +433,16 @@ public sealed class GbaScreenView : Control
             e.Handled = true;
             return;
         }
+        if (pt.Properties.IsLeftButtonPressed && _m.IsTileTool)
+        {
+            // Paint tiles and Erase paint while the button is held (one undo step per stroke); Fill fills once
+            _m.BeginStroke();
+            PaintAt(p);
+            _painting = _m.Tool != SceneTool.Fill;
+            if (_painting) e.Pointer.Capture(this);
+            e.Handled = true;
+            return;
+        }
         var actor = ActorAt(p);
         if (pt.Properties.IsRightButtonPressed)
         {
@@ -424,6 +486,11 @@ public sealed class GbaScreenView : Control
             _m.SetPan(_panStart.X + dx, _panStart.Y + dy);
             return;
         }
+        if (_painting)
+        {
+            if (inside) PaintAt(p);
+            return;
+        }
         if (_dragActor < 0) return;
         var mx = (int)Math.Round((p.X - _dragStart.X) / k);
         var my = (int)Math.Round((p.Y - _dragStart.Y) / k);
@@ -438,6 +505,7 @@ public sealed class GbaScreenView : Control
         base.OnPointerReleased(e);
         _dragActor = -1;
         _panning = false;
+        _painting = false;
         e.Pointer.Capture(null);
     }
 

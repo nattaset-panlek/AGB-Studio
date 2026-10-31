@@ -33,7 +33,7 @@ public sealed class AddNodePopover : Border, IOverlayContent
     /// <summary>The id of the node the popover added (tests).</summary>
     public string? Added { get; private set; }
 
-    public AddNodePopover(WindowContext ctx) : this(ctx.Args as AddNodeRequest) { }
+    public AddNodePopover(WindowContext ctx) : this(ctx.Args as AddNodeRequest, (ctx.Args as AddNodeRequest)?.Query) { }
 
     public AddNodePopover(AddNodeRequest? request, string? query = null)
     {

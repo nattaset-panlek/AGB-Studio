@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 01:31:16Z",
+  "generated": "2026-10-31 02:52:05Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -398,120 +398,120 @@
       "set": "Button",
       "figma": "78x26",
       "app": "78x26",
-      "DiffPercent": 9.42,
-      "BestShiftDiffPercent": 9.42,
+      "DiffPercent": 10.4,
+      "BestShiftDiffPercent": 10.4,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 30.29,
-      "ColourDiffPercent": 97.09
+      "MeanChannelError": 7.11,
+      "ColourDiffPercent": 16.12
     },
     {
       "Id": "C-button-secondary-sm-pressed",
       "set": "Button",
       "figma": "80x26",
       "app": "80x26",
-      "DiffPercent": 7.69,
-      "BestShiftDiffPercent": 7.69,
+      "DiffPercent": 7.64,
+      "BestShiftDiffPercent": 7.64,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 22.66,
-      "ColourDiffPercent": 88.65
+      "MeanChannelError": 9.42,
+      "ColourDiffPercent": 16.68
     },
     {
       "Id": "C-button-ghost-sm-pressed",
       "set": "Button",
       "figma": "78x26",
       "app": "78x26",
-      "DiffPercent": 4.64,
-      "BestShiftDiffPercent": 4.64,
+      "DiffPercent": 3.5,
+      "BestShiftDiffPercent": 3.5,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 20.62,
-      "ColourDiffPercent": 95.27
+      "MeanChannelError": 5.42,
+      "ColourDiffPercent": 13.26
     },
     {
       "Id": "C-button-danger-sm-pressed",
       "set": "Button",
       "figma": "78x26",
       "app": "78x26",
-      "DiffPercent": 8.43,
-      "BestShiftDiffPercent": 8.43,
+      "DiffPercent": 9.22,
+      "BestShiftDiffPercent": 9.22,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 28.97,
-      "ColourDiffPercent": 97.09
+      "MeanChannelError": 7.23,
+      "ColourDiffPercent": 16.12
     },
     {
       "Id": "C-button-primary-lg-pressed",
       "set": "Button",
       "figma": "88x32",
       "app": "88x32",
-      "DiffPercent": 6.46,
-      "BestShiftDiffPercent": 6.46,
+      "DiffPercent": 6.39,
+      "BestShiftDiffPercent": 6.39,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 28.88,
-      "ColourDiffPercent": 96.66
+      "MeanChannelError": 4.45,
+      "ColourDiffPercent": 11.79
     },
     {
       "Id": "C-button-secondary-lg-pressed",
       "set": "Button",
       "figma": "90x32",
       "app": "90x32",
-      "DiffPercent": 5.83,
-      "BestShiftDiffPercent": 5.83,
+      "DiffPercent": 5.87,
+      "BestShiftDiffPercent": 5.87,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 21.01,
-      "ColourDiffPercent": 89.1
+      "MeanChannelError": 6.76,
+      "ColourDiffPercent": 11.81
     },
     {
       "Id": "C-button-ghost-lg-pressed",
       "set": "Button",
       "figma": "88x32",
       "app": "88x32",
-      "DiffPercent": 3.73,
-      "BestShiftDiffPercent": 3.73,
+      "DiffPercent": 3.23,
+      "BestShiftDiffPercent": 3.23,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 19.87,
-      "ColourDiffPercent": 95.67
+      "MeanChannelError": 3.95,
+      "ColourDiffPercent": 9.27
     },
     {
       "Id": "C-button-danger-lg-pressed",
       "set": "Button",
       "figma": "88x32",
       "app": "88x32",
-      "DiffPercent": 5.89,
-      "BestShiftDiffPercent": 5.89,
+      "DiffPercent": 5.72,
+      "BestShiftDiffPercent": 5.72,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 27.5,
-      "ColourDiffPercent": 96.95
+      "MeanChannelError": 4.58,
+      "ColourDiffPercent": 11.68
     },
     {
       "Id": "C-button-primary-sm-disabled",
@@ -698,15 +698,15 @@
       "set": "Icon Button",
       "figma": "28x26",
       "app": "28x26",
-      "DiffPercent": 5.49,
-      "BestShiftDiffPercent": 4.53,
+      "DiffPercent": 6.73,
+      "BestShiftDiffPercent": 5.22,
       "shift": [
-        0,
-        -1
+        1,
+        0
       ],
       "LayoutOffset": 1,
-      "MeanChannelError": 6.51,
-      "ColourDiffPercent": 8.79
+      "MeanChannelError": 6.83,
+      "ColourDiffPercent": 8.52
     },
     {
       "Id": "C-play-control-play",
@@ -3233,30 +3233,30 @@
       "set": "frame Scene Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 14.06,
-      "BestShiftDiffPercent": 14.06,
+      "DiffPercent": 14.09,
+      "BestShiftDiffPercent": 14.09,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 14.95,
-      "ColourDiffPercent": 30.49
+      "MeanChannelError": 15.02,
+      "ColourDiffPercent": 30.79
     },
     {
       "Id": "T-L01",
       "set": "frame Scene Editor \u00B7 Light",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 14.24,
-      "BestShiftDiffPercent": 14.24,
+      "DiffPercent": 14.26,
+      "BestShiftDiffPercent": 14.26,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 15.27,
-      "ColourDiffPercent": 30.56
+      "MeanChannelError": 15.31,
+      "ColourDiffPercent": 30.86
     },
     {
       "Id": "T-O07",
@@ -3278,15 +3278,15 @@
       "set": "frame Keyboard Shortcuts",
       "figma": "760x390",
       "app": "760x390",
-      "DiffPercent": 0.88,
-      "BestShiftDiffPercent": 0.88,
+      "DiffPercent": 1.18,
+      "BestShiftDiffPercent": 1.18,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 0.99,
-      "ColourDiffPercent": 1.95
+      "MeanChannelError": 1.3,
+      "ColourDiffPercent": 2.29
     },
     {
       "Id": "T-D12",
@@ -3848,15 +3848,15 @@
       "set": "frame Play Mode",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 12.77,
-      "BestShiftDiffPercent": 12.77,
+      "DiffPercent": 13.08,
+      "BestShiftDiffPercent": 13.08,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 11.99,
-      "ColourDiffPercent": 30.52
+      "MeanChannelError": 12.45,
+      "ColourDiffPercent": 30.83
     },
     {
       "Id": "T-M18",
@@ -3878,23 +3878,23 @@
       "set": "frame Debugger",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 5.25,
-      "BestShiftDiffPercent": 5.25,
+      "DiffPercent": 5.26,
+      "BestShiftDiffPercent": 5.26,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 6.38,
-      "ColourDiffPercent": 7.41
+      "MeanChannelError": 6.39,
+      "ColourDiffPercent": 7.44
     },
     {
       "Id": "T-P23",
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.19,
-      "BestShiftDiffPercent": 3.19,
+      "DiffPercent": 3.2,
+      "BestShiftDiffPercent": 3.2,
       "shift": [
         0,
         0
@@ -3908,15 +3908,15 @@
       "set": "frame Debugger \u00B7 Palettes",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.53,
-      "BestShiftDiffPercent": 2.53,
+      "DiffPercent": 2.51,
+      "BestShiftDiffPercent": 2.51,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.13,
-      "ColourDiffPercent": 5.27
+      "MeanChannelError": 3.03,
+      "ColourDiffPercent": 4.67
     },
     {
       "Id": "T-P05",
@@ -3984,14 +3984,14 @@
       "figma": "320x356",
       "app": "320x356",
       "DiffPercent": 7.18,
-      "BestShiftDiffPercent": 6.98,
+      "BestShiftDiffPercent": 6.97,
       "shift": [
         0,
         -1
       ],
       "LayoutOffset": 1,
-      "MeanChannelError": 6.71,
-      "ColourDiffPercent": 11.27
+      "MeanChannelError": 6.7,
+      "ColourDiffPercent": 11.24
     },
     {
       "Id": "T-O02",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.74,
-      "BestShiftDiffPercent": 2.74,
+      "DiffPercent": 2.7,
+      "BestShiftDiffPercent": 2.7,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.24,
-      "ColourDiffPercent": 4.96
+      "MeanChannelError": 3.17,
+      "ColourDiffPercent": 4.93
     },
     {
       "Id": "T-D14",
@@ -4253,15 +4253,15 @@
       "set": "frame Logic Graph",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 4.01,
-      "BestShiftDiffPercent": 4.01,
+      "DiffPercent": 5.77,
+      "BestShiftDiffPercent": 5.77,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 7.11,
-      "ColourDiffPercent": 9.87
+      "MeanChannelError": 8.95,
+      "ColourDiffPercent": 13.1
     },
     {
       "Id": "T-O08",
@@ -4283,15 +4283,15 @@
       "set": "menu Node Context Menu",
       "figma": "264x175",
       "app": "264x175",
-      "DiffPercent": 2.68,
-      "BestShiftDiffPercent": 2.68,
+      "DiffPercent": 2.05,
+      "BestShiftDiffPercent": 2.05,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.8,
-      "ColourDiffPercent": 5.92
+      "MeanChannelError": 2.22,
+      "ColourDiffPercent": 4.81
     },
     {
       "Id": "T-P13",
@@ -4478,14 +4478,14 @@
       "set": "frame Preferences \u00B7 Paths",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.38,
-      "BestShiftDiffPercent": 1.38,
+      "DiffPercent": 1.39,
+      "BestShiftDiffPercent": 1.39,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 1.78,
+      "MeanChannelError": 1.79,
       "ColourDiffPercent": 3.02
     },
     {
@@ -4553,15 +4553,15 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.72,
-      "BestShiftDiffPercent": 1.72,
+      "DiffPercent": 1.69,
+      "BestShiftDiffPercent": 1.69,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.47,
-      "ColourDiffPercent": 5.11
+      "MeanChannelError": 2.43,
+      "ColourDiffPercent": 5.08
     },
     {
       "Id": "T-P10",
@@ -4681,7 +4681,7 @@
       ],
       "LayoutOffset": 0,
       "MeanChannelError": 14.43,
-      "ColourDiffPercent": 14.03
+      "ColourDiffPercent": 14.04
     },
     {
       "Id": "T-D15",

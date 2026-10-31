@@ -13,6 +13,9 @@ public sealed record SceneItem(SceneItemKind Kind, int Index = -1, string Name =
     public static SceneItem ForActor(int index) => new(SceneItemKind.Actor, index);
 }
 
+/// <summary>The Scene Editor tools (toolbar, left to right): Select (V), Move (M), Paint tiles (B), Fill, Erase.</summary>
+public enum SceneTool { Select, Move, Paint, Fill, Erase }
+
 /// <summary>Grid &amp; Snap (T-O03): size 8 / 16 / 32, show grid, snap, tile collision, camera bounds, grid colour.</summary>
 public sealed class GridSettings
 {
@@ -51,14 +54,27 @@ public sealed class SceneEditorModel
     SceneEditorModel(EditorServices s)
     {
         _s = s;
+        ApplyDefaultSnap();
         s.Project.Changed += () =>
         {
             _assets = null;
+            ApplyDefaultSnap();
             OpenDefault();
         };
     }
 
     public EditorServices Services => _s;
+
+    /// <summary>Preferences › Editor › Default snap (8 / 16 / 32 px) is the grid a project opens with; 0 turns snapping off.</summary>
+    void ApplyDefaultSnap()
+    {
+        var snap = _s.Preferences.Current.DefaultSnap;
+        if (snap is 8 or 16 or 32) { Grid.Size = snap; Grid.Snap = true; }
+        else if (snap <= 0) Grid.Snap = false;
+    }
+
+    /// <summary>Preferences › Editor › "Show collision overlay in Scene": off hides Grid &amp; Snap › Tile collision in the viewport.</summary>
+    public bool CollisionOverlayAllowed => _s.Preferences.Current.ShowCollisionOverlay;
     public GameProject? Project => _s.Project.Current;
     public SceneAssets? Assets => Project is { } p ? _assets?.Project == p ? _assets : _assets = new SceneAssets(p) : null;
 
@@ -327,7 +343,12 @@ public sealed class SceneEditorModel
     void Write()
     {
         if (ScenePath != null && Scene != null) GameProject.Save(ScenePath, Scene);
-        if (MapPath != null && Map != null) GameProject.Save(MapPath, Map);
+        if (MapPath != null && Map != null)
+        {
+            GameProject.Save(MapPath, Map);
+            // the Tilemap Editor reads the map again when it has no unsaved edits of its own
+            (_s.GetService(typeof(Tilemap.MapLibrary)) as Tilemap.MapLibrary)?.FileChanged(MapPath);
+        }
     }
 
     void Restore(string scenePath, string scene, string map, SceneItem? selection)
@@ -536,6 +557,128 @@ public sealed class SceneEditorModel
         a.X += Grid.Size;
         a.Y += Grid.Size;
         return AddActor(a, "Paste");
+    }
+
+    // ---- tile painting (Paint tiles B, Fill, Erase) ------------------------------------------------------
+
+    SceneTool _tool;
+    int _stroke;
+
+    /// <summary>The toolbar tool: Select and Move pick and drag actors; Paint tiles, Fill and Erase edit the map.</summary>
+    public SceneTool Tool
+    {
+        get => _tool;
+        set { if (_tool == value) return; _tool = value; ViewChanged?.Invoke(); }
+    }
+
+    public bool IsTileTool => _tool is SceneTool.Paint or SceneTool.Fill or SceneTool.Erase;
+
+    /// <summary>
+    /// The map layer the tile tools paint: the layer selected in the Hierarchy when it has cells, else the collision
+    /// layer (the ground), else the first tile layer; -1 when the scene has no paintable layer.
+    /// </summary>
+    public int PaintLayer
+    {
+        get
+        {
+            if (Map is not { } map) return -1;
+            bool Paintable(int i) => i >= 0 && i < map.Layers.Count && map.Layers[i].Type is LayerType.Tile or LayerType.CollisionOnly
+                                     && map.Layers[i].Cells.Count == map.Width * map.Height;
+            if (_selection is { Kind: SceneItemKind.Layer } l && Paintable(l.Index)) return l.Index;
+            if (Paintable(map.CollisionLayer) && map.Layers[map.CollisionLayer].Type == LayerType.Tile) return map.CollisionLayer;
+            for (var i = 0; i < map.Layers.Count; i++) if (map.Layers[i].Type == LayerType.Tile && Paintable(i)) return i;
+            return -1;
+        }
+    }
+
+    /// <summary>
+    /// The brush: the Tilemap Editor's stamp when that editor has this map open (tiles chosen in its tileset panel),
+    /// else the first named tile of the tileset (grass_top in Sky Hopper). Cells are metatile ids, row by row.
+    /// </summary>
+    public (int[] Cells, int Width, int Height) Brush
+    {
+        get
+        {
+            if (_s.GetService(typeof(Tilemap.MapLibrary)) is Tilemap.MapLibrary lib && lib.Active is { } ses && MapPath != null
+                && string.Equals(ses.Doc.Path, Path.GetFullPath(MapPath), StringComparison.OrdinalIgnoreCase))
+                return (ses.Stamp, ses.StampWidth, ses.StampHeight);
+            var path = Map is { } m ? Assets?.TilesetPath(m.Tileset) : null;
+            var meta = path != null ? Project!.LoadMeta<TilesetMeta>(path) : null;
+            var first = meta?.Tiles.Where(t => t.Key > 0 && t.Value.Name.Length > 0).Select(t => t.Key).DefaultIfEmpty(1).Min() ?? 1;
+            return ([first], 1, 1);
+        }
+    }
+
+    /// <summary>The cell of a layer under a scene pixel, with the layer's parallax as the ROM scrolls it.</summary>
+    public (int X, int Y) CellAt(int layer, int sceneX, int sceneY)
+    {
+        var l = Map!.Layers[layer];
+        var (camX, camY) = Camera;
+        int lx = ((camX * AgbStudio.Build.Pipeline.Cpp.Parallax(l.ParallaxX)) >> 8) + sceneX - camX;
+        int ly = ((camY * AgbStudio.Build.Pipeline.Cpp.Parallax(l.ParallaxY)) >> 8) + sceneY - camY;
+        return ((int)Math.Floor(lx / 16.0), (int)Math.Floor(ly / 16.0));
+    }
+
+    /// <summary>Starts a stroke: the cells painted until the next one are one undo step.</summary>
+    public void BeginStroke() => _stroke++;
+
+    int CellIndex(int x, int y) => x < 0 || y < 0 || x >= Map!.Width || y >= Map.Height ? -1 : y * Map.Width + x;
+
+    /// <summary>Paint tiles: the brush with its top-left at the cell under the scene pixel. False when nothing changed.</summary>
+    public bool PaintAt(int sceneX, int sceneY) => StrokeAt(sceneX, sceneY, erase: false);
+
+    /// <summary>Erase: empties the cells under the brush.</summary>
+    public bool EraseAt(int sceneX, int sceneY) => StrokeAt(sceneX, sceneY, erase: true);
+
+    bool StrokeAt(int sceneX, int sceneY, bool erase)
+    {
+        var layer = PaintLayer;
+        if (layer < 0) return false;
+        var (cx, cy) = CellAt(layer, sceneX, sceneY);
+        var (cells, w, h) = Brush;
+        var cellsOf = Map!.Layers[layer].Cells;
+        var changes = new List<(int Index, int Tile)>();
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+                if (CellIndex(cx + x, cy + y) is var i and >= 0 && cellsOf[i] != (erase ? 0 : cells[y * w + x]))
+                    changes.Add((i, erase ? 0 : cells[y * w + x]));
+        if (changes.Count == 0) return false;
+        Edit(erase ? "Erase" : "Paint tiles", () => { foreach (var (i, t) in changes) Map.Layers[layer].Cells[i] = t; }, "stroke:" + _stroke);
+        return true;
+    }
+
+    /// <summary>Fill: the connected cells equal to the clicked one take the brush pattern (one undo step).</summary>
+    public bool FillAt(int sceneX, int sceneY)
+    {
+        var layer = PaintLayer;
+        if (layer < 0) return false;
+        var (sx, sy) = CellAt(layer, sceneX, sceneY);
+        if (CellIndex(sx, sy) < 0) return false;
+        var map = Map!;
+        var cells = map.Layers[layer].Cells;
+        var (brush, bw, bh) = Brush;
+        static int Mod(int a, int m) => ((a % m) + m) % m;
+        var target = cells[CellIndex(sx, sy)];
+        var seen = new bool[map.Width * map.Height];
+        var queue = new Queue<(int X, int Y)>();
+        var changes = new List<(int Index, int Tile)>();
+        queue.Enqueue((sx, sy));
+        seen[CellIndex(sx, sy)] = true;
+        while (queue.Count > 0)
+        {
+            var (x, y) = queue.Dequeue();
+            changes.Add((CellIndex(x, y), brush[Mod(y - sy, bh) * bw + Mod(x - sx, bw)]));
+            foreach (var (nx, ny) in new[] { (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1) })
+            {
+                var n = CellIndex(nx, ny);
+                if (n < 0 || seen[n]) continue;
+                seen[n] = true;
+                if (cells[n] == target) queue.Enqueue((nx, ny));
+            }
+        }
+        if (changes.All(c => cells[c.Index] == c.Tile)) return false;
+        Edit("Fill", () => { foreach (var (i, t) in changes) map.Layers[layer].Cells[i] = t; });
+        return true;
     }
 
     /// <summary>Changes the open scene or its map (Scene Settings, Video Mode, Inspector header).</summary>

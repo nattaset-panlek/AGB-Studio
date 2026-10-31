@@ -35,6 +35,15 @@ public static class PlayCommands
     [CommandHandler("build.buildAndRun")]
     public static void BuildAndRun(EditorServices s) => Start(s, PlayStart.BuildAndRun, "build.buildAndRun");
 
+    /// <summary>Pause and Step act on a running game only: disabled until Play runs (the toolbars of every page bind them).</summary>
+    [EditorStartup]
+    public static void RequireRunningGame(EditorServices s)
+    {
+        bool Running() => s.GetService(typeof(PlayController)) is PlayController c && c.IsRunning;
+        s.Commands.Get("play.pause").Require(Running);
+        s.Commands.Get("play.frameStep").Require(Running);
+    }
+
     [EditorCommand("play.pause", "Pause", Category = "Build", Glyph = "pause")]
     public static void Pause(EditorServices s) => PlayController.Of(s).TogglePause();
 

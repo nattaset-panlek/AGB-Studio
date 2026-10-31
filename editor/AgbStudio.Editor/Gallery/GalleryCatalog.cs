@@ -19,6 +19,14 @@ public static class GalleryCatalog
     /// <summary>Sets a state pseudo-class on a control, or on a named part of its template.</summary>
     public static T Force<T>(T c, string pseudo, string? part = null) where T : Control
     {
+        // a Button sets :pressed from IsPressed whenever its state changes, so the gallery holds the button pressed
+        if (part is null && pseudo == ":pressed" && c is Button b)
+        {
+            var isPressed = typeof(Button).GetProperty(nameof(Button.IsPressed))!.GetSetMethod(nonPublic: true)!;
+            b.AttachedToVisualTree += (_, _) => isPressed.Invoke(b, [true]);
+            isPressed.Invoke(b, [true]);
+            return c;
+        }
         if (part is null) { ((IPseudoClasses)c.Classes).Add(pseudo); return c; }
         if (c is Avalonia.Controls.Primitives.TemplatedControl tc)
             tc.TemplateApplied += (_, e) => { if (e.NameScope.Find<Control>(part) is { } p) ((IPseudoClasses)p.Classes).Add(pseudo); };

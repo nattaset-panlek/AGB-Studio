@@ -48,6 +48,14 @@ public sealed class ConsoleLog
 
     public void Info(string text) => Add(ConsoleLevel.Info, text);
 
+    /// <summary>Adds a line made elsewhere with its own time (the game's log lines from Play Mode).</summary>
+    public void Add(ConsoleEntry e)
+    {
+        _entries.Add(e);
+        if (_entries.Count > MaxEntries) _entries.RemoveRange(0, _entries.Count - MaxEntries);
+        Changed?.Invoke();
+    }
+
     public void Clear()
     {
         _entries.Clear();
@@ -67,6 +75,10 @@ public sealed class ConsoleLog
         {
             var size = File.Exists(r.RomPath) ? new FileInfo(r.RomPath).Length : 0;
             Add(ConsoleLevel.Success, string.Create(CultureInfo.InvariantCulture, $"Build OK in {r.Elapsed.TotalSeconds:0.00} s · {Path.GetFileName(r.RomPath)} {(size + 1023) / 1024} KB"));
+        }
+        else if (r.Diagnostics.Any(d => d.Message == "Build cancelled."))
+        {
+            Add(ConsoleLevel.Warning, "Build cancelled · the last built ROM is unchanged");
         }
         else
         {

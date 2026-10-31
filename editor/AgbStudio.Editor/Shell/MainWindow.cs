@@ -35,6 +35,7 @@ public sealed class MainWindow : Window, IShellHost
     {
         _s = s;
         Title = "AGB Studio";
+        Icon = Graphics.WindowIcons.App();
         Width = 1440;
         Height = 900;
         MinWidth = 960;
@@ -175,7 +176,7 @@ public sealed class MainWindow : Window, IShellHost
     {
         if (!_s.Documents.HasUnsaved) return true;
         var dirty = _s.Documents.Dirty;
-        var result = await _s.Windows.Open("T-D12", dirty, source: "Exit") as string;
+        var result = await _s.Windows.Open("T-D12", new UnsavedChangesArgs(dirty, UnsavedReason.Exit), source: "Exit") as string;
         if (result == "save") { await _s.Documents.SaveAllAsync(); return true; }
         return result == "discard";
     }

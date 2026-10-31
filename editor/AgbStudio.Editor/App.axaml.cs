@@ -23,16 +23,10 @@ public partial class App : Application
                 return;
             }
             Services = EditorServices.CreateDefault(this);
-            var prefs = Services.Preferences.Current;
-            // P10.15: open the last project on start, if set and still there
-            if (prefs.OpenLastProjectOnStart && prefs.LastProject is { } last && File.Exists(last))
-            {
-                try { Services.Project.Open(last); }
-                catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException) { }
-            }
-            // The Launcher (T-P12) is the start page when no project is open; until it is built the Scene Editor shell shows.
-            var start = Services.Project.Current is null && Services.Windows.IsRegistered("T-P12") ? "T-P12" : "T-P01";
-            desktop.MainWindow = new MainWindow(Services, start);
+            // G-ERR.06: an unexpected error saves the changed documents and writes a crash log
+            new AgbStudio.Editor.Services.CrashGuard(Services).Install();
+            // P10.15: the last project (Preferences › Editor "Open last project on start"), else the Launcher
+            desktop.MainWindow = new MainWindow(Services, AgbStudio.Editor.Services.Startup.Choose(Services));
         }
         base.OnFrameworkInitializationCompleted();
     }

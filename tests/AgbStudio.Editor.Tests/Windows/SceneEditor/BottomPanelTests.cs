@@ -7,6 +7,7 @@ using AgbStudio.Editor.Windows.Scripts;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
@@ -179,5 +180,106 @@ public sealed class BottomPanelTests : IDisposable
         _w.M.SelectActor(1);
         Capture.Pump();
         Assert.Equal(["idle"], _w.Find<StackPanel>("AnimationList").Children.OfType<ListRow>().Select(r => r.Label));
+    }
+
+    // P10.11: the Edit menu on asset cards: Copy / Paste, Duplicate, Delete, Cut / Paste, each undoable
+    [AvaloniaFact]
+    public void Assets_EditMenuCopyPasteDuplicateDeleteCut()
+    {
+        var p = _w.S.Project.Current!;
+        var dir = Path.GetDirectoryName(p.SpriteFiles().First(f => Path.GetFileName(f) == "coin.png"))!;
+        int Sprites() => p.SpriteFiles().Count();
+        var n = Sprites();
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        Capture.Pump();
+        // the shortcuts go to the Assets panel that has the selection
+        _w.Key(PhysicalKey.C, RawInputModifiers.Control);
+        _w.Key(PhysicalKey.V, RawInputModifiers.Control);
+        Assert.Equal(n + 1, Sprites());
+        Assert.True(File.Exists(Path.Combine(dir, "coin_copy.png")));
+        _w.S.Commands.Execute("edit.duplicate");
+        Assert.Equal(n + 2, Sprites());
+        _w.S.Commands.Execute("edit.undo");
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(n, Sprites());
+        // Cut removes the asset, Paste puts it back; Delete removes it, undo brings it back
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        _w.Key(PhysicalKey.X, RawInputModifiers.Control);
+        Assert.False(File.Exists(Path.Combine(dir, "coin.png")));
+        _w.S.Commands.Execute("edit.paste");
+        Assert.True(File.Exists(Path.Combine(dir, "coin.png")));
+        Assert.Equal(n, Sprites());
+        Capture.Pump();
+        _w.Click(Card("coin.png"));
+        _w.S.Commands.Execute("edit.delete");
+        Assert.False(File.Exists(Path.Combine(dir, "coin.png")));
+        _w.S.Commands.Execute("edit.undo");
+        Assert.True(File.Exists(Path.Combine(dir, "coin.png")));
+    }
+
+    // T-P06 / P11.17: speed (ticks) and frame order are edited in the panel, saved to the sprite meta, with undo
+    [AvaloniaFact]
+    public void Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo()
+    {
+        OpenTab("Animation");
+        var panel = _w.All<AnimationPanel>().Single();
+        SpriteMeta Disk() => _w.M.Assets!.SpriteMeta("hero");
+        // the animation of hero with the most frames: Figma's idle has 8, the fixture's 2
+        var k = Disk().Animations.Select((a, i) => (a.Frames.Count, i)).Max().i;
+        var idle = Disk().Animations[k];
+        Assert.True(idle.Frames.Count >= 3);
+        _w.Click(_w.Find<StackPanel>("AnimationList").Children.OfType<ListRow>().ElementAt(k));
+        Assert.Equal(idle.Name, panel.Current!.Name);
+        var ticks = idle.Ticks;
+        var order = idle.Frames.ToList();
+        FrameThumb[] Thumbs() { Capture.Pump(); return _w.Find<StackPanel>("AnimationFrames").GetVisualDescendants().OfType<FrameThumb>().ToArray(); }
+        TextBlock Speed() => _w.Find<TextBlock>("AnimationSpeed");
+        FrameThumb Thumb(int i, string step) { var t = Thumbs(); Assert.True(i < t.Length, $"{step}: {t.Length} frames, {panel.Current?.Name}"); return t[i]; }
+        // the wheel over the speed line: one more tick per frame
+        var at = _w.Center(Speed());
+        _w.Win.MouseMove(at);
+        _w.Win.MouseWheel(at, new Vector(0, 1));
+        Capture.Pump();
+        Assert.Equal(ticks + 1, Disk().Animations[k].Ticks);
+        Assert.Contains($"{ticks + 1} ticks", Speed().Text);
+        Assert.Equal($"1 · {ticks + 1}t", Thumb(0, "speed").Label);
+        // + / − keys with the panel focused
+        panel.Focus();
+        _w.Key(PhysicalKey.Minus);
+        _w.Key(PhysicalKey.Minus);
+        Assert.Equal(ticks - 1, Disk().Animations[k].Ticks);
+        _w.S.Commands.Execute("edit.undo");
+        _w.S.Commands.Execute("edit.undo");
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(ticks, Disk().Animations[k].Ticks);
+        // the wheel over one frame changes that frame's ticks only
+        var third = _w.Center(Thumb(2, "frame ticks"));
+        _w.Win.MouseMove(third);
+        _w.Win.MouseWheel(third, new Vector(0, 1));
+        Capture.Pump();
+        Assert.Equal(ticks + 1, Disk().Animations[k].FrameTicks![2]);
+        Assert.Equal(ticks, Disk().Animations[k].FrameTicks![0]);
+        Assert.Equal($"3 · {ticks + 1}t", Thumb(2, "frame ticks label").Label);
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Null(Disk().Animations[k].FrameTicks);
+        // dragging the first frame onto the third moves it there
+        _w.Drag(_w.Center(Thumb(0, "drag")), _w.Center(Thumb(2, "drag to")));
+        var moved = order.ToList();
+        moved.RemoveAt(0);
+        moved.Insert(2, order[0]);
+        Assert.Equal(moved, Disk().Animations[k].Frames);
+        Assert.Equal(2, panel.FrameIndex);
+        // Ctrl + ← moves the selected frame back one place
+        panel.Focus();
+        _w.Key(PhysicalKey.ArrowLeft, RawInputModifiers.Control);
+        Assert.Equal(1, panel.FrameIndex);
+        Assert.Equal(order[0], Disk().Animations[k].Frames[1]);
+        _w.S.Commands.Execute("edit.undo");
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(order, Disk().Animations[k].Frames);
+        _w.S.Commands.Execute("edit.redo");
+        Assert.Equal(moved, Disk().Animations[k].Frames);
     }
 }

@@ -62,12 +62,27 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
             ("libtonc", Path.Combine(tc.LibtoncLib, "libtonc.a")), ("maxmod", Path.Combine(tc.LibgbaLib, "libmm.a")),
         }.Where(t => !File.Exists(t.Item2)).ToList();
 
+    CancellationTokenSource? _cancel;
+
+    /// <summary>
+    /// G-ERR.04: stops the running build (closing Build ROM while it builds). The build ends with "Build cancelled.";
+    /// the ROM of the last good build stays as it was. False when nothing is building.
+    /// </summary>
+    public bool Cancel()
+    {
+        if (_cancel is null) return false;
+        _cancel.Cancel();
+        return true;
+    }
+
     /// <summary>Runs a build; <paramref name="observer"/> receives step / file progress (Build ROM dialog, T-D06).</summary>
     public async Task<BuildResult> BuildAsync(BuildOptions? options = null, IBuildObserver? observer = null)
     {
         var p = project.Current ?? throw new InvalidOperationException("No project is open.");
         if (IsBuilding) throw new InvalidOperationException("A build is already running.");
         IsBuilding = true;
+        _cancel = CancellationTokenSource.CreateLinkedTokenSource(options?.Cancel ?? CancellationToken.None);
+        options = new BuildOptions { Configuration = options?.Configuration, Clean = options?.Clean ?? false, Cancel = _cancel.Token };
         Started?.Invoke();
         try
         {
@@ -88,7 +103,12 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
             Finished?.Invoke(result);
             return result;
         }
-        finally { IsBuilding = false; }
+        finally
+        {
+            IsBuilding = false;
+            _cancel?.Dispose();
+            _cancel = null;
+        }
     }
 
     /// <summary>The last build report of the open project (Build Report page, T-P11), or null.</summary>

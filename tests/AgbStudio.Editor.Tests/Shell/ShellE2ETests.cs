@@ -82,7 +82,10 @@ public class ShellE2ETests : IDisposable
         _fx.Services.Commands.Execute("help.keyboardShortcuts");
         Capture.Pump();
         var dlg = Assert.IsType<KeyboardShortcutsDialog>(_win.Overlays.Open.Single());
-        Assert.Equal(KeyboardShortcutsDialog.Rows.Select(r => r.Label), dlg.VisibleLabels);
+        // the Figma rows lead their groups (General, Scene); every other shortcut follows them
+        var figma = KeyboardShortcutsDialog.Rows.Select(r => r.Label).ToList();
+        Assert.Equal(figma, dlg.VisibleLabels.Where(figma.Contains));
+        Assert.Equal(figma.Take(5), dlg.VisibleLabels.Take(5));
         dlg.Search.Text = "grid";
         Capture.Pump();
         Assert.Equal(["Toggle grid"], dlg.VisibleLabels);
@@ -117,6 +120,51 @@ public class ShellE2ETests : IDisposable
         Assert.Equal("Save", palette.Items[0].Label);
         Key(Avalonia.Input.Key.Escape);
         Assert.False(_win.Overlays.IsOpen);
+    }
+
+    // P10.12 / T-O07: a file result opens its editor; a .scene result switches the Scene Editor to that scene
+    [AvaloniaFact]
+    public void CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches()
+    {
+        var model = AgbStudio.Editor.Windows.SceneEditor.SceneEditorModel.Of(_fx.Services);
+        Assert.Equal("Forest_01", model.SceneName);
+        Key(Avalonia.Input.Key.K, RawInputModifiers.Control);
+        var palette = Assert.IsType<CommandPalette>(_win.Overlays.Open.Single());
+        palette.Query.Focus();
+        _win.KeyTextInput("Cave_01.scene");
+        Capture.Pump();
+        Assert.Equal("Cave_01.scene", palette.Items[palette.HighlightIndex].Label);
+        Key(Avalonia.Input.Key.Return);
+        Assert.False(_win.Overlays.IsOpen);
+        Assert.Equal("T-P01", _win.CurrentPageId);
+        Assert.Equal("Cave_01", model.SceneName);
+        Assert.Equal("Cave_01", _fx.Services.Project.Current!.Settings.LastScene);
+        Assert.Equal("Cave_01.scene", _win.TitleBar.Document);
+        Assert.Equal("Cave_01 · 24×40 tiles", Find<Chip>("SceneSizeChip").Content);
+        // a script result opens the Script Editor on that file
+        Key(Avalonia.Input.Key.K, RawInputModifiers.Control);
+        palette = Assert.IsType<CommandPalette>(_win.Overlays.Open.Single());
+        palette.Query.Focus();
+        _win.KeyTextInput("Slime.cs");
+        Capture.Pump();
+        Key(Avalonia.Input.Key.Return);
+        Assert.Equal("T-P04", _win.CurrentPageId);
+        Assert.Equal("Slime.cs", Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptEditorPage>(_win.CurrentPage).Buffer!.Name);
+    }
+
+    // T-R01 / P16.04: the app icon (16-256 px) on the window, the component gallery and AGBStudio.exe
+    [AvaloniaFact]
+    public void Window_HasTheAppIcon()
+    {
+        Assert.NotNull(_win.Icon);
+        Assert.NotNull(new AgbStudio.Editor.Gallery.ComponentGallery().Icon);
+        using var s = Avalonia.Platform.AssetLoader.Open(new Uri(AgbStudio.Editor.Graphics.WindowIcons.Uri));
+        var head = new byte[6 + 16 * 7];
+        s.ReadExactly(head);
+        Assert.Equal(7, BitConverter.ToUInt16(head, 4));
+        Assert.Equal([16, 24, 32, 48, 64, 128, 256], Enumerable.Range(0, 7).Select(i => head[6 + 16 * i] == 0 ? 256 : head[6 + 16 * i]));
+        Assert.Equal(File.ReadAllBytes(Repo.Path_("docs", "brand", "agb-studio.ico")), File.ReadAllBytes(Path.Combine(Repo.Editor, "Assets", "agb-studio.ico")));
+        Assert.Contains("<ApplicationIcon>Assets/agb-studio.ico</ApplicationIcon>", File.ReadAllText(Path.Combine(Repo.Editor, "AgbStudio.Editor.csproj")));
     }
 
     [AvaloniaFact]
@@ -233,6 +281,7 @@ public class ShellE2ETests : IDisposable
         Capture.Pump();
         var dlg = Assert.IsType<UnsavedChangesDialog>(_win.Overlays.Open.Single());
         Assert.Contains("2 files have changes", string.Join(" ", dlg.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
+        Assert.Equal("Save changes before exiting?", dlg.GetVisualDescendants().OfType<DialogHeader>().Single().Title);
         Key(Avalonia.Input.Key.Escape);
         Assert.False(await exit);
         exit = _win.ConfirmExitAsync();

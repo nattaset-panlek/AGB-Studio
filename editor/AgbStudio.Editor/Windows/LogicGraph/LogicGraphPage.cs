@@ -15,7 +15,7 @@ using Avalonia.Threading;
 namespace AgbStudio.Editor.Windows.LogicGraph;
 
 /// <summary>Where Add Node puts the new node (graph coordinates) and the output pin to connect from (Shift+Enter).</summary>
-public sealed record AddNodeRequest(LogicGraphPage Page, Point Position, (string Node, string Pin)? From);
+public sealed record AddNodeRequest(LogicGraphPage Page, Point Position, (string Node, string Pin)? From, string? Query = null);
 
 /// <summary>Open graphs of an editor instance (pages are views; a graph keeps its undo and dirty state across them).</summary>
 public sealed class GraphSession
@@ -57,6 +57,8 @@ public sealed class LogicGraphPage : DockPanel
     public GraphCanvas Canvas { get; }
     public CodeEditor Code { get; } = new() { Name = "GeneratedCode", TextStyleName = "Mono/11", ShowLineNumbers = false, TextPadding = new Thickness(10, 10, 10, 10) };
     public SearchField Search { get; } = new() { Watermark = "Add node…", Name = "NodeSearch" };
+    /// <summary>Preview: the project's scene as the ROM draws it, its sprite animations playing.</summary>
+    public ScenePreview Preview { get; }
     public bool InSync { get; private set; } = true;
     public string? SyncError { get; private set; }
 
@@ -87,16 +89,20 @@ public sealed class LogicGraphPage : DockPanel
         PageChrome.DockTo(left, new Border { Padding = new Thickness(10, 8, 10, 6), Child = Search }, Dock.Top);
         left.Children.Add(new ScrollViewer { Content = _palette });
         Search.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) RebuildPalette(); };
+        // Nodes › Add node… opens Add Node (T-O08) for the middle of the view; what is typed goes to its search
+        Search.AddHandler(PointerPressedEvent, (_, e) => { OpenAddNodeFromSearch(null); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        Search.AddHandler(TextInputEvent, (_, e) => { OpenAddNodeFromSearch(e.Text); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         Search.KeyDown += (_, e) =>
         {
-            if (e.Key != Key.Enter) return;
-            if (PaletteMatches().FirstOrDefault() is { } first) AddNode(first.Type, CenterOfView(), null);
+            if (e.Key is not (Key.Enter or Key.Down)) return;
+            OpenAddNodeFromSearch(null);
             e.Handled = true;
         };
 
         // ---- right: preview, inspector, generated C# ----
+        Preview = new ScenePreview(s) { Width = 294, Height = 194 };
         var preview = new Border { CornerRadius = new CornerRadius(8), ClipToBounds = true, Height = 194, Margin = new Thickness(13, 13, 13, 12), Name = "Preview",
-            Child = new ArtImage { Source = "art/scene/day", Width = 294, Height = 194 } };
+            Child = Preview };
         var codeBox = UI.Frame(Code, "bg/base", radius: 6);
         codeBox.ClipToBounds = true;
         codeBox.Height = 198;
@@ -371,6 +377,13 @@ public sealed class LogicGraphPage : DockPanel
     public void OpenAddNode(Point world, (string Node, string Pin)? from) =>
         _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, world, from), source: "GraphCanvas");
 
+    /// <summary>Nodes › Add node…: Add Node for the middle of the view, its search starting with <paramref name="text"/>.</summary>
+    public void OpenAddNodeFromSearch(string? text)
+    {
+        if (_s.Windows.Host?.Overlays.IsOpen == true) return;
+        _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, CenterOfView(), null, text), Search, source: "NodesAddNode");
+    }
+
     // ---- inspector -------------------------------------------------------------------------------------------
 
     void RebuildInspector()
@@ -499,7 +512,7 @@ public sealed class LogicGraphPage : DockPanel
     public static IReadOnlyList<MenuEntry> NodeContextMenu() =>
     [
         new CommandEntry("edit.duplicate"), new CommandEntry("graph.disable"), new CommandEntry("graph.groupIntoComment", Keys: "Ctrl+G"), new CommandEntry("graph.collapse"),
-        SeparatorEntry.Instance, new CommandEntry("graph.showCode", ShowIcon: true), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
+        SeparatorEntry.Instance, new CommandEntry("graph.showCode", ShowIcon: true), new CommandEntry("edit.delete", Danger: true),
     ];
 
     /// <summary>Disable / enable the selected nodes (disabled nodes are kept in the file but not compiled).</summary>

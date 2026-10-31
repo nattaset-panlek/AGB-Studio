@@ -14,6 +14,7 @@ public sealed class ComponentGallery : Window
     public ComponentGallery()
     {
         Title = "AGB Studio · Components";
+        Icon = Graphics.WindowIcons.App();
         Width = 1440;
         Height = 900;
         Avalonia.Media.RenderOptions.SetTextRenderingMode(this, Avalonia.Media.TextRenderingMode.Antialias);

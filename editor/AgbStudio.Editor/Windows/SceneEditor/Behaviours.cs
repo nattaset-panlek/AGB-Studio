@@ -91,7 +91,9 @@ public static class Behaviours
                     var min = f.Groups[1].Success ? double.Parse(f.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
                     var max = f.Groups[2].Success ? double.Parse(f.Groups[2].Value, CultureInfo.InvariantCulture) : 4;
                     var def = f.Groups[5].Success ? f.Groups[5].Value.Trim().Trim('"').TrimEnd('f') : "";
-                    fields.Add(new BehaviourField(f.Groups[4].Value, f.Groups[4].Value, TypeOf(f.Groups[3].Value), def, min, max, false));
+                    // P6.06: a [Range(min, max)] number is a slider in the Inspector; other public fields are text
+                    var type = TypeOf(f.Groups[3].Value);
+                    fields.Add(new BehaviourField(f.Groups[4].Value, f.Groups[4].Value, type, def, min, max, f.Groups[1].Success && type is FieldType.Fixed or FieldType.Int && max > min));
                 }
                 list.Add(new BehaviourDef(c.Groups[1].Value, c.Groups[1].Value, "Scripts", "script", "code", true, fields));
             }
@@ -126,6 +128,8 @@ public static class Behaviours
     {
         if (f.Type == FieldType.Fixed && f.Slider && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
             return v.ToString("0.00", CultureInfo.InvariantCulture);
+        if (f.Type == FieldType.Int && f.Slider && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var n))
+            return Math.Round(n).ToString(CultureInfo.InvariantCulture);
         return value;
     }
 }

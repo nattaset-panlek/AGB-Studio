@@ -71,6 +71,9 @@ public sealed class PixelCanvas : Control
     public IBrush? CheckerLight { get => GetValue(CheckerLightProperty); set => SetValue(CheckerLightProperty, value); }
     public IBrush? CheckerDark { get => GetValue(CheckerDarkProperty); set => SetValue(CheckerDarkProperty, value); }
     public IBrush? GridBrush { get => GetValue(GridBrushProperty); set => SetValue(GridBrushProperty, value); }
+
+    /// <summary>When the pixel grid shows (Preferences › Appearance: at 400% and above, or never); 4x by default.</summary>
+    public Func<double, bool> PixelGrid { get; set; } = z => z >= 4;
     public IBrush? TileGridBrush { get => GetValue(TileGridBrushProperty); set => SetValue(TileGridBrushProperty, value); }
     public IBrush? CursorBrush { get => GetValue(CursorBrushProperty); set => SetValue(CursorBrushProperty, value); }
 
@@ -171,7 +174,7 @@ public sealed class PixelCanvas : Control
                     if (OnionFrame >= 0 && OnionFrame != _frame && !Colour15.IsTransparent(Shown(OnionFrame, x, y)))
                         using (ctx.PushOpacity(0.35)) ctx.DrawRectangle(Brush(Shown(OnionFrame, x, y)), null, cell);
                     // the pixel grid shows on empty pixels only, so the art reads as solid shapes
-                    if (z >= 4 && GridBrush != null)
+                    if (PixelGrid(z) && GridBrush != null)
                     {
                         if (x > 0) ctx.DrawRectangle(GridBrush, null, new Rect(cell.X, cell.Y, 1, z));
                         if (y > 0) ctx.DrawRectangle(GridBrush, null, new Rect(cell.X, cell.Y, z, 1));

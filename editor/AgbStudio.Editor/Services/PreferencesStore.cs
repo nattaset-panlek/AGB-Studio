@@ -32,6 +32,10 @@ public sealed partial class Preferences
     public Dictionary<string, string> Shortcuts { get; set; } = new(StringComparer.Ordinal);
 
     public string? LastProject { get; set; }
+
+    /// <summary>Appearance › "Show pixel grid at 400% zoom and above": true when a view at this zoom (pixels per game
+    /// pixel; 4 = 400%) draws the grid between game pixels.</summary>
+    public bool PixelGridAt(double scale) => ShowPixelGrid && scale * 100 >= Math.Max(100, PixelGridMinZoom);
 }
 
 /// <summary>Loads and saves <see cref="Preferences"/> as JSON, by default in %APPDATA%\AGBStudio\preferences.json.</summary>

@@ -121,7 +121,9 @@ public class OpeningProjectTests
         h.S.Documents.Open[0].IsDirty = true;
         var open = h.Launcher.OpenAsync(other, "test");
         Capture.Pump();
-        Assert.IsType<UnsavedChangesDialog>(h.Win.Overlays.Open[^1]);
+        // P10.08: the title names the action (opening another project, not exiting)
+        var first = Assert.IsType<UnsavedChangesDialog>(h.Win.Overlays.Open[^1]);
+        Assert.Equal("Save changes before opening another project?", first.GetVisualDescendants().OfType<DialogHeader>().Single().Title);
         h.Key(PhysicalKey.Escape);   // stay
         Assert.False(await open);
         Assert.Equal("Sky Hopper", h.S.Project.Name);

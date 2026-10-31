@@ -173,7 +173,8 @@ public sealed class NotBuiltNotice : Border, IOverlayContent
         header.CloseRequested += (_, _) => Closed?.Invoke(null);
         var text = new TextBlock
         {
-            Text = $"{info.Id} {info.Name} is not built yet." + (source is null ? "" : $" Requested by {source}."),
+            // only reachable for an id outside the Figma windows: say it for users, without design ids
+            Text = $"{info.Name} is not in this version of AGB Studio yet.",
             TextWrapping = TextWrapping.Wrap, Margin = new Avalonia.Thickness(20),
         };
         Theme_(text, "Body/12", "text/secondary");

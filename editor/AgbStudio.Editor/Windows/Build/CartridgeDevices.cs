@@ -6,7 +6,29 @@ using Microsoft.Win32.SafeHandles;
 namespace AgbStudio.Editor.Windows.Build;
 
 /// <summary>What a device reports about the cartridge (or SD card) in it, as the Flash dialog shows it.</summary>
-public sealed record CartridgeStatus(bool Detected, string Summary, string Detail, string? CurrentTitle = null);
+/// <param name="FlashMegabytes">The cartridge's flash size when the device can measure it (GBxCart RW).</param>
+public sealed record CartridgeStatus(bool Detected, string Summary, string Detail, string? CurrentTitle = null, int? FlashMegabytes = null)
+{
+    /// <summary>
+    /// T-D07 cartridge line: "Cartridge detected · 32 MB flash · SRAM 32 KB" from the measured flash size and the save
+    /// chip the game uses (Project Settings › Save data); the device's own summary when the size is not known.
+    /// </summary>
+    public string Line(AgbStudio.Core.Project.SaveType save) => !Detected || FlashMegabytes is not { } mb ? Summary
+        : $"Cartridge detected · {mb} MB flash" + (save == AgbStudio.Core.Project.SaveType.None ? "" : " · " + Settings.ProjectSettingsModel.SaveTypeSegments[Settings.ProjectSettingsModel.SaveTypes.ToList().IndexOf(save)]);
+
+    /// <summary>
+    /// The flash size of a cartridge from its address mirrors: a chip smaller than the 32 MB address space repeats
+    /// itself, so the first 64 bytes come back at 4, 8 or 16 MB. <paramref name="readAt"/> reads 64 bytes at a byte
+    /// offset; a cartridge with no mirror is 32 MB.
+    /// </summary>
+    public static int FlashSizeFromMirrors(Func<int, byte[]> readAt)
+    {
+        var first = readAt(0);
+        foreach (var mb in new[] { 4, 8, 16 })
+            if (readAt(mb * 1024 * 1024).AsSpan().SequenceEqual(first)) return mb;
+        return 32;
+    }
+}
 
 /// <summary>
 /// A way to put the ROM on a cartridge (D-12): (a) a flash cart's SD card (EZ-Flash, EverDrive and similar), fully
@@ -173,7 +195,16 @@ public sealed class GbxCartRw(string port) : ICartridgeDevice
             var title = Encoding.ASCII.GetString(header, 0xA0, 12).TrimEnd('\0', ' ');
             var code = Encoding.ASCII.GetString(header, 0xAC, 4).TrimEnd('\0');
             if (header[0xB2] != 0x96) return new CartridgeStatus(false, "No cartridge", "Insert a cartridge into the GBxCart RW");
-            return new CartridgeStatus(true, $"Cartridge detected · {code}", $"Current game: {title} rev {header[0xBC]}", title);
+            byte[] ReadAt(int offset)
+            {
+                s.Write(Encoding.ASCII.GetBytes($"A{offset / 2:x}\0"));
+                s.Write("r"u8);
+                var block = s.Read(64, 1000);
+                s.Write("0"u8);
+                return block;
+            }
+            var mb = CartridgeStatus.FlashSizeFromMirrors(ReadAt);
+            return new CartridgeStatus(true, $"Cartridge detected · {code}", $"Current game: {title} rev {header[0xBC]}", title, mb);
         }
         catch (IOException e)
         {
@@ -223,7 +254,7 @@ sealed class SerialPort : IDisposable
     public static SerialPort Open(string port, uint baud)
     {
         var h = CreateFileW(@"\\.\" + port, 0xC0000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero);
-        if (h.IsInvalid) throw new IOException($"{port} cannot be opened (error {Marshal.GetLastWin32Error()}).");
+        if (h.IsInvalid) throw new IOException($"{port} can't be opened (Windows error {Marshal.GetLastWin32Error()}); another program may be using it. Close that program and plug the GBxCart RW in again.");
         var dcb = new Dcb { DCBlength = Marshal.SizeOf<Dcb>() };
         GetCommState(h, ref dcb);
         dcb.BaudRate = baud;
@@ -231,14 +262,14 @@ sealed class SerialPort : IDisposable
         dcb.Parity = 0;
         dcb.StopBits = 0;
         dcb.Flags = 1;  // binary mode
-        if (!SetCommState(h, ref dcb)) { h.Dispose(); throw new IOException($"{port} does not accept {baud} baud."); }
+        if (!SetCommState(h, ref dcb)) { h.Dispose(); throw new IOException($"The device on {port} does not work at the GBxCart RW speed ({baud} baud). Check that it is a GBxCart RW and update its firmware."); }
         return new SerialPort(h);
     }
 
     public void Write(ReadOnlySpan<byte> data)
     {
         var buf = data.ToArray();
-        if (!WriteFile(_h, buf, buf.Length, out _, IntPtr.Zero)) throw new IOException("Serial write failed.");
+        if (!WriteFile(_h, buf, buf.Length, out _, IntPtr.Zero)) throw new IOException("Lost the connection to the GBxCart RW while sending data. Check the USB cable and try again.");
     }
 
     public byte[] Read(int count, int timeoutMs)

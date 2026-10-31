@@ -77,7 +77,7 @@ public sealed class ScriptEditorPage : DockPanel
         var code = new IconButton { Glyph = "code", IsActive = true, Name = "Tool_Code" };
         var debug = new IconButton { Glyph = "bug", Command = s.Commands.Get("tools.debugger"), Name = "Tool_Debug" };
         var analyzer = new Chip { Content = "Analyzer: GBA rules on", Glyph = "check", Style = ChipStyle.Success, Name = "AnalyzerChip" };
-        analyzer.Click += (_, _) => _ = s.Windows.Open("T-D08", source: "AnalyzerChip");
+        analyzer.Click += (_, _) => _ = s.Windows.Open("T-S04", source: "AnalyzerChip");
         var external = new AgbButton { Content = "Open externally", Glyph = "expand", Kind = ButtonKind.Secondary, Name = "OpenExternally" };
         external.Click += (_, _) => OpenExternally();
         var pipeline = new Chip { Content = "C# → C++ → devkitARM", Glyph = "chip", Name = "PipelineChip" };
@@ -105,7 +105,9 @@ public sealed class ScriptEditorPage : DockPanel
         var crumbRow = new Border { Height = 26, Padding = new Thickness(16, 0), Child = _breadcrumb };
         crumbRow.Token(Border.BackgroundProperty, "bg/base");
         _popupHost = new Border();
-        var editorArea = new Panel { Children = { Editor } };
+        // the code area takes Preferences › Editor › Theme (Studio Dark / Studio Light) whatever the app theme is
+        _codeTheme.Child = Editor;
+        var editorArea = new Panel { Children = { _codeTheme } };
         _bottomTabs =
         [
             new PanelTab { Label = "Problems", Glyph = "warn", Name = "Tab_Problems" },
@@ -145,7 +147,11 @@ public sealed class ScriptEditorPage : DockPanel
         // ---- behaviour ----
         Editor.TextChanged += OnTextChanged;
         Editor.CaretMoved += UpdateCaret;
-        Editor.IssueActivated += issue => _ = ShowPopupAsync(issue);
+        // Project Settings › Scripting › "Show inline hints in the editor": the analyzer hint opens next to the code
+        Editor.IssueActivated += issue => { if (InlineHints) _ = ShowPopupAsync(issue); };
+        // breakpoints (Debugger, P13.06): click a line number or press F9
+        Editor.GutterClicked += line => ToggleBreakpoint(line);
+        Editor.HasBreakpoint = line => Buffer is { } b && s.GetService(typeof(Debugger.DebuggerModel)) is Debugger.DebuggerModel dm && dm.HasBreakpoint(b.Path, line);
         TerminalInput.Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareTextBox");
         AgbStudio.Editor.Theme.Fig.SetStyle(TerminalInput, "Mono/11");
         TerminalInput.KeyDown += (_, e) => { if (e.Key == Key.Enter) { RunTerminal(TerminalInput.Text ?? ""); TerminalInput.Text = ""; e.Handled = true; } };
@@ -175,7 +181,22 @@ public sealed class ScriptEditorPage : DockPanel
         Editor.TabSize = settings.TabSize;
         Editor.AutocompleteAsYouType = settings.AutocompleteAsYouType;
         Editor.UnderlineIssues = settings.UnderlineAnalyzerWarnings;
+        // Preferences › Appearance › Code font size and Editor › Font / Theme
+        var size = _s.Preferences.Current.CodeFontSize;
+        Editor.FontSizeOverride = size is >= 8 and <= 32 ? size : 0;
+        Editor.FontFamilyOverride = CodeFontFamily(settings.Font);
+        _codeTheme.RequestedThemeVariant = CodeThemeVariant(settings.Theme);
     }
+
+    readonly Avalonia.Controls.ThemeVariantScope _codeTheme = new() { Name = "CodeThemeScope" };
+
+    /// <summary>The code font: the bundled JetBrains Mono, or an installed font of that name (Thai falls back to the bundled face).</summary>
+    public static Avalonia.Media.FontFamily? CodeFontFamily(string name) =>
+        string.IsNullOrWhiteSpace(name) || name == "JetBrains Mono" ? AgbStudio.Editor.Theme.Fonts.Mono : new Avalonia.Media.FontFamily(name + ", " + AgbStudio.Editor.Theme.Fonts.Mono);
+
+    /// <summary>"Studio Light" draws the code with the light tokens, "Studio Dark" with the dark ones.</summary>
+    public static Avalonia.Styling.ThemeVariant CodeThemeVariant(string theme) =>
+        theme == "Studio Light" ? Avalonia.Styling.ThemeVariant.Light : Avalonia.Styling.ThemeVariant.Dark;
 
     // the toolchain check runs off the UI thread
     void ToolchainChanged() => Dispatcher.UIThread.Post(UpdateStatus);
@@ -599,6 +620,9 @@ public sealed class ScriptEditorPage : DockPanel
     // ---- diagnostic popup ----------------------------------------------------------------------------------
 
     /// <summary>Shows the popup of an analyzer message with its quick fixes ("Change to fixed", "Ignore").</summary>
+    /// <summary>Project Settings › Scripting › Show inline hints (on by default): clicking an underlined issue opens its hint.</summary>
+    public bool InlineHints => _s.Project.Current?.Settings.Scripting.InlineHints ?? true;
+
     public async Task ShowPopupAsync(CodeIssue issue)
     {
         ClosePopup();
@@ -689,6 +713,18 @@ public sealed class ScriptEditorPage : DockPanel
 
     [EditorCommand("script.replace", "Replace", Category = "Script", Glyph = "search", Keys = "Ctrl+H", Context = ShortcutContext.Script, InPalette = false)]
     public static void ReplaceCommand(EditorServices s) => Current(s)?.OpenFind(replace: true);
+
+    /// <summary>Adds or removes the breakpoint of a line of this script (Debugger › Breakpoints lists it). True when added.</summary>
+    public bool ToggleBreakpoint(int line)
+    {
+        if (Buffer is not { } b) return false;
+        var added = Debugger.DebuggerModel.Of(_s).ToggleBreakpoint(b.Path, line);
+        Editor.InvalidateVisual();
+        return added;
+    }
+
+    [EditorCommand("script.toggleBreakpoint", "Toggle breakpoint", Category = "Script", Glyph = "bug", Keys = "F9", Context = ShortcutContext.Script)]
+    public static void ToggleBreakpointCommand(EditorServices s) { if (Current(s) is { } page) page.ToggleBreakpoint(page.Editor.CaretLine); }
 
     [EditorCommand("script.openExternally", "Open externally", Category = "Script", Glyph = "expand")]
     public static void OpenExternallyCommand(EditorServices s) => Current(s)?.OpenExternally();

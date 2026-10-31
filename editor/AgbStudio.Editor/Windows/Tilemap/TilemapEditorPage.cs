@@ -221,7 +221,7 @@ public sealed class TilemapEditorPage : DockPanel
     async Task PickTileset(InspectorField field)
     {
         if (Session is not { } ses) return;
-        var result = await _svc.Windows.Open("T-O04", "Tileset", field, source: "TilesetDropdown");
+        var result = await _svc.Windows.Open("T-O04", "Tilesets", field, source: "TilesetDropdown");
         var name = result switch { string s => GameProject.AssetName(s), _ => null };
         if (name is null || string.Equals(name, ses.Doc.Map.Tileset, StringComparison.OrdinalIgnoreCase)) return;
         ses.Doc.SetTileset(name);

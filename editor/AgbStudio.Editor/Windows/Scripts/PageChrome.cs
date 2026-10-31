@@ -47,7 +47,7 @@ public static class PageChrome
     {
         var play = new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" };
         Tip(s, play, "build.play");
-        return UI.Row(4, play, new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" }, new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+        return UI.Row(4, play, PlayButtons.Pause(s), PlayButtons.Step(s));
     }
 
     public static Border UndoRedo(EditorServices s)

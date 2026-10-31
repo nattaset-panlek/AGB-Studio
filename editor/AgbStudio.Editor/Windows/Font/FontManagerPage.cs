@@ -407,6 +407,16 @@ public sealed class FontManagerPage : DockPanel
         return PageChrome.SidePanel(header, dock, false, "FontSettingsPanel");
     }
 
+    /// <summary>Create › Font: the Font Manager with New Font (T-D15) on top; the new font is shown when it is created.</summary>
+    [CommandHandler("assets.create.font")]
+    public static async void CreateFont(EditorServices s)
+    {
+        await s.Windows.Open("T-P09", source: "assets.create.font");
+        if (s.Project.Current is null) return;
+        var page = s.Windows.Host?.CurrentPage as FontManagerPage;
+        if (await s.Windows.Open("T-D15", null, source: "assets.create.font") is FontEntry created) page?.SwitchTo(created);
+    }
+
     /// <summary>VRAM of the text layer's dialogue box: 28 x 5 tiles of 4bpp (runtime BoxStyle defaults).</summary>
     public const int TextVramBytes = 28 * 5 * 32;
 

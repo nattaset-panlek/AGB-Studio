@@ -53,8 +53,7 @@ public static class PageParts
     /// <summary>Play / Pause / Step as in the Scene Editor toolbar (Play runs the game).</summary>
     public static StackPanel PlayControls(EditorServices s) => UI.Row(4,
         new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
-        new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" },
-        new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+        PlayButtons.Pause(s), PlayButtons.Step(s));
 
     public static Chip VideoModeChip(EditorServices s)
     {

@@ -207,9 +207,11 @@ public sealed class ProjectSettingsDialog : SettingsDialog
         void AddRow(SaveField f)
         {
             var field = f;
+            // the size of each field is the bytes its type takes in the save (byte 1 B, short 2 B, int 4 B, bitset N, Table[N] ...)
             var size = Cell(Size(f.Type), true);
+            size.Name = "SaveFieldSize_" + save.Fields.IndexOf(f);
             var name = CellBox(f.Name, "Mono/11", v => Edit(() => { field.Name = v; UpdateSlots(); }), "SaveField_" + save.Fields.IndexOf(f));
-            var type = CellBox(f.Type, "Mono/11", v => Edit(() => { field.Type = v; size.Text = Size(v); UpdateSlots(); }));
+            var type = CellBox(f.Type, "Mono/11", v => Edit(() => { field.Type = v; size.Text = Size(v); UpdateSlots(); }), "SaveFieldType_" + save.Fields.IndexOf(f));
             table.Children.Insert(table.Children.Count - 1, TableRow(SaveColumns, 30, name, type, size));
         }
         var add = new AgbButton { Kind = ButtonKind.Ghost, Glyph = "plus", Content = "Add field", Name = "AddField", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 4, 0, 0) };
