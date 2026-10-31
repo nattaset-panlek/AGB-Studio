@@ -660,14 +660,15 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
     {
         public override void Render(DrawingContext ctx)
         {
+            // Figma: a 2 px dot in the middle of every 24 px cell
             var brush = ThemeService.Token(this, "border/default");
-            var step = 20 * c._zoom;
+            var step = 24 * c._zoom;
             if (brush is null || step < 6) return;
-            var ox = (c._pan.X % step + step) % step;
-            var oy = (c._pan.Y % step + step) % step;
+            var ox = ((c._pan.X + step / 2) % step + step) % step;
+            var oy = ((c._pan.Y + step / 2) % step + step) % step;
             for (var y = oy; y < Bounds.Height; y += step)
                 for (var x = ox; x < Bounds.Width; x += step)
-                    ctx.FillRectangle(brush, new Rect(Math.Round(x), Math.Round(y), 1.5, 1.5));
+                    ctx.FillRectangle(brush, new Rect(Math.Round(x), Math.Round(y), 2, 2));
         }
     }
 
