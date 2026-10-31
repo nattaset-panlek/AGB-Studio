@@ -52,7 +52,9 @@ public sealed class RamBudget
             if (s.Region == LinkerSections.MemoryRegion.Iwram)
             {
                 b.IwramStatic += s.Size;
-                if (s.Name.StartsWith(".iwram", StringComparison.Ordinal)) code += s.Size;
+                // Code in IWRAM: .iwram sections (Maxmod, the interrupt dispatcher, AGB_IWRAM_CODE) and the .text sections
+                // of the *.iwram.cpp files, which the linker script places in IWRAM under their own names.
+                if (s.Name.StartsWith(".iwram", StringComparison.Ordinal) || s.Name.StartsWith(".text", StringComparison.Ordinal)) code += s.Size;
                 else if (From(s, PoolObjects)) pools += s.Size;
                 else if (From(s, VmObjects)) vm += s.Size;
                 else otherI += s.Size;

@@ -53,35 +53,38 @@ void MapLayerView::drawColumn(int tileX, int y0, int y1) {
 }
 
 namespace {
-// One run of a metatile row: `n` entries from map column `tx` (inside the map), two per metatile.
-void metatileRun(u16* d, const u16* row, int tx, int n, const data::Metatile* metas, u32 count, u32 quad, u32 offset) {
-    const u16* c = row + (tx >> 1);
-    int j = 0;
-    if (tx & 1) {  // starts on the right half of a metatile
-        const u32 mt = *c++;
-        d[j++] = static_cast<u16>(mt < count ? metas[mt].se[quad + 1] + offset : 0);
+// The source of one map row for MapLayerView::drawRow, and the two ways to fill a run of shadow entries from it.
+struct RowSource {
+    const u16* cells;  // image layers: screen entries; tile layers: metatile indices
+    const data::Metatile* metas;
+    u32 count, quad;   // metatile count; 0 or 2 for the top or bottom half of the metatiles
+    u32 offset;        // the layer's first tile and palette bank, added to every entry
+};
+using RunFill = void (*)(u16* d, int tx, int n, const RowSource& r);
+
+void imageRun(u16* d, int tx, int n, const RowSource& r) {
+    const u16* s = r.cells + tx;
+    for (int j = 0; j < n; ++j) d[j] = static_cast<u16>(s[j] + r.offset);
+}
+
+void metatileRun(u16* d, int tx, int n, const RowSource& r) {
+    for (int j = 0; j < n; ++j, ++tx) {
+        const u32 mt = r.cells[tx >> 1];
+        d[j] = static_cast<u16>(mt < r.count ? r.metas[mt].se[(tx & 1) + r.quad] + r.offset : 0);
     }
-    for (; j + 1 < n; j += 2) {
-        const u32 mt = *c++;
-        if (mt < count) {
-            const u16* e = metas[mt].se + quad;
-            d[j] = static_cast<u16>(e[0] + offset);
-            d[j + 1] = static_cast<u16>(e[1] + offset);
-        } else {
-            d[j] = d[j + 1] = 0;
-        }
-    }
-    if (j < n) {
-        const u32 mt = *c;
-        d[j] = static_cast<u16>(mt < count ? metas[mt].se[quad] + offset : 0);
-    }
+}
+
+int wrapped(int v, int size) {
+    while (v >= size) v -= size;
+    while (v < 0) v += size;
+    return v;
 }
 }  // namespace
 
 // Fast path for image layers (sky, hills) and tile layers without wrap: the row is written as straight runs of shadow
 // entries, split where it crosses into the next 32-tile screen block (each run marks its block row dirty once) and where
 // the source row wraps; an entry is the map's entry plus the layer's first tile and palette bank. A big camera move
-// redraws the whole window this way at about 25 cycles a cell (P3.04).
+// redraws the whole window this way at about 30 cycles a cell (P3.04).
 void MapLayerView::drawRow(int tileY, int x0, int x1) {
     const data::MapLayer& l = *layer_;
     const bool image = l.type == data::LayerType::Image;
@@ -91,49 +94,31 @@ void MapLayerView::drawRow(int tileY, int x0, int x1) {
     }
     const bool wrap = l.wrap;
     const int w = image ? l.width : l.width * 2, h = image ? l.height : l.height * 2;  // in screen entries
-    int ty = tileY;
-    if (wrap) {
-        while (ty >= h) ty -= h;
-        while (ty < 0) ty += h;
-    }
-    // The source row; nullptr above or below a map that does not wrap (blank entries).
-    const u16* src = ty >= 0 && ty < h ? l.cells + (image ? ty : ty >> 1) * l.width : nullptr;
-    const data::Metatile* metas = image ? nullptr : l.tileset->metatiles;
-    const u32 count = image ? 0 : l.tileset->metatileCount;
-    const u32 quad = (ty & 1) * 2;
-    const u32 offset = placement_.firstTile | (static_cast<u32>(placement_.paletteBank) << 12);
+    const int ty = wrap ? wrapped(tileY, h) : tileY;
+    const bool inside = ty >= 0 && ty < h;  // rows above or below a map that does not wrap are blank
+    RowSource r{l.cells + (inside ? (image ? ty : ty >> 1) * l.width : 0), image ? nullptr : l.tileset->metatiles,
+                image ? 0u : l.tileset->metatileCount, static_cast<u32>(ty & 1) * 2,
+                placement_.firstTile | (static_cast<u32>(placement_.paletteBank) << 12)};
+    const RunFill fill = image ? imageRun : metatileRun;
     const int y = tileY & heightMask_;
     const int blocksWide = (widthMask_ + 1) >> 5;
     u16* const rowBase = shadow_ + (y >> 5) * blocksWide * 1024 + (y & 31) * 32;
-    u32* const dirty = dirtyRows_ + (y >> 5) * blocksWide;
-    const u32 rowBit = 1u << (y & 31);
-    int tx = x0;  // source column (screen entries)
-    if (wrap) {
-        while (tx >= w) tx -= w;
-        while (tx < 0) tx += w;
-    }
+    int tx = wrap ? wrapped(x0, w) : x0;  // source column (screen entries)
     for (int x = x0; x <= x1;) {
         const int col = x & widthMask_;
         int run = 32 - (col & 31);
         if (run > x1 - x + 1) run = x1 - x + 1;
         u16* dst = rowBase + (col >> 5) * 1024 + (col & 31);
-        dirty[col >> 5] |= rowBit;
+        dirtyRows_[(y >> 5) * blocksWide + (col >> 5)] |= 1u << (y & 31);
         x += run;
         for (int k = 0; k < run;) {
-            if (!src || tx < 0 || tx >= w) {  // beside or above / below a map that does not wrap
+            if (!inside || tx < 0 || tx >= w) {  // beside a map that does not wrap
                 dst[k++] = 0;
                 ++tx;
                 continue;
             }
-            int n = run - k;
-            if (n > w - tx) n = w - tx;  // up to the source row's end (a wrapping row goes on from its start)
-            u16* d = dst + k;
-            if (image) {
-                const u16* s = src + tx;
-                for (int j = 0; j < n; ++j) d[j] = static_cast<u16>(s[j] + offset);
-            } else {
-                metatileRun(d, src, tx, n, metas, count, quad, offset);
-            }
+            const int n = run - k < w - tx ? run - k : w - tx;  // up to the row's end (a wrapping row goes on from 0)
+            fill(dst + k, tx, n, r);
             k += n;
             tx += n;
             if (wrap && tx >= w) tx = 0;

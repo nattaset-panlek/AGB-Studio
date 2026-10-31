@@ -278,7 +278,7 @@ const char* keyName(u16 keys) {
 // ---- overlays -----------------------------------------------------------------------------------------
 
 namespace {
-Menu g_sceneMenu;
+AGB_EWRAM_DATA Menu g_sceneMenu;
 
 // Saves what an overlay changes on top of a running scene and puts it back on close. The overlay's panels share the
 // text layer with the scene's labels, dialogue box and title menu: closing a panel points its map entries at the blank

@@ -12,7 +12,8 @@ const Table* const* g_tables = nullptr;
 u8 g_count = 0, g_fallback = 0, g_lang = 0;
 
 BoxStyle g_style;
-render::TextBox g_box;
+// Text state lives in EWRAM (the Text row of the RAM budget): it is touched a few times per glyph, not per pixel.
+AGB_EWRAM_DATA render::TextBox g_box;
 bool g_open = false;
 bool g_awaitA = false;
 bool g_acked = false;  // the player pressed A for the line on screen (wait only once per line)
@@ -90,7 +91,7 @@ namespace {
 bool g_layerReady = false;
 int g_bg = 0;  // the BG the text layer took for this scene
 constexpr int kMaxLabels = 6;
-render::TextBox g_labels[kMaxLabels];
+AGB_EWRAM_DATA render::TextBox g_labels[kMaxLabels];
 // What each HUD label shows (setLabelValue): the same value is not redrawn, and a new value with the same text
 // before it only redraws the digits.
 struct LabelValue {
@@ -100,7 +101,7 @@ struct LabelValue {
     u8 digits;
     bool shown;
 };
-LabelValue g_labelValues[kMaxLabels];
+AGB_EWRAM_BSS LabelValue g_labelValues[kMaxLabels];
 // The label's own text: the run it was made with (Actor::label, passed back as the HUD prefix), the string key it came
 // from (-1 = a fixed run) and that key's run in the current language.
 struct LabelText {
@@ -108,7 +109,7 @@ struct LabelText {
     const data::TextRun* current;
     s16 key;
 };
-LabelText g_labelTexts[kMaxLabels];
+AGB_EWRAM_BSS LabelText g_labelTexts[kMaxLabels];
 int g_labelCount = 0;
 
 u16 g_blank = 0;
