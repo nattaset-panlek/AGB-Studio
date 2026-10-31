@@ -31,6 +31,8 @@ public sealed partial class Preferences
     public string ScriptEditorPath { get; set; } = @"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe";
     public string ImageEditorPath { get; set; } = "";
     public string TiledPath { get; set; } = "";
+    /// <summary>The first-run "devkitPro not found" notice was shown (P16.01); it is not shown again.</summary>
+    public bool DevkitProNoticeShown { get; set; }
 
     // Emulator (T-D09)
     public string EmulatorCore { get; set; } = "mGBA (built in)";

@@ -115,8 +115,12 @@ public sealed class BuildRomDialog : FigmaDialog
         {
             var bytes = File.ReadAllBytes(rom);
             if (pad) bytes = ExportRomDialog.PadRom(bytes);
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(dest))!);
+            var folder = Path.GetDirectoryName(Path.GetFullPath(dest))!;
+            Directory.CreateDirectory(folder);
             File.WriteAllBytes(dest, bytes);
+            // the notices of the libraries in the ROM (libtonc, maxmod) travel with it: the build writes them beside the ROM
+            var notices = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(rom))!, "THIRD_PARTY.txt");
+            if (File.Exists(notices)) File.Copy(notices, Path.Combine(folder, "THIRD_PARTY.txt"), true);
             _s.Toasts.Show($"Exported {Path.GetFileName(dest)}");
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

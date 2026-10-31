@@ -154,11 +154,11 @@ public class BuildRomTests
         try
         {
             fx.Services.Commands.Execute("build.buildRom");
+            Assert.Equal(("T-D06", (string?)"build.buildRom"), fx.Services.Windows.Requests[^1]);
+            // the script error stops the build in its first step, possibly before the Build ROM dialog was even drawn
+            GroupFixture.PumpUntil(() => win.Overlays.Open.OfType<BuildFailedDialog>().Any(), 600_000);
             Capture.Pump();
-            var d = Assert.IsType<BuildRomDialog>(win.Overlays.Open.Single());
-            GroupFixture.PumpUntil(() => d.Completion.IsCompleted, 600_000);
-            Capture.Pump();
-            Assert.False(d.Completion.Result!.Success);
+            Assert.False(fx.Services.Build.Last!.Success);
             var failed = Assert.IsType<BuildFailedDialog>(win.Overlays.Open.Single());
             Assert.Contains(failed.ShownSteps, s => s.State == StepState.Failed);
             Assert.Contains(failed.Failure.Errors, e => e.Text.Contains("Broken.cs", StringComparison.Ordinal));
@@ -177,6 +177,7 @@ public class BuildRomTests
         var p = GroupFixture.SkyHopper(fx);
         GroupFixture.WriteReport(p, 300);
         var rom = Path.Combine(p.BuildDir, "sky_hopper.gba");
+        File.WriteAllText(Path.Combine(p.BuildDir, "THIRD_PARTY.txt"), "libtonc, maxmod");   // every build writes the notices beside the ROM
         var dest = Path.Combine(fx.Folder, "out", "export.gba");
         var d = new BuildRomDialog(fx.Services, new BuildRequest(BuildConfiguration.Release, dest, true), start: false);
         var ok = new BuildResult { Success = true, RomPath = rom };
@@ -185,6 +186,7 @@ public class BuildRomTests
         Assert.Equal(("T-P02", "BuildRomRunInEmulator"), fx.Services.Windows.Requests[^1]);
         Assert.Equal(512 * 1024, new FileInfo(dest).Length);
         Assert.Equal(0xFF, File.ReadAllBytes(dest)[^1]);
+        Assert.Equal("libtonc, maxmod", File.ReadAllText(Path.Combine(fx.Folder, "out", "THIRD_PARTY.txt")));
         Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Exported export.gba");
     }
 }
