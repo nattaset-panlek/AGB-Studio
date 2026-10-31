@@ -1,4 +1,4 @@
-using AgbStudio.Build.Graphics;
+﻿using AgbStudio.Build.Graphics;
 using AgbStudio.Core;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
@@ -71,6 +71,20 @@ public static class PixelArt
         if (assets?.Sprite(sprite) is not { } s || s.FrameCount == 0) return null;
         var px = SpriteFrame(s, Math.Clamp(frame, 0, s.FrameCount - 1), out var w, out var h);
         return Bitmap(px, w, h);
+    }
+
+    /// <summary>
+    /// A sprite frame at a fixed scale, as Figma draws the sprite art at that size (a fractional scale blends the pixel
+    /// edges by area, <see cref="AgbStudio.Editor.Graphics.PixelScale"/>); an empty Image when there is no such sprite.
+    /// </summary>
+    public static Image SpriteAt(SceneAssets? assets, string sprite, int frame, double scale)
+    {
+        var img = new Image { Stretch = Stretch.None, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        RenderOptions.SetBitmapInterpolationMode(img, BitmapInterpolationMode.None);
+        if (assets?.Sprite(sprite) is not { } s || s.FrameCount == 0) return img;
+        var px = SpriteFrame(s, Math.Clamp(frame, 0, s.FrameCount - 1), out var w, out var h);
+        img.Source = AgbStudio.Editor.Graphics.PixelScale.Area(px, w, h, scale);
+        return img;
     }
 
     /// <summary>A PNG asset as it is on disk (tileset / image thumbnails).</summary>

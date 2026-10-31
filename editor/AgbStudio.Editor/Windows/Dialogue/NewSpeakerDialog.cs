@@ -1,4 +1,4 @@
-using AgbStudio.Build.Graphics;
+﻿using AgbStudio.Build.Graphics;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
@@ -108,7 +108,7 @@ public sealed class NewSpeakerDialog : FigmaDialog
             var tile = new Border
             {
                 Width = 56, Height = 56, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(name == Portrait ? 1.5 : 1),
-                Child = new PixelImage { Pixels = SpriteLibrary.Frame(project, name), MaxScale = 2 }, Name = "Portrait_" + name, Cursor = new Cursor(StandardCursorType.Hand),
+                Child = new PixelImage { Pixels = SpriteLibrary.Frame(project, name), Scale = PortraitScale(SpriteLibrary.Frame(project, name)) }, Name = "Portrait_" + name, Cursor = new Cursor(StandardCursorType.Hand),
             }.Token(Border.BackgroundProperty, "bg/base").Token(Border.BorderBrushProperty, name == Portrait ? "accent/default" : "border/default");
             ToolTip.SetTip(tile, new TipContent(name));
             var n = name;
@@ -116,6 +116,9 @@ public sealed class NewSpeakerDialog : FigmaDialog
             _portraits.Children.Add(tile);
         }
     }
+
+    /// <summary>Portraits as T-D21 draws the sprite art: a 16 px sprite at 2.5x (40 px in the 56 px tile), a larger one fitted to 40 px.</summary>
+    static double PortraitScale(PixelData? d) => d is null ? 0 : Math.Min(2.5, 40.0 / Math.Max(d.Width, d.Height));
 
     /// <summary>The sprite tiles (scrolling when there are more than fit) and the "+" tile at the end of the row.</summary>
     Control PortraitRow()

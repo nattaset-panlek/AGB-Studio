@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
@@ -187,7 +187,7 @@ public sealed class SpriteEditorPage : DockPanel
                 EditorDocument d => d.Path,
                 _ => null,
             } ?? (s.Documents.Active is { Path: { } ap } && ap.EndsWith(".png", StringComparison.OrdinalIgnoreCase) && File.Exists(ap) ? ap : null)
-              ?? _lib.SpriteFiles().OrderBy(File.GetCreationTimeUtc).FirstOrDefault();
+              ?? AgbStudio.Editor.Services.CreationOrder.Of(_lib.SpriteFiles()).FirstOrDefault();
             if (path != null) Open(path);
         }
         Refresh();
@@ -462,7 +462,7 @@ public sealed class SpriteEditorPage : DockPanel
         _list.Children.Clear();
         if (_lib is null) return;
         var q = _search.Text?.Trim() ?? "";
-        foreach (var f in _lib.SpriteFiles().OrderBy(File.GetCreationTimeUtc).ThenBy(f => f, StringComparer.OrdinalIgnoreCase))
+        foreach (var f in AgbStudio.Editor.Services.CreationOrder.Of(_lib.SpriteFiles()))
         {
             var name = Path.GetFileName(f);
             if (q.Length > 0 && !name.Contains(q, StringComparison.OrdinalIgnoreCase)) continue;
@@ -535,7 +535,7 @@ public sealed class SpriteEditorPage : DockPanel
         var anim = Anim;
         if (!_ticks.IsFocused) _ticks.Text = anim is null ? "" : TicksText(anim.Ticks);
         _onionChip.Style = OnionSkin ? ChipStyle.Accent : ChipStyle.Default;
-        _onionTool.IsActive = OnionSkin;
+        // Figma T-P08: the Onion skin chip shows the state; the toolbar button only toggles it (drawn off)
         _pingChip.Style = anim?.PingPong == true ? ChipStyle.Accent : ChipStyle.Default;
         _play.IsActive = _playing;
         _play.Glyph = _playing ? "pause" : "play";
@@ -553,8 +553,8 @@ public sealed class SpriteEditorPage : DockPanel
     {
         _frames.Children.Clear();
         if (_doc is not { } d || Anim is not { } a) return;
-        var scale = Math.Max(1, 32 / Math.Max(d.FrameW, d.FrameH));
-        if (d.FrameW * scale > 60 || d.FrameH * scale > 60) scale = 1;
+        // as the Figma strip draws the sprite art: a 16 px frame at 2.5x (40 px), a larger one fitted to 40 px
+        var scale = Math.Min(2.5, 40.0 / Math.Max(1, Math.Max(d.FrameW, d.FrameH)));
         for (var k = 0; k < a.Frames.Count; k++)
         {
             var frame = Math.Clamp(a.Frames[k], 0, d.FrameCount - 1);

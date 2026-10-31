@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
@@ -296,6 +296,10 @@ public sealed class AnimationPanel : DockPanel
 
     static int TicksOf(AnimationData a, int k) => a.FrameTicks != null && k < a.FrameTicks.Count ? a.FrameTicks[k] : a.Ticks;
 
+    /// <summary>2.5x for a sprite up to 16 px (Figma's 40 px frame pictures), a larger sprite fitted to 40 px.</summary>
+    static double FrameScale(SceneAssets? assets, string sprite) =>
+        assets?.Sprite(sprite) is { } s && Math.Max(s.SourceWidth, s.SourceHeight) > 0 ? Math.Min(2.5, 40.0 / Math.Max(s.SourceWidth, s.SourceHeight)) : 2.5;
+
     void Rebuild()
     {
         _list.Children.Clear();
@@ -326,18 +330,20 @@ public sealed class AnimationPanel : DockPanel
             var thumb = new FrameThumb { Label = $"{i + 1} · {TicksOf(cur, i)}t", IsSelected = i == _frame, Preview = null, Name = $"Frame_{i + 1}" };
             // the whole cell takes clicks, the wheel and drags (the thumb is transparent around its picture)
             var holder = new Panel { Width = 66, Background = Avalonia.Media.Brushes.Transparent, Children = { thumb } };
+            // the sprite as the Figma frame draws it: a 16 px frame at 2.5x (40 px, centred in the 66 px cell)
+            var scale = FrameScale(_m.Assets, Sprite);
             if (OnionSkin && i == _frame && frames.Count > 1)
             {
-                var prev = PixelArt.View(PixelArt.SpriteBitmap(_m.Assets, Sprite, frames[(i + frames.Count - 1) % frames.Count]), 48, 48);
+                var prev = PixelArt.SpriteAt(_m.Assets, Sprite, frames[(i + frames.Count - 1) % frames.Count], scale);
                 prev.Opacity = 0.3;
                 prev.VerticalAlignment = VerticalAlignment.Top;
-                prev.Margin = new Thickness(0, 9, 0, 0);
+                prev.Margin = new Thickness(0, 10, 0, 0);
                 prev.IsHitTestVisible = false;
                 holder.Children.Add(prev);
             }
-            var img = PixelArt.View(PixelArt.SpriteBitmap(_m.Assets, Sprite, frames[i]), 48, 48);
+            var img = PixelArt.SpriteAt(_m.Assets, Sprite, frames[i], scale);
             img.VerticalAlignment = VerticalAlignment.Top;
-            img.Margin = new Thickness(0, 9, 0, 0);
+            img.Margin = new Thickness(0, 10, 0, 0);
             img.IsHitTestVisible = false;
             holder.Children.Add(img);
             var k = i;

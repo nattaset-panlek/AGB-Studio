@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
@@ -135,7 +135,7 @@ public sealed class ScriptWorkspace : IDisposable
         var all = p.ScriptFiles().ToList();
         var open = _s.Documents.Open.Where(d => d.Path != null && d.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
             .Select(d => all.FirstOrDefault(f => string.Equals(Path.GetFullPath(f), Path.GetFullPath(d.Path!), StringComparison.OrdinalIgnoreCase))).OfType<string>().ToList();
-        var rest = all.Except(open, StringComparer.OrdinalIgnoreCase).OrderBy(f => File.GetCreationTimeUtc(f)).ThenBy(f => f, StringComparer.OrdinalIgnoreCase);
+        var rest = AgbStudio.Editor.Services.CreationOrder.Of(all.Except(open, StringComparer.OrdinalIgnoreCase));
         return [.. open, .. rest];
     }
 
