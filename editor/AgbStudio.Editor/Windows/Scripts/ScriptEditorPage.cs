@@ -347,7 +347,6 @@ public sealed class ScriptEditorPage : DockPanel
                 Glyph = o.Kind switch { OutlineKind.Class => "cube", OutlineKind.Method => "play", _ => o.HasIssue ? "warn" : "sliders" },
                 Name = "Outline_" + o.Name.Split('(')[0],
             };
-            if (o.Kind != OutlineKind.Class) item.Padding = new Thickness(o.Kind == OutlineKind.Method ? 23 : 19, 0, 8, 0);
             var target = o;
             item.Activated += (_, _) => { Editor.Select(target.Start, target.Start); Editor.Focus(); };
             _outline.Children.Add(item);
@@ -744,7 +743,7 @@ public sealed class ScriptEditorPage : DockPanel
 /// </summary>
 public sealed class DiagnosticPopup : Border
 {
-    readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 4, 0, 0) };
+    readonly StackPanel _buttons = new() { Orientation = Orientation.Horizontal, Spacing = 8 };   // 8 px under the text, as in Figma
 
     public CodeIssue Issue { get; }
     public event Action? Dismissed;
