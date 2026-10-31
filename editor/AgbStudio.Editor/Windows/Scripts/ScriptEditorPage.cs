@@ -146,6 +146,9 @@ public sealed class ScriptEditorPage : DockPanel
         Editor.TextChanged += OnTextChanged;
         Editor.CaretMoved += UpdateCaret;
         Editor.IssueActivated += issue => _ = ShowPopupAsync(issue);
+        // breakpoints (Debugger, P13.06): click a line number or press F9
+        Editor.GutterClicked += line => ToggleBreakpoint(line);
+        Editor.HasBreakpoint = line => Buffer is { } b && s.GetService(typeof(Debugger.DebuggerModel)) is Debugger.DebuggerModel dm && dm.HasBreakpoint(b.Path, line);
         TerminalInput.Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareTextBox");
         AgbStudio.Editor.Theme.Fig.SetStyle(TerminalInput, "Mono/11");
         TerminalInput.KeyDown += (_, e) => { if (e.Key == Key.Enter) { RunTerminal(TerminalInput.Text ?? ""); TerminalInput.Text = ""; e.Handled = true; } };
@@ -689,6 +692,18 @@ public sealed class ScriptEditorPage : DockPanel
 
     [EditorCommand("script.replace", "Replace", Category = "Script", Glyph = "search", Keys = "Ctrl+H", Context = ShortcutContext.Script, InPalette = false)]
     public static void ReplaceCommand(EditorServices s) => Current(s)?.OpenFind(replace: true);
+
+    /// <summary>Adds or removes the breakpoint of a line of this script (Debugger › Breakpoints lists it). True when added.</summary>
+    public bool ToggleBreakpoint(int line)
+    {
+        if (Buffer is not { } b) return false;
+        var added = Debugger.DebuggerModel.Of(_s).ToggleBreakpoint(b.Path, line);
+        Editor.InvalidateVisual();
+        return added;
+    }
+
+    [EditorCommand("script.toggleBreakpoint", "Toggle breakpoint", Category = "Script", Glyph = "bug", Keys = "F9", Context = ShortcutContext.Script)]
+    public static void ToggleBreakpointCommand(EditorServices s) { if (Current(s) is { } page) page.ToggleBreakpoint(page.Editor.CaretLine); }
 
     [EditorCommand("script.openExternally", "Open externally", Category = "Script", Glyph = "expand")]
     public static void OpenExternallyCommand(EditorServices s) => Current(s)?.OpenExternally();

@@ -39,6 +39,8 @@ public sealed class DebuggerPage : DockPanel
     public WatchPanel Watch { get; }
     public PalettesView Palettes { get; }
     public ColourPanel Colour { get; }
+    public ProfilerView ProfilerCenter { get; }
+    public BreakpointsView BreakpointsCenter { get; }
     public IconButton ArmButton { get; } = new() { Glyph = "bug", Name = "ArmBreakpoints" };
     public IconButton StepLineButton { get; } = new() { Glyph = "step", Name = "StepLine" };
     public IconButton RestartButton { get; } = new() { Glyph = "refresh", Name = "Restart" };
@@ -64,7 +66,12 @@ public sealed class DebuggerPage : DockPanel
         Watch = new WatchPanel(_m);
         Palettes = new PalettesView(_m);
         Colour = new ColourPanel(_m, s);
+        ProfilerCenter = new ProfilerView(_m);
+        BreakpointsCenter = new BreakpointsView(_m);
         _m.AddDefaultWatches();
+        // "On scene load" is always listed (off until ticked), as in Figma
+        if (!_m.Breakpoints.Any(b => b.Kind == BreakpointKind.SceneLoad)) _m.AddSceneLoad(enabled: false);
+        _m.Breakpoints.CollectionChanged += (_, _) => RebuildBreakpoints();
 
         // ---- toolbar ----
         ArmButton.Click += (_, _) => _m.Armed = !_m.Armed;
@@ -173,7 +180,19 @@ public sealed class DebuggerPage : DockPanel
                 _right.Content = Colour;
                 (_rightHeader.Title, _rightHeader.Glyph) = ("Colour", "pipette");
                 break;
+            case DebuggerView.Profiler:
+                _center.Content = ProfilerCenter;
+                _right.Content = Profiler;
+                (_rightHeader.Title, _rightHeader.Glyph) = ("Profiler", "clock");
+                break;
+            case DebuggerView.Breakpoints:
+                _center.Content = BreakpointsCenter;
+                _right.Content = Profiler;
+                (_rightHeader.Title, _rightHeader.Glyph) = ("Profiler", "clock");
+                break;
             default:
+                // VRAM tiles: character blocks and the OAM table (Figma T-P19); OAM sprites: the OAM table alone
+                Vram.ShowTiles = view == DebuggerView.VramTiles;
                 _center.Content = Vram;
                 _right.Content = Profiler;
                 (_rightHeader.Title, _rightHeader.Glyph) = ("Profiler", "clock");
@@ -185,7 +204,7 @@ public sealed class DebuggerPage : DockPanel
     void RebuildBreakpoints()
     {
         _breakpoints.Children.Clear();
-        foreach (var b in _m.Breakpoints)
+        foreach (var b in DebuggerModel.InListOrder(_m.Breakpoints))
         {
             var box = new CheckBox { Content = b.Label, IsChecked = b.Enabled, Name = "Breakpoint_" + b.Label };
             var bp = b;
@@ -220,6 +239,8 @@ public sealed class DebuggerPage : DockPanel
         {
             case DebuggerView.Memory: Memory.Refresh(); Watch.Refresh(); break;
             case DebuggerView.Palettes: Palettes.Refresh(); Colour.Refresh(); break;
+            case DebuggerView.Profiler: ProfilerCenter.Refresh(); Profiler.Refresh(); break;
+            case DebuggerView.Breakpoints: BreakpointsCenter.Refresh(); Profiler.Refresh(); break;
             default: Vram.Refresh(); Profiler.Refresh(); break;
         }
     }

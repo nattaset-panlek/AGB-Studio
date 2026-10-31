@@ -115,6 +115,38 @@ public sealed class DebuggerModel
         return b;
     }
 
+    /// <summary>Script Editor gutter / F9: removes the line's breakpoint, or adds one. True when one was added.</summary>
+    public bool ToggleBreakpoint(string file, int line)
+    {
+        var name = Path.GetFileName(file);
+        if (Breakpoints.FirstOrDefault(b => b.Kind != BreakpointKind.SceneLoad && b.File == name && b.Line == line) is { } b)
+        {
+            RemoveBreakpoint(b);
+            return false;
+        }
+        AddBreakpoint(name, line);
+        return true;
+    }
+
+    public void RemoveBreakpoint(Breakpoint b)
+    {
+        if (Breakpoints.Remove(b)) { _dirty = true; Updated?.Invoke(); }
+    }
+
+    /// <summary>True when a script line has a breakpoint (the Script Editor gutter dot).</summary>
+    public bool HasBreakpoint(string file, int line) => Breakpoints.Any(b => b.Kind != BreakpointKind.SceneLoad && b.File == Path.GetFileName(file) && b.Line == line);
+
+    /// <summary>The list order of the Debugger: line breakpoints as added, "On scene load" last.</summary>
+    public static IEnumerable<Breakpoint> InListOrder(IEnumerable<Breakpoint> all) => all.OrderBy(b => b.Kind == BreakpointKind.SceneLoad ? 1 : 0);
+
+    /// <summary>Where a breakpoint stops, as the Breakpoints view says it.</summary>
+    public string StopsAt(Breakpoint b)
+    {
+        if (b.Kind == BreakpointKind.SceneLoad) return "each scene load";
+        if (b.Kind == BreakpointKind.ScriptLine) return Map?.BindVm(b.File, b.Line) is { } vm ? $"script line {vm.Item2}" : $"line {b.Line} · not in the build yet";
+        return BindCSharp(b) is { } at ? $"line {at.Line}" : $"line {b.Line} · not in the build yet";
+    }
+
     public Breakpoint AddSceneLoad(bool enabled = true)
     {
         var b = Breakpoints.FirstOrDefault(x => x.Kind == BreakpointKind.SceneLoad);
@@ -338,7 +370,26 @@ public sealed class DebuggerModel
             }
         }
         catch (ArgumentOutOfRangeException) { }
+        list.AddRange(EffectsOn(index));
         return list;
+    }
+
+    /// <summary>
+    /// The project's palette effects that change a colour (Palette Manager · Fade / Cycle / Flash on one bank):
+    /// "Palette effect · water cycle (6–9)". Effects on every bank (a screen fade) are not listed per colour.
+    /// </summary>
+    public IReadOnlyList<string> EffectsOn(int index)
+    {
+        if (_s.Project.Current is null) return [];
+        Palette.PaletteEffectsData effects;
+        try { effects = Palette.ArtLibrary.For(_s).Effects; }
+        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or InvalidOperationException) { return []; }
+        var kind = index < 256 ? Palette.BankKind.Bg : Palette.BankKind.Obj;
+        int bank = index / 16 % 16, entry = index % 16;
+        return new[] { effects.Fade, effects.Cycle, effects.Flash }
+            .Where(e => e.Enabled && e.Bank >= 0 && e.BankKind == kind && e.Bank == bank && entry >= e.First && entry <= e.Last)
+            .Select(e => $"Palette effect · {e.Name} {e.Kind.ToString().ToLowerInvariant()} ({e.First}–{e.Last})")
+            .ToList();
     }
 
     Dictionary<int, string> MapLayers()

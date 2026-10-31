@@ -27,6 +27,18 @@ public sealed class VramOamView : StackPanel
 
     public int SelectedRow { get; set; }
     public IReadOnlyList<(OamEntry Entry, string Actor)> Rows { get; private set; } = [];
+    readonly Control[] _tiles;
+
+    /// <summary>VRAM tiles view: the character blocks above the OAM table; OAM sprites view: the table alone.</summary>
+    public bool ShowTiles
+    {
+        get => _tiles[0].IsVisible;
+        set
+        {
+            foreach (var c in _tiles) c.IsVisible = value;
+            _oamTitle.Margin = new Thickness(0, value ? 24 : 0, 0, 10);
+        }
+    }
 
     public VramOamView(DebuggerModel m)
     {
@@ -41,6 +53,7 @@ public sealed class VramOamView : StackPanel
         var objBox = TileBox(new Border { Padding = new Thickness(6, 4), Child = _obj });
         var boxes = UI.Row(16, UI.Column(6, _bgCaption, bgBox), UI.Column(6, DebugUI.Caption("OBJ tiles"), objBox));
         Children.Add(boxes);
+        _tiles = [title, boxes];
         _oamTitle.Margin = new Thickness(0, 24, 0, 10);
         Children.Add(_oamTitle);
         var header = new StackPanel { Orientation = Orientation.Horizontal };

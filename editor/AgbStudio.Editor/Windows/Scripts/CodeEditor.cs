@@ -78,6 +78,10 @@ public sealed class CodeEditor : Panel, IEditTarget
     public double FontSizeOverride { get; set; }
     public Thickness TextPadding { get; set; } = new(0, 12, 0, 12);
     public double GutterWidth { get; set; } = 60;
+    /// <summary>A click in the line-number gutter (1-based line): the Script Editor toggles a breakpoint there.</summary>
+    public event Action<int>? GutterClicked;
+    /// <summary>Lines (1-based) that show a breakpoint dot in the gutter.</summary>
+    public Func<int, bool>? HasBreakpoint { get; set; }
     public UndoService? Undo { get; set; }
     /// <summary>Autocomplete source: (text, caret offset) -> items. Runs off the UI thread.</summary>
     public Func<string, int, CancellationToken, IReadOnlyList<CompletionItem>>? CompletionProvider { get; set; }
@@ -553,6 +557,13 @@ public sealed class CodeEditor : Panel, IEditTarget
         var props = e.GetCurrentPoint(this).Properties;
         if (!props.IsLeftButtonPressed) return;
         var offset = OffsetAt(p);
+        if (ShowLineNumbers && p.X < Gutter && GutterClicked != null)
+        {
+            GutterClicked(LineOf(offset) + 1);
+            Redraw();
+            e.Handled = true;
+            return;
+        }
         if (e.ClickCount == 2)
         {
             _anchor = WordStart(offset);
@@ -677,6 +688,8 @@ public sealed class CodeEditor : Panel, IEditTarget
                 var num = new TextLayout((line + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), Face, FontSize, muted, TextAlignment.Right,
                     maxWidth: GutterWidth - 16, lineHeight: LineHeight);
                 num.Draw(ctx, new Point(0, LineTop(line)));
+                if (HasBreakpoint?.Invoke(line + 1) == true && Token("status/danger") is { } dot)
+                    ctx.DrawEllipse(dot, null, new Point(8, LineTop(line) + LineHeight / 2), 4, 4);
             }
         }
     }
