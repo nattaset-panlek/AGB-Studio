@@ -22,7 +22,7 @@ How the blueprint (`D:\GBA-Research\agb-studio-blueprint.html`) maps to code. De
 |---|---|
 | Platform | libtonc, maxmod (`libmm`), BIOS wrappers `bios.hpp`, IWRAM placement (`*.iwram.cpp`, `AGB_IWRAM_CODE`) |
 | Core services | `system.hpp` (VBlank frame loop, profiler), `commit.hpp` (OAM / palette / register shadows and DMA queue), `input.hpp`, `task.hpp`, `memory.hpp` (arenas, pools), `rng.hpp`, `save.hpp`, `debug.hpp`, `assert.hpp`, `format.hpp`, `fixed.hpp` |
-| Rendering and media | `render/bg.hpp` (VRAM blocks), `render/map.hpp` (metatile streaming), `render/sprite.hpp`, `render/palette.hpp`, `render/text.hpp`, `render/effects.hpp`, `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
+| Rendering and media | `render/bg.hpp` (VRAM blocks), `render/map.hpp` (metatile streaming), `render/affine.hpp` (rotate / scale layers, Mode 7), `render/bitmap.hpp` (Mode 3 frame buffer), `render/sprite.hpp`, `render/palette.hpp`, `render/text.hpp`, `render/effects.hpp`, `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
 | Game framework | `game.hpp` (screens, staged scene loading, links, camera), `actor.hpp`, `behaviours.hpp`, `script.hpp` + `script_ops.def` (Event Script VM), `bus.hpp` (command bus), `api.hpp` (C# API facade) |
 
 Frame order (blueprint 04): `system::waitVBlank()` commits the previous frame's shadows in VBlank; the scene then runs input, behaviours, scripts, tasks, physics (`lateUpdate`), touches, links, sprite animation, camera, map streaming, OAM build and palette effects.

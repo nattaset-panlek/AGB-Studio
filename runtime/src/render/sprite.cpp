@@ -4,6 +4,7 @@
 
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
+#include "agb/render/bg.hpp"
 #include "agb/render/palette.hpp"
 #include "agb/system.hpp"
 
@@ -64,7 +65,8 @@ void markTiles(int first, int count, bool used) {
 int allocTiles(int count) {
     // Sizes are powers of two in practice; align so large frames do not fragment small ones.
     const int align = count >= 8 ? 8 : count >= 4 ? 4 : 1;
-    for (int t = 0; t + count <= 1024; t += align)
+    // In Mode 3 the bitmap covers OBJ tiles 0..511 (render/bitmap.hpp).
+    for (int t = bg::videoMode() >= 3 ? 512 : 0; t + count <= 1024; t += align)
         if (tilesFree(t, count)) {
             markTiles(t, count, true);
             return t;
