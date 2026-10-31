@@ -87,6 +87,7 @@ public sealed class PlayShots : IShotSource, IShotSpecimen
             setup?.Invoke(model);
             _ = fx.Services.Windows.Open(id, source: "shot");
             play.Publish();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally

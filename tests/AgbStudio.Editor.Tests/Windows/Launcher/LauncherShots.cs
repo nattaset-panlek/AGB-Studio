@@ -160,7 +160,7 @@ public sealed class LauncherShots : IShotSource
         {
             win.Show();
             l.CompleteOpen(created.ProjectPath, ProjectCreator.StartScene);
-            Capture.Pump();
+            Capture.UndoHistory(fx.Services);
             Capture.Save(Capture.Frame(win), path);
         }
         finally { win.Close(); }
