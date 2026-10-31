@@ -208,7 +208,7 @@ u16* palette() {
 void markPaletteDirty() { g_palDirty = true; }
 
 bool queueCopy(void* dst, const void* src, u32 bytes) {
-    if (g_queueLen >= kDmaQueueSize || g_queueBytes + bytes > g_budget) {
+    if (g_queueLen >= kDmaQueueSize - kQueueReserve || g_queueBytes + bytes > g_budget) {
         deferred();
         return false;
     }

@@ -21,6 +21,7 @@ enum Reg : u8 {
 
 constexpr u32 kDefaultDmaBudget = 16 * 1024;  // bytes per VBlank
 constexpr int kDmaQueueSize = 64;
+constexpr int kQueueReserve = 16;  // entries queueCopy leaves free for fills and sequences, which are never retried
 
 void init();
 void flush();  // called by system::waitVBlank only

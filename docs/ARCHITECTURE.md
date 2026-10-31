@@ -100,7 +100,7 @@ memory; refused when the budget is used up, so the caller retries next frame: sp
 `queueFill` (a rectangle filled with one value: closing a text panel, the text layer's blank map, the Mode 3
 `bitmap::fill`) and `queueSequence` (a rectangle of map entries value, value + 1 ...: a text panel's tiles mapped in
 order). Fills and sequences keep everything they need in the queue entry, so rows past the budget wait for the next
-VBlank instead of being refused. A deferral counts in `deferredCount()` and logs "too much graphics data changed this
+VBlank instead of being refused, and `queueCopy` leaves the last 16 of the 64 queue entries to them. A deferral counts in `deferredCount()` and logs "too much graphics data changed this
 frame, so the rest is copied next frame" once. `copyNow` / `fillNow` (and LZ77 to VRAM) write at once and are only for
 staged loads: the scene loader opens `beginStagedLoad` / `endStagedLoad` around each load step, which runs while the
 picture is faded out. Debug builds count a `copyNow` / `fillNow` made while the picture shows (outside VBlank, forced

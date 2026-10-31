@@ -398,6 +398,22 @@ AGB_TEST(commit_queue_rows_past_the_budget_wait_for_the_next_vblank) {
     commit::setDmaBudget(commit::kDefaultDmaBudget);
 }
 
+// queueCopy leaves the last entries of the queue to fills and sequences: their callers never retry (a text panel closed
+// in the frame the camera jumped still gets its map written).
+AGB_TEST(commit_queue_keeps_room_for_fills_and_sequences) {
+    static u16 src[2];
+    u16* map = commit::bgMap(30);
+    int copies = 0;
+    while (copies < commit::kDmaQueueSize && commit::queueCopy(map, src, 4)) ++copies;
+    CHECK_EQ(copies, commit::kDmaQueueSize - commit::kQueueReserve);
+    int owned = 0;
+    for (int i = 0; i < commit::kQueueReserve; ++i) owned += commit::queueFill(map + 32 + i * 2, 0x2222, 4);
+    CHECK_EQ(owned, commit::kQueueReserve);
+    system::waitVBlank();
+    CHECK_EQ(commit::queuedBytes(), 0u);
+    CHECK_EQ(map[32 + 2 * (commit::kQueueReserve - 1) + 1], 0x2222);
+}
+
 // copyNow / fillNow are for staged loads: Debug builds count a call made while the picture shows, not one inside a
 // staged load or in VBlank.
 AGB_TEST(direct_vram_writes_outside_a_staged_load_are_counted) {
