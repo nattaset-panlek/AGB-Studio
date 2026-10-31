@@ -280,12 +280,16 @@ const char* keyName(u16 keys) {
 namespace {
 Menu g_sceneMenu;
 
-// Saves what an overlay changes on top of a running scene and puts it back on close.
+// Saves what an overlay changes on top of a running scene and puts it back on close. The overlay's panels share the
+// text layer with the scene's labels, dialogue box and title menu: closing a panel points its map entries at the blank
+// tile, so whatever it covered is mapped again here (the HUD labels vanished after Options).
 struct Restore {
     render::bg::Mark vram;
     u32 arena;
     u16 bldCnt, bldY, bldAlpha;
     u16 textColors[16];
+    int textBg;
+    render::bg::Config textConfig;  // a large panel may move the text layer to its own char block
 
     void take() {
         vram = render::bg::mark();
@@ -294,6 +298,8 @@ struct Restore {
         bldY = commit::reg(commit::BldY);
         bldAlpha = commit::reg(commit::BldAlpha);
         for (int i = 0; i < 16; ++i) textColors[i] = render::palettes::baseColor(kTextBank * 16 + i);
+        textBg = text::layer();
+        if (textBg >= 0) textConfig = render::bg::config(textBg);
     }
     void give() const {
         render::palettes::setBank(false, kTextBank, textColors);
@@ -302,6 +308,9 @@ struct Restore {
         commit::setReg(commit::BldAlpha, bldAlpha);
         screenArena().rewind(arena);
         render::bg::rewind(vram);
+        if (textBg >= 0) render::bg::configure(textBg, textConfig);
+        text::remapPanels();
+        g_sceneMenu.remap();
     }
 };
 

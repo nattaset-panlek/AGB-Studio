@@ -26,12 +26,12 @@ public sealed class RuntimeTextAudioTests(EmulatorFixture emu)
         for (var i = 0; i < 3; i++) s.Step();
     }
 
-    // The offsets in the dialogue box area where the expected text's ink pixels are exactly one colour on screen and
-    // that colour is nowhere else under the text.
-    static List<(int X, int Y)> Find(uint[] frame, byte[] expected, int w, int h)
+    // The offsets in the dialogue box area (or from line `top` to `bottom`) where the expected text's ink pixels are
+    // exactly one colour on screen and that colour is nowhere else under the text.
+    static List<(int X, int Y)> Find(uint[] frame, byte[] expected, int w, int h, int top = 104, int bottom = 160)
     {
         var hits = new List<(int, int)>();
-        for (var oy = 104; oy + h <= 160; oy++)
+        for (var oy = top; oy + h <= bottom; oy++)
             for (var ox = 0; ox + w <= 240 && ox < 48; ox++)
             {
                 uint? ink = null;
@@ -121,6 +121,10 @@ public sealed class RuntimeTextAudioTests(EmulatorFixture emu)
         Assert.Empty(Find(before, english.Pixels, english.W, english.H));
         Assert.Single(Find(after, english.Pixels, english.W, english.H));
         Assert.Empty(Find(after, thai.Pixels, thai.W, thai.H));
+        // The HUD Text Label (same key, at 16, 16) is back after the pause menu and Options, in the new language.
+        Assert.Equal(new List<(int, int)> { (16, 16) }, Find(before, thai.Pixels, thai.W, thai.H, 0, 48));
+        Assert.Equal(new List<(int, int)> { (16, 16) }, Find(after, english.Pixels, english.W, english.H, 0, 48));
+        Assert.Empty(Find(after, thai.Pixels, thai.W, thai.H, 0, 48));
     }
 
     /// <summary>An XM whose 8 channels each hold a looping note from the first row on.</summary>

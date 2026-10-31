@@ -13,6 +13,7 @@ struct Table {
 };
 
 void setTables(const Table* const* languages, u8 count, u8 fallback);
+// Switches the language (Options screen); labels made from a string key show it in the new language at once.
 void setLanguage(u8 language);
 u8 language();
 u8 languageCount();
@@ -49,8 +50,9 @@ render::TextBox& box();
 int layer();
 u16 blankEntry();  // map entry of the text layer's blank tile (closed panels point at it)
 
-// Text Label actors and HUD text: small text boxes on the text layer at screen pixel positions.
-int addLabel(int x, int y, int widthPx, const data::TextRun* run);
+// Text Label actors and HUD text: small text boxes on the text layer at screen pixel positions. `key` (-1 = none) is the
+// string key `run` came from: the label follows language changes, and so does a HUD number drawn after it.
+int addLabel(int x, int y, int widthPx, const data::TextRun* run, s16 key = -1);
 void setLabelText(int label, const data::Font& font, const char* ascii);  // runtime numbers ("SCORE 0120")
 // HUD value: the label's own text (localized, e.g. "SCORE" / "คะแนน"), a space, then the number padded to
 // `digits` with zeros (C# Actor.SetLabelNumber).
@@ -58,5 +60,8 @@ void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits)
 // Replaces a label's text (C# Actor.SetLabelText): speaker name tags, signs, status lines.
 void setLabelRun(int label, const data::TextRun* run);
 void clearLabels();
+// An overlay panel (pause menu, options screen) closed over the scene and pointed its map entries at the blank tile:
+// point the labels and the open dialogue box at their tiles again.
+void remapPanels();
 
 }  // namespace agb::text

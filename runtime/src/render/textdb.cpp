@@ -57,7 +57,15 @@ void setTables(const Table* const* languages, u8 count, u8 fallback) {
     if (g_lang >= count) g_lang = 0;
 }
 
-void setLanguage(u8 l) { g_lang = l < g_count ? l : g_lang; }
+namespace {
+void relocalizeLabels();
+}  // namespace
+
+void setLanguage(u8 l) {
+    if (l >= g_count || l == g_lang) return;
+    g_lang = l;
+    relocalizeLabels();
+}
 u8 language() { return g_lang; }
 u8 languageCount() { return g_count; }
 const char* languageName(u8 l) { return l < g_count ? g_tables[l]->language : ""; }
@@ -93,6 +101,14 @@ struct LabelValue {
     bool shown;
 };
 LabelValue g_labelValues[kMaxLabels];
+// The label's own text: the run it was made with (Actor::label, passed back as the HUD prefix), the string key it came
+// from (-1 = a fixed run) and that key's run in the current language.
+struct LabelText {
+    const data::TextRun* made;
+    const data::TextRun* current;
+    s16 key;
+};
+LabelText g_labelTexts[kMaxLabels];
 int g_labelCount = 0;
 
 u16 g_blank = 0;
@@ -141,8 +157,9 @@ bool ensureLayer() {
 int layer() { return ensureLayer() ? g_bg : -1; }
 u16 blankEntry() { return g_blank; }
 
-int addLabel(int x, int y, int widthPx, const data::TextRun* r) {
+int addLabel(int x, int y, int widthPx, const data::TextRun* r, s16 key) {
     if (g_labelCount >= kMaxLabels || !ensureLayer()) return -1;
+    g_labelTexts[g_labelCount] = {r, r, r ? key : static_cast<s16>(-1)};
     const int lh = r ? r->font->lineHeight : 16;
     render::TextBox& b = g_labels[g_labelCount];
     if (!b.init(g_bg, x / 8, y / 8, (widthPx + 7) / 8, (lh * (r ? r->lines : 1) + 7) / 8, g_style.paletteBank, render::TextBox::Style{1, 4, 0}))
@@ -172,6 +189,8 @@ void setLabelText(int label, const data::Font& font, const char* ascii) {
 
 void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits) {
     if (label < 0 || label >= g_labelCount || !prefix) return;
+    // The label's own text comes back as the run it was made with: show it in the current language.
+    if (prefix == g_labelTexts[label].made) prefix = g_labelTexts[label].current;
     render::TextBox& b = g_labels[label];
     LabelValue& lv = g_labelValues[label];
     if (lv.shown && lv.prefix == prefix && lv.value == value && lv.digits == digits) return;
@@ -213,12 +232,44 @@ void setLabelRun(int label, const data::TextRun* r) {
     b.update();
 }
 
+namespace {
+// The language changed: labels that show their own key (alone, or before a HUD number) are drawn in the new language.
+void relocalizeLabels() {
+    for (int i = 0; i < g_labelCount; ++i) {
+        LabelText& t = g_labelTexts[i];
+        const data::TextRun* r = t.key >= 0 ? run(static_cast<u16>(t.key)) : nullptr;
+        if (!r || r == t.current) continue;
+        const LabelValue lv = g_labelValues[i];
+        const bool own = lv.shown && lv.prefix == t.current;
+        t.current = r;
+        if (!own) continue;  // replaced by Actor.SetLabelText: keep what the script set
+        if (lv.digits == 0xFF) {
+            g_labels[i].show(r, 0);
+            int w = 0;
+            for (u16 k = 0; k < r->count; ++k) {
+                const int e = r->glyphs[k].x + r->font->glyphs[r->glyphs[k].glyph].advance;
+                if (e > w) w = e;
+            }
+            g_labelValues[i] = {r, 0, static_cast<s16>(w + 4), 0xFF, true};
+        } else {
+            g_labelValues[i].shown = false;  // redraw the new text and the same number
+            setLabelValue(i, r, lv.value, lv.digits);
+        }
+    }
+}
+}  // namespace
+
 void clearLabels() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].release();
     g_labelCount = 0;
     g_layerReady = false;
     g_open = false;
     g_boxReady = false;  // the scene's arena and VRAM are reset
+}
+
+void remapPanels() {
+    for (int i = 0; i < g_labelCount; ++i) g_labels[i].remap();
+    if (g_open) g_box.remap();
 }
 
 static bool ensureOpen() {

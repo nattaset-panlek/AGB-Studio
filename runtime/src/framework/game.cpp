@@ -126,7 +126,7 @@ void makeLabels(const SceneDef* d) {
         const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
         if (a && label) {
             a->label = label;
-            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label, ad.label ? static_cast<s16>(-1) : ad.labelKey));
         }
     }
 }
