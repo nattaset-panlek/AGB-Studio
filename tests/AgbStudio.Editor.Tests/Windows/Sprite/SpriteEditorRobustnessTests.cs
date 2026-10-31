@@ -28,9 +28,9 @@ public class SpriteEditorRobustnessTests
             fx.Services.Commands.Execute("assets.create.palette");
             Capture.Pump();
 
-            // the Phase 10 fixture has an empty player.png: it is listed but reported when opened
-            fx.OpenSkyHopper();
-            var page = new SpriteEditorPage(fx.Services);
+            // the fixture adds an empty player.png next to the Sky Hopper art: it is listed but reported when opened
+            var root = fx.OpenSkyHopper();
+            var page = new SpriteEditorPage(fx.Services, Path.Combine(root, "assets", "sprites", "player.png"));
             Assert.Null(page.Doc);
             Assert.Contains(fx.Services.Toasts.Visible, t => t.Status == ToastStatus.Error && t.Text.Contains("player.png"));
             Assert.NotNull(new PaletteManagerPage(fx.Services).Library);

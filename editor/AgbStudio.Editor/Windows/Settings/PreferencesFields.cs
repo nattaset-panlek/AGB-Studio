@@ -11,6 +11,8 @@ public sealed partial class Preferences
     // Editor (T-S07): Script editor
     public ScriptEditorMode ScriptEditor { get; set; } = ScriptEditorMode.External;
     public string ExternalEditor { get; set; } = "Visual Studio Code";
+    /// <summary>Command line of Custom…: {file}, {line}, {column} and {project} are replaced.</summary>
+    public string ExternalEditorArguments { get; set; } = "\"{file}\"";
     public bool OpenCsExternally { get; set; } = true;
     public bool GenerateCsproj { get; set; } = true;
     public bool HotReloadOnExternalSave { get; set; } = true;
@@ -29,6 +31,8 @@ public sealed partial class Preferences
     public string ScriptEditorPath { get; set; } = @"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe";
     public string ImageEditorPath { get; set; } = "";
     public string TiledPath { get; set; } = "";
+    /// <summary>The first-run "devkitPro not found" notice was shown (P16.01); it is not shown again.</summary>
+    public bool DevkitProNoticeShown { get; set; }
 
     // Emulator (T-D09)
     public string EmulatorCore { get; set; } = "mGBA (built in)";

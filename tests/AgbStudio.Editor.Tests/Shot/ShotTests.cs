@@ -29,6 +29,7 @@ public interface IShotSource
 /// Phase 10 windows headless at 100% DPI, compares them with the Figma exports and writes docs/evidence/app,
 /// docs/evidence/diff and docs/evidence/shot-report.{json,md}.
 /// </summary>
+[Collection(EmulatorCollection.Name)]
 public class ShotTests(ITestOutputHelper log)
 {
     sealed record ManifestItem(string id, string node, string set, string variant, double w, double h);

@@ -18,6 +18,7 @@ using Avalonia.VisualTree;
 namespace AgbStudio.Editor.Tests.Windows.Debugger;
 
 /// <summary>Debugger E2E (P13.01-P13.09) on the running Sky Hopper fixture.</summary>
+[Collection(EmulatorCollection.Name)]
 public class DebuggerE2ETests : EditorDriver
 {
     DebuggerPage OpenDebugger(string id = "T-P19")
@@ -276,6 +277,7 @@ public class DebuggerE2ETests : EditorDriver
 }
 
 /// <summary>Budget Details numbers and suggestions (P13.07) and Build Report history (P13.08).</summary>
+[Collection(EmulatorCollection.Name)]
 public class BudgetAndHistoryTests
 {
     [Fact]

@@ -431,7 +431,7 @@ public sealed class DatabasePage : ToolPage
                     Select(t, Math.Max(0, t.Table.Rows.FindIndex(x => x.GetValueOrDefault(t.Table.KeyField) == r.Detail)));
                 break;
             case UsedBy.Kind.Script:
-                _ = S.Windows.Open("T-P04", r.Path, source: "Database.UsedBy");
+                _ = Scripts.ScriptEditorPage.OpenScriptFile(S, r.Path, source: "Database.UsedBy");
                 break;
             case UsedBy.Kind.Scene:
                 _ = S.Windows.Open("T-P01", source: "Database.UsedBy");

@@ -1,3 +1,4 @@
+using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
@@ -21,7 +22,7 @@ namespace AgbStudio.Editor.Windows.Launcher;
 [EditorWindow("T-P12")]
 [EditorWindow("T-P20")]
 [EditorWindow("T-P21")]
-public sealed class LauncherPage : DockPanel
+public sealed class LauncherPage : DockPanel, IShortcutScope
 {
     readonly EditorServices _s;
     readonly LauncherService _launcher;
@@ -40,6 +41,9 @@ public sealed class LauncherPage : DockPanel
 
     /// <summary>"T-P12" Projects, "T-P20" Templates or "T-P21" Learn.</summary>
     public string Tab { get; }
+
+    /// <summary>Keys run the Launcher's commands (F2 Rename, Enter Open), never the Scene Editor's.</summary>
+    public ShortcutContext ShortcutContext => ShortcutContext.Launcher;
 
     public LauncherPage(WindowContext ctx) : this(ctx.Services, ctx.Info.Id, ctx.Args as string) { }
 
@@ -72,6 +76,7 @@ public sealed class LauncherPage : DockPanel
         _side.Content = tab switch { "T-P20" => TemplateDetails(), "T-P21" => LearnSide(), _ => HomeSide() };
 
         _launcher.Changed += Refresh;
+        _launcher.StatusChanged += () => Dispatcher.UIThread.Post(() => _status.Text = _launcher.StatusLine());
         _launcher.SelectionChanged += () => Dispatcher.UIThread.Post(UpdateSelection);
         _launcher.Tutorials.Changed += Refresh;
         _launcher.RenameRequested += BeginRename;
@@ -509,7 +514,8 @@ public sealed class LauncherPage : DockPanel
 
     void OpenHardwareGuide()
     {
-        var guide = new[] { AppContext.BaseDirectory, Path.Combine(AppContext.BaseDirectory, "docs") }.Select(d => Path.Combine(d, "gba-hardware-guide.md")).FirstOrDefault(File.Exists);
+        // offline: the guide installed with the editor (docs/user)
+        var guide = Menus.About.UserGuide("gba-hardware-guide.md");
         if (guide is null) _s.Toasts.Show("The GBA hardware guide is not installed.", ToastStatus.Error);
         else _launcher.OpenDocument(guide);
     }

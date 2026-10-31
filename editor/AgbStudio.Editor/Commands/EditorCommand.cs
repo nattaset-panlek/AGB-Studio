@@ -3,8 +3,18 @@ using Avalonia.Input;
 
 namespace AgbStudio.Editor.Commands;
 
-/// <summary>Where a shortcut is active. Global shortcuts conflict with every context.</summary>
-public enum ShortcutContext { Global, Scene, Script, Graph }
+/// <summary>
+/// Where a shortcut is active. Global shortcuts conflict with every context. Scene, Script and Graph are documents of
+/// the editor workspace and share one namespace (Preferences · Shortcuts reports Toggle grid against Go to line); the
+/// Launcher pages replace the workspace, so their keys (F2 Rename, Enter Open) never meet the editor's.
+/// </summary>
+public enum ShortcutContext { Global, Scene, Script, Graph, Launcher }
+
+/// <summary>A page that sets the shortcut context while it is shown (the Launcher pages).</summary>
+public interface IShortcutScope
+{
+    ShortcutContext ShortcutContext { get; }
+}
 
 /// <summary>
 /// One command of the editor (menu item, palette entry, shortcut target). <see cref="Window"/> names the Figma window
@@ -24,8 +34,21 @@ public sealed class EditorCommand : ICommand
 
     Action? _run;
     Func<bool>? _can;
+    Func<bool>? _required;
 
     public bool IsImplemented => _run != null;
+
+    /// <summary>
+    /// A condition on top of the handler's own (e.g. "a project is open" for the title bar menus), kept when another
+    /// handler is set later.
+    /// </summary>
+    public EditorCommand Require(Func<bool> condition)
+    {
+        var before = _required;
+        _required = before is null ? condition : () => before() && condition();
+        RaiseCanExecuteChanged();
+        return this;
+    }
 
     public EditorCommand Handle(Action run, Func<bool>? canExecute = null)
     {
@@ -38,7 +61,7 @@ public sealed class EditorCommand : ICommand
     public event EventHandler? CanExecuteChanged;
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
-    public bool CanExecute(object? parameter = null) => _can?.Invoke() ?? true;
+    public bool CanExecute(object? parameter = null) => (_required?.Invoke() ?? true) && (_can?.Invoke() ?? true);
 
     internal Action<EditorCommand>? Fallback { get; set; }
     internal Action<EditorCommand>? Executed { get; set; }

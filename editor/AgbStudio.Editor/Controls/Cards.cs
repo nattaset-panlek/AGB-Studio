@@ -114,7 +114,7 @@ public class NodeHeader : TemplatedControl
     public string? Title { get => GetValue(TitleProperty); set => SetValue(TitleProperty, value); }
 }
 
-public enum PinType { Exec, Bool, Fixed, Actor, Text }
+public enum PinType { Exec, Bool, Fixed, Actor, Text, Vector }
 public enum PinDir { In, Out }
 
 /// <summary>Figma "Node Pin": data type colour, In (hollow) / Out (filled); Exec is a play arrow.</summary>

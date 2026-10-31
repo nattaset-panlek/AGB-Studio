@@ -77,6 +77,7 @@ public abstract class EditorDriver : IDisposable
 }
 
 /// <summary>Play Mode E2E (P12.01-P12.11) with the Sky Hopper fixture running in the editor's mGBA core.</summary>
+[Collection(EmulatorCollection.Name)]
 public class PlayModeE2ETests : EditorDriver
 {
     [AvaloniaFact]
@@ -314,8 +315,24 @@ public class PlayModeE2ETests : EditorDriver
     {
         var page = OpenPlayMode();
         var lines = Lines(page);
-        Assert.True(lines.Any(l => System.Text.RegularExpressions.Regex.IsMatch(l.Text!, @"^Scene Forest_01 loaded \(BG 3 · OBJ \d+\)$") && l.Level == ConsoleLevel.Info),
+        // the BGs the game turned on: the three map layers and the text layer of the HUD, which takes a free BG
+        Assert.True(lines.Any(l => System.Text.RegularExpressions.Regex.IsMatch(l.Text!, @"^Scene Forest_01 loaded \(BG 4 · OBJ \d+\)$") && l.Level == ConsoleLevel.Info),
             string.Join(" | ", lines.Select(l => l.Text)));
+        // an engine warning: the scene now loads within its frames, so make a frame overrun by holding the game at a
+        // breakpoint (the jump at PlayerController.cs:19); the engine reports the frame once the game continues
+        var debug = AgbStudio.Editor.Windows.Debugger.DebuggerModel.Of(Fx.Services);
+        var bp = debug.AddBreakpoint("PlayerController.cs", 19);
+        Play.RunFrames(2);  // the Debugger hands the breakpoint to the game after a frame
+        Play.KeyDown(Key.Z);
+        for (var i = 0; i < 10 && !debug.AtBreakpoint; i++) Play.RunFrames(1);
+        Play.KeyUp(Key.Z);
+        Assert.True(debug.AtBreakpoint);
+        Play.RunFrames(5);
+        bp.Enabled = false;
+        debug.Resume();
+        Play.RunFrames(5);
+        Capture.Pump();
+        lines = Lines(page);
         Assert.Contains(lines, l => l.Level == ConsoleLevel.Warning && l.Text!.Contains("took longer than one frame"));  // engine warning, "warning: " prefix removed
         Assert.All(lines, l => Assert.Matches(@"^\d\d:\d\d:\d\d$", l.Time));
         Assert.Equal(Play.Console.Entries.Count, page.PanelTabs[1].Count);

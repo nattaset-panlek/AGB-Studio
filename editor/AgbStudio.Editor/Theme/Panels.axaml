@@ -417,6 +417,7 @@
     <Style Selector="^[Type=Fixed]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-fixed}" /></Style>
     <Style Selector="^[Type=Actor]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-actor}" /></Style>
     <Style Selector="^[Type=Text]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-text}" /></Style>
+    <Style Selector="^[Type=Vector]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-vector}" /></Style>
     <Style Selector="^[Dir=Out] /template/ Ellipse#PART_Dot"><Setter Property="Fill" Value="{Binding $parent[c:NodePin].Foreground}" /></Style>
     <Style Selector="^[Type=Exec]">
       <Setter Property="Width" Value="12" />

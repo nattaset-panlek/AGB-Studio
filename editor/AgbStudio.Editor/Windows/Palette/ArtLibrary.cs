@@ -156,7 +156,7 @@ public sealed class ArtLibrary
     /// <summary>Raised after any change to banks, colours, images, meta or effects (also on undo / redo).</summary>
     public event Action? Changed;
 
-    public string FilePath => Path.Combine(Project.AssetsDir, "palettes", "palettes.json");
+    public string FilePath => Path.Combine(Project.PalettesDir, "palettes.json");
 
     ArtLibrary(GameProject project, UndoService undo)
     {

@@ -23,6 +23,10 @@
     <ProjectReference Include="..\..\tools\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- the user guides, opened offline from the install (Launcher › Learn) -->
+    <None Include="..\..\docs\user\**\*.md" Link="docs\user\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="AgbStudio.Editor.Tests" />
   </ItemGroup>
 </Project>

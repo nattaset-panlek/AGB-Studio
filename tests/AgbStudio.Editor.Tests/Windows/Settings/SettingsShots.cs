@@ -90,7 +90,7 @@ public sealed class SettingsShots : IShotSource
         {
             using var fx = new Fixture();
             fx.Services.Set(new EditorLinks { Config = new EditorConfig { WebsiteUrl = "https://example.invalid/agb-studio" }, Open = _ => { } });
-            Render(new AboutDialog(fx.Services, "0.1.0", new DateTime(2026, 10, 31)), w, h, path);
+            Render(new AboutDialog(fx.Services, About.Version, new DateTime(2026, 10, 31)), w, h, path);
         });
         yield return ("T-O12", (path, w, h) =>
         {

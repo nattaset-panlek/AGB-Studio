@@ -60,10 +60,17 @@ public static partial class MenuActions
         foreach (var id in NeedProject)
         {
             var c = s.Commands.Get(id);
-            if (c.IsImplemented || c.Window is null) continue;
-            var window = c.Window;
             var idle = NeedIdleBuild.Contains(id);
-            c.Handle(() => _ = s.Windows.Open(window, source: id), () => HasProject() && (!idle || Idle()));
+            bool Can() => HasProject() && (!idle || Idle());
+            if (c.IsImplemented)
+            {
+                // implemented by its window's group (Create › Sprite, Build › Play ...): still needs the project
+                if (!gated.Contains(c)) { c.Require(Can); gated.Add(c); }
+                continue;
+            }
+            if (c.Window is null) continue;
+            var window = c.Window;
+            c.Handle(() => _ = s.Windows.Open(window, source: id), Can);
             gated.Add(c);
         }
 

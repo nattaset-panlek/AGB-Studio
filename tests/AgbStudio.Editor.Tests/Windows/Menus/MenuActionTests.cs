@@ -16,6 +16,7 @@ using SkiaSharp;
 namespace AgbStudio.Editor.Tests.Windows.Menus;
 
 /// <summary>P11.65-P11.67: every title bar menu item (T-M01..T-M08) acts or opens its window and is disabled when it cannot.</summary>
+[Collection(EmulatorCollection.Name)]
 public sealed class MenuActionTests : IDisposable
 {
     readonly Fixture _fx = new();
@@ -140,11 +141,20 @@ public sealed class MenuActionTests : IDisposable
                 case Opens o:
                     Assert.Equal(o.Window, cmd.Window);
                     Assert.True(cmd.CanExecute(), id + " is disabled with a project open");
+                    var before = s.Windows.Requests.Count;
                     s.Commands.Execute(id);
                     Capture.Pump();
-                    Assert.Equal((o.Window, (string?)id), s.Windows.Requests[^1]);
+                    // the command opens its Figma window first; Create › Sprite / C# Script then put their New dialog on top
+                    Assert.True(s.Windows.Requests.Count > before, id + " opened nothing");
+                    Assert.Equal((o.Window, (string?)id), s.Windows.Requests[before]);
                     if (o.Owner == Mine) Assert.True(s.Windows.IsRegistered(o.Window), id);
                     while (win.Overlays.IsOpen) win.Overlays.CloseTop();
+                    if (s.Build.IsBuilding)
+                    {
+                        // Play started a build: the game is not started, and Play / Build are enabled again when the build ends
+                        (s.GetService(typeof(AgbStudio.Editor.Windows.Play.PlayController)) as AgbStudio.Editor.Windows.Play.PlayController)?.Stop();
+                        Play.PlayTestSupport.WaitUntil(() => !s.Build.IsBuilding, 300);
+                    }
                     break;
                 case Acts:
                     Assert.True(cmd.IsImplemented, id + " has no handler");
@@ -323,15 +333,18 @@ public sealed class MenuActionTests : IDisposable
 
         var links = new EditorLinks { Config = new EditorConfig { UpdateFeed = "https://feed.example/latest.json" }, Open = _opened.Add, Fetch = (url, _) => { asked.Add(url); return feed is null ? throw new HttpRequestException("offline") : Task.FromResult(feed); } };
         s.Set(links);
-        feed = """{ "version": "0.2.0", "url": "https://agb.example/releases/0.2.0" }""";
+        // versions relative to this build (Directory.Build.props): a newer minor, then this version
+        var current = Version.Parse(About.Version);
+        var newer = $"{current.Major}.{current.Minor + 1}.0";
+        feed = $$"""{ "version": "{{newer}}", "url": "https://agb.example/releases/{{newer}}" }""";
         r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal(("AGB Studio 0.2.0 is available", true), (r.Message, r.Available));
-        Assert.Equal("https://agb.example/releases/0.2.0", _opened[^1]);
+        Assert.Equal(($"AGB Studio {newer} is available", true), (r.Message, r.Available));
+        Assert.Equal($"https://agb.example/releases/{newer}", _opened[^1]);
         Assert.Equal(["https://feed.example/latest.json"], asked);
 
-        feed = """[{ "tag_name": "v0.1.0", "html_url": "https://agb.example/r/0.1.0" }]""";
+        feed = $$"""[{ "tag_name": "v{{About.Version}}", "html_url": "https://agb.example/r/{{About.Version}}" }]""";
         r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal(("AGB Studio is up to date (0.1.0)", false), (r.Message, r.Available));
+        Assert.Equal(($"AGB Studio is up to date ({About.Version})", false), (r.Message, r.Available));
 
         feed = null;
         r = await MenuActions.CheckUpdatesAsync(s);

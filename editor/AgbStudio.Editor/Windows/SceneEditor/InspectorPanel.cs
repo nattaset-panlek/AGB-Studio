@@ -235,7 +235,7 @@ public sealed class InspectorPanel : Panel
             _m.SelectedComponent = ci;
             if (e.ClickCount == 2 && script && SceneCommands.ScriptFile(_m, comp.Type) is { } file)
             {
-                _ = _s.Windows.Open("T-P04", file, source: "ScriptComponent");
+                _ = Scripts.ScriptEditorPage.OpenScriptFile(_s, file, source: "ScriptComponent");
                 header.IsOpen = true;   // the first click of the double click folded it
                 e.Handled = true;
             }

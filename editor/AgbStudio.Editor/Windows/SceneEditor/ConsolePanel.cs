@@ -195,10 +195,10 @@ public sealed class ConsolePanel : Panel
         _scroll.ScrollToEnd();
     }
 
-    /// <summary>Opens the line's file in the Script Editor at its line (args: (string File, int Line)).</summary>
+    /// <summary>Opens the line's file at its line, as Preferences › "Open .cs with" says (the Script Editor or the external editor).</summary>
     public void Open(ConsoleEntry e)
     {
         if (e.File == null) return;
-        _ = _s.Windows.Open("T-P04", (e.File, e.Line), source: "ConsoleLine");
+        _ = Scripts.ScriptEditorPage.OpenScriptFile(_s, e.File, Math.Max(1, e.Line), source: "ConsoleLine");
     }
 }

@@ -201,9 +201,10 @@ public static class GbaScreenRenderer
             {
                 if (frame.TextLayer < 0)
                 {
-                    frame.TextLayer = TextBg;
+                    frame.TextLayer = TextLayerBg(bgs, scene.VideoMode);
                     bgPal.SetBank(TextBank, TextColors);
-                    bgs[TextBg] = new Bg { Priority = 0 };
+                    // a map layer on the same BG (no free one) is replaced: its scroll stays (set below)
+                    bgs[frame.TextLayer] = new Bg { Priority = 0 };
                 }
                 var lh = run.Font.LineHeight;
                 int tx = a.X / 8, ty = a.Y / 8, w = (240 - a.X + 7) / 8, h = (lh * run.Lines + 7) / 8;
@@ -212,7 +213,7 @@ public static class GbaScreenRenderer
                 labels.Add((tx, ty, w, h, px));
             }
         }
-        if (frame.TextLayer >= 0) bgs[TextBg]!.Sample = TextSampler(labels);
+        if (frame.TextLayer >= 0) bgs[frame.TextLayer]!.Sample = TextSampler(labels);
 
         // scroll: every map layer view sets its BG's scroll with parallax each frame (the text layer keeps 0,0
         // unless a map layer shares its BG)
@@ -336,6 +337,17 @@ public static class GbaScreenRenderer
         }
         else if (tx < 0 || ty < 0 || tx >= w || ty >= h) return (0, 0);
         return TilePixel(img.Tiles.Tiles, img.Cells[ty * w + tx], bank, px & 7, py & 7);
+    }
+
+    // text::pickBg (runtime/src/render/textdb.cpp): BoxStyle::bg (BG0) when the scene leaves it free, else the highest
+    // regular BG of the video mode the scene does not show, else BG0 shared with the scene layer (taking its scroll).
+    static int TextLayerBg(Bg?[] bgs, int videoMode)
+    {
+        var last = videoMode == 0 ? 3 : videoMode == 1 ? 1 : -1;
+        if (TextBg <= last && bgs[TextBg] == null) return TextBg;
+        for (var b = last; b >= 0; b--)
+            if (bgs[b] == null) return b;
+        return TextBg;
     }
 
     // The text layer: a 32x32 map (256 x 256 px, wrapping) whose entries point at each label box's tiles, written

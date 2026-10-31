@@ -16,6 +16,8 @@ public sealed class EditorConfig
     public string WebsiteUrl { get; set; } = "";
     public string CommunityUrl { get; set; } = "";
     public string ReleaseNotesUrl { get; set; } = "";
+    /// <summary>The devkitPro installer page ("devkitPro not found", P16.01): the devkitPro project's own page by default.</summary>
+    public string DevkitProUrl { get; set; } = "https://devkitpro.org/wiki/Getting_Started";
 
     static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
@@ -127,6 +129,17 @@ public static class About
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
         {
             var f = Path.Combine(dir.FullName, "docs", "THIRD_PARTY.md");
+            if (File.Exists(f)) return f;
+        }
+        return null;
+    }
+
+    /// <summary>A user guide (docs/user, e.g. the GBA hardware guide): in docs/user next to AGBStudio.exe, in docs/user of a checkout.</summary>
+    public static string? UserGuide(string file)
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+        {
+            var f = Path.Combine(dir.FullName, "docs", "user", file);
             if (File.Exists(f)) return f;
         }
         return null;

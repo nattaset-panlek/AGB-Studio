@@ -25,6 +25,9 @@ public sealed class Fixture : IDisposable
     public Fixture(bool withApp = true)
     {
         Services = EditorServices.Create(withApp ? Avalonia.Application.Current : null, Path.Combine(Folder, "appdata"), Timer, () => Now);
+        // tests start no external editor, whatever is installed: scripts then open in the built-in Script Editor
+        AgbStudio.Editor.Windows.Scripts.ExternalEditorService.Of(Services).Launch =
+            (exe, _) => throw new InvalidOperationException($"tests do not start {Path.GetFileName(exe)}");
     }
 
     /// <summary>Creates and opens the Sky Hopper project with the documents, status and files of the Figma Scene Editor.</summary>
@@ -57,6 +60,9 @@ public sealed class Fixture : IDisposable
 
     public void Dispose()
     {
+        // a Play started by the test stops (also one still building), then the editor lets go of the process core
+        (Services.GetService(typeof(AgbStudio.Editor.Windows.Play.PlayController)) as IDisposable)?.Dispose();
+        Services.Emulator.Release();
         try { Directory.Delete(Folder, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
 }

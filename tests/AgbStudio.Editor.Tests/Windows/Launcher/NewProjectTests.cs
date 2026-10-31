@@ -186,17 +186,20 @@ public class NewProjectTests
         var s = p.Settings;
         Assert.Equal(("Forest Run", "Forest Run", "FORESTRUN", "FRST", SaveType.Flash128K), (s.Name, s.General.GameTitle, s.General.RomTitle, s.General.GameCode, s.Save.Type));
         Assert.Equal("ForestRun", s.Scripting.Namespace);
-        // Platformer template: the player, enemy, coin and goal sprites, music and a jump sound
-        Assert.Equal(["coin", "flag", "hero", "slime"], p.SpriteFiles().Select(GameProject.AssetName));
-        Assert.Single(p.MusicFiles());
-        // Sample level (Forest_01): tileset, map and the scene, which is the start scene
-        Assert.Equal(["Forest_01"], p.SceneFiles().Select(GameProject.AssetName));
-        Assert.Equal(("Forest_01", "Forest_01"), (s.General.StartScene, s.LastScene));
-        Assert.Single(p.MapFiles());
-        Assert.Contains(GameProject.Load<SceneFile>(p.SceneFiles().Single()).Actors, a => a.Kind == ActorKind.Player);
-        // Thai variable-width font
-        Assert.True(File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font")));
-        Assert.True(File.Exists(Path.Combine(p.FontsDir, "NotoSansThai-Regular.ttf")));
+        // Sample level: the Platformer template of AgbStudio.Build writes the whole game, as a project made from it directly
+        var reference = AgbStudio.Build.Content.Templates.TemplateCatalog.Find("platformer")!.Create(Path.Combine(h.Fx.Folder, "Reference"), "Reference");
+        Assert.Equal(Names(reference.SceneFiles()), Names(p.SceneFiles()));
+        Assert.Equal(Names(reference.ScriptFiles()), Names(p.ScriptFiles()));
+        Assert.Equal(Names(reference.SpriteFiles()), Names(p.SpriteFiles()));
+        Assert.Equal(Names(reference.MapFiles()), Names(p.MapFiles()));
+        Assert.Equal(reference.MusicFiles().Count(), p.MusicFiles().Count());
+        Assert.Contains("PlayerController", Names(p.ScriptFiles()));
+        Assert.Contains(p.SceneFiles().Select(GameProject.Load<SceneFile>).SelectMany(sc => sc.Actors), a => a.Kind == ActorKind.Player);
+        // its title screen is the start scene
+        Assert.Equal((reference.Settings.General.StartScene, reference.Settings.General.StartScene), (s.General.StartScene, s.LastScene));
+        // Thai variable-width font (the template's own)
+        var font = GameProject.Load<FontFile>(Path.Combine(p.FontsDir, "thai_vwf.font"));
+        Assert.True(File.Exists(Path.Combine(p.FontsDir, font.Source)));
         Assert.Equal("thai_vwf", s.General.DefaultFont);
         // no Logic Graph examples
         Assert.Empty(p.GraphFiles());
@@ -236,11 +239,40 @@ public class NewProjectTests
         Assert.Equal("Scene_01", p.Settings.General.StartScene);
         Assert.Empty(p.FontFiles());
         Assert.Equal("", p.Settings.General.DefaultFont);
-        var graph = LogicGraph.Parse(File.ReadAllText(p.GraphFiles().Single()));
+        var graph = AgbStudio.Scripting.Graph.LogicGraph.Parse(File.ReadAllText(p.GraphFiles().Single()));
         Assert.Equal("PlayerLogic", graph.Class);
         Assert.Contains("class PlayerLogic", GraphCodeGen.Generate(graph, "PlayerLogic.graph"));
         Assert.False(Directory.Exists(Path.Combine(p.Root, ".git")));
         Assert.Equal("art/genre/puzzle", h.Launcher.Thumbnail(p.ProjectPath, "Block Drop"));
+    }
+
+    /// <summary>A template card makes the game of its AgbStudio.Build template (the Visual Novel card is "novel", its template "visualnovel").</summary>
+    [AvaloniaFact]
+    public async Task Create_VisualNovel_WritesTheTemplateGame()
+    {
+        using var h = new LauncherHarness();
+        _ = h.S.Windows.Open("T-D01", "novel", source: "test");
+        Capture.Pump();
+        var dlg = (NewProjectDialog)h.Win.Overlays.Open.Single();
+        dlg.NameField.Text = "Dusk Tale";
+        dlg.SetLocationBase(Path.Combine(h.Fx.Folder, "Made"));
+        dlg.Git.IsChecked = false;
+        h.Click(Confirm(dlg));
+        await LauncherHarness.Until(() => h.S.Project.Current != null && !h.Win.Overlays.IsOpen);
+
+        var p = h.S.Project.Current!;
+        Assert.Equal(("Dusk Tale", "DUSKTALE"), (p.Settings.Name, p.Settings.General.RomTitle));
+        var reference = AgbStudio.Build.Content.Templates.TemplateCatalog.Find("visualnovel")!.Create(Path.Combine(h.Fx.Folder, "Reference"), "Reference");
+        Assert.NotEmpty(p.SceneFiles());
+        Assert.NotEmpty(p.ScriptFiles());
+        Assert.Equal(Names(reference.SceneFiles()), Names(p.SceneFiles()));
+        Assert.Equal(Names(reference.ScriptFiles()), Names(p.ScriptFiles()));
+        Assert.Equal(Names(reference.SpriteFiles()), Names(p.SpriteFiles()));
+        Assert.All(p.ScriptFiles(), f => Assert.Contains("class ", File.ReadAllText(f)));
+        Assert.Equal(reference.Settings.General.StartScene, p.Settings.General.StartScene);
+        Assert.Equal("T-P01", h.Win.CurrentPageId);
+        // every card of Launcher · Templates has its AgbStudio.Build template
+        Assert.All(TemplateCatalog.All, t => Assert.NotNull(ProjectCreator.BuildTemplate(t)));
     }
 
     [AvaloniaFact]
@@ -259,5 +291,7 @@ public class NewProjectTests
     static TextBox Box(TextField f) => f.GetVisualDescendants().OfType<TextBox>().Single(b => b.Name == "PART_Box");
     static TextBlock Help(TemplatedControl f) => f.GetVisualDescendants().OfType<StackPanel>().First().Children.OfType<TextBlock>().Last();
     static Button Confirm(NewProjectDialog d) => d.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "PART_Confirm");
+
+    static string[] Names(IEnumerable<string> files) => files.Select(GameProject.AssetName).Order().ToArray();
     static IBrush? Token(Control c, string key) => c.TryFindResource(key, c.ActualThemeVariant, out var v) ? v as IBrush : null;
 }

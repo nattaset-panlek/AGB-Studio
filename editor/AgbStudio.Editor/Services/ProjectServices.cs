@@ -51,6 +51,17 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
     /// <summary>The C# scripting compiler; its last result feeds the Script Editor, Inspector and Debugger.</summary>
     public AgbStudio.Scripting.ScriptBackend Scripts { get; } = new();
 
+    /// <summary>The tools the last build could not find (it did not start then); empty when it had them all.</summary>
+    public IReadOnlyList<(string Tool, string Path)> MissingTools { get; private set; } = [];
+
+    /// <summary>The tools a build runs or links that are not at their path: devkitARM g++, gbafix, mmutil, libtonc, maxmod.</summary>
+    public static IReadOnlyList<(string Tool, string Path)> FindMissingTools(Toolchain tc) =>
+        new[]
+        {
+            ("devkitARM", tc.Gxx), ("gbafix", tc.Gbafix), ("mmutil", tc.Mmutil),
+            ("libtonc", Path.Combine(tc.LibtoncLib, "libtonc.a")), ("maxmod", Path.Combine(tc.LibgbaLib, "libmm.a")),
+        }.Where(t => !File.Exists(t.Item2)).ToList();
+
     /// <summary>Runs a build; <paramref name="observer"/> receives step / file progress (Build ROM dialog, T-D06).</summary>
     public async Task<BuildResult> BuildAsync(BuildOptions? options = null, IBuildObserver? observer = null)
     {
@@ -60,7 +71,19 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
         Started?.Invoke();
         try
         {
-            var result = await Task.Run(() => new GameBuilder(p, new Toolchain(devkitPro()), observer) { Scripts = Scripts }.Build(options));
+            var tc = new Toolchain(devkitPro());
+            // without devkitPro's tools the build cannot start: one error per missing tool names its path (G-ERR.05)
+            MissingTools = FindMissingTools(tc);
+            if (MissingTools.Count > 0)
+            {
+                var failed = new BuildResult { Success = false, FailedStep = GameBuilder.StepCompile };
+                foreach (var (tool, path) in MissingTools)
+                    failed.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"{tool} is not at {path}. Set the devkitPro folder in Preferences › Paths."));
+                Last = failed;
+                Finished?.Invoke(failed);
+                return failed;
+            }
+            var result = await Task.Run(() => new GameBuilder(p, tc, observer) { Scripts = Scripts }.Build(options));
             Last = result;
             Finished?.Invoke(result);
             return result;
@@ -74,20 +97,42 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
 
 /// <summary>
 /// The single mGBA libretro core of the process (D-06: one <see cref="LibretroCore"/> per process). Play Mode and the
-/// Debugger (Phase 12-13) acquire it here; the shell only owns its lifetime.
+/// Debugger (Phase 12-13) acquire it here; the shell only owns its lifetime. Hosts share the one core: the first
+/// <see cref="Acquire"/> creates it and the last <see cref="Release"/> disposes it, so several editor instances in one
+/// process (the tests) never try to create a second core.
 /// </summary>
 public sealed class EmulatorHost : IDisposable
 {
+    static readonly object s_lock = new();
+    static LibretroCore? s_core;
+    static int s_users;
+
     LibretroCore? _core;
     public bool IsLoaded => _core != null;
 
-    /// <summary>Creates the core on first use. Throws if mgba_libretro.dll cannot be loaded.</summary>
-    public LibretroCore Acquire(string? corePath = null) => _core ??= new LibretroCore(corePath);
+    /// <summary>Takes the process core, creating it on first use. Throws if mgba_libretro.dll cannot be loaded.</summary>
+    public LibretroCore Acquire(string? corePath = null)
+    {
+        if (_core != null) return _core;
+        lock (s_lock)
+        {
+            s_core ??= new LibretroCore(corePath);
+            s_users++;
+            return _core = s_core;
+        }
+    }
 
+    /// <summary>Gives the core back; the last host that holds it disposes it.</summary>
     public void Release()
     {
-        _core?.Dispose();
-        _core = null;
+        if (_core is null) return;
+        lock (s_lock)
+        {
+            _core = null;
+            if (--s_users > 0) return;
+            s_core?.Dispose();
+            s_core = null;
+        }
     }
 
     public void Dispose() => Release();
