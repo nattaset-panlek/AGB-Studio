@@ -128,4 +128,32 @@ public sealed class HierarchyTests : IDisposable
         Assert.Equal(count, m.Scene.Actors.Count);
         Assert.Equal("Question Block", m.Scene.Actors[3].Name);
     }
+
+    // P10.11 on actors: Ctrl+X cuts the selected actor (saved without it), Ctrl+V puts it back; Ctrl+A selects the
+    // scene row, which holds every actor; with no actor selected, Ctrl+X cuts nothing
+    [AvaloniaFact]
+    public void EditMenu_CutPasteAndSelectAllOnActors()
+    {
+        var m = _w.M;
+        var count = m.Scene!.Actors.Count;
+        _w.Click(Row("actor:3"));
+        Assert.Equal(3, m.SelectedActorIndex);
+        _w.Key(PhysicalKey.X, RawInputModifiers.Control);
+        Assert.Equal(count - 1, m.Scene.Actors.Count);
+        Assert.DoesNotContain(m.Scene.Actors, a => a.Name == "Question Block");
+        Assert.Equal(count - 1, GameProject.Load<SceneFile>(m.ScenePath!).Actors.Count);
+        Assert.DoesNotContain(Panel.Items, i => i.Label == "Question Block");
+        _w.Key(PhysicalKey.V, RawInputModifiers.Control);
+        Assert.Equal(count, m.Scene.Actors.Count);
+        Assert.Contains(m.Scene.Actors, a => a.Name.StartsWith("Question Block", StringComparison.Ordinal));
+        Assert.Equal(count, GameProject.Load<SceneFile>(m.ScenePath!).Actors.Count);
+
+        _w.Key(PhysicalKey.A, RawInputModifiers.Control);
+        Assert.Equal(SceneItemKind.Scene, m.Selection?.Kind);
+        Assert.True(Row("scene").IsSelected);
+        Assert.False(Row("actor:0").IsSelected);
+        Assert.Equal(-1, m.SelectedActorIndex);
+        _w.Key(PhysicalKey.X, RawInputModifiers.Control);
+        Assert.Equal(count, m.Scene.Actors.Count);
+    }
 }

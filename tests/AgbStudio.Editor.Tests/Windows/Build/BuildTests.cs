@@ -515,6 +515,67 @@ public class FlashTests
         finally { win.Close(); }
     }
 
+    /// <summary>
+    /// 4.9 "Loading: flashing a cartridge" (T-D07): Build › Flash to Cartridge…, Flash; while the device writes, the
+    /// dialog shows "Writing", "208 / 412 KB" with the bar at that point and the hint "Keep the cartridge connected until
+    /// it finishes." in its footer; Flash is greyed out. When the write goes on, the ROM is verified and the dialog closes.
+    /// </summary>
+    [AvaloniaFact]
+    public void Writing_ShowsWritingXOfYKb_AndKeepTheCartridgeConnected()
+    {
+        using var fx = new Fixture();
+        var p = GroupFixture.SkyHopper(fx);
+        GroupFixture.WriteReport(p);
+        var rom = File.ReadAllBytes(Path.Combine(p.BuildDir, "sky_hopper.gba"));
+        var dev = new FakeCartridge { PauseAt = 208 * 1024 };
+        fx.Services.Set<ICartridgeDeviceProvider>(new FakeDevices(dev));
+        var win = new MainWindow(fx.Services) { Width = 1440, Height = 900 };
+        win.Show();
+        try
+        {
+            // Build › Flash to Cartridge…
+            var build = win.MenuBar.Items.OfType<MenuItem>().Single(m => (string?)m.Header == "Build");
+            Click(win, build);
+            Assert.True(build.IsSubMenuOpen);
+            var item = build.Items.OfType<MenuItem>().Single(m => (string?)m.Header == "Flash to Cartridge…");
+            ClickIn(item);
+            var d = Assert.IsType<FlashDialog>(win.Overlays.Open.Single());
+            GroupFixture.PumpUntil(() => d.Detection.IsCompleted, 10_000);
+            Click(win, Part(d, "PART_Confirm"));
+            GroupFixture.PumpUntil(() => d.ProgressText.StartsWith("208 /", StringComparison.Ordinal), 10_000);
+
+            Assert.True(d.IsFlashing);
+            var shown = d.GetVisualDescendants().OfType<TextBlock>().Where(t => t.IsEffectivelyVisible && t.Bounds.Width > 0).Select(t => t.Text).ToList();
+            Assert.Contains("Writing", shown);
+            Assert.Contains($"208 / {rom.Length / 1024} KB", shown);
+            Assert.Equal("208 / 412 KB", d.ProgressText);
+            var hint = d.GetVisualDescendants().OfType<DialogFooter>().Single().GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "PART_Hint");
+            Assert.True(hint.IsEffectivelyVisible);
+            Assert.Equal("Keep the cartridge connected until it finishes.", hint.Text);
+            var bar = d.GetVisualDescendants().OfType<AgbProgress>().Single(b => b.Name == "FlashProgress");
+            Assert.Equal((208 * 1024.0, (double)rom.Length), (bar.Value, bar.Maximum));
+            Assert.False(Part(d, "PART_Confirm").IsEnabled);
+
+            // the write goes on: written, verified, closed
+            dev.Gate.SetResult();
+            GroupFixture.PumpUntil(() => !win.Overlays.IsOpen, 10_000);
+            Assert.Equal(rom, dev.Flash);
+            Assert.Contains(fx.Services.Toasts.Visible, t => t.Text.StartsWith("Flashed sky_hopper.gba", StringComparison.Ordinal));
+        }
+        finally { win.Close(); }
+    }
+
+    /// <summary>A click on a control in the window or menu popup it is shown in.</summary>
+    static void ClickIn(Control c)
+    {
+        var top = TopLevel.GetTopLevel(c) ?? throw new InvalidOperationException(c + " is not shown");
+        var p = c.TranslatePoint(new Point(c.Bounds.Width / 2, c.Bounds.Height / 2), top)!.Value;
+        top.MouseMove(p);
+        top.MouseDown(p, MouseButton.Left);
+        top.MouseUp(p, MouseButton.Left);
+        Capture.Pump();
+    }
+
     /// <summary>G-ERR.04 on a flash cart's SD card: a cancelled copy leaves no .part file and the game on the card as it was.</summary>
     [AvaloniaFact]
     public void SdCardFlashCart_CancelledWrite_LeavesTheCardAsItWas()

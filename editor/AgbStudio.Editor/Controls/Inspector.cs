@@ -34,14 +34,16 @@ public class AgbProgress : RangeBase
 }
 
 /// <summary>
-/// Figma "Slider": 4 px track, accent fill, 12 px white knob with a border/strong ring. The knob sits at
-/// width * value / 100 - 6, clamped to the track, exactly as the Figma variants place it.
+/// Figma "Slider": 4 px track, accent fill, 12 px white knob (lit/white, as the Switch knob) with a border/strong ring.
+/// The knob sits at width * value / 100 - 6, clamped to the track, exactly as the Figma variants place it.
 /// </summary>
 public class AgbSlider : RangeBase
 {
     public static readonly StyledProperty<IBrush?> FillProperty = AvaloniaProperty.Register<AgbSlider, IBrush?>(nameof(Fill));
+    public static readonly StyledProperty<IBrush?> KnobProperty = AvaloniaProperty.Register<AgbSlider, IBrush?>(nameof(Knob));
     public static readonly StyledProperty<IBrush?> KnobRingProperty = AvaloniaProperty.Register<AgbSlider, IBrush?>(nameof(KnobRing));
     public IBrush? Fill { get => GetValue(FillProperty); set => SetValue(FillProperty, value); }
+    public IBrush? Knob { get => GetValue(KnobProperty); set => SetValue(KnobProperty, value); }
     public IBrush? KnobRing { get => GetValue(KnobRingProperty); set => SetValue(KnobRingProperty, value); }
 
     bool _drag;
@@ -50,7 +52,7 @@ public class AgbSlider : RangeBase
     {
         MaximumProperty.OverrideDefaultValue<AgbSlider>(100);
         FocusableProperty.OverrideDefaultValue<AgbSlider>(true);
-        AffectsRender<AgbSlider>(ValueProperty, MinimumProperty, MaximumProperty, BackgroundProperty, FillProperty, KnobRingProperty);
+        AffectsRender<AgbSlider>(ValueProperty, MinimumProperty, MaximumProperty, BackgroundProperty, FillProperty, KnobProperty, KnobRingProperty);
     }
 
     double Ratio => Maximum > Minimum ? Math.Clamp((Value - Minimum) / (Maximum - Minimum), 0, 1) : 0;
@@ -63,7 +65,7 @@ public class AgbSlider : RangeBase
         ctx.DrawRectangle(Background, null, new Rect(0, 4, w, 4), 2, 2);
         if (Ratio > 0) ctx.DrawRectangle(Fill, null, new Rect(0, 4, w * Ratio, 4), 2, 2);
         var x = Math.Clamp(w * Ratio - 6, 0, Math.Max(0, w - 12));
-        ctx.DrawEllipse(Brushes.White, KnobRing is null ? null : new Pen(KnobRing, 1), new Rect(x + 0.5, 0.5, 11, 11));
+        ctx.DrawEllipse(Knob, KnobRing is null ? null : new Pen(KnobRing, 1), new Rect(x + 0.5, 0.5, 11, 11));
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

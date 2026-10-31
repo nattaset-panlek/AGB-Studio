@@ -226,6 +226,61 @@ public sealed class BottomPanelTests : IDisposable
         Assert.True(File.Exists(Path.Combine(dir, "coin.png")));
     }
 
+    // P10.11: Select All on asset cards selects every card of the category; Copy / Paste, Duplicate, Delete and Cut /
+    // Paste then act on all of them, each one undo step; a click selects one card again
+    [AvaloniaFact]
+    public void Assets_SelectAllThenCopyPasteDuplicateDeleteCut()
+    {
+        var p = _w.S.Project.Current!;
+        string[] Fonts() => p.FontFiles().Select(Path.GetFileName).Order(StringComparer.Ordinal).ToArray()!;
+        string[] original = ["pixel8.font", "thai_vwf.font", "title_big.font"];
+        Assert.Equal(original, Fonts());
+        _w.Click(_w.Find<ListRow>("Category_Fonts"));
+        Capture.Pump();
+        void SelectAll()
+        {
+            _w.Click(Card("pixel8.font"));
+            _w.Key(PhysicalKey.A, RawInputModifiers.Control);
+            Capture.Pump();
+            Assert.All(Assets.Cards, c => Assert.True(c.IsSelected, c.NameText + " is not selected"));
+            Assert.Equal(3, Assets.Cards.Count);
+        }
+        SelectAll();
+        // Copy, Paste: a copy of each, in one undo step
+        _w.Key(PhysicalKey.C, RawInputModifiers.Control);
+        _w.Key(PhysicalKey.V, RawInputModifiers.Control);
+        Assert.Equal(["pixel8.font", "pixel8_copy.font", "thai_vwf.font", "thai_vwf_copy.font", "title_big.font", "title_big_copy.font"], Fonts());
+        Assert.Equal(["pixel8_copy.font"], Assets.Cards.Where(c => c.IsSelected).Select(c => c.NameText));
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(original, Fonts());
+        // Duplicate
+        Capture.Pump();
+        SelectAll();
+        _w.S.Commands.Execute("edit.duplicate");
+        Assert.Equal(6, Fonts().Length);
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(original, Fonts());
+        // Delete, undo brings all three back
+        Capture.Pump();
+        SelectAll();
+        _w.S.Commands.Execute("edit.delete");
+        Assert.Empty(Fonts());
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(original, Fonts());
+        // Cut, Paste puts all three back under their names
+        Capture.Pump();
+        SelectAll();
+        _w.Key(PhysicalKey.X, RawInputModifiers.Control);
+        Assert.Empty(Fonts());
+        _w.S.Commands.Execute("edit.paste");
+        Assert.Equal(original, Fonts());
+        // a click selects that card alone
+        Capture.Pump();
+        SelectAll();
+        _w.Click(Card("title_big.font"));
+        Assert.Equal(["title_big.font"], Assets.Cards.Where(c => c.IsSelected).Select(c => c.NameText));
+    }
+
     // T-P06 / P11.17: speed (ticks) and frame order are edited in the panel, saved to the sprite meta, with undo
     [AvaloniaFact]
     public void Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo()

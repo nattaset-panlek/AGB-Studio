@@ -31,12 +31,16 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
     readonly StatusItem _statusLines, _statusSaved;
     readonly LineInspector _inspector;
     ProjectData? _data;
-    DialogueLine? _clipboard;
+    List<DialogueLine>? _clipboard;
+    int _selectedLine = -1;
 
     public ProjectData? Data => _data;
     public DialogueDoc? Current { get; private set; }
     public int ConversationIndex { get; private set; }
-    public int SelectedLine { get; private set; } = -1;
+    /// <summary>The selected line card; selecting one (click, a new line, another conversation) ends Select All.</summary>
+    public int SelectedLine { get => _selectedLine; private set { _selectedLine = value; AllLinesSelected = false; } }
+    /// <summary>Edit â€º Select All: every line of the conversation is selected; Cut / Copy / Duplicate / Delete act on all of them.</summary>
+    public bool AllLinesSelected { get; private set; }
     public int SelectedChoice { get; private set; } = -1;
     public string Primary { get; private set; } = "en";
     public string Secondary { get; private set; } = "en";
@@ -79,6 +83,9 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
         AddStatus(_statusLines);
         _statusSaved = new StatusItem { Glyph = "check", Content = "Saved", Name = "Status_Saved" };
         AddStatus(_statusSaved, right: true);
+        // the Edit menu acts on the line cards while the page is shown (a clicked card is rebuilt, so it loses the keyboard)
+        AttachedToVisualTree += (_, _) => { if (s.Top is MainWindow w) w.Edit.DefaultTarget = this; };
+        DetachedFromVisualTree += (_, _) => { if (s.Top is MainWindow w && w.Edit.DefaultTarget == this) w.Edit.DefaultTarget = null; };
 
         s.Project.Changed += () => { Attach(null); Refresh(); };
         Attach(open);
@@ -219,7 +226,7 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
         if (Conversation is not { } c || Current is null) return;
         for (var i = 0; i < c.Lines.Count; i++)
         {
-            _cards.Children.Add(LineCards.Card(this, Current, c, i, i == SelectedLine && SelectedChoice < 0));
+            _cards.Children.Add(LineCards.Card(this, Current, c, i, AllLinesSelected || i == SelectedLine && SelectedChoice < 0));
             if (c.Lines[i].Choices is { Count: > 0 } choices) _cards.Children.Add(LineCards.Choices(this, c, i, choices));
         }
         AddBox = LineCards.AddBox(this);
@@ -303,10 +310,10 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
     Dictionary<string, Dictionary<string, string?>> Snapshot(IEnumerable<string> keys) =>
         keys.ToDictionary(k => k, k => _data!.Languages.ToDictionary(l => l.Code, l => _data.Text(l.Code, k)));
 
-    string NewLineId(Conversation c)
+    string NewLineId(Conversation c, IReadOnlyList<DialogueLine>? pending = null)
     {
         var n = c.Lines.Count + 1;
-        while (c.Lines.Any(l => l.Id == "l" + n)) n++;
+        while (c.Lines.Concat(pending ?? []).Any(l => l.Id == "l" + n)) n++;
         return "l" + n;
     }
 
@@ -481,25 +488,41 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
     public bool CanCopy => Line != null;
     public bool CanPaste => _clipboard != null && Conversation != null;
     public void Cut() { Copy(); Delete(); }
-    public void Copy() { if (Line is { } l) _clipboard = CloneLine(l); }
+    /// <summary>Copies the selected line, or every line after Select All.</summary>
+    public void Copy()
+    {
+        if (AllLinesSelected && Conversation is { Lines.Count: > 0 } c) _clipboard = c.Lines.Select(CloneLine).ToList();
+        else if (Line is { } l) _clipboard = [CloneLine(l)];
+    }
 
+    /// <summary>
+    /// Pastes the copied lines after the selected line (at the end after Select All) in one undo step. A line keeps its
+    /// id and key when no line has the id (Paste after Cut, so "goto" choices still find it), else it gets new ones.
+    /// </summary>
     public void Paste()
     {
-        if (_clipboard is null || Conversation is not { } c) return;
-        var copy = CloneLine(_clipboard);
-        copy.Id = NewLineId(c);
-        if (copy.Key != null)
+        if (_clipboard is not { Count: > 0 } clip || Conversation is not { } c) return;
+        var copies = new List<DialogueLine>();
+        foreach (var src in clip)
         {
-            var oldKey = copy.Key;
-            copy.Key = $"dlg.{Current!.Name}.{copy.Id}";
-            foreach (var lang in _data!.Languages)
-                if (_data.Text(lang.Code, oldKey) is { } t) (copy.Text ??= [])[lang.Code] = t;
+            var copy = CloneLine(src);
+            if (copy.Id is { Length: > 0 } own && !c.Lines.Concat(copies).Any(l => l.Id == own)) { copies.Add(copy); continue; }
+            copy.Id = NewLineId(c, copies);
+            if (copy.Key != null)
+            {
+                var oldKey = copy.Key;
+                copy.Key = $"dlg.{Current!.Name}.{copy.Id}";
+                foreach (var lang in _data!.Languages)
+                    if (_data.Text(lang.Code, oldKey) is { } t) (copy.Text ??= [])[lang.Code] = t;
+            }
+            copies.Add(copy);
         }
-        var at = SelectedLine < 0 ? c.Lines.Count : SelectedLine + 1;
+        var at = AllLinesSelected || SelectedLine < 0 ? c.Lines.Count : SelectedLine + 1;
         EditDialogue("Paste", () =>
         {
-            c.Lines.Insert(at, copy);
-            if (copy.Key != null) foreach (var (lang, t) in copy.Text ?? []) _data!.SetText(lang, copy.Key, t);
+            c.Lines.InsertRange(at, copies);
+            foreach (var copy in copies)
+                if (copy.Key != null) foreach (var (lang, t) in copy.Text ?? []) _data!.SetText(lang, copy.Key, t);
         });
         SelectedLine = at;
         Refresh();
@@ -514,6 +537,14 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
     public void Delete()
     {
         if (Conversation is not { } c || Line is not { } l) return;
+        if (AllLinesSelected)
+        {
+            EditDialogue("Delete lines", c.Lines.Clear);
+            SelectedLine = -1;
+            SelectedChoice = -1;
+            Refresh();
+            return;
+        }
         var choice = SelectedChoice;
         EditDialogue(choice >= 0 ? "Delete choice" : "Delete line", () =>
         {
@@ -524,7 +555,14 @@ public sealed class DialogueEditorPage : ToolPage, IEditTarget
         Refresh();
     }
 
-    public void SelectAll() { }
+    public void SelectAll()
+    {
+        if (Conversation is not { Lines.Count: > 0 }) return;
+        if (SelectedLine < 0) SelectedLine = 0;
+        SelectedChoice = -1;
+        AllLinesSelected = true;
+        Refresh();
+    }
 
     /// <summary>Create › Dialogue: the Dialogue Editor with a new conversation.</summary>
     [CommandHandler("assets.create.dialogue")]
