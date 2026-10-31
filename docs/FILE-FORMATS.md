@@ -14,10 +14,9 @@ JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`,
 `tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg`,
 `palettes` and `graph`. All but `graph` are generated from the C# classes with the JSON settings of `GameProject.Save`;
 `SchemaTests.SchemasMatchTheFileModel` fails when a class changes and its schema was not regenerated (run the tests with
-`AGB_UPDATE_SCHEMAS=1` to rewrite them). The schemas do not hold the editor-only fields the Tilemap Editor, Font
-Manager, Dialogue Editor and Logic Graph write (`bgSize` / `bpp`, `drawTo`, speaker `names` / `color`, `comments` /
-`collapsed` / `disabled`, below), and the schema check in `SchemaTests` rejects unknown fields, so a file with one of
-them does not pass its schema.
+`AGB_UPDATE_SCHEMAS=1` to rewrite them). The fields the Tilemap Editor, Font Manager, Dialogue Editor and Logic Graph
+write (`bgSize` / `bpp`, `drawTo`, speaker `names` / `color`, `comments` / `collapsed` / `disabled`, below) are in
+the file models and the schemas; `EditorFileSchemaTests` saves each kind with the editor's own writer and validates it.
 
 ## Project folder
 
@@ -107,9 +106,8 @@ and palettes baked in (at most 256 tiles). A map is the layout of a scene (bluep
 show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`). The Tilemap Editor also writes
 `bgSize` ("32x32", "64x32", "32x64" or "64x64"; left out = 64x32) and `bpp` (4 or 8; left out = 4).
 
-The Tilemap Editor (`MapDocument`) also writes two top-level fields that are not in `MapFile` or `map.schema.json`:
-`bgSize` (`"32x32"`, `"32x64"` or `"64x64"`; left out for the default 64x32) and `bpp` (`8`; left out for the default
-4). It keeps any other field it does not know and writes it back on save. The build does not read `bgSize` or `bpp`.
+The Tilemap Editor (`MapDocument`) writes `bgSize` and `bpp` through `MapFile` (left out at their defaults). It keeps
+any other field it does not know and writes it back on save. The build does not read `bgSize` or `bpp`.
 
 ## `prefabs/<Name>.prefab` (ActorData)
 
