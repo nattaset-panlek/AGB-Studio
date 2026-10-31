@@ -1,6 +1,6 @@
 # AGB Studio · Engine + Editor Master Checklist
 
-- สถานะ: **ยังไม่เริ่ม build** รอผู้ใช้สั่งเริ่ม (ห้ามเขียนโค้ด engine/editor ก่อนหน้านั้น)
+- สถานะ: **กำลัง build ตาม /goal ของผู้ใช้ (2026-10-31)** ติ๊กเฉพาะข้อที่มีหลักฐาน; entry/exit gate, decision และข้อ `USER` รอผู้ใช้ยืนยันในแชต
 - ฉบับ: 0.1 · 2026-10-31
 - ขอบเขต (scope): ดีไซน์ใน Figma file `givb0hmQYmmaOy7p7DGtb2` page "GBA GameEngine Project" (`3400:3217`) sections "AGB Studio · Components", "AGB Studio · Editor Map", "AGB Studio · Screens", "AGB Studio · Brand"
 - สถาปัตยกรรม: blueprint `D:\GBA-Research\agb-studio-blueprint.html` (published: https://claude.ai/artifact/DnpkUdKGZWyD7EK4L5qpvW)
@@ -821,7 +821,7 @@ Doc-only components, not built in the app: Doc/Callout, Doc/Target Chip (annotat
 - [ ] T-R01 App icon from "Plus Pad" (5-square cross, ink arms, indigo #3b4fd8 centre) for exe, installer, taskbar, About (64 px) · Verify: `SHOT` vs Plus Pad · Logo sheet
 - [ ] T-R02 Wordmark "AGB Studio" in Nunito ExtraBold in the Launcher brand block · Verify: `SHOT` vs T-P12
 - [ ] T-R03 Banners (4) used for the release page and installer · Verify: `REV`
-- [ ] T-R04 ROM boot splash "AGB Studio logo · 2 s", skippable in Debug builds (Project Settings · General) · Blocked until the GBA-size splash art is designed (1.4 item 6)
+- [ ] T-R04 ROM boot splash "AGB Studio logo · 2 s", skippable in Debug builds (Project Settings · General) · The GBA-size splash was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame
 
 ---
 
@@ -942,7 +942,7 @@ Items:
 - [x] P4.09 Game state fields (score, coins, lives) declared in scripts and reachable from Logic Graph "Add to Variable" [T-P04, T-P17] · Verify: `UT` — evidence: test:GraphTests.FigmaGraphGeneratesTheFigmaCode, test:GraphTests.GeneratedCodeCompilesAndTranslates, test:TranslatorTests.ScriptingApiMembersTranslate, commit:d802a71 (2026-10-31)
 - [x] P4.10 Command bus: rules emit commands, presentation answers at declared sync points, input source Player or AI (infra: Turn-based RPG and Puzzle templates in T-P20) · Verify: `UT` rules run headless; `RT` same inputs give the same result — evidence: test:bus_rules_are_independent_of_presentation, test:TemplateTests.RpgShopsAndWinsABattle, commit:d802a71 (2026-10-31)
 - [x] P4.11 Scene API: `Scene.Load`, `Scene.Pause`, `Save.Checkpoint()`, start scene from settings [T-S01, T-D03] · Verify: `RT` — evidence: test:scene_pause_freezes_until_start, test:FrameworkPlayTests.CutsceneScriptCellPauseOnlyIfLinkAndMapScriptsRunInTheRom, test:platformer_scene_end_to_end, test:cutscenes_and_dialogue_run_in_the_vm, test:TemplateTests.SampleProjectsBuildAndBootToTheTitle, commit:d802a71 (2026-10-31)
-- [ ] P4.12 Runtime button remap [T-D08 "Let players remap buttons in the options menu"] · Blocked until the options menu is designed (1.4 item 6)
+- [ ] P4.12 Runtime button remap [T-D08 "Let players remap buttons in the options menu"] · The options screen was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame
 
 Exit gate:
 - [ ] P4.X1 A Forest_01 slice of the fixture runs at 60 fps with player, slimes, coins, HUD · Verify: `EMU`, `BUD`, `USER`
