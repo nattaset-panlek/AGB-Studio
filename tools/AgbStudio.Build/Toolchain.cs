@@ -61,9 +61,12 @@ public sealed class Toolchain
 
     public bool IsComplete => Check().All(t => t.Found);
 
+    /// <summary>Runs a tool for its version (exe, arguments); tests replace it so no process starts.</summary>
+    public Func<string, string, ProcResult> RunTool { get; init; } = (exe, args) => Proc.Run(exe, args, null, TimeSpan.FromSeconds(20));
+
     string? GccVersion()
     {
-        var r = Proc.Run(Gcc, "-dumpversion", null, TimeSpan.FromSeconds(20));
+        var r = RunTool(Gcc, "-dumpversion");
         return r.ExitCode == 0 ? $"devkitARM {r.Output.Trim().Split('.')[0]}.{r.Output.Trim().Split('.').ElementAtOrDefault(1) ?? "0"}" : null;
     }
 

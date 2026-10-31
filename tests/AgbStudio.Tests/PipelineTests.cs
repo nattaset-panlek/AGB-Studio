@@ -347,6 +347,42 @@ public sealed class PipelineTests(EmulatorFixture emu)
     }
 
     [Fact]
+    public void ToolchainReportsFoundToolsAndTheDevkitArmVersionFromAFakeInstall()
+    {
+        // P10.16 / T-D09 / T-S08: found / not found per tool and the devkitARM version, without starting a process.
+        var root = Directory.CreateTempSubdirectory("fakedkp").FullName;
+        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe", @"tools\bin\gbafix.exe", @"libtonc\lib\libtonc.a" })
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(root, f))!);
+            File.WriteAllText(Path.Combine(root, f), "");
+        }
+        var asked = new List<string>();
+        var tc = new Toolchain(root) { RunTool = (exe, args) => { asked.Add(Path.GetFileName(exe) + " " + args); return new ProcResult(0, "16.1.0\n"); } };
+        var status = tc.Check().ToDictionary(t => t.Name);
+        Assert.True(status["devkitPro"].Found);
+        Assert.Equal("devkitARM 16.1", status["devkitARM"].Version);
+        Assert.True(status["libtonc"].Found);
+        Assert.True(status["gbafix"].Found);
+        Assert.False(status["maxmod"].Found);
+        Assert.False(status["mmutil"].Found);
+        Assert.Equal(["arm-none-eabi-gcc.exe -dumpversion"], asked);
+        Assert.False(new Toolchain(Path.Combine(root, "missing")).IsComplete);
+    }
+
+    [Fact]
+    public void BuildOutputFolderFromProjectSettings()
+    {
+        // T-S03 "Output folder": the build writes its ROM, report and cache there.
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(Root, "mini_output"));
+        p.Settings.Build.Output = "out/rom/";
+        p.SaveSettings();
+        var r = new GameBuilder(p, new Toolchain()).Build(new BuildOptions { Clean = true });
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        Assert.StartsWith(Path.Combine(p.Root, "out", "rom") + Path.DirectorySeparatorChar, r.RomPath);
+        Assert.True(File.Exists(Path.Combine(p.Root, "out", "rom", "report.json")));
+    }
+
+    [Fact]
     public void GccErrorsBecomeClickableDiagnostics()
     {
         var d = GameBuilder.ParseGccLine(@"D:\proj\scripts\PlayerController.cs:22:9: error: expected ';' before '}' token");

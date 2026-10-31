@@ -31,7 +31,8 @@ public sealed class GameProject
     public string SfxDir => Path.Combine(Root, "audio", "sfx");
     public string PalettesDir => Path.Combine(AssetsDir, "palettes");  // imported .pal / .gpl palettes (Import Asset)
     public string PrefabsDir => Path.Combine(Root, "prefabs");      // Make Prefab: prefabs/<Name>.prefab (an ActorData)
-    public string BuildDir => Path.Combine(Root, "build");
+    // Project Settings · Build · Output folder (default "build/"), relative to the project folder.
+    public string BuildDir => Path.Combine(Root, string.IsNullOrWhiteSpace(Settings.Build.Output) ? "build" : Settings.Build.Output.Trim().TrimEnd('/', '\\').Replace('/', Path.DirectorySeparatorChar));
 
     GameProject(string projectPath, ProjectFile settings)
     {
