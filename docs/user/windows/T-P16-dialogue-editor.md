@@ -39,6 +39,10 @@ Writes conversations as a list of lines, each with a speaker and a portrait, plu
 The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
 moves it one frame (F10). They are greyed out while no game runs.
 
+Differs from Figma: the frame previews the line in a dark box on two lines and writes the flag `flags.metOwl`; AGB
+Studio previews what the ROM shows, the game's light text box (as in the in-game frame IG-03) with the line on one line
+as the ROM breaks it and the choices under it, and the conditions use the scripting API's name `Flags.MetOwl`.
+
 ## Related
 
 - [New Speaker](T-D21-new-speaker.md)

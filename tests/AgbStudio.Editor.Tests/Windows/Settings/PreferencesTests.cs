@@ -201,6 +201,30 @@ public sealed class PreferencesTests : IDisposable
         Assert.Equal("rider64.exe · set in Paths", d.Find<InspectorField>("Executable").Value);
     }
 
+    /// <summary>Scope log T-S07: the Font dropdown is wide enough for "JetBrains Mono" (Figma's box clips it), and the
+    /// Theme dropdown still fits its longest choice.</summary>
+    [AvaloniaFact]
+    public void Editor_FontAndThemeDropdownsShowTheirWholeNames()
+    {
+        _fx.OpenSkyHopper();
+        var win = Shell();
+        var d = Open(win);
+        win.Click(d.Find<NavItem>("Nav_T-S07"));
+        void Fits(string field, string value)
+        {
+            var f = d.Find<InspectorField>(field);
+            f.Value = value;
+            Capture.Pump();
+            var text = f.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Text == value && t.IsEffectivelyVisible);
+            var probe = new TextBlock { Text = value, FontFamily = text.FontFamily, FontSize = text.FontSize, FontWeight = text.FontWeight, LetterSpacing = text.LetterSpacing };
+            probe.Measure(Size.Infinity);
+            Assert.True(text.Bounds.Width >= probe.DesiredSize.Width, $"{field}: \"{value}\" needs {probe.DesiredSize.Width:0.0} px, the box gives {text.Bounds.Width:0.0}");
+        }
+        Fits("CodeFontFamily", "JetBrains Mono");
+        Fits("CodeTheme", "Studio Light");
+        Fits("CodeTheme", "Studio Dark");
+    }
+
     [AvaloniaFact]
     public void Cancel_LeavesPreferencesAsTheyWere_AndInvalidValuesBlockSave()
     {
@@ -233,12 +257,29 @@ public sealed class PreferencesTests : IDisposable
         var d = Open(win);
         win.Click(d.Find<NavItem>("Nav_T-S08"));
         var card = d.Find<Border>("BuildCacheCard");
-        Assert.Contains(card.GetVisualDescendants().OfType<TextBlock>(), t => t.Text?.EndsWith("· 0.3 MB") == true);
+        // scope log T-S08, P11.62: the card says the cache is the project's own, in its build folder
+        var root = _fx.Services.Project.Current!.Root;
+        var folder = Path.GetFileName(root);
+        Assert.Equal("Build cache · per project", d.Find<TextBlock>("BuildCacheTitle").Text);
+        Assert.Equal(Path.Combine(folder, "build", "cache") + " · 0.3 MB", d.Find<TextBlock>("BuildCacheInfo").Text);
         win.Click(d.Find<AgbButton>("ClearCache"));
         Assert.False(Directory.Exists(Path.Combine(build, "cache")));
         Assert.False(Directory.Exists(Path.Combine(build, "obj")));
-        Assert.Contains(card.GetVisualDescendants().OfType<TextBlock>(), t => t.Text?.EndsWith("· empty") == true);
+        Assert.Equal(Path.Combine(folder, "build", "cache") + " · empty", d.Find<TextBlock>("BuildCacheInfo").Text);
         Assert.Contains(_fx.Services.Toasts.Visible, t => t.Text.StartsWith("Build cache cleared"));
+        // an output folder set in Project Settings › Build is named from the project folder too; one outside the
+        // project is written in full
+        var output = _fx.Services.Project.Current!.Settings.Build.Output;
+        _fx.Services.Project.Current!.Settings.Build.Output = "out/gba";
+        Assert.Equal(Path.Combine(folder, "out", "gba", "cache") + " · empty", PreferencesDialog.CacheText(_fx.Services.Project.Current));
+        var outside = Path.Combine(Path.GetDirectoryName(root)!, "SharedBuild");
+        _fx.Services.Project.Current!.Settings.Build.Output = outside;
+        Assert.Equal(PreferencesDialog.Abbreviate(Path.Combine(outside, "cache")) + " · empty", PreferencesDialog.CacheText(_fx.Services.Project.Current));
+        _fx.Services.Project.Current!.Settings.Build.Output = output;
+        Assert.Equal("No project open", PreferencesDialog.CacheText(null));
+
+        // the Image editor hint says what it opens, as ExternalTools does (scope log T-S08)
+        Assert.Equal("Opens .aseprite files and background images · sprite / tileset PNGs open in the Sprite / Tilemap Editor", d.Find<TextField>("ImageEditorPath").Help);
     }
 
     [AvaloniaFact]
@@ -307,6 +348,46 @@ public sealed class PreferencesTests : IDisposable
         Assert.Equal("G", Fmt.Format(_fx.Services.Shortcuts.GestureOf("scene.toggleGrid")!));
         Assert.Equal("Ctrl+G", Fmt.Format(_fx.Services.Shortcuts.GestureOf("script.goToLine")!));
         Assert.Empty(new PreferencesStore(_fx.Services.Preferences.FilePath).Current.Shortcuts);
+    }
+
+    /// <summary>Scope log G-SCOPE.02, T-P06: search finds the Animation panel's gestures as fixed rows, with their keys
+    /// and a lock where the pencil is; "or press a key" finds Ctrl+Left. The Figma rows (empty search) stay as they are.</summary>
+    [AvaloniaFact]
+    public void Shortcuts_AnimationPanelGesturesAreListedAsFixedRows()
+    {
+        _fx.OpenSkyHopper();
+        var win = Shell();
+        var d = Open(win);
+        win.Click(d.Find<NavItem>("Nav_T-S09"));
+        Assert.Empty(d.FixedShortcutRows());
+        Assert.DoesNotContain(d.GetVisualDescendants().OfType<Border>(), b => b.Name?.StartsWith("Fixed_") == true);
+
+        var search = d.Find<SearchField>("ShortcutSearch");
+        win.Type(search, "animation");
+        Assert.Equal(AgbStudio.Editor.Commands.FixedGestures.All.Select(g => g.Label), d.FixedShortcutRows().Select(g => g.Label));
+        foreach (var g in d.FixedShortcutRows())
+        {
+            var row = d.Find<Border>("Fixed_" + g.Id);
+            Assert.Equal(g.Keys, row.GetVisualDescendants().OfType<Keycap>().Select(k => k.Label));
+            Assert.Equal("lock", row.GetVisualDescendants().OfType<Icon>().Single(i => i.Name == "Locked_" + g.Id).Glyph);
+            Assert.Empty(row.GetVisualDescendants().OfType<IconButton>());   // no pencil: cannot be rebound
+            Assert.Equal("Animation panel · Fixed · keys work while the panel has focus · cannot be changed",
+                ToolTip.GetTip(row.GetVisualDescendants().OfType<Icon>().Single(i => i.Name == "Locked_" + g.Id)));
+        }
+        // the fixed rows come after the commands the search finds
+        var names = d.Find<StackPanel>("ShortcutTable").Children.Skip(1).Select(c => c.Name ?? "").ToList();
+        Assert.True(names.FindLastIndex(n => n.StartsWith("Shortcut_")) < names.FindIndex(n => n.StartsWith("Fixed_")));
+
+        // "or press a key": Ctrl+Left
+        search.Text = "";
+        search.Focus();
+        win.Key(PhysicalKey.ArrowLeft, RawInputModifiers.Control);
+        Assert.Equal("Ctrl+Left", search.Text);
+        Assert.Equal(["Move animation frame left"], d.FixedShortcutRows().Select(g => g.Label));
+        search.Text = "wheel";
+        Capture.Pump();
+        Assert.Equal(["Animation speed", "Animation frame ticks"], d.FixedShortcutRows().Select(g => g.Label));
+        Assert.Equal(["on the speed line", "on a frame"], d.FixedShortcutRows().Select(g => g.Where));
     }
 
     [AvaloniaFact]

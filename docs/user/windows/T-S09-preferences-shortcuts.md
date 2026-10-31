@@ -22,6 +22,9 @@ and go back to the defaults.
   the same keys.
 - **Pencil button**: opens Record Shortcut for that command. When you press Replace there, the new keys are set and
   taken away from any command that used them.
+- **Fixed rows**: a search also finds the Animation panel's mouse and keys (for example "animation", "wheel" or
+  Ctrl+Left), listed after the commands. They are not commands, so they have a lock instead of the pencil and cannot be
+  changed.
 - **Reset to defaults**: puts every shortcut back to how AGB Studio ships.
 - **Footer**: Cancel (or Esc) drops every shortcut change; Save applies them at once.
 

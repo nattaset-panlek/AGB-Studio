@@ -20,6 +20,11 @@ All the keyboard shortcuts in one list you can search; you change them in Prefer
   - **General**: Command palette (Ctrl+K), Save (Ctrl+S), Play (F5), Build ROM (Ctrl+B) and Undo (Ctrl+Z).
   - **Scene**: Select (V), Move (M), Paint tiles (B), Toggle grid (G) and Focus selection (F). These keys work in the
     Scene Editor.
+- **Animation panel** (last group, after the commands): the mouse and keys that edit an animation in the Animation
+  panel. They are not commands, so they cannot be changed; the line under the group title says so. Mouse wheel on the
+  speed line (Animation speed), mouse wheel on a frame (Animation frame ticks), drag a frame (Move animation frame), +
+  and - (one tick more or less per frame), Ctrl+Left and Ctrl+Right (move the selected frame). The keys work while the
+  panel has the focus.
 - **Keys**: each key is drawn as a key cap. The dialog shows the keys that are set now, so a shortcut you changed in
   Preferences › Shortcuts appears here with its new keys.
 - **Edit in Preferences › Shortcuts** (bottom left): closes this dialog and opens Preferences on the Shortcuts tab,

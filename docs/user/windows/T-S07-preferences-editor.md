@@ -38,6 +38,9 @@ an external editor (VS Code, Rider, Visual Studio) whose path is set on the Path
 - **Footer**: Cancel (or Esc) drops the changes; Save keeps them and applies them at once. Default snap is used the
   next time a project opens.
 
+Differs from Figma: the Font box is wider than in the frame (and Tab size narrower), so "JetBrains Mono" shows whole;
+in the frame the name runs past the box.
+
 ## Related
 
 - [Preferences](T-D09-preferences.md) (the dialog and its other tabs)

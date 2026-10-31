@@ -175,7 +175,6 @@ public sealed class BuildReportPage : DockPanel
         string[] heads = ["Asset", "Type", "Size", "Share"];
         for (var c = 0; c < 4; c++) Put(table, new TableCell { Kind = TableCellKind.Header, Text = heads[c] }, 0, c);
         var largest = r.LargestAssets.Take(5).ToList();
-        var max = Math.Max(1, largest.Count == 0 ? 1 : largest.Max(a => a.Bytes));
         for (var i = 0; i < largest.Count; i++)
         {
             var a = largest[i];
@@ -183,7 +182,10 @@ public sealed class BuildReportPage : DockPanel
             Put(table, new TableCell { Text = AssetFileName(p, a), Height = 30 }, i + 1, 0);
             Put(table, new TableCell { Text = a.Type, Height = 30 }, i + 1, 1);
             Put(table, new TableCell { Text = PageFrame.Kb(a.Bytes), Kind = TableCellKind.Mono, Height = 30 }, i + 1, 2);
-            var share = new AgbProgress { Status = ProgressStatus.Accent, Value = 100.0 * a.Bytes / max, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 10, 0) };
+            // the asset's share of the ROM, every bar on one scale: the whole track is the whole ROM (scope log T-P11)
+            var percent = RomShare(a.Bytes, r.RomBytes);
+            var share = new AgbProgress { Status = ProgressStatus.Accent, Value = percent, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 10, 0), Name = "Share_" + i };
+            ToolTip.SetTip(share, percent.ToString("0.0", CultureInfo.InvariantCulture) + " % of the ROM");
             Put(table, new TableCell { Height = 30 }, i + 1, 3);
             Put(table, share, i + 1, 3);
         }
@@ -206,6 +208,9 @@ public sealed class BuildReportPage : DockPanel
         root.Children.Add(history);
         return root;
     }
+
+    /// <summary>An asset's share of the ROM in percent: the length of its Largest assets bar, whose track is 100 %.</summary>
+    public static double RomShare(long assetBytes, long romBytes) => 100.0 * assetBytes / Math.Max(1, romBytes);
 
     static void Put(Grid g, Control c, int row, int col)
     {

@@ -22,7 +22,9 @@ earlier builds.
   **Warnings** (the count and the first warning, or "No warnings"), and **Free VRAM** (out of 96 KB, for the scene that
   uses the most).
 - **ROM breakdown**: one bar split into Graphics, Code, Audio and Data, with the size of each.
-- **Largest assets**: the five biggest assets with type, size and a share bar.
+- **Largest assets**: the five biggest assets with type, size and a share bar: the asset's share of the ROM, all bars
+  on one scale where the whole bar is the whole ROM (a 41 KB asset in a 412 KB ROM fills a tenth of it). Point at a bar
+  to see the percent, for example "10.0 % of the ROM".
 - **History**: up to 12 recent builds, newest first: time, a tick or cross, and the ROM size, build time and warnings,
   or the first error of a failed build.
 - **Cartridge header**: Title (up to 12 characters), Game code (4), Maker (2), Save type (None, SRAM 32 KB, Flash 64 KB,
@@ -34,6 +36,9 @@ earlier builds.
   name.
 - **No build yet**: before the first build the page says "No build yet. Build the ROM to see its report."
 - The page reloads by itself when a build finishes.
+
+Differs from Figma: the frame draws the share bars on no single scale (41 KB at four fifths of the bar, 6.2 KB at a
+fifth); AGB Studio draws each bar as the asset's share of the ROM, so the bars are short and their lengths compare.
 
 ## Related
 

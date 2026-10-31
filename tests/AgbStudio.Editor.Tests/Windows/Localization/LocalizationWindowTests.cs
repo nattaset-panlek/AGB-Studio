@@ -110,6 +110,12 @@ public class LocalizationWindowTests : DataE2E
             for (var x = 0; x < 224; x++)
                 Assert.Equal(px[y * 224 + x] == 0 ? 0u : Gba.ToArgb(runtime[px[y * 224 + x]]), box.Argb[y * 224 + x]);
         Assert.Equal(Gba.ToArgb(0x0C63), box.Argb[(40 - 6) * 224 + 224 - 9]);   // the continue marker
+        // scope log T-P14, T-P16: what the ROM shows, the runtime's light box (paper 0x7BDE, as IG-03) and not Figma's
+        // dark one, with the text on one line as the ROM breaks it, not Figma's two
+        Assert.Equal(1, layout.Lines);
+        Assert.Equal(Gba.ToArgb(0x7BDE), box.Argb[39 * 224]);
+        Assert.Equal(Gba.ToArgb(0x7BDE), box.Argb[223]);
+        Assert.Equal(page.Gba!.Layout("th", text)!.Lines, layout.Lines);
         Assert.Equal($"{layout.MaxWidth} / 224 px", page.TargetMeter!.ValueText);
         Assert.Equal($"พอดี {layout.Lines} บรรทัดในกล่องข้อความ (สูงสุด 3) · ตัดคำไทยตามพจนานุกรม", page.Caption);
         // speaker and notes are edited in strings.meta.json

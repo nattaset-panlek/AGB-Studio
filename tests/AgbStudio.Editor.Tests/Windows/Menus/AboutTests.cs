@@ -115,4 +115,40 @@ public sealed class AboutTests : IDisposable
         Assert.Equal(("T-S09", "KeyboardShortcuts"), s.Windows.Requests[^1]);
         Assert.Contains(prefs.GetVisualDescendants().OfType<AgbStudio.Editor.Controls.NavItem>(), n => n.Name == "Nav_T-S09" && n.IsSelected);
     }
+
+    /// <summary>Scope log G-SCOPE.02, T-P06: the Animation panel's wheel, drag and key edits, which are not commands, are
+    /// listed after every command group with their keys and a caption that they cannot be changed; search finds them.</summary>
+    [AvaloniaFact]
+    public void KeyboardShortcuts_ListsTheAnimationPanelGesturesAsFixed()
+    {
+        var win = Shell(new EditorConfig());
+        win.Key(PhysicalKey.Slash, RawInputModifiers.Control);
+        var dlg = Assert.IsType<KeyboardShortcutsDialog>(win.Overlays.Open.Single());
+        Assert.Contains("ANIMATION PANEL", dlg.GroupTitles);
+        var fixedRows = KeyboardShortcutsDialog.FixedRows;
+        string? none = null;
+        Assert.Equal(
+            [("Animation speed", "Wheel", "on the speed line"), ("Animation frame ticks", "Wheel", "on a frame"), ("Move animation frame", "Drag", "a frame"),
+             ("Animation slower (one tick more)", "+", none), ("Animation faster (one tick less)", "-", none),
+             ("Move animation frame left", "Ctrl+Left", none), ("Move animation frame right", "Ctrl+Right", none)],
+            fixedRows.Select(r => (r.Label, r.KeyText, r.Where)));
+        Assert.Equal(fixedRows.Select(r => r.Label).Order(), dlg.VisibleLabels.Where(l => fixedRows.Any(r => r.Label == l)).Order());
+        var note = dlg.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "FixedNote");
+        Assert.Equal("Fixed · keys work while the panel has focus · cannot be changed", note.Text);
+        // each row draws its keycaps (and where the pointer is for the mouse gestures)
+        foreach (var r in fixedRows)
+        {
+            var row = dlg.GetVisualDescendants().OfType<DockPanel>().Single(d => d.Name == "Fixed_" + r.Id);
+            Assert.Equal(r.Keys, row.GetVisualDescendants().OfType<AgbStudio.Editor.Controls.Keycap>().Select(k => k.Label));
+            Assert.Equal(r.Where, row.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "GestureWhere")?.Text);
+        }
+        // they are not commands: no command has their labels, so Preferences › Shortcuts has no pencil for them
+        Assert.All(fixedRows, r => Assert.DoesNotContain(dlg.AllShortcuts, c => c.Label == r.Label));
+        dlg.Search.Text = "Ctrl+Left";
+        Capture.Pump();
+        Assert.Equal(["Move animation frame left"], dlg.VisibleLabels);
+        dlg.Search.Text = "wheel";
+        Capture.Pump();
+        Assert.Equal(["Animation speed", "Animation frame ticks"], dlg.VisibleLabels);
+    }
 }

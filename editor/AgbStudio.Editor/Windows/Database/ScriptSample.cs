@@ -123,10 +123,12 @@ public static partial class ScriptSample
     static IBrush? Keyword => Avalonia.Application.Current?.FindResource("lit/accent-pink") is Color c ? new SolidColorBrush(c) : null;
 }
 
-/// <summary>Numbers as the status bar shows ROM sizes ("ROM 528 B", "ROM 1.1 KB").</summary>
+/// <summary>Numbers as the status bar shows ROM sizes ("ROM 576 B", "ROM 1.1 KB").</summary>
 public static class Sizes
 {
     public static string Rom(int bytes) => bytes < 1024 ? $"ROM {bytes} B" : string.Create(CultureInfo.InvariantCulture, $"ROM {bytes / 1024.0:0.0} KB");
 
-    public static int TableBytes(TableFile t) => t.Rows.Count * t.Fields.Where(f => f.Name != t.KeyField).Sum(DatabaseCodegen.FieldBytes);
+    /// <summary>The table's bytes in the ROM (P9.07): rows times the row struct, whose size is the field bytes padded to
+    /// the largest field, as the build lays it out (DatabaseCodegen.TableBytes), not the sum of the Add Field bytes.</summary>
+    public static int TableBytes(TableFile t) => DatabaseCodegen.TableBytes(t);
 }

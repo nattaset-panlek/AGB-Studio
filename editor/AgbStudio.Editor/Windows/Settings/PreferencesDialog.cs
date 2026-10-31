@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgbStudio.Build.Pipeline;
+using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
@@ -235,7 +236,9 @@ public sealed class PreferencesDialog : SettingsDialog
             DropdownRow("Open .cs with", OpenWith, p.OpenCsExternally ? OpenWith[0] : OpenWith[1], v => Edit(() => p.OpenCsExternally = v == OpenWith[0]), "OpenCsWith"),
             scriptChecks);
 
-        var builtIn = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,12,*,12,*") };
+        // Font gets 16 px from Tab size so its box shows "JetBrains Mono" whole (Figma's box is 116 px and the name
+        // overflows it; scope log T-S07); Theme keeps its width for "Studio Light"
+        var builtIn = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("227*,12,195*,12,211*") };
         var font = DropdownRow("Font", CodeFonts, p.CodeFont, v => Edit(() => p.CodeFont = v), "CodeFontFamily");
         var tab = TextRow("Tab size", p.TabSize.ToString(CultureInfo.InvariantCulture), v => Edit(() => p.TabSize = Number(v) ?? 0), "TabSize");
         var theme = DropdownRow("Theme", CodeThemes, p.CodeTheme, v => Edit(() => p.CodeTheme = v), "CodeTheme");
@@ -301,11 +304,15 @@ public sealed class PreferencesDialog : SettingsDialog
             PathRow("Projects folder", p.ProjectsFolder, null, v => Edit(() => p.ProjectsFolder = v), folder: true, "ProjectsFolder"),
             PathRow("Script editor", p.ScriptEditorPath, ScriptEditorHelp(p),
                 v => Edit(() => p.ScriptEditorPath = v), folder: false, "ScriptEditorPath"),
-            PathRow("Image editor", p.ImageEditorPath, "Opens .png / .aseprite on double-click", v => Edit(() => p.ImageEditorPath = v), folder: false, "ImageEditorPath"),
+            PathRow("Image editor", p.ImageEditorPath, ImageEditorHint, v => Edit(() => p.ImageEditorPath = v), folder: false, "ImageEditorPath"),
             PathRow("Tiled", p.TiledPath, "Optional · only needed to edit .tmx maps", v => Edit(() => p.TiledPath = v), folder: false, "TiledPath"),
             CacheCard());
         return col;
     }
+
+    /// <summary>The hint under Paths › Image editor, worded as ExternalTools opens files (scope log T-S08): .aseprite files
+    /// and the PNGs in assets/images go to the Image editor, sprite and tileset PNGs to their editors in the app.</summary>
+    public const string ImageEditorHint = "Opens .aseprite files and background images · sprite / tileset PNGs open in the Sprite / Tilemap Editor";
 
     string DevkitHelp()
     {
@@ -345,7 +352,10 @@ public sealed class PreferencesDialog : SettingsDialog
     {
         var project = _s.Project.Current;
         var info = UI.Text(CacheText(project), "Mono/10", "text/muted");
-        var text = UI.Column(2, UI.Text("Build cache", "Body/12 Semibold", "text/primary"), info);
+        info.Name = "BuildCacheInfo";
+        var title = UI.Text(CacheTitle, "Body/12 Semibold", "text/primary");
+        title.Name = "BuildCacheTitle";
+        var text = UI.Column(2, title, info);
         text.VerticalAlignment = VerticalAlignment.Center;
         var clear = new AgbButton { Kind = ButtonKind.Secondary, Glyph = "x", Content = "Clear cache", Name = "ClearCache", VerticalAlignment = VerticalAlignment.Center, IsEnabled = project != null };
         clear.Click += (_, _) =>
@@ -377,12 +387,24 @@ public sealed class PreferencesDialog : SettingsDialog
         if (Directory.Exists(obj)) Directory.Delete(obj, true);
     }
 
-    static string CacheText(AgbStudio.Core.Project.GameProject? p)
+    /// <summary>The card title: each project keeps its own cache in its build folder, never one folder for all projects
+    /// (scope log T-S08, P11.62).</summary>
+    public const string CacheTitle = "Build cache · per project";
+
+    /// <summary>The open project's cache folder and its size: "SkyHopper\build\cache · 0.3 MB", the folder named from the
+    /// project folder (its build folder, Project Settings › Build › Output folder), or the full path when the output
+    /// folder is outside the project.</summary>
+    public static string CacheText(AgbStudio.Core.Project.GameProject? p)
     {
         if (p is null) return "No project open";
         var mb = CacheBytes(p.BuildDir) / (1024.0 * 1024.0);
         var size = mb >= 10 ? $"{mb:0} MB" : mb >= 0.05 ? $"{mb:0.0} MB" : "empty";
-        return $"{Abbreviate(IOPath.Combine(p.BuildDir, "cache"))} · {size}";
+        var cache = IOPath.GetFullPath(IOPath.Combine(p.BuildDir, "cache"));
+        var inProject = IOPath.GetRelativePath(p.Root, cache);
+        var where = inProject.StartsWith("..", StringComparison.Ordinal) || IOPath.IsPathRooted(inProject)
+            ? Abbreviate(cache)
+            : IOPath.Combine(IOPath.GetFileName(p.Root), inProject);
+        return $"{where} · {size}";
     }
 
     /// <summary>Writes the user's folders as %LOCALAPPDATA% / %USERPROFILE%, as Figma does.</summary>
@@ -479,6 +501,14 @@ public sealed class PreferencesDialog : SettingsDialog
             .ToList();
     }
 
+    /// <summary>The fixed gestures the search finds (none for an empty search, like the commands beyond the Figma rows):
+    /// listed with their keys and a lock instead of the pencil, since they are not commands and cannot be rebound.</summary>
+    public IReadOnlyList<FixedGestures.Gesture> FixedShortcutRows()
+    {
+        var q = _search?.Text?.Trim() ?? "";
+        return q.Length == 0 ? [] : FixedGestures.All.Where(g => g.Matches(q)).ToList();
+    }
+
     void FillShortcuts()
     {
         if (_shortcutRows is null) return;
@@ -497,6 +527,18 @@ public sealed class PreferencesDialog : SettingsDialog
             edit.Click += async (_, _) => await Record(command, label, edit);
             var row = TableRow(ShortcutColumns, 30, Cell(label), keys, edit);
             row.Name = "Shortcut_" + id;
+            _shortcutRows.Children.Add(row);
+        }
+        // the gestures that are not commands: their keys, and a lock where the pencil is
+        foreach (var g in FixedShortcutRows())
+        {
+            var keys = UI.Row(6, g.Keys.Select(k => (Control)new Keycap { Label = k, VerticalAlignment = VerticalAlignment.Center }).ToArray());
+            if (g.Where != null) keys.Children.Add(KeyboardShortcutsDialog.KeysWhere(g.Where));
+            var locked = new Icon { Glyph = "lock", Size = 14, HorizontalAlignment = HorizontalAlignment.Left, Name = "Locked_" + g.Id }
+                .Token(Icon.ForegroundProperty, "text/muted");
+            ToolTip.SetTip(locked, g.Group + " · " + FixedGestures.FixedNote);
+            var row = TableRow(ShortcutColumns, 30, Cell(g.Label), keys, locked);
+            row.Name = "Fixed_" + g.Id;
             _shortcutRows.Children.Add(row);
         }
     }

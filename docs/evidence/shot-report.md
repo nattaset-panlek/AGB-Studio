@@ -236,7 +236,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M08 | menu Open Recent | 264x123 | 264x123 | 2.16 | 2.16 | 0,0 | 0 | 2.47 |
 | T-P15 | frame Audio | 1440x900 | 1440x900 | 4.22 | 4.22 | 0,0 | 0 | 4.46 |
 | T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 2.72 | 2.72 | 0,0 | 0 | 2.66 |
-| T-P11 | frame Build Report | 1440x900 | 1440x900 | 1.45 | 1.45 | 0,0 | 0 | 1.76 |
+| T-P11 | frame Build Report | 1440x900 | 1440x900 | 1.54 | 1.54 | 0,0 | 0 | 1.85 |
 | T-D06 | frame Build ROM | 600x440 | 600x440 | 2.29 | 2.29 | 0,0 | 0 | 2.71 |
 | T-D23 | frame Build ROM · Failed | 600x382 | 600x382 | 1.32 | 1.32 | 0,0 | 0 | 1.43 |
 | T-D05 | frame Export ROM | 560x488 | 560x488 | 1.89 | 1.89 | 0,0 | 0 | 2.05 |
@@ -303,8 +303,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-S05 | frame Project Settings · Localization | 900x620 | 900x620 | 0.80 | 0.80 | 0,0 | 0 | 0.97 |
 | T-D09 | frame Preferences | 900x620 | 900x620 | 0.55 | 0.55 | 0,0 | 0 | 0.63 |
 | T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.57 | 0.57 | 0,0 | 0 | 0.64 |
-| T-S07 | frame Preferences · Editor | 900x620 | 900x620 | 1.44 | 1.44 | 0,0 | 0 | 1.78 |
-| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.34 | 1.34 | 0,0 | 0 | 1.70 |
+| T-S07 | frame Preferences · Editor | 900x620 | 900x620 | 1.45 | 1.45 | 0,0 | 0 | 1.80 |
+| T-S08 | frame Preferences · Paths | 900x620 | 900x620 | 1.45 | 1.45 | 0,0 | 0 | 1.85 |
 | T-S09 | frame Preferences · Shortcuts | 900x620 | 900x620 | 0.89 | 0.89 | 0,0 | 0 | 1.01 |
 | T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.54 | 0.54 | 0,0 | 0 | 0.65 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.38 |
