@@ -16,6 +16,14 @@ Transition g_kind = Transition::Cut;
 bool g_out = false;
 u16 g_frames = 0, g_elapsed = 0;
 int g_level = 0;
+bool g_transitionMosaic = false;
+u16 g_blendCnt = 0, g_blendAlpha = 0;  // the alpha blend a transition puts back when it ends
+
+void restoreBlend() {
+    commit::setReg(commit::BldCnt, g_blendCnt);
+    commit::setReg(commit::BldAlpha, g_blendAlpha);
+    commit::setReg(commit::BldY, 0);
+}
 
 // Restarts the HBlank DMA at the start of each frame (line 0 is written by hand in VBlank).
 void vblankRestart() {
@@ -33,7 +41,7 @@ void applyTransition() {
     switch (g_kind) {
         case Transition::Cut:
         case Transition::Fade:
-            if (level == 0) clearBlend();
+            if (level == 0) restoreBlend();
             else setBrightness(kBg0 | kBg1 | kBg2 | kBg3 | kObj | kBackdrop, -level);
             break;
         case Transition::Slide: {
@@ -44,6 +52,7 @@ void applyTransition() {
             break;
         }
     }
+    if (g_transitionMosaic) setMosaic(static_cast<u8>(1 + level / 2), static_cast<u8>(1 + level / 2));
 }
 }  // namespace
 
@@ -54,12 +63,16 @@ void reset() {
     disableWindows();
     g_level = 0;
     g_frames = g_elapsed = 0;
+    g_transitionMosaic = false;
 }
 
 void setAlphaBlend(u8 a, u8 b, u8 eva, u8 evb) {
-    commit::setReg(commit::BldCnt, static_cast<u16>((a & 0x3F) | ((b & 0x3F) << 8) | BLD_STD));
-    commit::setReg(commit::BldAlpha, static_cast<u16>((eva > 16 ? 16 : eva) | ((evb > 16 ? 16 : evb) << 8)));
+    g_blendCnt = static_cast<u16>((a & 0x3F) | ((b & 0x3F) << 8) | BLD_STD);
+    g_blendAlpha = static_cast<u16>((eva > 16 ? 16 : eva) | ((evb > 16 ? 16 : evb) << 8));
+    restoreBlend();
 }
+
+void setTransitionMosaic(bool on) { g_transitionMosaic = on; }
 
 void setBrightness(u8 targets, int amount) {
     const u16 mode = amount >= 0 ? BLD_WHITE : BLD_BLACK;
@@ -69,6 +82,7 @@ void setBrightness(u8 targets, int amount) {
 }
 
 void clearBlend() {
+    g_blendCnt = g_blendAlpha = 0;
     commit::setReg(commit::BldCnt, 0);
     commit::setReg(commit::BldY, 0);
 }

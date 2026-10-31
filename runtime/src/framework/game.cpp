@@ -131,6 +131,34 @@ void makeLabels(const SceneDef* d) {
     }
 }
 
+// Video Mode popover (T-O02), applied when the scene's layers are loaded and before it fades in.
+// "Alpha blending (fog, shadows)": the map layers drawn in front of the collision (gameplay) layer are the first blend
+// targets, 8/16 over the layers behind, the sprites and the backdrop; semi-transparent sprites (shadows) blend over the
+// layers. The gameplay layer and the layers behind it stay solid, and the text layer (HUD, dialogue) is never blended.
+// "Mosaic effect": the scene's layers and sprites take part in the mosaic; the scene's transitions grow the blocks.
+void applyVideoEffects(const SceneDef* d) {
+    namespace fx = render::effects;
+    const data::MapLayer* ground = nullptr;
+    if (d->collisionLayer >= 0 && d->collisionLayer < d->layerCount && d->layers[d->collisionLayer].type != data::LayerType::CollisionOnly)
+        ground = &d->layers[d->collisionLayer];
+    u8 front = 0, behind = fx::kObj | fx::kBackdrop;
+    for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+        const data::MapLayer& l = d->layers[i];
+        if (l.type == data::LayerType::CollisionOnly) continue;
+        const u8 bit = static_cast<u8>(1u << (l.bg & 3));
+        if (ground && &l != ground && (l.priority < ground->priority || (l.priority == ground->priority && l.bg < ground->bg))) front |= bit;
+        else behind |= bit;
+        if (d->mosaic) {
+            render::bg::Config c = render::bg::config(l.bg);
+            c.mosaic = true;
+            render::bg::configure(l.bg, c);
+        }
+    }
+    if (d->alphaBlend) fx::setAlphaBlend(front, behind, 8, 8);
+    render::sprites::setMosaicAll(d->mosaic);
+    fx::setTransitionMosaic(d->mosaic);
+}
+
 class SceneScreen final : public Screen {
 public:
     const char* name() const override { return g_scene.def ? g_scene.def->name : "scene"; }
@@ -219,6 +247,7 @@ public:
                 actors::startNew();
                 return false;
             default:  // 7 fade in + OnEnter
+                applyVideoEffects(d);
                 render::effects::beginIn(g_scene.transition, g_scene.transitionFrames);
                 if (d->music >= 0 && audio::ready()) {
                     audio::setMusicVolume(fixed(1));
