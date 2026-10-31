@@ -7,7 +7,7 @@ using AgbStudio.Core.Project;
 namespace AgbStudio.Tests;
 
 /// <summary>
-/// P3.11: the build reads each music module's MusicMeta (assets/audio/music/&lt;file&gt;.meta.json): the loop start becomes
+/// P3.11: the build reads the scene's music Volume and each music module's MusicMeta (assets/audio/music/&lt;file&gt;.meta.json): the loop start becomes
 /// the module's restart order in the soundbank, volume and fade on scene change go into the agb_soundbank_music table, and
 /// the game definition hands the table to the runtime (FixtureBuildTests.GameDefinitionHandsTheMusicMetaToTheRuntime; the
 /// audio_music ROM test plays it).
@@ -78,5 +78,31 @@ public sealed class MusicMetaTests
         var edited = GameBuilder.SoundbankKey([module]);
         Assert.NotEqual(noMeta, withMeta);
         Assert.NotEqual(withMeta, edited);
+    }
+
+    /// <summary>
+    /// The scene's music Volume (World Map inspector, MusicSettings.Volume) goes into its SceneDef as musicVolume (0..256):
+    /// the game's music volume while the scene's own track plays (the audio_music ROM test plays it).
+    /// </summary>
+    [Fact]
+    public void SceneMusicVolumeGoesIntoTheSceneDefinition()
+    {
+        var p = SkyHopper.Create(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "music_scene_volume"));
+        var forest = p.SceneFiles().Single(f => GameProject.AssetName(f) == "Forest_01");
+        var scene = GameProject.Load<SceneFile>(forest);
+        scene.Music.Volume = 0.35;
+        GameProject.Save(forest, scene);
+        var r = new GameBuilder(p, new Toolchain()).Build(new BuildOptions { GenerateOnly = true });
+        var gen = Path.Combine(p.BuildDir, "gen", "scenes");
+        string Def(string name)
+        {
+            var cpp = File.ReadAllText(Path.Combine(gen, $"scene_{name}.cpp")).Replace("\r\n", "\n");
+            return cpp[cpp.IndexOf($"extern const agb::SceneDef agbasset_scene_{name} = {{", StringComparison.Ordinal)..];
+        }
+        Assert.True(File.Exists(Path.Combine(gen, "scene_Forest_01.cpp")), string.Join('\n', r.Diagnostics));
+        Assert.EndsWith(", 90};\n", Def("Forest_01"));   // 0.35 x 256 = 89.6
+        Assert.EndsWith(", 205};\n", Def("Forest_02"));  // the default 0.8
+        Assert.Equal(256, GameBuilder.SceneMusicVolume(new SceneFile { Music = new MusicSettings { Volume = 1.5 } }));
+        Assert.Equal(0, GameBuilder.SceneMusicVolume(new SceneFile { Music = new MusicSettings { Volume = -1 } }));
     }
 }

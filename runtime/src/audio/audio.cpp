@@ -57,7 +57,8 @@ u16 g_musicCount = 0;
 s32 g_module = -1;     // the module playing (or played last)
 s32 g_track = 256;     // its MusicMeta volume, 0..256
 u16 g_moduleVolume = 0;
-fixed g_volume = fixed(1), g_fadeFrom, g_fadeTo;
+// The player's (Options), the game's (scene, Music.SetVolume) and the fade level; see audio.hpp.
+fixed g_volume = fixed(1), g_game = fixed(1), g_fade = fixed(1), g_fadeFrom, g_fadeTo;
 u16 g_fadeFrames = 0, g_fadeElapsed = 0;
 bool g_fadeStop = false;
 u8 g_dmgTimer[4];
@@ -68,7 +69,8 @@ void frameHook() {
 }
 
 void applyVolume() {
-    const int v = (g_volume.raw * g_track * 1024) >> 16;
+    const s32 levels = (((g_volume.raw * g_game.raw) >> 8) * g_fade.raw) >> 8;  // 0..256
+    const int v = (levels * g_track * 1024) >> 16;
     g_moduleVolume = static_cast<u16>(v < 0 ? 0 : v > 1024 ? 1024 : v);
     mmSetModuleVolume(g_moduleVolume);
 }
@@ -134,6 +136,7 @@ void playMusic(u16 module, bool loop) {
     mmStart(module, loop ? MM_PLAY_LOOP : MM_PLAY_ONCE);
     g_musicOn = true;
     g_fadeFrames = 0;
+    g_fade = fixed(1);
     applyVolume();
 }
 
@@ -147,12 +150,11 @@ bool musicPlaying() { return g_ready && mmActive(); }
 
 void setMusicVolume(fixed v) {
     g_volume = clamp(v, fixed(), fixed(1));
-    g_fadeFrames = 0;
     if (g_ready) applyVolume();
 }
 
 void fadeMusic(fixed target, u16 frames, bool stopAtZero) {
-    g_fadeFrom = g_volume;
+    g_fadeFrom = g_fade;
     g_fadeTo = clamp(target, fixed(), fixed(1));
     g_fadeFrames = frames ? frames : 1;
     g_fadeElapsed = 0;
@@ -160,6 +162,14 @@ void fadeMusic(fixed target, u16 frames, bool stopAtZero) {
 }
 
 fixed musicVolume() { return g_volume; }
+
+void setGameMusicVolume(fixed v) {
+    g_game = clamp(v, fixed(), fixed(1));
+    if (g_ready) applyVolume();
+}
+
+fixed gameMusicVolume() { return g_game; }
+fixed musicFade() { return g_fade; }
 u16 moduleVolume() { return g_moduleVolume; }
 
 bool musicFadesOnSceneChange() {
@@ -263,7 +273,7 @@ Usage usage() {
 void update() {
     if (g_fadeFrames && g_fadeElapsed < g_fadeFrames) {
         ++g_fadeElapsed;
-        g_volume = g_fadeFrom + (g_fadeTo - g_fadeFrom) * static_cast<int>(g_fadeElapsed) / static_cast<int>(g_fadeFrames);
+        g_fade = g_fadeFrom + (g_fadeTo - g_fadeFrom) * static_cast<int>(g_fadeElapsed) / static_cast<int>(g_fadeFrames);
         if (g_ready) applyVolume();
         if (g_fadeElapsed == g_fadeFrames && g_fadeStop && g_fadeTo.raw == 0) stopMusic();
     }

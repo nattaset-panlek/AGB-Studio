@@ -20,7 +20,9 @@ AGB_TEST(music_plays_and_fades) {
     CHECK_EQ(audio::musicVolume().raw, 128);
     audio::fadeMusic(fixed(0), 20);
     for (int i = 0; i < 25; ++i) system::waitVBlank();
-    CHECK_EQ(audio::musicVolume().raw, 0);
+    CHECK_EQ(audio::musicFade().raw, 0);
+    CHECK_EQ(audio::moduleVolume(), 0);
+    CHECK_EQ(audio::musicVolume().raw, 128);  // the fade leaves the player's music volume alone
     CHECK(!audio::musicPlaying());  // stopped at zero
     audio::setMusicVolume(fixed(1));
     audio::playMusic(agb_sound::MOD_TUNE);

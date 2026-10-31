@@ -59,7 +59,8 @@ MyGame/
 
 `name`, `width` and `height` in 16 px tiles, `videoMode` (0-3; the runtime draws tile layers in modes 0-2, mode 3
 only sets the display mode), `map` (a map name), `camera` (`follow` actor, `deadZoneW` / `deadZoneH`, `clampToMap`),
-`music` (`track`, `volume`, `fadeOnSceneChange`), `events` (`onLoad` / `onEnter` / `onExit` C# statements), `actors`,
+`music` (`track`, `volume`: the game's music volume while this scene's own track plays, built as
+`SceneDef::musicVolume` 0..256; `fadeOnSceneChange`), `events` (`onLoad` / `onEnter` / `onExit` C# statements), `actors`,
 `links`, `alphaBlending`, `mosaic`, `backdrop` (#RRGGBB), an optional title `menu`, the World Map card position
 (`mapX`, `mapY`) and the `template` the scene started from.
 
