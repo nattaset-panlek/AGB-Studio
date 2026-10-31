@@ -1,0 +1,13 @@
+
+# Subject above: what changed, in plain words, under about 72 characters. No emoji.
+#
+# Name what this change implements (G-SCOPE.01, checklist sections 1 and 2.6), one of:
+#   Figma ref: T-...            the window id from docs/ENGINE-CHECKLIST.md section 4, e.g. T-P04, T-D23
+#   infra: <reason>             what the design needs it for: build, CI, tests, docs, file formats, ...
+# tools/check-commit-refs.ps1 (run by ci.cmd) lists commits that name neither.
+Figma ref: T-
+# Checklist items this change ticks or advances (P..., G-...), with the evidence (section 2.3):
+Checklist:
+#
+# Use this file: git config commit.template .gitmessage
+# Lines starting with '#' are removed by git.

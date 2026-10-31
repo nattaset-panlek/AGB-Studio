@@ -20,6 +20,7 @@ u32 g_mapFlags[4], g_sessionFlags[4];
 s32 g_mapVars[32], g_sessionVars[32];
 
 AGB_EWRAM_BSS DebugState g_debug;
+u8 g_stepContext = 0xFF;  // context that resumed with "step one line" (0xFF = any)
 
 constexpr int kOperandBytes[] = {
 #define AGB_OP(name, operands, note) operands,
@@ -174,11 +175,25 @@ bool step(Context& c, int budget, bool immediate) {
             case Op::Yield:
                 if (immediate) break;
                 return true;
+            case Op::WaitUntil:
+                // The condition was just evaluated; while it is false, go back to it and try again next frame.
+                if (pop(c)) break;
+                if (immediate) {
+                    debug::logf("warning: WaitUntil in %s waits, which is not allowed in an immediate script", s.name);
+                    break;
+                }
+                f.pc = static_cast<u16>(f.pc + read16(p + 1));
+                return true;
             case Op::Line: {
                 const u16 line = static_cast<u16>(read16(p + 1));
                 c.lastLine = line;
-                if (!immediate && (hitBreakpoint(f.script, line) || g_debug.resume == 2)) {
-                    if (g_debug.resume == 2) g_debug.resume = 0;
+                // Single step (resume = 2) stops the stepping context at its next line.
+                const bool stepHere = g_debug.resume == 2 && (g_stepContext == 0xFF || g_stepContext == &c - g_ctx);
+                if (!immediate && (hitBreakpoint(f.script, line) || stepHere)) {
+                    if (stepHere) {
+                        g_debug.resume = 0;
+                        g_stepContext = 0xFF;
+                    }
                     c.paused = true;
                     g_debug.pausedContext = static_cast<u8>(&c - g_ctx);
                     g_debug.pausedScript = f.script;
@@ -314,6 +329,7 @@ void run() {
     // Debugger resume / step requests from the editor.
     if (g_debug.pausedContext != 0xFF && g_debug.resume) {
         g_ctx[g_debug.pausedContext].paused = false;
+        g_stepContext = g_debug.resume == 2 ? g_debug.pausedContext : static_cast<u8>(0xFF);
         g_debug.pausedContext = 0xFF;
         if (g_debug.resume == 1) g_debug.resume = 0;
     }
@@ -329,13 +345,21 @@ void run() {
                 c.wait = nullptr;
                 push(c, c.waitResult);
             }
-            if (!step(c, 2000, false)) c.active = false;
+            if (!step(c, 2000, false)) {
+                c.active = false;
+                // Stepped past the end of the script: nothing left to stop at.
+                if (g_stepContext == &c - g_ctx) {
+                    g_stepContext = 0xFF;
+                    g_debug.resume = 0;
+                }
+            }
         }
 }
 
 void resetContexts() {
     for (auto& c : g_ctx) c.active = false;
     g_debug.pausedContext = 0xFF;
+    g_stepContext = 0xFF;
     clearMapStore();
 }
 

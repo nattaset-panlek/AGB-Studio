@@ -195,6 +195,13 @@ public static class ProjectApi
         foreach (var f in fields)
         {
             var member = BuildCpp.Ident(f.Name);
+            if (f.Type == "script")
+            {
+                // Script cells (Effect column) are code: Items.Get(ItemId.Potion).effect() runs the row's cell.
+                sb.Append($"        {Doc($"Runs this row's {f.Name} cell (script); an empty cell does nothing.")}\n");
+                sb.Append($"        [Cpp(\"agb_db::Run({{this.}}{member})\")] public void {CsIdent(f.Name)}() {{ }}\n");
+                continue;
+            }
             var (cs, cpp) = f.Type switch
             {
                 "int" => ("int", (string?)null),
@@ -386,7 +393,7 @@ public static class ProjectApi
         {
             var diags = new List<AgbStudio.Build.Pipeline.Diagnostic>();
             var o = DatabaseCodegen.Generate(ctx.Tables, k => ctx.Strings.TryGetValue(k, out var v) ? v : -1,
-                n => ScriptsSound(ctx, n), _ => false, diags, "");
+                n => ScriptsSound(ctx, n), _ => false, diags, "", scriptCells: true);
             // DatabaseCodegen declares script fields as "void (*)() name;", which is not valid C++ (reported to the build
             // owner); the stand-in writes the valid "void (*name)();".
             var header = System.Text.RegularExpressions.Regex.Replace(o.Header, @"void \(\*\)\(\) (\w+);", "void (*$1)();");

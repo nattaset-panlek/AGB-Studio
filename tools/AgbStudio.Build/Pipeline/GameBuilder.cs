@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using AgbStudio.Build.Audio;
 using AgbStudio.Build.Content;
 using AgbStudio.Build.Graphics;
@@ -57,6 +58,8 @@ public sealed class ScriptOutput
     // Script class name -> C++ expression creating it with field overrides: (arena, fields) => code
     public Func<string, IReadOnlyDictionary<string, string>, string?> FactoryCall { get; set; } = (_, _) => null;
     public string RegistryHeader { get; set; } = "";
+    // Saved flag ids after this compile (null = unchanged): the build keeps them in Project Settings · Save data.
+    public Dictionary<string, int>? FlagIds { get; set; }
 }
 
 /// <summary>Builds a project into a .gba: scripts, assets, C++ codegen, devkitARM, gbafix, report.</summary>
@@ -515,7 +518,7 @@ public sealed class GameBuilder
         Tables = tables;
         if (tables.Count == 0) return;
         var diags = new List<Diagnostic>();
-        var o = Data.DatabaseCodegen.Generate(tables, StringKey, n => SoundId(n), n => _sprites.ContainsKey(n), diags, _p.DataDir);
+        var o = Data.DatabaseCodegen.Generate(tables, StringKey, n => SoundId(n), n => _sprites.ContainsKey(n), diags, _p.DataDir, scriptCells: Scripts != null);
         foreach (var d in diags) Add(d);
         SoundbankBuilder.WriteIfChanged(Path.Combine(GenDir, "agb_db.hpp"), o.Header);
         foreach (var (file, text) in o.Sources) Write(Path.Combine(GenDir, "data", file), text);
@@ -551,10 +554,20 @@ public sealed class GameBuilder
         };
         _scriptOut = Scripts.Compile(_p, input, _obs);
         foreach (var d in _scriptOut.Diagnostics) Add(d);
+        // Flag ids are part of the save format, so they live in the project file (versioned with the game), not in
+        // build/ (P4.08).
+        if (_scriptOut.FlagIds is { } ids && !SameIds(ids, _p.Settings.Save.FlagIds))
+        {
+            _p.Settings.Save.FlagIds = ids.OrderBy(kv => kv.Key, StringComparer.Ordinal).ToDictionary(kv => kv.Key, kv => kv.Value);
+            _p.SaveSettings();
+        }
         _sources.AddRange(_scriptOut.Sources);
         _includeDirs.AddRange(_scriptOut.IncludeDirs);
         return $"{_scriptOut.ScriptCount} scripts";
     }
+
+    static bool SameIds(Dictionary<string, int> a, Dictionary<string, int> b) =>
+        a.Count == b.Count && a.All(kv => b.TryGetValue(kv.Key, out var v) && v == kv.Value);
 
     List<string> SceneNames() => _p.SceneFiles().Select(GameProject.AssetName).ToList();
 
@@ -567,7 +580,9 @@ public sealed class GameBuilder
     {
         var scenes = _p.SceneFiles().Select(f => (File: f, Scene: GameProject.Load<SceneFile>(f))).ToList();
         var names = scenes.Select(s => s.Scene.Name.Length > 0 ? s.Scene.Name : GameProject.AssetName(s.File)).ToList();
+        _maps.Clear();
         foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
+        GeneratePrefabs();
         foreach (var (file, scene) in scenes) CheckHardwareLimits(file, scene);
         var splash = GenerateSplash();
         var ui = GenerateUiKit(names, scenes.Any(s => s.Scene.Menu != null));
@@ -694,152 +709,20 @@ public sealed class GameBuilder
         if (_scriptOut.RegistryHeader.Length > 0) sb.Append($"#include \"{_scriptOut.RegistryHeader}\"\n");
         sb.Append("namespace {\n");
 
-        // Map layers
-        MapFile? map = null;
-        var layerCount = 0;
-        var collisionLayer = -1;
+        // Map layers: the map file's data is generated once and shared by every scene that shows it (P5.03).
+        MapOut? map = null;
         if (scene.Map.Length > 0)
         {
-            var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
-            if (!File.Exists(mapPath))
-            {
-                Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} uses map '{scene.Map}', which does not exist."));
-                return;
-            }
-            map = GameProject.Load<MapFile>(mapPath);
-            var tsId = Cpp.Ident(map.Tileset);
-            // Maps made only of image layers (a visual novel backdrop) need no tileset.
-            var needsTileset = map.Layers.Any(l => l.Type != LayerType.Image);
-            if (needsTileset && !_tilesets.ContainsKey(map.Tileset))
-            {
-                Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets."));
-                return;
-            }
-            if (needsTileset) externs.Append($"extern const agb::data::Tileset agbasset_tileset_{tsId};\n");
-            var layers = new StringBuilder();
-            for (var i = 0; i < map.Layers.Count; i++)
-            {
-                var l = map.Layers[i];
-                if (l.Type != LayerType.Image && l.Cells.Count != map.Width * map.Height)
-                {
-                    Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} has {l.Cells.Count} cells; the map is {map.Width}×{map.Height}."));
-                    return;
-                }
-                var type = l.Type switch { LayerType.Image => "Image", LayerType.Affine => "Affine", LayerType.CollisionOnly => "CollisionOnly", _ => "Tile" };
-                if (l.Type == LayerType.Image)
-                {
-                    if (!_images.TryGetValue(l.Image, out var size))
-                    {
-                        Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} uses image '{l.Image}', which is not in assets/images."));
-                        continue;
-                    }
-                    var imgId = Cpp.Ident(l.Image);
-                    externs.Append($"extern const agb::data::Tileset agbasset_tileset_{imgId};\nextern const unsigned short agbasset_tileset_{imgId}_cells[];\n");
-                    layers.Append($"    {{{l.Bg}, agb::data::LayerType::Image, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
-                    layers.Append($"{size.W}, {size.H}, agbasset_tileset_{imgId}_cells, &agbasset_tileset_{imgId}}},\n");
-                    continue;
-                }
-                if (l.Type == LayerType.Affine)
-                {
-                    // 8bpp tiles with flips and banks baked in, one tile per 8x8 cell (affine maps have neither).
-                    var ts = _tilesets[map.Tileset];
-                    var af = AffineConverter.Convert(ts, l.Cells, map.Width, map.Height);
-                    if (af.Problem != null) Add(new Diagnostic(Severity.Warning, mapPath, 0, 0, "", $"Layer {l.Name}: {af.Problem}"));
-                    sb.Append("alignas(4) ");
-                    Cpp.Bytes(sb, $"const unsigned int agbasset_map_{id}_l{i}_tiles", af.Tiles);
-                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}_colors", ts.Palette.Flatten().Select(c => (int)c));
-                    sb.Append($"const agb::data::Palette agbasset_map_{id}_l{i}_pal{{agbasset_map_{id}_l{i}_colors, {ts.Palette.Banks.Count}}};\n");
-                    sb.Append($"const agb::data::Tileset agbasset_map_{id}_l{i}_ts{{{{agbasset_map_{id}_l{i}_tiles, {af.Tiles.Length}, {af.TileCount}, 8, false}}, ");
-                    sb.Append($"&agbasset_map_{id}_l{i}_pal, nullptr, nullptr, nullptr, 0, nullptr, 0}};\n");
-                    sb.Append("alignas(4) ");
-                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", af.PackedCells);
-                    layers.Append($"    {{{l.Bg}, agb::data::LayerType::Affine, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
-                    layers.Append($"{af.Width}, {af.Height}, agbasset_map_{id}_l{i}, &agbasset_map_{id}_l{i}_ts}},\n");
-                    continue;
-                }
-                Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", l.Cells);
-                layers.Append($"    {{{l.Bg}, agb::data::LayerType::{type}, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
-                layers.Append($"{map.Width}, {map.Height}, agbasset_map_{id}_l{i}, &agbasset_tileset_{tsId}}},\n");
-            }
-            sb.Append($"const agb::data::MapLayer agbasset_scene_{id}_layers[] = {{\n{layers}}};\n");
-            layerCount = map.Layers.Count;
-            collisionLayer = map.CollisionLayer >= 0 ? map.CollisionLayer : map.Layers.FindIndex(l => l.Type == LayerType.Tile);
+            map = MapData(scene.Map, file, scene.Name);
+            if (map == null) return;
+            externs.Append($"extern const agb::data::MapLayer {map.Symbol}[];\n");
         }
 
         // Actors and their behaviours
         var actorNames = scene.Actors.Select(a => a.Name).ToList();
-        for (var ai = 0; ai < scene.Actors.Count; ai++)
-        {
-            var a = scene.Actors[ai];
-            var creators = new List<string>();
-            for (var ci = 0; ci < a.Components.Count; ci++)
-            {
-                var comp = a.Components[ci];
-                var fn = $"agbmake_{id}_{ai}_{ci}";
-                var builtin = BuiltinBehaviours.Find(comp.Type);
-                if (builtin != null)
-                {
-                    sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{\n    auto* b = arena.make<{builtin.CppClass}>();\n    if (!b) return nullptr;\n");
-                    foreach (var (k, v) in comp.Fields)
-                    {
-                        var f = builtin.Fields.FirstOrDefault(x => x.Name == k);
-                        if (f == null)
-                        {
-                            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: {comp.Type} has no field '{k}'."));
-                            continue;
-                        }
-                        try
-                        {
-                            sb.Append($"    b->{f.CppMember} = {BuiltinBehaviours.Value(f, v, n => Math.Max(0, SoundId(n)))};\n");
-                        }
-                        catch (FormatException)
-                        {
-                            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: {comp.Type}.{k} = '{v}' is not a valid value."));
-                        }
-                    }
-                    sb.Append("    return b;\n}\n");
-                }
-                else
-                {
-                    var call = _scriptOut.FactoryCall(comp.Type, comp.Fields);
-                    if (call == null)
-                    {
-                        Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: behaviour '{comp.Type}' was not found (not a built-in and no C# script defines it)."));
-                        continue;
-                    }
-                    sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{ return {call}; }}\n");
-                }
-                creators.Add(fn);
-            }
-            if (creators.Count > 0) sb.Append($"const agb::BehaviourCreate agbasset_scene_{id}_a{ai}_b[] = {{{string.Join(", ", creators)}}};\n");
-        }
         var actors = new StringBuilder();
         for (var ai = 0; ai < scene.Actors.Count; ai++)
-        {
-            var a = scene.Actors[ai];
-            var sheet = "nullptr";
-            if (a.Sprite.Length > 0)
-            {
-                if (!_sprites.ContainsKey(a.Sprite))
-                {
-                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name} uses sprite '{a.Sprite}', which is not in assets/sprites."));
-                }
-                else
-                {
-                    externs.Append($"extern const agb::data::SpriteSheet agbasset_sprite_{Cpp.Ident(a.Sprite)};\n");
-                    sheet = $"&agbasset_sprite_{Cpp.Ident(a.Sprite)}";
-                }
-            }
-            var box = a.Collider != null ? $"{{{a.Collider.X}, {a.Collider.Y}, {a.Collider.W}, {a.Collider.H}}}"
-                : a.Kind is ActorKind.TriggerZone or ActorKind.CameraZone ? $"{{0, {-a.ZoneH}, {a.ZoneW}, {a.ZoneH}}}" : "{0, 0, 0, 0}";
-            var tag = a.Tag.Length == 0 ? 0 : _p.Settings.Tags.IndexOf(a.Tag) + 1;
-            var behaviours = a.Components.Count > 0 && scene.Actors[ai].Components.Count > 0 ? $"agbasset_scene_{id}_a{ai}_b" : "nullptr";
-            actors.Append($"    {{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, ");
-            actors.Append(a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr");
-            var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
-            if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables."));
-            actors.Append($", {box}, {behaviours}, {a.Components.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}},\n");
-        }
+            actors.Append("    ").Append(ActorCpp(sb, externs, file, scene.Actors[ai], $"agbmake_{id}_{ai}", $"agbasset_scene_{id}_a{ai}_b")).Append(",\n");
         if (scene.Actors.Count > 0) sb.Append($"const agb::ActorDef agbasset_scene_{id}_actors[] = {{\n{actors}}};\n");
 
         // Links
@@ -847,10 +730,13 @@ public sealed class GameBuilder
         for (var li = 0; li < scene.Links.Count; li++)
         {
             var l = scene.Links[li];
-            var from = actorNames.IndexOf(l.From);
+            // An empty From is a "Condition only" link (Link Settings): it has no trigger actor.
+            var from = l.From.Trim().Length == 0 ? -1 : actorNames.IndexOf(l.From);
             var to = sceneNames.IndexOf(l.To);
-            if (from < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link from '{l.From}': no actor with that name in {scene.Name}.")); continue; }
+            if (from < 0 && l.From.Trim().Length > 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link from '{l.From}': no actor with that name in {scene.Name}.")); continue; }
             if (to < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link to '{l.To}': no scene with that name.")); continue; }
+            if (from < 0 && l.Kind != LinkKind.Respawn && l.OnlyIf.Trim().Length == 0)
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Link → {l.To} has neither a From actor nor an 'Only if' condition, so it never fires."));
             var condition = "nullptr";
             if (l.OnlyIf.Length > 0 && ScriptsCompiled) condition = $"agb_link_{id}_{li}";
             else if (l.OnlyIf.Length > 0)
@@ -868,8 +754,8 @@ public sealed class GameBuilder
             Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name}: music '{scene.Music.Track}' is not in assets/audio/music."));
         var backdrop = Gba.ToBgr555(0xFF000000u | uint.Parse(scene.Backdrop.TrimStart('#'), NumberStyles.HexNumber));
         sb.Append($"extern const agb::SceneDef agbasset_scene_{id} = {{\n");
-        sb.Append($"    {Cpp.Str(scene.Name)}, {(map?.Width ?? scene.Width)}, {(map?.Height ?? scene.Height)}, {scene.VideoMode},\n");
-        sb.Append($"    {(layerCount > 0 ? $"agbasset_scene_{id}_layers" : "nullptr")}, {layerCount}, {collisionLayer},\n");
+        sb.Append($"    {Cpp.Str(scene.Name)}, {(map?.Map.Width ?? scene.Width)}, {(map?.Map.Height ?? scene.Height)}, {scene.VideoMode},\n");
+        sb.Append($"    {(map is { LayerCount: > 0 } ? map.Symbol : "nullptr")}, {map?.LayerCount ?? 0}, {map?.CollisionLayer ?? -1},\n");
         sb.Append($"    {(scene.Actors.Count > 0 ? $"agbasset_scene_{id}_actors" : "nullptr")}, {scene.Actors.Count},\n");
         sb.Append($"    {{{follow}, {scene.Camera.DeadZoneW}, {scene.Camera.DeadZoneH}, {(scene.Camera.ClampToMap ? "true" : "false")}, 0, 0}},\n");
         sb.Append($"    {music}, {(scene.Music.FadeOnSceneChange ? "true" : "false")},\n");
@@ -882,6 +768,217 @@ public sealed class GameBuilder
         var text = sb.ToString();
         var cut = text.IndexOf("namespace {", StringComparison.Ordinal);
         Write(Path.Combine(GenDir, "scenes", $"scene_{id}.cpp"), text[..cut] + externs + text[cut..]);
+    }
+
+    /// <summary>A map file's layers in ROM: <c>agbasset_map_&lt;Map&gt;_layers</c> in gen/maps (P5.03).</summary>
+    public sealed record MapOut(MapFile Map, string Symbol, int LayerCount, int CollisionLayer);
+
+    readonly Dictionary<string, MapOut?> _maps = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Writes a map's layers once per build (gen/maps/map_&lt;Map&gt;.cpp), however many scenes show the map, and returns
+    /// the symbol of its layer table. Null when the map or its assets are missing (the error names the scene).
+    /// </summary>
+    MapOut? MapData(string mapName, string sceneFile, string sceneName)
+    {
+        var name = Path.GetFileNameWithoutExtension(mapName);
+        if (_maps.TryGetValue(name, out var done)) return done;
+        var mapPath = Path.Combine(_p.MapsDir, name + ".map");
+        if (!File.Exists(mapPath))
+        {
+            Add(new Diagnostic(Severity.Error, sceneFile, 0, 0, "", $"Scene {sceneName} uses map '{mapName}', which does not exist."));
+            return null;
+        }
+        var map = GameProject.Load<MapFile>(mapPath);
+        var id = Cpp.Ident(name);
+        var sb = new StringBuilder();
+        var externs = new StringBuilder();
+        sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(mapPath)).Append(". Do not edit.\n");
+        sb.Append("#include \"agb/data.hpp\"\n");
+        var tsId = Cpp.Ident(map.Tileset);
+        // Maps made only of image layers (a visual novel backdrop) need no tileset.
+        var needsTileset = map.Layers.Any(l => l.Type != LayerType.Image);
+        if (needsTileset && !_tilesets.ContainsKey(map.Tileset))
+        {
+            Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets."));
+            _maps[name] = null;
+            return null;
+        }
+        if (needsTileset) externs.Append($"extern const agb::data::Tileset agbasset_tileset_{tsId};\n");
+        var data = new StringBuilder();
+        var layers = new StringBuilder();
+        for (var i = 0; i < map.Layers.Count; i++)
+        {
+            var l = map.Layers[i];
+            if (l.Type != LayerType.Image && l.Cells.Count != map.Width * map.Height)
+            {
+                Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} has {l.Cells.Count} cells; the map is {map.Width}×{map.Height}."));
+                _maps[name] = null;
+                return null;
+            }
+            var type = l.Type switch { LayerType.Image => "Image", LayerType.Affine => "Affine", LayerType.CollisionOnly => "CollisionOnly", _ => "Tile" };
+            if (l.Type == LayerType.Image)
+            {
+                if (!_images.TryGetValue(l.Image, out var size))
+                {
+                    Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} uses image '{l.Image}', which is not in assets/images."));
+                    continue;
+                }
+                var imgId = Cpp.Ident(l.Image);
+                externs.Append($"extern const agb::data::Tileset agbasset_tileset_{imgId};\nextern const unsigned short agbasset_tileset_{imgId}_cells[];\n");
+                layers.Append($"    {{{l.Bg}, agb::data::LayerType::Image, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+                layers.Append($"{size.W}, {size.H}, agbasset_tileset_{imgId}_cells, &agbasset_tileset_{imgId}}},\n");
+                continue;
+            }
+            if (l.Type == LayerType.Affine)
+            {
+                // 8bpp tiles with flips and banks baked in, one tile per 8x8 cell (affine maps have neither).
+                var ts = _tilesets[map.Tileset];
+                var af = AffineConverter.Convert(ts, l.Cells, map.Width, map.Height);
+                if (af.Problem != null) Add(new Diagnostic(Severity.Warning, mapPath, 0, 0, "", $"Layer {l.Name}: {af.Problem}"));
+                data.Append("alignas(4) ");
+                Cpp.Bytes(data, $"const unsigned int agbasset_map_{id}_l{i}_tiles", af.Tiles);
+                Cpp.U16(data, $"const unsigned short agbasset_map_{id}_l{i}_colors", ts.Palette.Flatten().Select(c => (int)c));
+                data.Append($"const agb::data::Palette agbasset_map_{id}_l{i}_pal{{agbasset_map_{id}_l{i}_colors, {ts.Palette.Banks.Count}}};\n");
+                data.Append($"const agb::data::Tileset agbasset_map_{id}_l{i}_ts{{{{agbasset_map_{id}_l{i}_tiles, {af.Tiles.Length}, {af.TileCount}, 8, false}}, ");
+                data.Append($"&agbasset_map_{id}_l{i}_pal, nullptr, nullptr, nullptr, 0, nullptr, 0}};\n");
+                data.Append("alignas(4) ");
+                Cpp.U16(data, $"const unsigned short agbasset_map_{id}_l{i}", af.PackedCells);
+                layers.Append($"    {{{l.Bg}, agb::data::LayerType::Affine, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+                layers.Append($"{af.Width}, {af.Height}, agbasset_map_{id}_l{i}, &agbasset_map_{id}_l{i}_ts}},\n");
+                continue;
+            }
+            Cpp.U16(data, $"const unsigned short agbasset_map_{id}_l{i}", l.Cells);
+            layers.Append($"    {{{l.Bg}, agb::data::LayerType::{type}, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+            layers.Append($"{map.Width}, {map.Height}, agbasset_map_{id}_l{i}, &agbasset_tileset_{tsId}}},\n");
+        }
+        var symbol = $"agbasset_map_{id}_layers";
+        sb.Append(externs).Append("namespace {\n").Append(data).Append("}  // namespace\n");
+        sb.Append($"extern const agb::data::MapLayer {symbol}[] = {{\n{(map.Layers.Count > 0 ? layers.ToString() : "    {},\n")}}};\n");
+        Write(Path.Combine(GenDir, "maps", $"map_{id}.cpp"), sb.ToString());
+        var collision = map.CollisionLayer >= 0 ? map.CollisionLayer : map.Layers.FindIndex(l => l.Type == LayerType.Tile);
+        var result = new MapOut(map, symbol, map.Layers.Count, collision);
+        _maps[name] = result;
+        return result;
+    }
+
+    /// <summary>
+    /// The behaviour creators of one actor (scene actor or prefab) and its <c>agb::ActorDef</c> initializer.
+    /// </summary>
+    string ActorCpp(StringBuilder sb, StringBuilder externs, string file, ActorData a, string makePrefix, string listName)
+    {
+        var creators = new List<string>();
+        for (var ci = 0; ci < a.Components.Count; ci++)
+        {
+            var comp = a.Components[ci];
+            var fn = $"{makePrefix}_{ci}";
+            var builtin = BuiltinBehaviours.Find(comp.Type);
+            if (builtin != null)
+            {
+                sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{\n    auto* b = arena.make<{builtin.CppClass}>();\n    if (!b) return nullptr;\n");
+                foreach (var (k, v) in comp.Fields)
+                {
+                    var f = builtin.Fields.FirstOrDefault(x => x.Name == k);
+                    if (f == null)
+                    {
+                        Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: {comp.Type} has no field '{k}'."));
+                        continue;
+                    }
+                    try
+                    {
+                        sb.Append($"    b->{f.CppMember} = {BuiltinBehaviours.Value(f, v, n => Math.Max(0, SoundId(n)))};\n");
+                    }
+                    catch (FormatException)
+                    {
+                        Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: {comp.Type}.{k} = '{v}' is not a valid value."));
+                    }
+                }
+                sb.Append("    return b;\n}\n");
+            }
+            else
+            {
+                var call = _scriptOut.FactoryCall(comp.Type, comp.Fields);
+                if (call == null)
+                {
+                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: behaviour '{comp.Type}' was not found (not a built-in and no C# script defines it)."));
+                    continue;
+                }
+                sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{ return {call}; }}\n");
+            }
+            creators.Add(fn);
+        }
+        if (creators.Count > 0) sb.Append($"const agb::BehaviourCreate {listName}[] = {{{string.Join(", ", creators)}}};\n");
+        var sheet = "nullptr";
+        if (a.Sprite.Length > 0)
+        {
+            if (!_sprites.ContainsKey(a.Sprite))
+            {
+                Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name} uses sprite '{a.Sprite}', which is not in assets/sprites."));
+            }
+            else
+            {
+                var decl = $"extern const agb::data::SpriteSheet agbasset_sprite_{Cpp.Ident(a.Sprite)};\n";
+                if (!externs.ToString().Contains(decl, StringComparison.Ordinal)) externs.Append(decl);
+                sheet = $"&agbasset_sprite_{Cpp.Ident(a.Sprite)}";
+            }
+        }
+        var box = a.Collider != null ? $"{{{a.Collider.X}, {a.Collider.Y}, {a.Collider.W}, {a.Collider.H}}}"
+            : a.Kind is ActorKind.TriggerZone or ActorKind.CameraZone ? $"{{0, {-a.ZoneH}, {a.ZoneW}, {a.ZoneH}}}" : "{0, 0, 0, 0}";
+        var tag = a.Tag.Length == 0 ? 0 : _p.Settings.Tags.IndexOf(a.Tag) + 1;
+        var behaviours = creators.Count > 0 ? listName : "nullptr";
+        var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
+        if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables."));
+        return $"{{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, " +
+               (a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr") +
+               $", {box}, {behaviours}, {creators.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}}";
+    }
+
+    int _prefabCount;
+
+    /// <summary>
+    /// Prefabs (Make Prefab, prefabs/&lt;Name&gt;.prefab) as const actor templates in ROM (P4.07): gen/prefabs.cpp holds an
+    /// <c>agb::ActorDef</c> per prefab and the <c>agb_prefabs</c> table that Scene.Spawn("Name", x, y) looks in.
+    /// </summary>
+    void GeneratePrefabs()
+    {
+        var files = _p.PrefabFiles().ToList();
+        _prefabCount = 0;
+        if (files.Count == 0) return;
+        var sb = new StringBuilder();
+        var externs = new StringBuilder();
+        var table = new StringBuilder();
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var f in files)
+        {
+            var name = GameProject.AssetName(f);
+            ActorData a;
+            try
+            {
+                a = GameProject.Load<ActorData>(f);
+            }
+            catch (Exception e) when (e is JsonException or InvalidDataException)
+            {
+                Add(new Diagnostic(Severity.Error, f, 0, 0, "", $"Prefab {name} could not be read: {e.Message}"));
+                continue;
+            }
+            if (!names.Add(name)) continue;
+            var id = Cpp.Ident(name);
+            // The template sits at the origin: Scene.Spawn gives the position.
+            var template = new ActorData
+            {
+                Name = a.Name, Kind = a.Kind, Sprite = a.Sprite, Animation = a.Animation, Tag = a.Tag, Priority = a.Priority, Hidden = a.Hidden,
+                Collider = a.Collider, ZoneW = a.ZoneW, ZoneH = a.ZoneH, Text = a.Text, Components = a.Components,
+            };
+            sb.Append($"const agb::ActorDef agbasset_prefab_{id} = {ActorCpp(sb, externs, f, template, $"agbmake_prefab_{id}", $"agbasset_prefab_{id}_b")};\n");
+            table.Append($"    {{{Cpp.Str(name)}, &agbasset_prefab_{id}}},\n");
+            _prefabCount++;
+        }
+        var text = new StringBuilder("// Generated by AGB Studio from prefabs/*.prefab. Do not edit.\n");
+        text.Append("#include \"agb/api.hpp\"\n#include \"agb/behaviours.hpp\"\n#include \"agb/game.hpp\"\n");
+        if (_scriptOut.RegistryHeader.Length > 0) text.Append($"#include \"{_scriptOut.RegistryHeader}\"\n");
+        text.Append(externs).Append("namespace {\n").Append(sb).Append("}  // namespace\n");
+        text.Append($"extern const agb::PrefabDef agb_prefabs[] = {{\n{(_prefabCount > 0 ? table.ToString() : "    {nullptr, nullptr},\n")}}};\n");
+        Write(Path.Combine(GenDir, "prefabs.cpp"), text.ToString());
     }
 
     void SceneMenuCpp(StringBuilder sb, string file, string id, SceneMenu menu, List<string> sceneNames)
@@ -923,6 +1020,7 @@ public sealed class GameBuilder
         var hasAudio = _musicIds.Count + _soundIds.Count > 0;
         if (hasAudio) sb.Append("extern const unsigned char agb_soundbank[];\n");
         if (_dmgCount > 0) sb.Append("#include \"agb/audio.hpp\"\nextern const agb::audio::DmgSfx agb_dmg_sfx[];\n");
+        if (_prefabCount > 0) sb.Append("extern const agb::PrefabDef agb_prefabs[];\n");
         foreach (var f in _p.SceneFiles()) sb.Append($"extern const agb::SceneDef agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))};\n");
         if (_languages.Count > 0) sb.Append("#include \"agb/text.hpp\"\n");
         if (splash || ui) sb.Append("#include \"agb/ui.hpp\"\n");
@@ -952,8 +1050,7 @@ public sealed class GameBuilder
         sb.Append("};\n}  // namespace\n");
         sb.Append("GameState agb_state;\n");
         var start = Math.Max(0, sceneNames.IndexOf(s.General.StartScene));
-        var layout = string.Join(";", s.Save.Fields.Select(f => f.Name + ":" + f.Type)) + (ScriptsCompiled ? ";scriptStore" : "");
-        var version = 1 + (int)(Fnv(layout) % 30000);
+        var version = SaveVersion(s.Save, ScriptsCompiled);
         sb.Append("extern const agb::GameDef agb_game = {\n");
         sb.Append($"    {Cpp.Str(s.General.GameTitle)}, kScenes, {sceneNames.Count}, {start},\n");
         sb.Append($"    {{agb::save::Type::{s.Save.Type}, {Math.Max(1, s.Save.Slots)}, sizeof(GameState), {version}, {(s.Save.Checksum ? "true" : "false")}}},\n");
@@ -961,7 +1058,8 @@ public sealed class GameBuilder
         sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, {(ScriptsCompiled ? "agb_scripts_init" : "nullptr")}, {(s.General.SkipSplashInDebug ? "true" : "false")}, ");
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
-        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount}}};\n");
+        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount},\n");
+        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");
@@ -985,6 +1083,17 @@ public sealed class GameBuilder
         h.Append("}\n");
         foreach (var f in _fonts.Values) h.Append($"extern const agb::data::Font {f.Symbol};\n");
         SoundbankBuilder.WriteIfChanged(Path.Combine(GenDir, "agb_game.hpp"), h.ToString());
+    }
+
+    /// <summary>
+    /// The save format version (save::Config.version): a save written with another layout is not read back. It follows
+    /// the save fields and whether the script store is saved; flags live in that fixed-size store under stable ids
+    /// (SaveSettings.FlagIds), so adding a flag keeps the version and the existing save data (P4.08).
+    /// </summary>
+    public static int SaveVersion(SaveSettings save, bool scriptStore)
+    {
+        var layout = string.Join(";", save.Fields.Select(f => f.Name + ":" + f.Type)) + (scriptStore ? ";scriptStore" : "");
+        return 1 + (int)(Fnv(layout) % 30000);
     }
 
     static uint Fnv(string s)
@@ -1084,7 +1193,10 @@ public sealed class GameBuilder
     {
         var sb = new StringBuilder();
         sb.Append($"{_p.Settings.General.GameTitle} was made with AGB Studio and contains the following libraries.\n\n");
+        // D-05: the AGB Studio runtime inside the ROM is MIT; the same permission text covers it and libtonc.
+        sb.Append("AGB Studio runtime\n------------------\nCopyright (c) 2026 AGB Studio contributors\n\n");
         sb.Append("libtonc\n-------\nCopyright (c) J Vijn\n\n");
+        sb.Append("Both are under the MIT licence:\n\n");
         sb.Append("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\n");
         sb.Append("documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation\n");
         sb.Append("the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to\n");

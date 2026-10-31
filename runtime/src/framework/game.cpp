@@ -24,6 +24,7 @@ const GameDef* g_def = nullptr;
 Screen* g_stack[game::kMaxScreens];
 int g_depth = 0;
 bool g_paused = false;
+u32 g_pausedFrame = 0;  // frame of Scene.Pause (the Start press that paused does not also resume)
 
 // ---- the built-in scene screen ------------------------------------------------------------------------
 constexpr int kMaxLayers = 4;
@@ -50,6 +51,7 @@ struct SceneState {
     bool labelsMade = false;  // the OnLoad step made the Text Labels (Start and OnLoad may run a frame later)
     data::MapLayer ramLayers[kMaxLayers];  // layers edited at run time (cells in the screen arena)
     bool edited[kMaxLayers] = {};
+    s16 zone = -1;  // Camera Zone actor the followed actor is in
 };
 SceneState g_scene;
 void publishGameInfo();
@@ -73,6 +75,35 @@ void clampCamera() {
     g_scene.camY = h <= 160 ? 0 : (g_scene.camY < 0 ? 0 : g_scene.camY > h - 160 ? h - 160 : g_scene.camY);
 }
 
+// The Camera Zone actor whose box holds the middle of `a` (its collider, else its origin), or -1.
+int zoneOf(const Actor& a) {
+    const Box b = a.worldBox();
+    const int x = b.w ? b.x + b.w / 2 : a.pos.x.floor(), y = b.h ? b.y + b.h / 2 : a.pos.y.floor();
+    int found = -1;
+    actors::forEach([&](Actor& z) {
+        if (found >= 0 || z.kind != ActorKind::CameraZone || !z.isAlive()) return;
+        const Box zb = z.worldBox();
+        if (x >= zb.x && x < zb.x + zb.w && y >= zb.y && y < zb.y + zb.h) found = z.index;
+    });
+    return found;
+}
+
+// Keeps one axis of the view inside a zone: a zone smaller than the screen centres the view on it.
+int confine(int cam, int zoneStart, int zoneSize, int screen) {
+    if (zoneSize <= screen) return zoneStart + (zoneSize - screen) / 2;
+    return cam < zoneStart ? zoneStart : cam > zoneStart + zoneSize - screen ? zoneStart + zoneSize - screen : cam;
+}
+
+void confineToZone() {
+    g_scene.zone = g_scene.follow && g_scene.follow->isAlive() ? static_cast<s16>(zoneOf(*g_scene.follow)) : static_cast<s16>(-1);
+    if (const Actor* z = g_scene.zone >= 0 ? actors::at(g_scene.zone) : nullptr) {
+        const Box zb = z->worldBox();
+        g_scene.camX = confine(g_scene.camX, zb.x, zb.w, 240);
+        g_scene.camY = confine(g_scene.camY, zb.y, zb.h, 160);
+    }
+    clampCamera();
+}
+
 void followCamera() {
     Actor* a = g_scene.follow;
     if (!a || !a->isAlive() || !g_scene.def) return;
@@ -83,7 +114,7 @@ void followCamera() {
     if (px > right) g_scene.camX += px - right;
     if (py < top) g_scene.camY -= top - py;
     if (py > bottom) g_scene.camY += py - bottom;
-    clampCamera();
+    confineToZone();
 }
 
 // Text Label actors of the scene: their text drawn on the text layer (load step 6).
@@ -114,6 +145,8 @@ public:
                 g_scene.drawnLayers = -1;
                 g_scene.loadedLayers = 0;
                 g_scene.labelsMade = false;
+                g_scene.zone = -1;
+                g_paused = false;
                 for (bool& e : g_scene.edited) e = false;
                 actors::reset();
                 render::sprites::reset();
@@ -163,7 +196,7 @@ public:
                     g_scene.camX = g_scene.follow->pos.x.floor() - 120;
                     g_scene.camY = g_scene.follow->pos.y.floor() - 80;
                 }
-                clampCamera();
+                confineToZone();
                 // Each layer draws its whole window (about 70k cycles): one layer per frame keeps the frame rate.
                 if (d->layerCount > 0) {
                     g_scene.drawnLayers = 0;
@@ -213,7 +246,14 @@ public:
             ui::openPause();
             return;
         }
-        if (!g_paused) {
+        // A scene frozen by Scene.Pause (no pause menu) resumes on Start; the scripts run again from the next frame,
+        // so the press that resumed does not pause again.
+        bool resumed = false;
+        if (g_paused && input::pressed(Key::Start) && system::frame() != g_pausedFrame) {
+            g_paused = false;
+            resumed = true;
+        }
+        if (!g_paused && !resumed) {
             profile::begin(profile::Category::Logic);
             if (ui::sceneMenuOpen()) ui::updateSceneMenu();
             actors::startNew();
@@ -254,16 +294,37 @@ public:
     }
 
 private:
+    // World Map links (see LinkKind). The first link that fires starts the scene change.
     void checkLinks() {
         const SceneDef* d = g_scene.def;
+        if (!d->linkCount) return;
+        // The player is lost when destroyed (Health ran out), out of hearts, or fallen below the map.
+        bool lost = false;
+        actors::forEach([&](Actor& a) {
+            if (a.kind != ActorKind::Player) return;
+            const Health* h = a.get<Health>();
+            if (a.dying || (h && h->dead) || a.worldBox().y >= d->heightTiles * 16) lost = true;
+        });
         for (int i = 0; i < d->linkCount; ++i) {
             const LinkDef& l = d->links[i];
-            Actor* trigger = actors::at(l.fromActor);
-            if (!trigger || !trigger->isAlive()) continue;
-            bool fire = false;
-            actors::forEach([&](Actor& a) {
-                if (&a != trigger && a.kind == ActorKind::Player && a.overlaps(*trigger)) fire = true;
-            });
+            bool inside = false;
+            if (Actor* trigger = l.fromActor >= 0 ? actors::at(l.fromActor) : nullptr; trigger && trigger->isAlive()) {
+                actors::forEach([&](Actor& a) {
+                    if (&a != trigger && a.kind == ActorKind::Player && a.isAlive() && a.overlaps(*trigger)) inside = true;
+                });
+            }
+            bool fire;
+            switch (l.kind) {
+                case LinkKind::Door:
+                    fire = inside && api::Input::Pressed(Key::Up);
+                    break;
+                case LinkKind::Respawn:
+                    fire = inside || lost;
+                    break;
+                default:
+                    fire = l.fromActor < 0 ? l.condition != nullptr : inside;
+                    break;
+            }
             if (!fire || (l.condition && !l.condition())) continue;
             game::loadScene(l.targetScene, l.spawnX, l.spawnY, l.transition, l.frames);
             return;
@@ -521,9 +582,35 @@ bool loadSceneByName(const char* name) {
 
 u16 currentScene() { return g_scene.index; }
 bool loading() { return g_loadStep >= 0 || g_scene.changePending; }
-void setPaused(bool p) { g_paused = p; }
-bool paused() { return g_paused; }
+
+void pause() {
+    const ui::Kit* k = ui::kit();
+    // While a scene loads (Scene.Pause in OnLoad or Start) an overlay would cut the staged load short: freeze instead.
+    if (k && k->pauseAction >= 0 && !loading()) {
+        if (!ui::overlayOpen()) ui::openPause();
+        return;
+    }
+    if (!g_paused) g_pausedFrame = system::frame();
+    g_paused = true;
+}
+
+void setPaused(bool p) {
+    if (p && !g_paused) g_pausedFrame = system::frame();
+    g_paused = p;
+}
+
+bool paused() { return g_paused || ui::overlayOpen(); }
 void* state() { return g_def ? g_def->state : nullptr; }
+
+const ActorDef* prefab(const char* name) {
+    for (u16 i = 0; g_def && name && i < g_def->prefabCount; ++i) {
+        const char* a = g_def->prefabs[i].name;
+        const char* b = name;
+        while (*a && *a == *b) ++a, ++b;
+        if (*a == *b) return g_def->prefabs[i].actor;
+    }
+    return nullptr;
+}
 
 }  // namespace game
 
@@ -609,19 +696,25 @@ void stopMode7() { render::affine::stopMode7(); }
 Actor* spawn(const char* name, int x, int y) {
     const SceneDef* d = g_scene.def;
     if (!d || !name) return nullptr;
-    for (int i = 0; i < d->actorCount; ++i) {
+    const ActorDef* def = nullptr;
+    for (int i = 0; i < d->actorCount && !def; ++i) {
         const char* a = d->actors[i].name;
         const char* b = name;
         while (*a && *a == *b) ++a, ++b;
-        if (*a != *b) continue;
-        Actor* actor = actors::spawnAt(d->actors[i], screenArena(), x, y);
-        if (actor) actor->setVisible(true);
-        else debug::logf("warning: Spawn %s: all %d actor slots are in use", name, actors::kMaxActors);
-        return actor;
+        if (*a == *b) def = &d->actors[i];
     }
-    debug::logf("warning: Spawn: no actor named %s in %s", name, d->name);
-    return nullptr;
+    if (!def) def = game::prefab(name);
+    if (!def) {
+        debug::logf("warning: Spawn: no actor or prefab named %s in %s", name, d->name);
+        return nullptr;
+    }
+    Actor* actor = actors::spawnAt(*def, screenArena(), x, y);
+    if (actor) actor->setVisible(true);
+    else debug::logf("warning: Spawn %s: all %d actor slots are in use", name, actors::kMaxActors);
+    return actor;
 }
+
+int cameraZone() { return g_scene.zone; }
 
 int tile(int layer, int tx, int ty) {
     const SceneDef* d = g_scene.def;

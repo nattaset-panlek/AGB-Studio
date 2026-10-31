@@ -31,7 +31,7 @@ public static partial class DialogueCompiler
         Dictionary<string, int> autoFlags, out List<ScriptDiagnostic> diagnostics)
     {
         diagnostics = new List<ScriptDiagnostic>();
-        DeclareFlags(f, vars, autoFlags);
+        DeclareFlags(f, vars, autoFlags, ctx.FlagIds);
         var file = path.Replace('\\', '/');
         var cls = ClassName(f, path);
         var sb = new StringBuilder();
@@ -170,7 +170,9 @@ public static partial class DialogueCompiler
         }
     }
 
-    static void DeclareFlags(DialogueFile f, List<ScriptVarDef> vars, Dictionary<string, int> autoFlags)
+    // A flag keeps the id it was given by an earlier build (stable); a new flag takes the first id that no declared
+    // variable and no recorded flag (removed ones included) has, so saved flag bits never change meaning (P4.08).
+    static void DeclareFlags(DialogueFile f, List<ScriptVarDef> vars, Dictionary<string, int> autoFlags, IReadOnlyDictionary<string, int> stable)
     {
         var names = new SortedSet<string>(StringComparer.Ordinal);
         void Scan(string? text)
@@ -194,8 +196,12 @@ public static partial class DialogueCompiler
         {
             if (vars.Any(v => v.Group == "Flags" && v.Name == n)) continue;
             var used = vars.Where(v => v.Type == "bool" && v.Id < 0x4000).Select(v => v.Id).ToHashSet();
-            var id = 0;
-            while (used.Contains(id)) id++;
+            if (!stable.TryGetValue(n, out var id) || used.Contains(id))
+            {
+                used.UnionWith(stable.Values);
+                id = 0;
+                while (used.Contains(id)) id++;
+            }
             vars.Add(new ScriptVarDef { Group = "Flags", Name = n, Type = "bool", Id = id });
             autoFlags[n] = id;
         }

@@ -6,7 +6,9 @@ place where AGB Studio does not yet match the design.
 
 Menus (T-M01 to T-M24) have no pages of their own: each menu item is listed under "Opens from" on the window it opens.
 For the hardware limits the windows check (VRAM, palettes, sprites, sound, save), see the
-[GBA hardware guide](../gba-hardware-guide.md).
+[GBA hardware guide](../gba-hardware-guide.md). The steps of the Launcher tutorials are in
+[Tutorials](../tutorials/README.md), and the licence that applies to the games you make is in
+[The licence of your games](../licence-for-your-games.md).
 
 ## Pages
 

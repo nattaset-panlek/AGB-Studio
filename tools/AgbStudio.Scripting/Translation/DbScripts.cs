@@ -17,12 +17,13 @@ internal static class DbScripts
 
     public static List<Cell> Cells(ScriptCompileContext ctx) =>
         ctx.Tables.SelectMany(t => t.Rows.SelectMany(r => t.Fields.Where(f => f.Type == "script")
-                .Select(f => (r, f, code: (r.GetValueOrDefault(f.Name) ?? "").Trim()))
+                .Select(f => (r, f, code: AgbStudio.Build.Data.DatabaseCodegen.ScriptCellCode(r, f)))
                 .Where(x => x.code.Length > 0)
                 .Select(x => new Cell(t, x.r.GetValueOrDefault(t.KeyField) ?? "", x.f, x.code, x.r))))
             .ToList();
 
-    public static string Symbol(Cell c) => $"agb_dbscript_{BuildCpp.Ident(c.Table.Name)}_{BuildCpp.Ident(c.RowId)}_{BuildCpp.Ident(c.Field.Name)}";
+    // The table cell points at this function (DatabaseCodegen writes the same name).
+    public static string Symbol(Cell c) => AgbStudio.Build.Data.DatabaseCodegen.ScriptCellSymbol(c.Table.Name, c.RowId, c.Field.Name);
     public static string ClassName(TableFile t) => "DbScripts_" + BuildCpp.Ident(t.Name);
     public static string Method(Cell c) => $"{BuildCpp.Ident(c.RowId)}_{BuildCpp.Ident(c.Field.Name)}";
 

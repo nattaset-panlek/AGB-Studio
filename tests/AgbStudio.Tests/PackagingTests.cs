@@ -31,4 +31,43 @@ public sealed class PackagingTests
         // No emoji or brand slips in the shipped text (G-EMOJI, G-LEGAL.03).
         Assert.DoesNotContain(Lint.Run(Path.Combine(stage, "docs")), i => i.Rule is "no-emoji" or "product-name");
     }
+
+    [Fact]
+    public void EveryShippedLibraryHasALicenceRow()
+    {
+        // P16.02 / G-LEGAL.04: each DLL next to AGBStudio.exe (the package's bin/ is the editor build plus the .NET runtime)
+        // belongs to a component listed in docs/THIRD_PARTY.md.
+        var bin = Path.Combine(NativeBuild.RepoRoot, "editor", "AgbStudio.Editor", "bin", "Release", "net10.0");
+        Assert.True(Directory.Exists(bin), "build the solution (Release) first");
+        var notices = File.ReadAllText(Path.Combine(NativeBuild.RepoRoot, "docs", "THIRD_PARTY.md"));
+        string? Row(string dll) => dll switch
+        {
+            _ when dll.StartsWith("AgbStudio", StringComparison.OrdinalIgnoreCase) || dll == "AGBStudio" => "",  // AGB Studio itself (MIT, LICENSE)
+            _ when dll.StartsWith("Avalonia", StringComparison.Ordinal) => "Avalonia",
+            _ when dll.StartsWith("Microsoft.CodeAnalysis", StringComparison.Ordinal) => "Roslyn",
+            _ when dll.StartsWith("System.Composition", StringComparison.Ordinal) => "System.Composition",
+            _ when dll.StartsWith("Microsoft.DiaSymReader", StringComparison.Ordinal) => "DiaSymReader",
+            _ when dll.StartsWith("System.", StringComparison.Ordinal) || dll.StartsWith("Microsoft.", StringComparison.Ordinal) => ".NET runtime",
+            "SkiaSharp" => "SkiaSharp",
+            "libSkiaSharp" => "Skia",
+            "HarfBuzzSharp" => "HarfBuzzSharp",
+            "libHarfBuzzSharp" => "HarfBuzz",
+            "Humanizer" => "Humanizer",
+            "MicroCom.Runtime" => "MicroCom",
+            "av_libglesv2" => "ANGLE",
+            "mgba_libretro" => "mGBA",
+            "msquic" => "MsQuic",
+            // the .NET runtime of a self-contained publish (bin/Release/net10.0/win-x64/publish)
+            _ when dll.StartsWith("clr", StringComparison.Ordinal) || dll.StartsWith("mscor", StringComparison.Ordinal) || dll is "coreclr" or "hostfxr" or "hostpolicy" or "netstandard" or "System" or "WindowsBase" => ".NET runtime",
+            _ => null,
+        };
+        var dlls = Directory.EnumerateFiles(bin, "*.dll", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "runtimes" + Path.DirectorySeparatorChar) || f.Contains("win-x64"))
+            .Select(f => Path.GetFileNameWithoutExtension(f)).Distinct().ToList();
+        Assert.NotEmpty(dlls);
+        var unknown = dlls.Where(d => Row(d) == null).ToList();
+        Assert.True(unknown.Count == 0, "no THIRD_PARTY.md row for: " + string.Join(", ", unknown));
+        var missing = dlls.Select(Row).Where(r => r is { Length: > 0 }).Distinct().Where(r => !notices.Contains(r!, StringComparison.Ordinal)).ToList();
+        Assert.True(missing.Count == 0, "THIRD_PARTY.md lacks: " + string.Join(", ", missing));
+    }
 }

@@ -213,6 +213,110 @@ AGB_TEST(vm_breakpoint_pauses_and_resumes) {
     CHECK_EQ(d.pausedContext, 0xFF);
 }
 
+// ---- WaitUntil, single step and the locals view -------------------------------------------------------------
+namespace {
+// script 0: await WaitUntil(() => Flags.open); var[0x8006] = 1
+//   L0: GetFlag 0x8005; WaitUntil -> L0; PushI8 1; StoreVar 0x8006; End
+const u8 kWaitFlag[] = {op(Op::GetFlag), 0x05, 0x80, op(Op::WaitUntil), 0xFA, 0xFF, op(Op::PushI8), 1, op(Op::StoreVar), 0x06, 0x80, op(Op::End)};
+// script 1: await WaitUntil(() => count >= 3) where another script counts; var[0x8009] = count
+//   L0: LoadVar 0x8007; PushI8 3; Ge; WaitUntil -> L0; LoadVar 0x8007; StoreVar 0x8009; End
+const u8 kWaitCount[] = {op(Op::LoadVar), 0x07, 0x80, op(Op::PushI8), 3, op(Op::Ge), op(Op::WaitUntil), 0xF7, 0xFF,
+                         op(Op::LoadVar), 0x07, 0x80, op(Op::StoreVar), 0x09, 0x80, op(Op::End)};
+// script 2: counts var[0x8007] up once per frame
+const u8 kCount[] = {op(Op::LoadVar), 0x07, 0x80, op(Op::PushI8), 1, op(Op::Add), op(Op::StoreVar), 0x07, 0x80, op(Op::Yield), op(Op::Jump), 0xF3, 0xFF};
+// script 3: line 1: a = 7; line 2: b = a + 5; line 3: var[0x8008] = b (2 locals)
+const u8 kLines[] = {op(Op::Line), 1, 0, op(Op::PushI8), 7, op(Op::StoreLocal), 0,
+                     op(Op::Line), 2, 0, op(Op::LoadLocal), 0, op(Op::PushI8), 5, op(Op::Add), op(Op::StoreLocal), 1,
+                     op(Op::Line), 3, 0, op(Op::LoadLocal), 1, op(Op::StoreVar), 0x08, 0x80, op(Op::End)};
+// script 4: a cutscene that passes a line marker every frame: L0: Line 9; Yield; Jump -> L0
+const u8 kTicker[] = {op(Op::Line), 9, 0, op(Op::Yield), op(Op::Jump), 0xF9, 0xFF};
+const script::Script kScripts2[] = {
+    {"waitFlag", kWaitFlag, sizeof kWaitFlag, 0, 0}, {"waitCount", kWaitCount, sizeof kWaitCount, 0, 0},
+    {"count", kCount, sizeof kCount, 0, 0},          {"lines", kLines, sizeof kLines, 2, 0},
+    {"ticker", kTicker, sizeof kTicker, 0, 0},
+};
+
+s32 localOf(int ctx, int slot) {
+    const script::Context* c = script::context(ctx);
+    return c ? c->locals[c->frames[c->depth - 1].localBase + slot] : -999;
+}
+}  // namespace
+
+AGB_TEST(vm_wait_until_checks_its_condition_every_frame) {
+    script::setTables(kScripts2, 5, kNatives, 3);
+    script::resetContexts();
+    script::setFlag(0x8005, false);
+    script::setVar(0x8006, 0);
+    const int ctx = script::start(0, script::Priority::Cutscene);
+    for (int i = 0; i < 5; ++i) script::run();
+    CHECK(script::running(ctx));
+    CHECK_EQ(script::var(0x8006), 0);
+    script::setFlag(0x8005, true);
+    script::run();
+    CHECK(!script::running(ctx));
+    CHECK_EQ(script::var(0x8006), 1);
+
+    // The condition is evaluated again each frame: here another script counts while this one waits.
+    script::setVar(0x8007, 0);
+    const int waiter = script::start(1, script::Priority::Cutscene);
+    const int counter = script::start(2, script::Priority::Trigger);
+    int frames = 0;
+    while (script::running(waiter) && frames < 20) {
+        script::run();
+        ++frames;
+    }
+    CHECK(!script::running(waiter));
+    CHECK_EQ(script::var(0x8009), 3);
+    CHECK(frames >= 3);
+    script::stop(counter);
+
+    // An immediate script cannot wait: WaitUntil logs a warning and goes on.
+    script::setFlag(0x8005, false);
+    script::setVar(0x8006, 0);
+    script::runImmediate(0);
+    CHECK_EQ(script::var(0x8006), 1);
+}
+
+AGB_TEST(vm_single_step_and_locals_view) {
+    script::setTables(kScripts2, 5, kNatives, 3);
+    script::resetContexts();
+    script::setVar(0x8008, 0);
+    auto& d = script::debugState();
+    d.resume = 0;
+    d.breakpoints[0] = {3, 2};
+    d.breakpointCount = 1;
+    // A cutscene that runs first every frame and passes line markers; stepping must not stop it.
+    const int ticker = script::start(4, script::Priority::Cutscene);
+    const int ctx = script::start(3, script::Priority::Trigger);
+    for (int i = 0; i < 3; ++i) script::run();
+    CHECK_EQ(d.pausedContext, ctx);
+    CHECK_EQ(d.pausedScript, 3);
+    CHECK_EQ(d.pausedLine, 2);
+    CHECK_EQ(localOf(ctx, 0), 7);  // a = 7 ran; line 2 did not
+    CHECK_EQ(localOf(ctx, 1), 0);
+    // Step one line: the paused context runs line 2 and stops at line 3.
+    d.breakpointCount = 0;
+    d.resume = 2;
+    script::run();
+    CHECK_EQ(d.pausedContext, ctx);
+    CHECK_EQ(d.pausedLine, 3);
+    CHECK_EQ(d.resume, 0);
+    CHECK_EQ(localOf(ctx, 1), 12);
+    CHECK_EQ(script::var(0x8008), 0);
+    CHECK(script::running(ticker));
+    CHECK(!script::context(ticker)->paused);
+    // Step past the last line: the script ends and nothing stays paused.
+    d.resume = 2;
+    script::run();
+    CHECK(!script::running(ctx));
+    CHECK_EQ(script::var(0x8008), 12);
+    CHECK_EQ(d.pausedContext, 0xFF);
+    CHECK_EQ(d.resume, 0);
+    script::run();
+    CHECK(!script::context(ticker)->paused);
+    script::stop(ticker);
+}
+
 int main() {
     system::init();
     test::runAll();

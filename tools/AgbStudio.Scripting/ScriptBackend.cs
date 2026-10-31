@@ -33,6 +33,7 @@ public sealed class ScriptBackend : IScriptBackend
         output.ScriptCount = sources.Count;
         if (!r.Success) return output;
         SaveTypeIndices(input.OutputDir, r.TypeIndices);
+        output.FlagIds = new Dictionary<string, int>(r.FlagIds);
         output.Sources.AddRange(r.Sources);
         output.IncludeDirs.Add(r.IncludeDir);
         output.FactoryCall = r.FactoryCall;
@@ -68,6 +69,7 @@ public sealed class ScriptBackend : IScriptBackend
             Tags = new Dictionary<string, int>(input.Tags),
             SaveFields = input.GameState,
             TypeIndices = LoadTypeIndices(input.OutputDir),
+            FlagIds = new Dictionary<string, int>(s.Save.FlagIds),
         };
         // Sound and music names are the file names; the build keys its ids by the soundbank symbol (JUMP).
         ctx.Sounds = Named(project.SoundFiles(), input.Sounds);
