@@ -1,7 +1,8 @@
 // Read-only Figma export for the SHOT procedure (checklist 2.5) through the Talk To Figma fork relay.
-// Usage: node figma-export.mjs [tokens] [icons] [art] [menus] [shots]   (no argument = all)
+// Usage: node figma-export.mjs [tokens] [icons] [art] [menus] [shots] [brand]   (no argument = all but brand)
 // Writes: docs/evidence/figma/tokens.json, menus.json, <id>.png + manifest.json,
-//         editor/AgbStudio.Editor/Assets/Icons/<name>.svg, editor/AgbStudio.Editor/Assets/Art/<name>.svg
+//         editor/AgbStudio.Editor/Assets/Icons/<name>.svg, editor/AgbStudio.Editor/Assets/Art/<name>.svg,
+//         brand: docs/brand/<banner>.png (T-R03) and docs/brand/app-icon-<size>.png (T-R01) from "AGB Studio · Brand"
 // Never creates, edits or deletes Figma nodes. Needs Node 22+ (global WebSocket) and the relay on ws://localhost:3055.
 import fs from "node:fs";
 import path from "node:path";
@@ -128,6 +129,28 @@ for (const m of out) for (const i of m.items) if (i.iconId) { i.icon = names[i.i
 return out;`);
     fs.writeFileSync(path.join(figDir, "menus.json"), JSON.stringify(menus, null, 1) + "\n");
     console.log("menus:", menus.length);
+  }
+  if (steps.includes("brand")) {
+    // T-R03 banners ("Plus Pad · Banners": frames named "Banner · <use> <w>×<h>") and the T-R01 app icon at 1x
+    const brandDir = path.join(root, "docs", "brand");
+    fs.mkdirSync(brandDir, { recursive: true });
+    const found = await run(`const pg = await figma.getNodeByIdAsync("${PAGE_ID}"); await pg.loadAsync();
+const brand = pg.children.find(s => s.name === "AGB Studio · Brand");
+const banners = brand.findAll(n => n.type === "FRAME" && n.name.startsWith("Banner · ")).map(n => ({ id: n.id, name: n.name }));
+const icon = pg.findOne(n => (n.type === "COMPONENT" || n.type === "COMPONENT_SET") && n.name === "brand/app-icon");
+const icons = icon ? (icon.type === "COMPONENT_SET" ? icon.children : [icon]).map(n => ({ id: n.id, name: n.name })) : [];
+return { banners, icons };`);
+    const items = [
+      ...found.banners.map(b => ({ node: b.id, file: slug(b.name.replace("Banner · ", "banner ")) })),
+      ...found.icons.map(i => ({ node: i.id, file: "app-icon-" + variantSlug(i.name) })),
+    ];
+    const code = `const ids = ${JSON.stringify(items.map(i => i.node))};
+const nodes = await Promise.all(ids.map(id => figma.getNodeByIdAsync(id)));
+const bytes = await Promise.all(nodes.map(n => n.exportAsync({ format: "PNG", useAbsoluteBounds: true, constraint: { type: "SCALE", value: 1 } })));
+return bytes.map(b => figma.base64Encode(b));`;
+    const out = await run(code);
+    items.forEach((it, i) => fs.writeFileSync(path.join(brandDir, it.file + ".png"), Buffer.from(out[i], "base64")));
+    console.log("brand:", found.banners.length, "banners,", found.icons.length, "app icons");
   }
   if (steps.includes("shots")) {
     const items = [];
