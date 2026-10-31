@@ -139,7 +139,8 @@ public sealed class TableGrid : Border, IEditTarget
             Control cell;
             if (col.Field is { Type: "sprite" } sf)
             {
-                var img = new PixelImage { Pixels = SpriteLibrary.Frame(_page.Data?.Project, row.GetValueOrDefault(sf.Name)), MaxScale = 1, Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(10, 0, 0, 0) };
+                // Figma draws the item icons about 16 px, centred under "ICON": 8 px sprites at 2x
+                var img = new PixelImage { Pixels = SpriteLibrary.Frame(_page.Data?.Project, row.GetValueOrDefault(sf.Name)), MaxScale = 2, Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(16, 0, 0, 0) };
                 var b = new Border { Child = img, BorderThickness = new Thickness(0, 0, 0, 1), Height = RowHeight }.Token(Border.BorderBrushProperty, "border/default");
                 if (selected) b.Token(Border.BackgroundProperty, "accent/selected");
                 cell = b;
