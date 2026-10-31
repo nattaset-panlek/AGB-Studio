@@ -41,15 +41,15 @@ public sealed class RamBudget
     static readonly string[] MapObjects = ["render_map.o", "render_map_draw.iwram.o", "render_affine.o", "render_bg.o"];
     static readonly string[] TextObjects = ["render_text.o", "render_textdb.o", "render_glyph.iwram.o", "framework_ui.o"];
 
-    static bool From(LinkerMap.Section s, string[] objects) => objects.Any(o => s.ObjectName.EndsWith("_" + o, StringComparison.OrdinalIgnoreCase));
+    static bool From(LinkerSections.Section s, string[] objects) => objects.Any(o => s.ObjectName.EndsWith("_" + o, StringComparison.OrdinalIgnoreCase));
 
-    public static RamBudget FromMap(LinkerMap map)
+    public static RamBudget FromMap(LinkerSections map)
     {
         var b = new RamBudget();
         long code = 0, pools = 0, vm = 0, otherI = 0, arena = 0, maps = 0, save = 0, text = 0, scratch = 0;
         foreach (var s in map.Sections)
         {
-            if (s.Region == LinkerMap.MemoryRegion.Iwram)
+            if (s.Region == LinkerSections.MemoryRegion.Iwram)
             {
                 b.IwramStatic += s.Size;
                 if (s.Name.StartsWith(".iwram", StringComparison.Ordinal)) code += s.Size;
@@ -57,7 +57,7 @@ public sealed class RamBudget
                 else if (From(s, VmObjects)) vm += s.Size;
                 else otherI += s.Size;
             }
-            else if (s.Region == LinkerMap.MemoryRegion.Ewram)
+            else if (s.Region == LinkerSections.MemoryRegion.Ewram)
             {
                 b.EwramStatic += s.Size;
                 if (s.ObjectName.EndsWith("_core_memory.o", StringComparison.OrdinalIgnoreCase)) arena += s.Size;

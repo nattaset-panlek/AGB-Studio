@@ -20,7 +20,7 @@ public sealed class RamBudgetTests(ITestOutputHelper log)
         Assert.True(b.Success, b.Log);
         foreach (var name in RuntimeTests.Discover())
         {
-            var ram = RamBudget.FromMap(LinkerMap.Read(Path.Combine(RuntimeTests.BuildDir, name + ".elf.map")));
+            var ram = RamBudget.FromMap(LinkerSections.Read(Path.Combine(RuntimeTests.BuildDir, name + ".elf.map")));
             Assert.True(ram.WithinLimits, $"{name}: {string.Join("; ", ram.Warnings())}");
             foreach (var row in HeldRows) Assert.False(ram.Rows.Single(r => r.Name == row).OverBudget, $"{name}: {string.Join("; ", ram.Describe())}");
         }
@@ -35,7 +35,7 @@ public sealed class RamBudgetTests(ITestOutputHelper log)
         var p = t.Create(dir, t.Name);
         var r = new GameBuilder(p, new Toolchain()) { Scripts = new ScriptBackend() }.Build();
         Assert.True(r.Success, string.Join('\n', r.Diagnostics));
-        var ram = RamBudget.FromMap(LinkerMap.Read(r.ElfPath + ".map"));
+        var ram = RamBudget.FromMap(LinkerSections.Read(r.ElfPath + ".map"));
         foreach (var line in ram.Describe()) log.WriteLine(line);
         Assert.True(ram.WithinLimits, string.Join("; ", ram.Warnings()));
         Assert.True(ram.StackSpace >= RamBudget.StackReserve);

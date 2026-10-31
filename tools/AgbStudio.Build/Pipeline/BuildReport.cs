@@ -121,10 +121,9 @@ public sealed class BuildReport
         if (RomSizeWarning(r.RomBytes, s.Build.WarnRomMegabytes) is { } romWarning) r.Warnings.Add(romWarning);
         if (r.IwramBytes > r.IwramCapacity - 8 * 1024)
             r.Warnings.Add($"IWRAM uses {r.IwramBytes / 1024} KB of 32 KB; less than 8 KB is left for the stack.");
-        var mapPath = result.ElfPath + ".map";
         if (result.ElfPath.Length > 0 && File.Exists(mapPath))
         {
-            var ram = RamBudget.FromMap(LinkerMap.Read(mapPath));
+            var ram = RamBudget.FromMap(LinkerSections.Read(mapPath));  // sections by blueprint 10 row (G-HW.04)
             r.RamSplit = ram.Rows;
             var stackWarned = r.IwramBytes > r.IwramCapacity - 8 * 1024;
             r.Warnings.AddRange(ram.Warnings().Where(w => !(stackWarned && w.StartsWith("IWRAM: code and data", StringComparison.Ordinal))));

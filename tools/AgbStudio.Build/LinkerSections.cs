@@ -6,7 +6,7 @@ namespace AgbStudio.Build;
 /// <summary>The input sections and global symbols of a GNU ld map file (the <c>.elf.map</c> written next to every ROM):
 /// where each object's code and data were placed. Used to check debug-channel exports (P2.13) and the IWRAM / EWRAM
 /// split (G-HW.04).</summary>
-public sealed class LinkerMap
+public sealed class LinkerSections
 {
     public sealed record Section(string Name, uint Address, uint Size, string Object)
     {
@@ -20,7 +20,7 @@ public sealed class LinkerMap
     public IReadOnlyList<Section> Sections { get; }
     public IReadOnlyDictionary<string, uint> Symbols { get; }
 
-    LinkerMap(List<Section> sections, Dictionary<string, uint> symbols)
+    LinkerSections(List<Section> sections, Dictionary<string, uint> symbols)
     {
         Sections = sections;
         Symbols = symbols;
@@ -31,9 +31,9 @@ public sealed class LinkerMap
     static readonly Regex AddressSize = new(@"^\s+0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(.+)$", RegexOptions.Compiled);
     static readonly Regex SymbolLine = new(@"^\s+0x([0-9a-fA-F]+)\s+([A-Za-z_][\w.$]*)$", RegexOptions.Compiled);
 
-    public static LinkerMap Read(string path) => Parse(File.ReadLines(path));
+    public static LinkerSections Read(string path) => Parse(File.ReadLines(path));
 
-    public static LinkerMap Parse(IEnumerable<string> lines)
+    public static LinkerSections Parse(IEnumerable<string> lines)
     {
         var sections = new List<Section>();
         var symbols = new Dictionary<string, uint>(StringComparer.Ordinal);
@@ -69,7 +69,7 @@ public sealed class LinkerMap
             var s = SymbolLine.Match(line);
             if (s.Success) symbols.TryAdd(s.Groups[2].Value, Hex(s.Groups[1].Value));
         }
-        return new LinkerMap(sections, symbols);
+        return new LinkerSections(sections, symbols);
 
         void Add(string name, string address, string size, string obj)
         {

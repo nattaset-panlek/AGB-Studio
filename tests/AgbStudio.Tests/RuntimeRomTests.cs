@@ -119,9 +119,9 @@ public sealed class RuntimeRomTests(EmulatorFixture emu)
                 },
             });
 
-        LinkerMap.Section Section(string rom, string name)
+        LinkerSections.Section Section(string rom, string name)
         {
-            var map = LinkerMap.Read(Path.Combine(RuntimeTests.BuildDir, rom + ".elf.map"));
+            var map = LinkerSections.Read(Path.Combine(RuntimeTests.BuildDir, rom + ".elf.map"));
             return map.Find(name) ?? throw new Xunit.Sdk.XunitException($"{rom}: no section {name} in the map file");
         }
 
@@ -134,11 +134,11 @@ public sealed class RuntimeRomTests(EmulatorFixture emu)
         Assert.Equal(table.Size, game.Stride * 64);  // actors::kMaxActors entries of the stride the host reads
         var info = Section("framework_platformer", ".bss.agb_game_info");
         Assert.Equal(info.Address, game.Game);
-        Assert.Equal(LinkerMap.MemoryRegion.Iwram, info.Region);
+        Assert.Equal(LinkerSections.MemoryRegion.Iwram, info.Region);
         Assert.Equal(Section("framework_bus_vm", ".sbss.agb_debugger").Address, exports["framework_bus_vm"].Debugger);
         Assert.Equal(Section("host_probe", ".sbss.agb_symbols").Address, exports["host_probe"].Symbols);
         Assert.Equal(Section("host_probe", ".sbss.agb_debug_channel").Address, exports["host_probe"].Channel);
-        Assert.All(exports.Values, e => Assert.Equal(LinkerMap.MemoryRegion.Ewram, LinkerMap.RegionOf(e.Channel)));
+        Assert.All(exports.Values, e => Assert.Equal(LinkerSections.MemoryRegion.Ewram, LinkerSections.RegionOf(e.Channel)));
     }
 
     [Fact]
