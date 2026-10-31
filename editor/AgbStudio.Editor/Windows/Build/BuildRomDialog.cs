@@ -61,6 +61,8 @@ public sealed class BuildRomDialog : FigmaDialog
         Build($"Building {_rom}…", "zap", content, _footer, 600);
         _header = this.GetLogicalDescendantsOfType<DialogHeader>().First();
         Render();
+        // closing the dialog (Close, X, Esc) while it builds stops the build (G-ERR.04)
+        DetachedFromVisualTree += (_, _) => { if (Completion is { IsCompleted: false }) _s.Build.Cancel(); };
         if (start) Completion = RunAsync();
     }
 
@@ -98,6 +100,14 @@ public sealed class BuildRomDialog : FigmaDialog
         _s.Status.Build = result.Success ? $"Build OK · {result.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} s" : "Build failed";
         if (result.Success) _s.Status.Rom = $"ROM {kb} KB / 32 MB";
         Completed?.Invoke(result);
+        if (!result.Success && result.Diagnostics.Any(d => d.Message == "Build cancelled."))
+        {
+            // stopped by the user: nothing to fix, the last good ROM is unchanged
+            _s.Status.Build = "Build cancelled";
+            _s.Toasts.Show("Build cancelled. The last built ROM is unchanged.", ToastStatus.Success, TimeSpan.FromSeconds(3));
+            Close(result);
+            return;
+        }
         if (!result.Success)
         {
             Close(result);

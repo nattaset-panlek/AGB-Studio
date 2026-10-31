@@ -76,6 +76,10 @@ public sealed class ConsoleLog
             var size = File.Exists(r.RomPath) ? new FileInfo(r.RomPath).Length : 0;
             Add(ConsoleLevel.Success, string.Create(CultureInfo.InvariantCulture, $"Build OK in {r.Elapsed.TotalSeconds:0.00} s · {Path.GetFileName(r.RomPath)} {(size + 1023) / 1024} KB"));
         }
+        else if (r.Diagnostics.Any(d => d.Message == "Build cancelled."))
+        {
+            Add(ConsoleLevel.Warning, "Build cancelled · the last built ROM is unchanged");
+        }
         else
         {
             Add(ConsoleLevel.Error, "Build failed" + (r.FailedStep.Length > 0 ? " at " + r.FailedStep : ""));
