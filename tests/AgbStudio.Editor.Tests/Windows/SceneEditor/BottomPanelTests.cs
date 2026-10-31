@@ -58,7 +58,7 @@ public sealed class BottomPanelTests : IDisposable
         foreach (var (category, card, window) in new[]
                  {
                      ("Sprites", "hero.png", "T-P08"), ("Tilesets", "forest_tiles.png", "T-P03"), ("Maps", "Forest_01.map", "T-P03"),
-                     ("Fonts", "pixel8.font", "T-P09"), ("Audio", "bgm_forest.xm", "T-P15"), ("Scripts", "PlayerController.cs", "T-P04"), ("Data", "Items.db", "T-P07"),
+                     ("Fonts", "pixel8.font", "T-P09"), ("Audio", "bgm_forest.xm", "T-P15"), ("Scripts", "PlayerController.cs", "T-P04"), ("Data", "items.db", "T-P07"),
                  })
         {
             _w.Click(_w.Find<ListRow>("Category_" + category));

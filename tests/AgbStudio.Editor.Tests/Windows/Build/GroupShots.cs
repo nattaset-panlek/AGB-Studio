@@ -22,7 +22,8 @@ public sealed class GroupShots : IShotSource
         yield return ("T-P15", (path, w, h) => Page(path, "T-P15", fx =>
         {
             var page = (AudioPage)fx.CurrentPage;
-            page.Seek(7, 20);
+            // pattern 4 holds the rows the frame shows; its row 20 is about where the Figma playhead stands (37 % in)
+            page.Seek(4, 20);
         }, report: true));   // a built project: the Audio ROM meter is the soundbank's share of the ROM
         yield return ("T-P25", (path, w, h) => Page(path, "T-P25", _ => { }, args: "jump.sfx"));
         yield return ("T-P11", (path, w, h) => Page(path, "T-P11", _ => { }, report: true));

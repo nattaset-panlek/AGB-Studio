@@ -214,7 +214,7 @@ public class BuildReportTests
             var legend = win.GetVisualDescendants().OfType<StackPanel>().First(s => s.Name == "BreakdownLegend").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text);
             Assert.Equal(["Graphics · 182 KB", "Code · 128 KB", "Audio · 96 KB", "Data · 6 KB"], legend);
             var cells = win.GetVisualDescendants().OfType<Grid>().First(g => g.Name == "LargestAssets").Children.OfType<TableCell>().Select(c => c.Text).Where(t => t != null).ToList();
-            Assert.Equal(["Asset", "Type", "Size", "Share", "bgm_forest.xm", "Music", "41 KB", "forest_tiles.png", "Tileset", "32 KB", "thai_vwf.font", "Font", "6.2 KB", "hero.png", "Sprite", "4 KB", "Items.db", "Data", "1.1 KB"], cells);
+            Assert.Equal(["Asset", "Type", "Size", "Share", "bgm_forest.xm", "Music", "41 KB", "forest_tiles.png", "Tileset", "32 KB", "thai_vwf.font", "Font", "6.2 KB", "hero.png", "Sprite", "4 KB", "items.db", "Data", "1.1 KB"], cells);
             var history = win.GetVisualDescendants().OfType<StackPanel>().First(s => s.Name == "History").Children.OfType<StackPanel>()
                 .Select(r => string.Join(" ", r.Children.OfType<TextBlock>().Select(t => t.Text))).ToList();
             Assert.Equal(["12:06:03 412 KB · 0.80 s · 1 warning", "11:58:40 409 KB · 0.77 s", "11:52:12 PlayerController.cs(22): ';' expected", "11:40:05 401 KB · 0.91 s"], history);

@@ -3,8 +3,9 @@ namespace AgbStudio.Build.Audio;
 /// <summary>Writes short original chiptune modules for templates and samples (D-20).</summary>
 public static class Chiptune
 {
-    /// <summary>A looping 2-pattern tune: lead melody, bass and a noise hi-hat.</summary>
-    public static byte[] SimpleTune(string title, int tempoBpm, int seed = 1)
+    /// <summary>A looping 2-pattern tune: lead melody, bass and a noise hi-hat; <paramref name="orders"/> plays the two
+    /// patterns in turn that many times (1 plays the first only).</summary>
+    public static byte[] SimpleTune(string title, int tempoBpm, int seed = 1, int orders = 2)
     {
         var mod = new ModWriter { Title = title };
         mod.Samples.Add(new("lead", ModWriter.Waveform("pulse25"), 40, 0, 32));
@@ -13,7 +14,8 @@ public static class Chiptune
         var rng = new Random(seed);
         string[] scale = ["C-2", "D-2", "E-2", "G-2", "A-2", "C-3", "D-3", "E-3"];
         string[] bassLine = ["C-1", "A-1", "F-1", "G-1"];
-        for (var pat = 0; pat < 2; pat++)
+        var patterns = Math.Clamp(orders, 1, 2);
+        for (var pat = 0; pat < patterns; pat++)
         {
             var p = mod.NewPattern();
             var note = 4;
@@ -31,7 +33,7 @@ public static class Chiptune
             if (pat == 0) p[0, 3] = new(null, 0, 0xF, Math.Clamp(tempoBpm, 32, 255));
             mod.Patterns.Add(p);
         }
-        mod.Order.AddRange([0, 1]);
+        for (var i = 0; i < orders; i++) mod.Order.Add(i % patterns);
         return mod.Encode();
     }
 }

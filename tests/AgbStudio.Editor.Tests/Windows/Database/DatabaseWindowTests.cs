@@ -32,7 +32,7 @@ public class DatabaseWindowTests : DataE2E
         Click(ws.PanelTabs[3]);
         Assert.IsType<DatabasePage>(Win.CurrentPage);
         Assert.Contains(("T-P07", (string?)"DatabaseTab"), S.Windows.Requests);
-        Assert.Equal("Items.db", Win.TitleBar.Document);
+        Assert.Equal("items.db", Win.TitleBar.Document);
         // the "Scene" tab goes back to the Scene Editor
         Click(Page.DocTabs[0]);
         Assert.IsType<SceneWorkspace>(Win.CurrentPage);
@@ -118,7 +118,7 @@ public class DatabaseWindowTests : DataE2E
         Save();
         Assert.False(S.Documents.Active!.IsDirty);
         Assert.True(page.SavedVisible);
-        var saved = GameProject.Load<TableFile>(Path.Combine(Root, "data", "Items.db"));
+        var saved = GameProject.Load<TableFile>(Path.Combine(Root, "data", "items.db"));
         Assert.Equal("35", saved.Rows[2]["price"]);
         // enum cells offer their values
         var type = Items.Fields.First(f => f.Name == "type");
