@@ -14,9 +14,13 @@ public sealed class ToolchainStatusService(Func<string?> devkitPro)
 
     public ToolchainStatusService() : this(() => null) { }
 
+    /// <summary>Runs a tool for its version (gcc -dumpversion); null starts the real program. Tests pass a stub.</summary>
+    public Func<string, string, ProcResult>? RunTool { get; set; }
+
     public IReadOnlyList<ToolStatus> CheckNow()
     {
-        Tools = new Toolchain(devkitPro()).Check();
+        var dkp = devkitPro();
+        Tools = (RunTool is { } run ? new Toolchain(dkp) { RunTool = run } : new Toolchain(dkp)).Check();
         Changed?.Invoke();
         return Tools;
     }
