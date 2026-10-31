@@ -69,7 +69,7 @@ public sealed class InspectorTests : IDisposable
         Assert.Equal("Layer OBJ · Prio 2", ((TextBlock)_w.Find<Button>("PriorityButton").Content!).Text);
 
         var pos = Field("Position");
-        Assert.Equal(("40", "112"), (pos.Value, pos.Value2));
+        Assert.Equal(("48", "288"), (pos.Value, pos.Value2));
         var boxes = pos.GetVisualDescendants().OfType<TextBox>().Where(b => b.IsEffectivelyVisible).ToList();
         TypeInto(boxes[0], "64");
         Assert.Equal(64, _w.M.Scene.Actors[0].X);

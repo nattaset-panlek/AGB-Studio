@@ -19,4 +19,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- the docs/schemas validator of AgbStudio.Tests (P1.04: files the editor writes validate) -->
+    <Compile Include="..\AgbStudio.Tests\JsonSchemaCheck.cs" Link="Support\JsonSchemaCheck.cs" />
+  </ItemGroup>
 </Project>

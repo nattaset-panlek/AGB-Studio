@@ -160,9 +160,13 @@ public sealed class ImageConverterTests
     {
         var data = SlimeAseprite(32);
         var e = Assert.Throws<InvalidDataException>(() => AsepriteFile.Parse(data[..200], "slime.aseprite"));
-        Assert.Contains("ends too early", e.Message);
+        // G-ERR.01: what (the file, cut short), why it can't be read, and what to do
+        Assert.Contains("slime.aseprite ends too early", e.Message);
+        Assert.EndsWith("Save it again in Aseprite, or copy the whole file again, then import it again.", e.Message);
         data[4] = 0;
-        Assert.Contains("slime.aseprite is not an Aseprite file", Assert.Throws<InvalidDataException>(() => AsepriteFile.Parse(data, "slime.aseprite")).Message);
+        var mark = Assert.Throws<InvalidDataException>(() => AsepriteFile.Parse(data, "slime.aseprite")).Message;
+        Assert.StartsWith("slime.aseprite is not an Aseprite file", mark);
+        Assert.EndsWith("or export it as a .png, then import it again.", mark);
     }
 
     [Fact]

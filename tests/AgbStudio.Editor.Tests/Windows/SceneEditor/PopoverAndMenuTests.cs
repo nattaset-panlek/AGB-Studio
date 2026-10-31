@@ -230,7 +230,7 @@ public sealed class PopoverAndMenuTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_w.Fx.Root, "prefabs", "Player.prefab")));
         M.SelectActor(M.Scene.Actors.FindIndex(a => a.Name == "Goal Flag"));
         Run(menu[8]);                                               // Focus in View: the flag at the centre of the screen
-        Assert.Equal((450 - 120, 304 - 80), M.Camera);
+        Assert.Equal((224 - 120, 288 - 80), M.Camera);
     }
 
     [AvaloniaFact]

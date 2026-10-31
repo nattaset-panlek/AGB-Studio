@@ -299,10 +299,11 @@ public class BudgetAndHistoryTests
     {
         var p = GameProject.Open(PlayTestSupport.ProjectPath);
         var suggestions = BudgetService.PaletteSuggestions(p, "Forest_01");
-        // OBJ palettes go to the scene's sprites in spawn order: hero 0, slime 1, block 2, flag 3, coin 4
-        Assert.Equal(["hero.png and slime.png could share OBJ palette 0 — saves one palette slot.", "block.png and flag.png could share OBJ palette 2 — saves one palette slot."], suggestions);
+        // OBJ palettes go to the scene's sprites in spawn order: hero 0, slime 1, block 2, flag 3, coin 4, heart (HUD) 5
+        Assert.Equal(["hero.png and slime.png could share OBJ palette 0 — saves one palette slot.", "block.png and flag.png could share OBJ palette 2 — saves one palette slot.",
+            "coin.png and heart.png could share OBJ palette 4 — saves one palette slot."], suggestions);
         // each pair really fits one palette: 15 colours + transparent
-        foreach (var pair in new[] { new[] { "hero", "slime" }, ["block", "flag"] })
+        foreach (var pair in new[] { new[] { "hero", "slime" }, ["block", "flag"], ["coin", "heart"] })
         {
             var colours = pair.SelectMany(n => AgbStudio.Build.Graphics.ColorImage.Load(Path.Combine(p.AssetsDir, "sprites", n + ".png")).Histogram().Keys).Distinct().Count();
             Assert.InRange(colours, 1, 15);

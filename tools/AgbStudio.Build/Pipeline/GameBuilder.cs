@@ -86,7 +86,23 @@ public sealed class GameBuilder
     }
 
     public string GenDir => Path.Combine(_p.BuildDir, "gen");
-    public string RomPath => Path.Combine(_p.BuildDir, Cpp.Ident(GameProject.FileName(_p.Settings.Name)).ToLowerInvariant() + ".gba");
+    public string RomPath => Path.Combine(_p.BuildDir, RomFileName(_p.Settings.Name));
+
+    /// <summary>The ROM file name of a project: its name in lower-case words joined by "_" ("Sky Hopper" → "sky_hopper.gba",
+    /// as Export ROM, Build ROM and the Console show it); "game.gba" when the name has no ASCII letter or digit.</summary>
+    public static string RomFileName(string projectName)
+    {
+        var words = new List<string>();
+        var word = new StringBuilder();
+        foreach (var c in projectName + " ")
+        {
+            if (char.IsAsciiLetterOrDigit(c)) { word.Append(char.ToLowerInvariant(c)); continue; }
+            if (word.Length > 0) words.Add(word.ToString());
+            word.Clear();
+        }
+        var name = words.Count == 0 ? "game" : string.Join("_", words);
+        return (char.IsAsciiDigit(name[0]) ? "_" + name : name) + ".gba";
+    }
 
     // ---- state shared by the steps ----------------------------------------------------------------
     readonly Dictionary<string, ConvertedSprite> _sprites = new(StringComparer.Ordinal);

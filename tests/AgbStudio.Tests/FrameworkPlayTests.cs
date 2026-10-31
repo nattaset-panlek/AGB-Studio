@@ -338,7 +338,7 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
         Play.Hold(s, 0, 20);
         // Title menu: Start (the first item) loads Forest_01 with a fade.
         Play.Hold(s, GbaKeys.A, 1);
-        Play.WaitForScene(s, Forest1, 40);
+        Play.WaitForScene(s, Forest1, SkyHopper.PlayerStart.X);
         return s;
     }
 
@@ -364,6 +364,7 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
         Assert.Contains("Slime (1)", names);
         Assert.Equal(5, names.Count(n => n.StartsWith("Coin", StringComparison.Ordinal)));
         Assert.Contains("HUD · Score", names);
+        Assert.Equal(3, names.Count(n => n.StartsWith("Heart", StringComparison.Ordinal)));   // the HUD hearts of art-scene-day
         // 10 seconds of play: walk, jump, turn. No gameplay frame may miss its VBlank.
         var before = s.Profiler()!.Overruns;
         uint worst = 0;
@@ -413,13 +414,13 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
             return n;
         }
 
-        // Forest_01 Goal Flag -> Forest_02 (on touch, Only if Game.coins >= 10, fade 0.5 s).
-        Teleport(458, 304);
+        // Forest_01 Goal Flag -> Forest_02 (on touch, Only if Game.coins >= 10, fade 0.5 s); the flag stands on the start screen.
+        Teleport(232, 288);
         Play.Hold(s, 0, 26);
         Assert.Equal(Forest1, Play.Scene(s));  // no coins yet: the link does not fire
         var coins = Play.StateAddress(s) + Play.Offset(p.Settings.Save, "coins");
         BitConverter.TryWriteBytes(s.Core.Memory(coins, 2), (short)10);
-        Teleport(458, 304);
+        Teleport(232, 288);
         Go(Forest2, 24, "Forest_02", minFrames: 26);
 
         // Forest_02 Summit Door -> Summit (door: needs Up, slide 0.5 s).
@@ -435,15 +436,15 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
 
         // Forest_02 Fall in pit -> Forest_01 (respawn, cut).
         Teleport(192, 330);
-        var cut = Go(Forest1, 40, "Forest_01 (respawn)");
+        var cut = Go(Forest1, SkyHopper.PlayerStart.X, "Forest_01 (respawn)");
 
         // Forest_01 Exit -> Cave_01 (door, fade 0.5 s).
-        Teleport(308, 304);
+        Teleport(448, 288);
         Go(Cave, 32, "Cave_01", GbaKeys.Up, minFrames: 30);
 
         // Cave_01 Cave Exit -> Forest_01 (door, fade).
         Teleport(368, 624);
-        Go(Forest1, 300, "Forest_01 (from the cave)", GbaKeys.Up);
+        Go(Forest1, 424, "Forest_01 (from the cave)", GbaKeys.Up);
 
         Assert.Equal(SkyHopper.SceneNames.Order(), visited.Select(v => v.Split(' ')[0]).Distinct().Order());
         Assert.True(cut < 30, $"the cut took {cut} frames");

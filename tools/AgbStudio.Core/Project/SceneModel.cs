@@ -117,6 +117,10 @@ public sealed class MapFile
     public int Height { get; set; } = 20;
     public List<MapLayerData> Layers { get; set; } = new();
     public int CollisionLayer { get; set; } = -1;   // index into Layers
+    /// <summary>Tilemap Editor "BG size": "32x32", "64x32", "32x64" or "64x64" screen blocks; omitted = 64x32.</summary>
+    public string? BgSize { get; set; }
+    /// <summary>Tilemap Editor "Colours": 4 (16 per tile) or 8 (256 colours); omitted = 4.</summary>
+    public int? Bpp { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

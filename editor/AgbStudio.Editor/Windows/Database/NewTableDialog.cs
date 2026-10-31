@@ -100,6 +100,9 @@ public sealed class NewTableDialog : FigmaDialog
             var rows = CsvImporter.Parse(File.ReadAllText(CsvPath));
             if (rows.Count > 1 && rows[1].Length > 0) return BuildCpp.Ident(rows[1][0]);
         }
+        // a table of that name in the project: its first row (Figma: "Enemies" gives EnemyId.Bat); else the first new row
+        if (_data?.Tables.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)) is { } same
+            && same.Table.Rows.FirstOrDefault()?.GetValueOrDefault(same.Table.KeyField) is { Length: > 0 } first) return BuildCpp.Ident(first);
         return BuildCpp.Ident(DatabaseCodegen.Singular(name.Length == 0 ? "Items" : name)) + "1";
     }
 

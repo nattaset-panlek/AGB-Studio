@@ -104,7 +104,8 @@ layer (`MapLayerData`) has a `name`, hardware `bg` (0-3), `type` (`Tile`, `Image
 `priority`, `parallaxX` / `parallaxY` (1 = moves with the camera), `wrap`, `cells` (one metatile index per cell,
 row-major) or, for image layers, the `image` name. Affine layers are converted at build time to 8bpp tiles with flips
 and palettes baked in (at most 256 tiles). A map is the layout of a scene (blueprint "Layout"): several scenes can
-show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`).
+show the same map, and the ROM holds one copy of it (`build/gen/maps/map_<Name>.cpp`). The Tilemap Editor also writes
+`bgSize` ("32x32", "64x32", "32x64" or "64x64"; left out = 64x32) and `bpp` (4 or 8; left out = 4).
 
 The Tilemap Editor (`MapDocument`) also writes two top-level fields that are not in `MapFile` or `map.schema.json`:
 `bgSize` (`"32x32"`, `"32x64"` or `"64x64"`; left out for the default 64x32) and `bpp` (`8`; left out for the default
@@ -146,9 +147,8 @@ copies it in any scene when the scene has no actor of that name.
   `cellHeight` (image fonts), character sets, extra characters, line height, baseline, spacing, bits per pixel, drop
   shadow, Thai mark stacking and lower-vowel placement, `thaiWordWrap`, glyph overrides (edited pixels by code point).
   `Ttf` takes a `.ttf` or an `.otf` file: TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed.
-  Font collections (`.ttc`), web fonts (`.woff`) and variable fonts with CFF2 outlines are refused with a message. The
-  Font Manager (`FontEntry`) also writes `drawTo` (Rendering · Draw to, the BG of the text layer, 1-3; left out for
-  0), which is not in `FontFile` or `font.schema.json`, and keeps other unknown fields.
+  Font collections (`.ttc`), web fonts (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
+  `drawTo` is the BG (0-3) of the text layer chosen in Font Manager · Draw to (left out = BG 0).
 - `data/<Table>.db` (`TableFile`): key field, keep in ROM, `fields` (name, type `int` / `fixed` / `bool` / `text` /
   `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized, `showInInspector`, and
   `reference`, the table a `reference` field points at) and `rows`.
@@ -161,15 +161,14 @@ copies it in any scene when the scene has no actor of that name.
 - `scripts/<Name>.graph` (`LogicGraph`): `class` (the generated C# class), `nodes` (each `id`, `type` from the node
   catalog, `x`, `y`, `props`) and `links` (`from` / `to` as "node.pin", from an output pin to an input pin). The
   generated `<Name>.cs` next to it carries a header and is read-only in the editor (D-11). The Logic Graph editor
-  (`GraphDocument`) also writes `comments` (each `title`, `x`, `y`, `w`, `h`), `collapsed` (node ids) and `disabled`
-  (a graph of the same shape holding the disabled nodes and links) when they are not empty; none of them is in
-  `graph.schema.json`.
+  adds `comments` (`title`, `x`, `y`, `w`, `h`), `collapsed` (node ids) and `disabled` (nodes and links switched off,
+  a graph of the same shape that is not compiled).
 - `dialogue/<name>.dlg` (`DialogueFile`): `name`, `textSpeed`, `blip`, `speakers` (`name`, `portrait`, `blip`,
-  `textSpeed`; the Dialogue Editor also writes `names`, the name per language, and `color`, the name tag colour, which
-  are not in `DialogueFile` or `dlg.schema.json`) and `conversations` (`id`, `lines`). A line has an optional `id`,
-  `speaker`, a string `key` or inline `text` per language, `portrait`, `speed`, `blip`, `showIf`, `thenSet`, `next`,
-  `choices` (each `key` or `text`, `showIf`, `thenSet`, `goto`, `scene`, `end`), or a `command` with its arguments
-  (`scene`, `flag` / `value`, `table` / `item` / `count`, `sound` / `volume`, `frames` / `seconds`, `amplitude`).
+  `textSpeed`, and from New Speaker `names` per language and the name tag `color`) and `conversations` (`id`,
+  `lines`). A line has an optional `id`, `speaker`, a string `key` or inline
+  `text` per language, `portrait`, `speed`, `blip`, `showIf`, `thenSet`, `next`, `choices` (each `key` or `text`,
+  `showIf`, `thenSet`, `goto`, `scene`, `end`), or a `command` with its arguments (`scene`, `flag` / `value`,
+  `table` / `item` / `count`, `sound` / `volume`, `frames` / `seconds`, `amplitude`).
 
 ## Build output (`build/`)
 

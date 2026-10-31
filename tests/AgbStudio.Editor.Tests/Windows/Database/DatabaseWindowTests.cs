@@ -332,7 +332,7 @@ public class DatabaseWindowTests : DataE2E
         Assert.Contains("public static short coins;", api);
         Assert.Contains("Items.Get(ItemId.Potion)", Find<TextBlock>("ScriptSampleText").Inlines!.Select(i => (i as Avalonia.Controls.Documents.Run)?.Text).Aggregate("", (a, b) => a + b));
         // a table without a script action or a price shows a typed field
-        Assert.Equal("var enemy1 = Enemies.Get(EnemyId.Enemy1);   // typed, autocompleted\nvar hp = enemy1.hp;                     // int 1",
+        Assert.Equal("var bat = Enemies.Get(EnemyId.Bat);      // typed, autocompleted\nvar hp = bat.hp;                        // int 1",
             ScriptSample.Text(page.Data.Table("Enemies")!.Table, 0, page.Data.Project.Settings));
         Assert.Equal("drop table", UsedBy.Humanize("dropTable"));
     }
@@ -362,6 +362,9 @@ public class DatabaseWindowTests : DataE2E
 
         // a name that exists is refused and the dialog stays open
         dlg = Dialog<NewTableDialog>("T-D17", page);
+        // the hint names the first row of a table of that name (Figma T-D17: Enemies.Get(EnemyId.Bat))
+        dlg.NameField.Text = "Enemies";
+        Assert.Equal("Scripts use it as Enemies.Get(EnemyId.Bat)", dlg.NameField.Help);
         dlg.NameField.Text = "Items";
         Assert.Null(dlg.Create());
         Assert.Equal("A table named Items already exists.", dlg.NameField.Help);

@@ -69,8 +69,13 @@ public sealed class DialogueDoc
         node.Remove("lineOf");
         if (node["speakers"] is JsonArray speakers)
             foreach (var s in speakers.OfType<JsonObject>())
+            {
+                // "names" and "color" (DialogueSpeaker, docs/schemas/dlg.schema.json) are edited in the extras: they win
+                s.Remove("names");
+                s.Remove("color");
                 if (SpeakerExtras.TryGetValue(s["name"]?.GetValue<string>() ?? "", out var extra))
                     foreach (var (k, v) in extra) s[k] = v?.DeepClone();
+            }
         return node.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n";
     }
 

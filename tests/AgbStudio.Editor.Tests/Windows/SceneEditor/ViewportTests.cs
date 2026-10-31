@@ -29,8 +29,8 @@ public sealed class ViewportTests : IDisposable
         // 720 x 480 centred in the 860 x 510 viewport, as in Figma (330, 129 in the page)
         var tl = screen.TranslatePoint(screen.Origin, _w.Win)!.Value;
         Assert.Equal(new Point(330, 129), tl);
-        // the ROM's start camera: Player (40, 112) centred, clamped to the 480 x 320 map
-        Assert.Equal((0, 32), _w.M.Camera);
+        // the ROM's start camera: Player (48, 288) at the bottom-left of the 480 x 320 map, clamped (the Figma picture)
+        Assert.Equal((0, 160), _w.M.Camera);
         var f = screen.Frame!;
         Assert.Equal(240 * 160, f.Bgr.Length);
         Assert.Contains(f.Sprites, s => _w.M.Scene!.Actors[s.Actor].Name == "Player");
@@ -38,7 +38,7 @@ public sealed class ViewportTests : IDisposable
         Assert.Equal("300%", _w.Find<Chip>("ZoomChip").Content);
         Assert.Equal("Grid 16", _w.Find<Chip>("GridChip").Content);
         // with the pointer outside, the cursor chip shows the selected actor's position
-        Assert.Equal("x 40  y 112", _w.Find<Chip>("CursorChip").Content);
+        Assert.Equal("x 48  y 288", _w.Find<Chip>("CursorChip").Content);
     }
 
     [AvaloniaFact]
@@ -46,10 +46,10 @@ public sealed class ViewportTests : IDisposable
     {
         var screen = Screen;
         var o = screen.TranslatePoint(screen.Origin, _w.Win)!.Value;
-        // pointer over screen pixel (100, 50): scene (100, 82) with the camera at (0, 32)
+        // pointer over screen pixel (100, 50): scene (100, 210) with the camera at (0, 160)
         _w.Win.MouseMove(new Point(o.X + 100 * 3 + 1, o.Y + 50 * 3 + 1));
-        Assert.Equal((100, 82), _w.M.Cursor);
-        Assert.Equal("x 100  y 82", _w.Find<Chip>("CursorChip").Content);
+        Assert.Equal((100, 210), _w.M.Cursor);
+        Assert.Equal("x 100  y 210", _w.Find<Chip>("CursorChip").Content);
         // Ctrl + wheel zooms in steps of 100 %
         _w.Win.MouseWheel(new Point(o.X + 10, o.Y + 10), new Vector(0, 1), RawInputModifiers.Control);
         Assert.Equal(400, _w.M.Zoom);
@@ -61,7 +61,7 @@ public sealed class ViewportTests : IDisposable
         var c = _w.Center(screen);
         _w.Drag(c, new Point(c.X - 40, c.Y - 20), MouseButton.Middle);
         Assert.Equal((20, 10), _w.M.Pan);
-        Assert.Equal((20, 42), _w.M.Camera);
+        Assert.Equal((20, 170), _w.M.Camera);
         // Fit to Screen: the largest whole zoom that fits 860 x 510 (pixel-perfect)
         _w.S.Commands.Execute("scene.zoom.fit");
         Capture.Pump();
@@ -75,7 +75,7 @@ public sealed class ViewportTests : IDisposable
         var screen = Screen;
         var m = _w.M;
         var block = m.Scene!.Actors.FindIndex(a => a.Name == "Question Block");
-        m.SetPan(0, 128);   // camera (0, 160): the block (120, 240) is on screen
+        Assert.Equal((0, 160), m.Camera);   // the block (64, 240) is on screen
         Capture.Pump();
         var (x, y, _, _) = screen.ActorRect(block)!.Value;
         var p = screen.TranslatePoint(screen.ToView(x + 8, y + 8), _w.Win)!.Value;
@@ -84,11 +84,11 @@ public sealed class ViewportTests : IDisposable
         Assert.True(_w.Find<TreeItem>("Row_actor:" + block).IsSelected);
         // drag by 20 scene pixels right: snapped to the 16 px grid
         _w.Drag(p, new Point(p.X + 20 * 3, p.Y));
-        Assert.Equal(136, m.Scene.Actors[block].X);
-        Assert.Equal(136, GameProject.Load<SceneFile>(m.ScenePath!).Actors[block].X);
+        Assert.Equal(88, m.Scene.Actors[block].X);
+        Assert.Equal(88, GameProject.Load<SceneFile>(m.ScenePath!).Actors[block].X);
         // one undo step for the whole drag
         _w.S.Commands.Execute("edit.undo");
-        Assert.Equal(120, m.Scene.Actors[block].X);
+        Assert.Equal(64, m.Scene.Actors[block].X);
         // arrow keys move by the grid size
         screen.Focus();
         _w.Key(PhysicalKey.ArrowDown);
@@ -114,32 +114,32 @@ public sealed class ViewportTests : IDisposable
         Assert.Equal("Ground", m.Map!.Layers[layer].Name);
         var brush = Assert.Single(m.Brush.Cells);
         Assert.True(brush > 0);
-        // an empty sky cell: scene (100, 82) is cell (6, 5)
-        Assert.Equal((6, 5), m.CellAt(layer, 100, 82));
+        // an empty sky cell on the start screen (camera (0, 160)): scene (100, 210) is cell (6, 13)
+        Assert.Equal((6, 13), m.CellAt(layer, 100, 210));
         int Cell(int x, int y) => m.Map!.Layers[layer].Cells[y * m.Map.Width + x];
-        Assert.Equal(0, Cell(6, 5));
+        Assert.Equal(0, Cell(6, 13));
         var undoBefore = _w.S.Undo.UndoCount;
-        _w.ClickAt(View(100, 82));
-        Assert.Equal(brush, Cell(6, 5));
-        Assert.Equal(brush, Disk()[5 * m.Map!.Width + 6]);
+        _w.ClickAt(View(100, 210));
+        Assert.Equal(brush, Cell(6, 13));
+        Assert.Equal(brush, Disk()[13 * m.Map!.Width + 6]);
         Assert.Equal(SceneItemKind.Actor, m.Selection!.Kind);   // painting does not change the selection
         // a drag paints every cell it crosses as one undo step
-        _w.Drag(View(100, 50), View(148, 50));
-        Assert.Equal([brush, brush, brush, brush], new[] { Cell(6, 3), Cell(7, 3), Cell(8, 3), Cell(9, 3) });
+        _w.Drag(View(100, 178), View(148, 178));
+        Assert.Equal([brush, brush, brush, brush], new[] { Cell(6, 11), Cell(7, 11), Cell(8, 11), Cell(9, 11) });
         Assert.Equal(undoBefore + 2, _w.S.Undo.UndoCount);
         _w.S.Commands.Execute("edit.undo");
-        Assert.Equal([0, 0, 0, 0], new[] { Cell(6, 3), Cell(7, 3), Cell(8, 3), Cell(9, 3) });
-        Assert.Equal(brush, Cell(6, 5));
+        Assert.Equal([0, 0, 0, 0], new[] { Cell(6, 11), Cell(7, 11), Cell(8, 11), Cell(9, 11) });
+        Assert.Equal(brush, Cell(6, 13));
         // Erase empties the cell
         _w.Click(_w.Find<IconButton>("Tool_eraser"));
         Assert.Equal(SceneTool.Erase, m.Tool);
-        _w.ClickAt(View(100, 82));
-        Assert.Equal(0, Cell(6, 5));
-        Assert.Equal(0, Disk()[5 * m.Map.Width + 6]);
+        _w.ClickAt(View(100, 210));
+        Assert.Equal(0, Cell(6, 13));
+        Assert.Equal(0, Disk()[13 * m.Map.Width + 6]);
         // Fill replaces the connected empty cells around the clicked one (the sky) in one step, and undoes in one
         _w.Click(_w.Find<IconButton>("Tool_bucket"));
         var empty = m.Map.Layers[layer].Cells.Count(c => c == 0);
-        _w.ClickAt(View(100, 82));
+        _w.ClickAt(View(100, 210));
         Assert.True(m.Map.Layers[layer].Cells.Count(c => c == 0) < empty - 50);
         Assert.Equal(brush, Cell(0, 0));
         _w.S.Commands.Execute("edit.undo");
@@ -149,10 +149,10 @@ public sealed class ViewportTests : IDisposable
         session.SelectTile(7);
         Assert.Equal([7], m.Brush.Cells);
         _w.Click(_w.Find<IconButton>("Tool_pencil"));
-        _w.ClickAt(View(100, 82));
-        Assert.Equal(7, Cell(6, 5));
+        _w.ClickAt(View(100, 210));
+        Assert.Equal(7, Cell(6, 13));
         // the open Tilemap Editor map (no unsaved edits) shows the painted cell
-        Assert.Equal(7, session.Doc.Cell(layer, 6, 5));
+        Assert.Equal(7, session.Doc.Cell(layer, 6, 13));
         // a Layer selected in the Hierarchy is the one painted
         var hills = m.Map.Layers.FindIndex(l => l.Type == LayerType.Tile && l.Name != "Ground");
         if (hills >= 0)
