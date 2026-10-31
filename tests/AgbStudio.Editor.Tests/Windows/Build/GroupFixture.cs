@@ -172,7 +172,7 @@ public sealed class CaptureAudioOutput : IAudioOutput
 public sealed class FakeCartridge(string name = "GBxCart RW · USB (COM4)") : ICartridgeDevice
 {
     public string Name { get; } = name;
-    public CartridgeStatus Status { get; set; } = new(true, "Cartridge detected · 32 MB flash · SRAM 32 KB", "Current game: SKYHOPPER rev 2", "SKYHOPPER");
+    public CartridgeStatus Status { get; set; } = new(true, "Cartridge detected · SKYH", "Current game: SKYHOPPER rev 2", "SKYHOPPER", FlashMegabytes: 32);
     public byte[]? Save { get; set; } = [1, 2, 3, 4];
     public byte[] Flash { get; private set; } = [];
     public bool CorruptOnWrite { get; set; }

@@ -105,7 +105,9 @@ public sealed class ScriptEditorPage : DockPanel
         var crumbRow = new Border { Height = 26, Padding = new Thickness(16, 0), Child = _breadcrumb };
         crumbRow.Token(Border.BackgroundProperty, "bg/base");
         _popupHost = new Border();
-        var editorArea = new Panel { Children = { Editor } };
+        // the code area takes Preferences › Editor › Theme (Studio Dark / Studio Light) whatever the app theme is
+        _codeTheme.Child = Editor;
+        var editorArea = new Panel { Children = { _codeTheme } };
         _bottomTabs =
         [
             new PanelTab { Label = "Problems", Glyph = "warn", Name = "Tab_Problems" },
@@ -145,7 +147,8 @@ public sealed class ScriptEditorPage : DockPanel
         // ---- behaviour ----
         Editor.TextChanged += OnTextChanged;
         Editor.CaretMoved += UpdateCaret;
-        Editor.IssueActivated += issue => _ = ShowPopupAsync(issue);
+        // Project Settings › Scripting › "Show inline hints in the editor": the analyzer hint opens next to the code
+        Editor.IssueActivated += issue => { if (InlineHints) _ = ShowPopupAsync(issue); };
         // breakpoints (Debugger, P13.06): click a line number or press F9
         Editor.GutterClicked += line => ToggleBreakpoint(line);
         Editor.HasBreakpoint = line => Buffer is { } b && s.GetService(typeof(Debugger.DebuggerModel)) is Debugger.DebuggerModel dm && dm.HasBreakpoint(b.Path, line);
@@ -178,7 +181,22 @@ public sealed class ScriptEditorPage : DockPanel
         Editor.TabSize = settings.TabSize;
         Editor.AutocompleteAsYouType = settings.AutocompleteAsYouType;
         Editor.UnderlineIssues = settings.UnderlineAnalyzerWarnings;
+        // Preferences › Appearance › Code font size and Editor › Font / Theme
+        var size = _s.Preferences.Current.CodeFontSize;
+        Editor.FontSizeOverride = size is >= 8 and <= 32 ? size : 0;
+        Editor.FontFamilyOverride = CodeFontFamily(settings.Font);
+        _codeTheme.RequestedThemeVariant = CodeThemeVariant(settings.Theme);
     }
+
+    readonly Avalonia.Controls.ThemeVariantScope _codeTheme = new() { Name = "CodeThemeScope" };
+
+    /// <summary>The code font: the bundled JetBrains Mono, or an installed font of that name (Thai falls back to the bundled face).</summary>
+    public static Avalonia.Media.FontFamily? CodeFontFamily(string name) =>
+        string.IsNullOrWhiteSpace(name) || name == "JetBrains Mono" ? AgbStudio.Editor.Theme.Fonts.Mono : new Avalonia.Media.FontFamily(name + ", " + AgbStudio.Editor.Theme.Fonts.Mono);
+
+    /// <summary>"Studio Light" draws the code with the light tokens, "Studio Dark" with the dark ones.</summary>
+    public static Avalonia.Styling.ThemeVariant CodeThemeVariant(string theme) =>
+        theme == "Studio Light" ? Avalonia.Styling.ThemeVariant.Light : Avalonia.Styling.ThemeVariant.Dark;
 
     // the toolchain check runs off the UI thread
     void ToolchainChanged() => Dispatcher.UIThread.Post(UpdateStatus);
@@ -602,6 +620,9 @@ public sealed class ScriptEditorPage : DockPanel
     // ---- diagnostic popup ----------------------------------------------------------------------------------
 
     /// <summary>Shows the popup of an analyzer message with its quick fixes ("Change to fixed", "Ignore").</summary>
+    /// <summary>Project Settings › Scripting › Show inline hints (on by default): clicking an underlined issue opens its hint.</summary>
+    public bool InlineHints => _s.Project.Current?.Settings.Scripting.InlineHints ?? true;
+
     public async Task ShowPopupAsync(CodeIssue issue)
     {
         ClosePopup();

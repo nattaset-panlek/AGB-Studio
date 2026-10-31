@@ -117,7 +117,7 @@ public sealed class FlashDialog : FigmaDialog
     void ShowStatus(CartridgeStatus status)
     {
         Status = status;
-        _infoTitle.Text = status.Summary;
+        _infoTitle.Text = status.Line(_s.ProjectSettings.Settings.Save.Type);
         var detail = status.Detail;
         if (status.CurrentTitle is { Length: > 0 } t)
         {

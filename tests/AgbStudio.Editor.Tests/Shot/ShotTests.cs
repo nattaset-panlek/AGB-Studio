@@ -113,7 +113,7 @@ public class ShotTests(ITestOutputHelper log)
         yield return ("T-D10", (path, w, h) =>
         {
             using var fx = new Fixture();
-            Capture.ControlToPng(new KeyboardShortcutsDialog(fx.Services.Shortcuts), w, h, path, Brushes.Black);
+            Capture.ControlToPng(new KeyboardShortcutsDialog(fx.Services.Shortcuts, fx.Services.Commands), w, h, path, Brushes.Black);
         });
         yield return ("T-D12", (path, w, h) =>
         {

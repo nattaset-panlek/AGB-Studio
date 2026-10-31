@@ -231,6 +231,16 @@ public sealed class ProjectSettingsTests : IDisposable
         win.Click(d.Find<NavItem>("Nav_T-S02"));
         Assert.Equal(("3 slots", "189 B / 32 KB"), (d.Find<Meter>("SlotsMeter").Label, d.Find<Meter>("SlotsMeter").ValueText));
         Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
+        // T-S02: the size of each field follows its type, as Figma lists them (score 4 B, lives 1 B, coins 2 B ...)
+        Assert.Equal(["4 B", "1 B", "2 B", "16 B", "32 B", "8 B"], Enumerable.Range(0, 6).Select(i => d.Find<TableCell>("SaveFieldSize_" + i).Text));
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "int");
+        Assert.Equal("4 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "66 bytes per slot");
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "short");
+        Assert.Equal("2 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        win.Type(d.Find<TextBox>("SaveFieldType_1"), "byte");
+        Assert.Equal("1 B", d.Find<TableCell>("SaveFieldSize_1").Text);
+        Assert.Contains(d.Page!.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "63 bytes per slot");
         win.Click(d.Find<Segment>("SaveType_4"));
         Assert.Equal("189 B / 8 KB", d.Find<Meter>("SlotsMeter").ValueText);
         win.Click(d.Find<NavItem>("Nav_T-S01"));

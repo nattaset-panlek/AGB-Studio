@@ -93,9 +93,18 @@ public sealed class CodeEditor : Panel, IEditTarget
 
     TextStyle Style => TextStyles.Get(TextStyleName);
     double FontSize => FontSizeOverride > 0 ? FontSizeOverride : Style.Size;
-    public double LineHeight => Style.LineHeight ?? Math.Ceiling(FontSize * 1.5);
+    /// <summary>The style's line height, grown or shrunk with a font size override (Preferences › Code font size).</summary>
+    public double LineHeight => Style.LineHeight is { } lh ? (FontSizeOverride > 0 ? Math.Ceiling(lh * FontSize / Style.Size) : lh) : Math.Ceiling(FontSize * 1.5);
     double Gutter => ShowLineNumbers ? GutterWidth : 0;
-    Typeface Face => new(Style.FontFamily, FontStyle.Normal, Style.FontWeight);
+    Typeface Face => new(FontFamilyOverride ?? Style.FontFamily, FontStyle.Normal, Style.FontWeight);
+
+    /// <summary>Preferences › Editor › Font of the built-in code editor (null: the text style's font).</summary>
+    public FontFamily? FontFamilyOverride
+    {
+        get => _fontFamily;
+        set { if (Equals(_fontFamily, value)) return; _fontFamily = value; _layouts.Clear(); Redraw(); }
+    }
+    FontFamily? _fontFamily;
 
     // ---- text model ------------------------------------------------------------------------------------------
 
