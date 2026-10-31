@@ -353,7 +353,7 @@ public sealed class PaletteManagerPage : DockPanel
         try { _lib.ImportColors(Bank, path); }
         catch (Exception e) when (e is IOException or InvalidDataException or FormatException or IndexOutOfRangeException)
         {
-            _s.Toasts.Show($"Could not import {System.IO.Path.GetFileName(path)}", ToastStatus.Error);
+            _s.Toasts.Show($"Could not import {System.IO.Path.GetFileName(path)}: {e.Message.TrimEnd('.')}. Palettes must be JASC .pal or GIMP .gpl files.", ToastStatus.Error);
         }
     }
 

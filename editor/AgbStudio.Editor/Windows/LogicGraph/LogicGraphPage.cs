@@ -512,7 +512,7 @@ public sealed class LogicGraphPage : DockPanel
     public static IReadOnlyList<MenuEntry> NodeContextMenu() =>
     [
         new CommandEntry("edit.duplicate"), new CommandEntry("graph.disable"), new CommandEntry("graph.groupIntoComment", Keys: "Ctrl+G"), new CommandEntry("graph.collapse"),
-        SeparatorEntry.Instance, new CommandEntry("graph.showCode", ShowIcon: true), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
+        SeparatorEntry.Instance, new CommandEntry("graph.showCode", ShowIcon: true), new CommandEntry("edit.delete", Danger: true),
     ];
 
     /// <summary>Disable / enable the selected nodes (disabled nodes are kept in the file but not compiled).</summary>

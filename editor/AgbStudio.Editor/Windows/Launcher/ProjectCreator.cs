@@ -280,7 +280,8 @@ public static class ProjectCreator
         try
         {
             var r = (git ?? ((args, dir) => Proc.Run("git", args, dir, TimeSpan.FromSeconds(30))))("init", folder);
-            if (r.ExitCode != 0) warnings.Add("git init failed: " + r.Output.Trim());
+            if (r.ExitCode != 0)
+                warnings.Add($"The project was made, but without a Git repository (git init failed: {r.Output.Trim().Split('\n')[0].Trim()}). Run git init in the project folder to add one.");
         }
         catch (Exception e) when (e is Win32Exception or InvalidOperationException or IOException)
         {

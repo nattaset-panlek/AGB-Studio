@@ -408,7 +408,7 @@ public sealed class LauncherService
         }
         if (Directory.Exists(root) && !DeleteFolder(root))
         {
-            Services.Toasts.Show($"Could not delete {root}.", ToastStatus.Error);
+            Services.Toasts.Show($"Could not move {root} to the Recycle Bin. Close programs that use files in it, then try again.", ToastStatus.Error);
             return false;
         }
         Services.Recent.Remove(s.Path);

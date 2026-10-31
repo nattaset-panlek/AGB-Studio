@@ -254,7 +254,7 @@ sealed class SerialPort : IDisposable
     public static SerialPort Open(string port, uint baud)
     {
         var h = CreateFileW(@"\\.\" + port, 0xC0000000, 0, IntPtr.Zero, 3, 0, IntPtr.Zero);
-        if (h.IsInvalid) throw new IOException($"{port} cannot be opened (error {Marshal.GetLastWin32Error()}).");
+        if (h.IsInvalid) throw new IOException($"{port} can't be opened (Windows error {Marshal.GetLastWin32Error()}); another program may be using it. Close that program and plug the GBxCart RW in again.");
         var dcb = new Dcb { DCBlength = Marshal.SizeOf<Dcb>() };
         GetCommState(h, ref dcb);
         dcb.BaudRate = baud;
@@ -262,14 +262,14 @@ sealed class SerialPort : IDisposable
         dcb.Parity = 0;
         dcb.StopBits = 0;
         dcb.Flags = 1;  // binary mode
-        if (!SetCommState(h, ref dcb)) { h.Dispose(); throw new IOException($"{port} does not accept {baud} baud."); }
+        if (!SetCommState(h, ref dcb)) { h.Dispose(); throw new IOException($"The device on {port} does not work at the GBxCart RW speed ({baud} baud). Check that it is a GBxCart RW and update its firmware."); }
         return new SerialPort(h);
     }
 
     public void Write(ReadOnlySpan<byte> data)
     {
         var buf = data.ToArray();
-        if (!WriteFile(_h, buf, buf.Length, out _, IntPtr.Zero)) throw new IOException("Serial write failed.");
+        if (!WriteFile(_h, buf, buf.Length, out _, IntPtr.Zero)) throw new IOException("Lost the connection to the GBxCart RW while sending data. Check the USB cable and try again.");
     }
 
     public byte[] Read(int count, int timeoutMs)

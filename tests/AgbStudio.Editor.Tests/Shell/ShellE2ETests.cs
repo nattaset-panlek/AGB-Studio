@@ -82,7 +82,10 @@ public class ShellE2ETests : IDisposable
         _fx.Services.Commands.Execute("help.keyboardShortcuts");
         Capture.Pump();
         var dlg = Assert.IsType<KeyboardShortcutsDialog>(_win.Overlays.Open.Single());
-        Assert.Equal(KeyboardShortcutsDialog.Rows.Select(r => r.Label), dlg.VisibleLabels);
+        // the Figma rows lead their groups (General, Scene); every other shortcut follows them
+        var figma = KeyboardShortcutsDialog.Rows.Select(r => r.Label).ToList();
+        Assert.Equal(figma, dlg.VisibleLabels.Where(figma.Contains));
+        Assert.Equal(figma.Take(5), dlg.VisibleLabels.Take(5));
         dlg.Search.Text = "grid";
         Capture.Pump();
         Assert.Equal(["Toggle grid"], dlg.VisibleLabels);
@@ -147,6 +150,21 @@ public class ShellE2ETests : IDisposable
         Key(Avalonia.Input.Key.Return);
         Assert.Equal("T-P04", _win.CurrentPageId);
         Assert.Equal("Slime.cs", Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptEditorPage>(_win.CurrentPage).Buffer!.Name);
+    }
+
+    // T-R01 / P16.04: the app icon (16-256 px) on the window, the component gallery and AGBStudio.exe
+    [AvaloniaFact]
+    public void Window_HasTheAppIcon()
+    {
+        Assert.NotNull(_win.Icon);
+        Assert.NotNull(new AgbStudio.Editor.Gallery.ComponentGallery().Icon);
+        using var s = Avalonia.Platform.AssetLoader.Open(new Uri(AgbStudio.Editor.Graphics.WindowIcons.Uri));
+        var head = new byte[6 + 16 * 7];
+        s.ReadExactly(head);
+        Assert.Equal(7, BitConverter.ToUInt16(head, 4));
+        Assert.Equal([16, 24, 32, 48, 64, 128, 256], Enumerable.Range(0, 7).Select(i => head[6 + 16 * i] == 0 ? 256 : head[6 + 16 * i]));
+        Assert.Equal(File.ReadAllBytes(Repo.Path_("docs", "brand", "agb-studio.ico")), File.ReadAllBytes(Path.Combine(Repo.Editor, "Assets", "agb-studio.ico")));
+        Assert.Contains("<ApplicationIcon>Assets/agb-studio.ico</ApplicationIcon>", File.ReadAllText(Path.Combine(Repo.Editor, "AgbStudio.Editor.csproj")));
     }
 
     [AvaloniaFact]

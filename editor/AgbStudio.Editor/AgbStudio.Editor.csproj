@@ -4,6 +4,8 @@
     <AssemblyName>AGBStudio</AssemblyName>
     <RootNamespace>AgbStudio.Editor</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- T-R01 / P16.04: the app icon (Figma brand/app-icon, Light variant; docs/brand/agb-studio.ico) on AGBStudio.exe -->
+    <ApplicationIcon>Assets/agb-studio.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
   </PropertyGroup>

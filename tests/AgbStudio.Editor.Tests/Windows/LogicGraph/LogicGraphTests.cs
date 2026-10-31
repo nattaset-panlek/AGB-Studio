@@ -242,6 +242,9 @@ public sealed class LogicGraphTests : IDisposable
         var menu = _h.OpenContextMenu()!;
         Assert.Equal(["Duplicate", "Disable", "Group into comment", "Collapse", "Show generated C#", "Delete"],
             menu.Items.OfType<MenuItem>().Select(i => (string?)i.Header));
+        // one separator, after Collapse, as in Figma
+        Assert.Equal(["Duplicate", "Disable", "Group into comment", "Collapse", "-", "Show generated C#", "Delete"],
+            menu.Items.Cast<object>().Select(i => i is MenuItem m ? (string?)m.Header : "-"));
         Assert.Equal("Ctrl+G", AgbStudio.Editor.Theme.Shortcuts.Format(menu.Items.OfType<MenuItem>().Single(i => (string?)i.Header == "Group into comment").InputGesture!));
         _h.RunMenuItem("Duplicate");
         Assert.Equal(11, page.Document.AllNodes.Count());

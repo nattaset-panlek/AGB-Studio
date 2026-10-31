@@ -35,6 +35,7 @@ public sealed class MainWindow : Window, IShellHost
     {
         _s = s;
         Title = "AGB Studio";
+        Icon = Graphics.WindowIcons.App();
         Width = 1440;
         Height = 900;
         MinWidth = 960;

@@ -158,7 +158,8 @@ public sealed class AssetActions
         }
         catch (Exception e) when (e is not OutOfMemoryException)
         {
-            meta = "cannot read";
+            // the card says why; the file stays as it is so it can be fixed and reimported
+            meta = "can't read · " + (e is System.Text.Json.JsonException ? "broken file" : e.Message.Split('\n')[0].TrimEnd('.'));
         }
         return new AssetItem(path, c, EditorFor(path, c), meta, thumb);
     }

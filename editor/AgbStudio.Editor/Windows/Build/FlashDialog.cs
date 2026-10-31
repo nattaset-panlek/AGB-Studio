@@ -110,7 +110,10 @@ public sealed class FlashDialog : FigmaDialog
     {
         CartridgeStatus status;
         try { status = await d.DetectAsync(CancellationToken.None); }
-        catch (Exception e) when (e is IOException or NotSupportedException or UnauthorizedAccessException) { status = new CartridgeStatus(false, "Device error", e.Message); }
+        catch (Exception e) when (e is IOException or NotSupportedException or UnauthorizedAccessException)
+        {
+            status = new CartridgeStatus(false, $"Can't talk to {d.Name}", $"{e.Message} Check the cable, then choose the device again.");
+        }
         if (Selected == d) ShowStatus(status);
     }
 
@@ -198,7 +201,7 @@ public sealed class FlashDialog : FigmaDialog
         }
         catch (Exception e) when (e is IOException or NotSupportedException or UnauthorizedAccessException)
         {
-            _s.Toasts.Show(e.Message, ToastStatus.Error);
+            _s.Toasts.Show($"Flashing failed: {e.Message} The cartridge may now hold a broken game; flash again.", ToastStatus.Error);
             return false;
         }
         finally
