@@ -19,7 +19,7 @@ u16 g_pvarCount = 0;
 u32 g_mapFlags[4], g_sessionFlags[4];
 s32 g_mapVars[32], g_sessionVars[32];
 
-AGB_EWRAM_BSS DebugState g_debug;
+AGB_EWRAM_BSS_NAMED(agb_debugger) DebugState g_debug;
 
 constexpr int kOperandBytes[] = {
 #define AGB_OP(name, operands, note) operands,

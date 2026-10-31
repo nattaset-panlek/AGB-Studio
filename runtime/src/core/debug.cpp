@@ -7,7 +7,7 @@
 namespace agb::debug {
 
 namespace {
-AGB_EWRAM_BSS Channel g_channel;
+AGB_EWRAM_BSS_NAMED(agb_debug_channel) Channel g_channel;
 u32 g_warned[4];  // bit set of warnOnce ids already reported
 }  // namespace
 

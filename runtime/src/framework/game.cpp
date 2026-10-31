@@ -341,7 +341,7 @@ private:
 };
 AGB_EWRAM_BSS u8 g_splashStorage[sizeof(SplashScreen)] AGB_ALIGN4;
 
-debug::GameInfo g_info;
+AGB_IWRAM_BSS_NAMED(agb_game_info) debug::GameInfo g_info;
 
 void publishGameInfo() {
     g_info.scene = g_scene.index;

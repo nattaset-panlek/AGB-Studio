@@ -99,6 +99,48 @@ public sealed class RuntimeRomTests(EmulatorFixture emu)
         Assert.True(rr.Passed, $"{rr.Error}\n{string.Join('\n', rr.Log)}");
     }
 
+    // P2.13: every address the debug channel exports to the editor (live Inspector actor table, Debugger VM state, C#
+    // symbols, profiler, hot-reload game info) is the address the linker gave that structure in the ROM's .map file.
+    [Fact]
+    public void DebugChannelAddressesMatchTheMapFile()
+    {
+        Assert.True(s_build.Value.Success, s_build.Value.Log);
+        var probe = RuntimeTests.BuildAll(["host_probe"]);
+        Assert.True(probe.Success, probe.Log);
+        var exports = new Dictionary<string, (uint Channel, uint Profiler, uint Actors, uint Stride, uint Game, uint Debugger, uint Symbols)>();
+        foreach (var (rom, frames) in new[] { ("framework_platformer", 3000), ("framework_bus_vm", 3000), ("host_probe", 60) })
+            RomTestRunner.Run(emu.Core, RuntimeTests.RomPath(rom), new RomTestOptions
+            {
+                MaxFrames = frames,
+                BeforeUnload = c =>
+                {
+                    var ch = DebugChannel.Find(c)!;
+                    exports[rom] = (ch.Address, ch.Profiler, ch.ActorTable, ch.ActorStride, ch.Game, ch.Debugger, ch.Symbols);
+                },
+            });
+
+        LinkerMap.Section Section(string rom, string name)
+        {
+            var map = LinkerMap.Read(Path.Combine(RuntimeTests.BuildDir, rom + ".elf.map"));
+            return map.Find(name) ?? throw new Xunit.Sdk.XunitException($"{rom}: no section {name} in the map file");
+        }
+
+        var game = exports["framework_platformer"];
+        Assert.Equal(Section("framework_platformer", ".sbss.agb_debug_channel").Address, game.Channel);
+        Assert.Equal(Section("framework_platformer", ".sbss.agb_profiler").Address, game.Profiler);
+        Assert.Equal(508u, Section("framework_platformer", ".sbss.agb_profiler").Size);  // the layout Inspector.Profiler reads
+        var table = Section("framework_platformer", ".sbss.agb_actor_table");
+        Assert.Equal(table.Address, game.Actors);
+        Assert.Equal(table.Size, game.Stride * 64);  // actors::kMaxActors entries of the stride the host reads
+        var info = Section("framework_platformer", ".bss.agb_game_info");
+        Assert.Equal(info.Address, game.Game);
+        Assert.Equal(LinkerMap.MemoryRegion.Iwram, info.Region);
+        Assert.Equal(Section("framework_bus_vm", ".sbss.agb_debugger").Address, exports["framework_bus_vm"].Debugger);
+        Assert.Equal(Section("host_probe", ".sbss.agb_symbols").Address, exports["host_probe"].Symbols);
+        Assert.Equal(Section("host_probe", ".sbss.agb_debug_channel").Address, exports["host_probe"].Channel);
+        Assert.All(exports.Values, e => Assert.Equal(LinkerMap.MemoryRegion.Ewram, LinkerMap.RegionOf(e.Channel)));
+    }
+
     [Fact]
     public void ReleaseBuildStripsLogText()
     {

@@ -24,5 +24,9 @@ using s64 = int64_t;
 #define AGB_EWRAM_DATA __attribute__((section(".ewram")))
 // Zero-initialised EWRAM (NOLOAD, cleared by the boot code): use for buffers so they take no ROM space.
 #define AGB_EWRAM_BSS __attribute__((section(".sbss")))
+// The same in a section of its own, so the linker map lists it by name: structures the debug channel exports to the
+// editor (RuntimeRomTests.DebugChannelAddressesMatchTheMapFile compares them with the .map file).
+#define AGB_EWRAM_BSS_NAMED(name) __attribute__((section(".sbss." #name)))
+#define AGB_IWRAM_BSS_NAMED(name) __attribute__((section(".bss." #name)))
 #define AGB_ALIGN4 __attribute__((aligned(4)))
 #define AGB_UNUSED(x) ((void)(x))

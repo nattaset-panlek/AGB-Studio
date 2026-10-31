@@ -7,7 +7,7 @@
 
 namespace agb::profile {
 namespace {
-AGB_EWRAM_BSS Stats g_stats;
+AGB_EWRAM_BSS_NAMED(agb_profiler) Stats g_stats;
 u32 g_acc[static_cast<int>(Category::Count)];
 Category g_current = Category::Logic;
 u32 g_mark = 0;

@@ -15,7 +15,7 @@ struct AllActors {
     Actor* end() const { return g_actors + actors::kMaxActors; }
 };
 constexpr AllActors kAll{};
-AGB_EWRAM_BSS ActorDebug g_debug[actors::kMaxActors];
+AGB_EWRAM_BSS_NAMED(agb_actor_table) ActorDebug g_debug[actors::kMaxActors];
 // Behaviour memory of each actor slot (reused with the slot). Behaviours that do not fit go to the scene arena.
 constexpr u32 kSlotBytes = 128;
 alignas(8) AGB_EWRAM_BSS u8 g_slotMemory[actors::kMaxActors][kSlotBytes];
