@@ -239,7 +239,7 @@ public sealed class NewProjectDialog : FigmaDialog
     public async Task<string?> CreateAsync()
     {
         if (_busy || !Validate()) return null;
-        if (!await _launcher.ConfirmUnsavedAsync()) return null;
+        if (!await _launcher.ConfirmUnsavedAsync(UnsavedReason.CloseProject)) return null;
         _busy = true;
         Validate();
         try

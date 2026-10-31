@@ -1,5 +1,7 @@
+using AgbStudio.Core;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Commands;
+using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 
@@ -70,6 +72,15 @@ public sealed class MapLibrary
 
     public TilemapSession? Current(object? args) => Resolve(args) is { } path ? Open(path) : null;
 
+    /// <summary>Another editor wrote the .map (the Scene Editor's tile tools): an open map without unsaved edits
+    /// reads it again, and a preview copy is dropped.</summary>
+    public void FileChanged(string path)
+    {
+        path = Path.GetFullPath(path);
+        _peek.Remove(path);
+        if (_open.TryGetValue(path, out var s) && !s.Doc.IsDirty) s.Doc.ReloadMap();
+    }
+
     readonly Dictionary<string, MapDocument> _peek = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>A map for display only (previews): the open one when it is being edited, else read from disk without a Doc Tab.</summary>
@@ -121,6 +132,47 @@ public sealed class MapLibrary
         }
         docs.Active = ed;
         return ed;
+    }
+}
+
+/// <summary>Create › Tileset / Tilemap (T-M09): a new map, and a new tileset when the project has none.</summary>
+public static class NewTilemap
+{
+    /// <summary>
+    /// Writes maps/Map_NN.map (the first free number): 30 x 20 tiles, one tile layer "Ground" on BG0 that is also the
+    /// collision source, on the project's first tileset; a project without a tileset gets assets/tilesets/tiles.png,
+    /// 4 x 4 empty 16 px tiles to draw in an image editor. Returns the map path.
+    /// </summary>
+    public static string Create(GameProject p)
+    {
+        Directory.CreateDirectory(p.MapsDir);
+        var tileset = p.TilesetFiles().FirstOrDefault();
+        if (tileset is null)
+        {
+            tileset = Path.Combine(p.AssetsDir, "tilesets", "tiles.png");
+            Directory.CreateDirectory(Path.GetDirectoryName(tileset)!);
+            Png.WriteArgb(tileset, new uint[64 * 64], 64, 64);
+        }
+        var name = "";
+        for (var i = 1; name.Length == 0 || File.Exists(Path.Combine(p.MapsDir, name + ".map")); i++) name = $"Map_{i:00}";
+        const int w = 30, h = 20;
+        var map = new MapFile
+        {
+            Name = name, Tileset = GameProject.AssetName(tileset), Width = w, Height = h, CollisionLayer = 0,
+            Layers = { new MapLayerData { Name = "Ground", Bg = 0, Type = LayerType.Tile, Priority = 1, Cells = Enumerable.Repeat(0, w * h).ToList() } },
+        };
+        var path = Path.Combine(p.MapsDir, name + ".map");
+        GameProject.Save(path, map);
+        return path;
+    }
+
+    [CommandHandler("assets.create.tileset")]
+    public static void CreateCommand(EditorServices s)
+    {
+        if (s.Project.Current is not { } p) { _ = s.Windows.Open("T-P03", source: "assets.create.tileset"); return; }
+        var path = Create(p);
+        _ = s.Windows.Open("T-P03", path, source: "assets.create.tileset");
+        s.Toasts.Show($"Created {Path.GetFileName(path)}", ToastStatus.Success, TimeSpan.FromSeconds(3));
     }
 }
 

@@ -48,6 +48,14 @@ public sealed class ConsoleLog
 
     public void Info(string text) => Add(ConsoleLevel.Info, text);
 
+    /// <summary>Adds a line made elsewhere with its own time (the game's log lines from Play Mode).</summary>
+    public void Add(ConsoleEntry e)
+    {
+        _entries.Add(e);
+        if (_entries.Count > MaxEntries) _entries.RemoveRange(0, _entries.Count - MaxEntries);
+        Changed?.Invoke();
+    }
+
     public void Clear()
     {
         _entries.Clear();

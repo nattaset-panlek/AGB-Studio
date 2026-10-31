@@ -36,8 +36,7 @@ public static class PageChrome
     {
         var play = UI.Row(4,
             new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
-            new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" },
-            new PlayControl { Kind = PlayKind.Step, Name = "StepButton" });
+            PlayButtons.Pause(s), PlayButtons.Step(s));
         Tip(s, play.Children[0], "build.play");
         var chip = new Chip { Content = $"GBA · Mode {videoMode} · 240×160", Glyph = "chip", Name = "VideoModeChip" };
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: "VideoModeChip");

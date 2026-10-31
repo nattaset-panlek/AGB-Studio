@@ -21,9 +21,11 @@ public sealed class SceneWorkspace : DockPanel
     readonly ContentControl _bottomContent = new();
     readonly PanelTab[] _panelTabs;
 
-    public SceneWorkspace(WindowContext ctx) : this(ctx.Services) { }
+    public SceneWorkspace(WindowContext ctx) : this(ctx.Services, ctx.Args) { }
 
-    public SceneWorkspace(EditorServices s)
+    /// <param name="args">What the page was opened for: a .scene path (Command Palette, World Map › Open) switches the
+    /// viewport to that scene.</param>
+    public SceneWorkspace(EditorServices s, object? args = null)
     {
         _s = s;
         Name = "SceneWorkspace";
@@ -42,12 +44,13 @@ public sealed class SceneWorkspace : DockPanel
         var layers = new[] { "BG0", "BG1", "BG2", "BG3", "OBJ" }.Select(l => new LayerToggle { Content = l, IsOn = l != "BG3", Name = "Layer_" + l }).ToArray();
         var play = UI.Row(4,
             new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
-            new PlayControl { Kind = PlayKind.Pause, Command = s.Commands.TryGet("play.pause", out var pause) ? pause : null, Name = "PauseButton" },
-            new PlayControl { Kind = PlayKind.Step, Command = s.Commands.TryGet("play.frameStep", out var step) ? step : null, Name = "StepButton" });
+            PlayButtons.Pause(s), PlayButtons.Step(s));
         // P10.18 tooltips: command title and its current shortcut
         Tip(play.Children[0], "build.play");
         string[] toolCommands = ["scene.tool.select", "scene.tool.move", "scene.tool.paint", "", "", "scene.toggleGrid"];
         for (var i = 0; i < _tools.Length; i++) if (toolCommands[i].Length > 0) Tip(_tools[i], toolCommands[i]);
+        ToolTip.SetTip(_tools[3], new TipContent("Fill"));
+        ToolTip.SetTip(_tools[4], new TipContent("Erase"));
         var chip = new Chip { Content = "GBA · Mode 0 · 240×160", Glyph = "chip", Name = "VideoModeChip" };
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: "VideoModeChip");
         var undo = new IconButton { Glyph = "undo", Command = s.Commands.Get("edit.undo"), Name = "UndoButton" };
@@ -100,7 +103,7 @@ public sealed class SceneWorkspace : DockPanel
         var tabs = UI.Frame(_docTabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
         _docTabs.VerticalAlignment = VerticalAlignment.Stretch;
         center.Children.Add(tabs);
-        var viewport = UI.Frame(Slot("T-P01:Viewport"), "bg/canvas").Named("Viewport");
+        var viewport = UI.Frame(Slot("T-P01:Viewport", args), "bg/canvas").Named("Viewport");
         Grid.SetRow(viewport, 1);
         center.Children.Add(viewport);
 
@@ -138,6 +141,9 @@ public sealed class SceneWorkspace : DockPanel
     }
 
     public int ActiveTool => Array.FindIndex(_tools[..5], t => t.IsActive);
+
+    /// <summary>The tool changed (index: Select, Move, Paint tiles, Fill, Erase); the viewport paints with the last three.</summary>
+    public event Action<int>? ToolChanged;
     public IReadOnlyList<PanelTab> PanelTabs => _panelTabs;
     public PanelTab? SelectedPanel => _panelTabs.FirstOrDefault(t => t.IsSelected);
 
@@ -147,6 +153,7 @@ public sealed class SceneWorkspace : DockPanel
     void SetTool(int i)
     {
         for (var k = 0; k < 5; k++) _tools[k].IsActive = k == i;
+        ToolChanged?.Invoke(i);
     }
 
     void SelectPanel(PanelTab tab)
@@ -158,7 +165,7 @@ public sealed class SceneWorkspace : DockPanel
         if (id != "T-P01:Assets") _s.Windows.Requests.Add((id, tab.Name));
     }
 
-    Control Slot(string id) => (Control?)_s.Windows.CreatePanel(id) ?? new Panel { Name = "Slot_" + id.Replace(':', '_').Replace('-', '_') };
+    Control Slot(string id, object? args = null) => (Control?)_s.Windows.CreatePanel(id, args) ?? new Panel { Name = "Slot_" + id.Replace(':', '_').Replace('-', '_') };
 
     static Border ToolGroup(IEnumerable<Control> items)
     {

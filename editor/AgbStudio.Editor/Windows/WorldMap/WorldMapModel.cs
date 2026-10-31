@@ -78,7 +78,10 @@ public sealed partial class WorldMapModel
         return "art/scene/day";
     }
 
-    static bool IsBoss(MapScene s) => s.Data.Actors.Any(a => a.Kind == ActorKind.Enemy && a.Components.Any(c => c.Type == "Health"));
+    static bool IsBoss(MapScene s) => IsBossScene(s.Data);
+
+    /// <summary>A boss scene: an enemy with Health (hearts), as Summit's Slime King. World Map cards and the Scene Switcher tag it "boss".</summary>
+    public static bool IsBossScene(SceneFile s) => s.Actors.Any(a => a.Kind == ActorKind.Enemy && a.Components.Any(c => c.Type == "Health"));
 
     /// <summary>Card / list meta: "menu", "boss" or the size in tiles ("30×20").</summary>
     public static string Meta(MapScene s) => s.Data.Menu != null ? "menu" : IsBoss(s) ? "boss" : $"{s.Data.Width}×{s.Data.Height}";

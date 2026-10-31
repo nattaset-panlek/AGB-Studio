@@ -86,7 +86,9 @@ public sealed class SceneSwitcher : ScenePopover
     {
         var map = _m.Assets?.Map(scene);
         var thumb = new Border { Width = 48, Height = 32, CornerRadius = new CornerRadius(4), ClipToBounds = true, Child = PixelArt.View(Preview(scene, map), 48, 32) };
-        var meta = UI.Text(scene.Menu != null ? "menu" : $"{map?.Width ?? scene.Width}×{map?.Height ?? scene.Height}", "Mono/10", current ? "text/on-selected" : "text/muted");
+        var meta = UI.Text(scene.Menu != null ? "menu" : WorldMap.WorldMapModel.IsBossScene(scene) ? "boss" : $"{map?.Width ?? scene.Width}×{map?.Height ?? scene.Height}",
+            "Mono/10", current ? "text/on-selected" : "text/muted");
+        meta.Name = "SceneMeta_" + name;
         var label = UI.Text(name, "Body/12", current ? "text/on-selected" : "text/primary");
         var dock = new DockPanel { HorizontalSpacing = 11 };
         DockPanel.SetDock(thumb, Dock.Left);

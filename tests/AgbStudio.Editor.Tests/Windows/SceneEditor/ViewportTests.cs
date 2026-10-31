@@ -98,6 +98,73 @@ public sealed class ViewportTests : IDisposable
         Assert.Equal(SceneItemKind.Scene, m.Selection!.Kind);
     }
 
+    // T-P01: Paint tiles (B), Fill and Erase edit the scene's map in the viewport, one undo step per stroke
+    [AvaloniaFact]
+    public void PaintFillAndErase_EditTheMapWithUndo()
+    {
+        var m = _w.M;
+        var screen = Screen;
+        Point View(int sceneX, int sceneY) => screen.TranslatePoint(screen.ToView(sceneX, sceneY), _w.Win)!.Value;
+        int[] Disk() => GameProject.Load<MapFile>(m.MapPath!).Layers[m.PaintLayer].Cells.ToArray();
+        _w.Click(_w.Find<IconButton>("Tool_pencil"));
+        Assert.Equal(SceneTool.Paint, m.Tool);
+        Assert.Equal(2, _w.Workspace.ActiveTool);
+        // the ground layer (the collision source) is painted with the first named tile of the tileset
+        var layer = m.PaintLayer;
+        Assert.Equal("Ground", m.Map!.Layers[layer].Name);
+        var brush = Assert.Single(m.Brush.Cells);
+        Assert.True(brush > 0);
+        // an empty sky cell: scene (100, 82) is cell (6, 5)
+        Assert.Equal((6, 5), m.CellAt(layer, 100, 82));
+        int Cell(int x, int y) => m.Map!.Layers[layer].Cells[y * m.Map.Width + x];
+        Assert.Equal(0, Cell(6, 5));
+        var undoBefore = _w.S.Undo.UndoCount;
+        _w.ClickAt(View(100, 82));
+        Assert.Equal(brush, Cell(6, 5));
+        Assert.Equal(brush, Disk()[5 * m.Map!.Width + 6]);
+        Assert.Equal(SceneItemKind.Actor, m.Selection!.Kind);   // painting does not change the selection
+        // a drag paints every cell it crosses as one undo step
+        _w.Drag(View(100, 50), View(148, 50));
+        Assert.Equal([brush, brush, brush, brush], new[] { Cell(6, 3), Cell(7, 3), Cell(8, 3), Cell(9, 3) });
+        Assert.Equal(undoBefore + 2, _w.S.Undo.UndoCount);
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal([0, 0, 0, 0], new[] { Cell(6, 3), Cell(7, 3), Cell(8, 3), Cell(9, 3) });
+        Assert.Equal(brush, Cell(6, 5));
+        // Erase empties the cell
+        _w.Click(_w.Find<IconButton>("Tool_eraser"));
+        Assert.Equal(SceneTool.Erase, m.Tool);
+        _w.ClickAt(View(100, 82));
+        Assert.Equal(0, Cell(6, 5));
+        Assert.Equal(0, Disk()[5 * m.Map.Width + 6]);
+        // Fill replaces the connected empty cells around the clicked one (the sky) in one step, and undoes in one
+        _w.Click(_w.Find<IconButton>("Tool_bucket"));
+        var empty = m.Map.Layers[layer].Cells.Count(c => c == 0);
+        _w.ClickAt(View(100, 82));
+        Assert.True(m.Map.Layers[layer].Cells.Count(c => c == 0) < empty - 50);
+        Assert.Equal(brush, Cell(0, 0));
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal(empty, m.Map.Layers[layer].Cells.Count(c => c == 0));
+        // the brush follows the Tilemap Editor's stamp for this map
+        var session = AgbStudio.Editor.Windows.Tilemap.MapLibrary.Of(_w.S).Open(m.MapPath!);
+        session.SelectTile(7);
+        Assert.Equal([7], m.Brush.Cells);
+        _w.Click(_w.Find<IconButton>("Tool_pencil"));
+        _w.ClickAt(View(100, 82));
+        Assert.Equal(7, Cell(6, 5));
+        // the open Tilemap Editor map (no unsaved edits) shows the painted cell
+        Assert.Equal(7, session.Doc.Cell(layer, 6, 5));
+        // a Layer selected in the Hierarchy is the one painted
+        var hills = m.Map.Layers.FindIndex(l => l.Type == LayerType.Tile && l.Name != "Ground");
+        if (hills >= 0)
+        {
+            m.Selection = new SceneItem(SceneItemKind.Layer, hills);
+            Assert.Equal(hills, m.PaintLayer);
+        }
+        // Select clicks pick actors again
+        _w.Click(_w.Find<IconButton>("Tool_cursor"));
+        Assert.Equal(SceneTool.Select, m.Tool);
+    }
+
     [AvaloniaFact]
     public void LayerTogglesHideBackgroundsAndSprites()
     {

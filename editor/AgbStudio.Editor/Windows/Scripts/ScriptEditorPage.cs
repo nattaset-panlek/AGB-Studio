@@ -77,7 +77,7 @@ public sealed class ScriptEditorPage : DockPanel
         var code = new IconButton { Glyph = "code", IsActive = true, Name = "Tool_Code" };
         var debug = new IconButton { Glyph = "bug", Command = s.Commands.Get("tools.debugger"), Name = "Tool_Debug" };
         var analyzer = new Chip { Content = "Analyzer: GBA rules on", Glyph = "check", Style = ChipStyle.Success, Name = "AnalyzerChip" };
-        analyzer.Click += (_, _) => _ = s.Windows.Open("T-D08", source: "AnalyzerChip");
+        analyzer.Click += (_, _) => _ = s.Windows.Open("T-S04", source: "AnalyzerChip");
         var external = new AgbButton { Content = "Open externally", Glyph = "expand", Kind = ButtonKind.Secondary, Name = "OpenExternally" };
         external.Click += (_, _) => OpenExternally();
         var pipeline = new Chip { Content = "C# → C++ → devkitARM", Glyph = "chip", Name = "PipelineChip" };

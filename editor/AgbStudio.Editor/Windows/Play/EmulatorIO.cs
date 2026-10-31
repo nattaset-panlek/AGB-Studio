@@ -18,6 +18,19 @@ public sealed class EmulatorOptions
     public bool PauseWhenUnfocused { get; set; }
     public string FastForwardKey { get; set; } = "Tab";
     public double FastForwardSpeed { get; set; } = 4;
+
+    /// <summary>Takes Preferences · Emulator (T-D09): scale 1-4, filter Pixel-perfect / Smooth, audio, pause when
+    /// unfocused, fast-forward key and speed. The core is always the built-in mGBA.</summary>
+    public EmulatorOptions ReadFrom(AgbStudio.Editor.Services.Preferences p)
+    {
+        Scale = Math.Clamp(p.EmulatorScale, 1, 4);
+        PixelPerfect = !string.Equals(p.EmulatorFilter, "Smooth", StringComparison.OrdinalIgnoreCase);
+        Audio = p.EmulatorAudio;
+        PauseWhenUnfocused = p.PauseWhenUnfocused;
+        FastForwardKey = string.IsNullOrWhiteSpace(p.FastForwardKey) ? "Tab" : p.FastForwardKey.Trim();
+        FastForwardSpeed = p.FastForwardSpeed > 1 ? p.FastForwardSpeed : 4;
+        return this;
+    }
 }
 
 /// <summary>Where Play Mode sends the game's audio (interleaved stereo 16-bit).</summary>

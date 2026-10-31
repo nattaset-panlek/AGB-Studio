@@ -119,6 +119,36 @@ public class ShellE2ETests : IDisposable
         Assert.False(_win.Overlays.IsOpen);
     }
 
+    // P10.12 / T-O07: a file result opens its editor; a .scene result switches the Scene Editor to that scene
+    [AvaloniaFact]
+    public void CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches()
+    {
+        var model = AgbStudio.Editor.Windows.SceneEditor.SceneEditorModel.Of(_fx.Services);
+        Assert.Equal("Forest_01", model.SceneName);
+        Key(Avalonia.Input.Key.K, RawInputModifiers.Control);
+        var palette = Assert.IsType<CommandPalette>(_win.Overlays.Open.Single());
+        palette.Query.Focus();
+        _win.KeyTextInput("Cave_01.scene");
+        Capture.Pump();
+        Assert.Equal("Cave_01.scene", palette.Items[palette.HighlightIndex].Label);
+        Key(Avalonia.Input.Key.Return);
+        Assert.False(_win.Overlays.IsOpen);
+        Assert.Equal("T-P01", _win.CurrentPageId);
+        Assert.Equal("Cave_01", model.SceneName);
+        Assert.Equal("Cave_01", _fx.Services.Project.Current!.Settings.LastScene);
+        Assert.Equal("Cave_01.scene", _win.TitleBar.Document);
+        Assert.Equal("Cave_01 · 24×40 tiles", Find<Chip>("SceneSizeChip").Content);
+        // a script result opens the Script Editor on that file
+        Key(Avalonia.Input.Key.K, RawInputModifiers.Control);
+        palette = Assert.IsType<CommandPalette>(_win.Overlays.Open.Single());
+        palette.Query.Focus();
+        _win.KeyTextInput("Slime.cs");
+        Capture.Pump();
+        Key(Avalonia.Input.Key.Return);
+        Assert.Equal("T-P04", _win.CurrentPageId);
+        Assert.Equal("Slime.cs", Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptEditorPage>(_win.CurrentPage).Buffer!.Name);
+    }
+
     [AvaloniaFact]
     public void Docking_PanelsTabsAndDirtyDot()
     {
@@ -233,6 +263,7 @@ public class ShellE2ETests : IDisposable
         Capture.Pump();
         var dlg = Assert.IsType<UnsavedChangesDialog>(_win.Overlays.Open.Single());
         Assert.Contains("2 files have changes", string.Join(" ", dlg.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
+        Assert.Equal("Save changes before exiting?", dlg.GetVisualDescendants().OfType<DialogHeader>().Single().Title);
         Key(Avalonia.Input.Key.Escape);
         Assert.False(await exit);
         exit = _win.ConfirmExitAsync();

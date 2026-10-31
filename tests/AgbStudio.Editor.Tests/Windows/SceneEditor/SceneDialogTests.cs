@@ -24,6 +24,9 @@ public sealed class SceneDialogTests : IDisposable
         Assert.Equal(("T-O01", "Breadcrumb"), _w.S.Windows.Requests[^1]);
         var sw = Assert.IsType<SceneSwitcher>(_w.Win.Overlays.Open.Single());
         Assert.Equal(["Title", "Forest_01", "Forest_02", "Cave_01", "Summit"], sw.Shown);
+        // the row tags of the Figma frame: "menu", the size in tiles, and "boss" for Summit (Slime King has Health)
+        string Meta(string scene) => sw.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "SceneMeta_" + scene).Text!;
+        Assert.Equal(["menu", "30×20", "32×20", "24×40", "boss"], sw.Shown.Select(Meta).ToArray());
         _w.Type("for");
         Assert.Equal(["Forest_01", "Forest_02"], sw.Shown);
         _w.Click(sw.GetVisualDescendants().OfType<Button>().First(b => b.Name == "Scene_Forest_02"));

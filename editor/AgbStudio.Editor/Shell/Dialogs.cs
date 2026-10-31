@@ -94,13 +94,32 @@ public sealed class KeyboardShortcutsDialog : FigmaDialog
     public static IEnumerable<string> KeyParts(string keys) => keys.Length == 0 ? [] : keys.EndsWith("++") ? [.. keys[..^2].Split('+'), "+"] : keys.Split('+');
 }
 
-/// <summary>Unsaved Changes (T-D12, 460 x 262): File › Exit or closing the app with dirty documents. Result "save", "discard" or null (stay).</summary>
+/// <summary>Why Unsaved Changes asks: the editor exits, another project opens, or the open project closes (a new one replaces it).</summary>
+public enum UnsavedReason { Exit, OpenProject, CloseProject }
+
+/// <summary>What Unsaved Changes is opened with: the dirty documents and the action that would lose them.</summary>
+public sealed record UnsavedChangesArgs(IReadOnlyList<EditorDocument> Documents, UnsavedReason Reason);
+
+/// <summary>
+/// Unsaved Changes (T-D12, 460 x 262): File › Exit or closing the app, opening another project or creating a new one
+/// with dirty documents; the title names that action. Result "save", "discard" or null (stay).
+/// </summary>
 [EditorWindow("T-D12")]
 public sealed class UnsavedChangesDialog : FigmaDialog
 {
-    public UnsavedChangesDialog(WindowContext ctx) : this((IReadOnlyList<EditorDocument>?)ctx.Args ?? ctx.Services.Documents.Dirty) { }
+    public UnsavedChangesDialog(WindowContext ctx) : this(
+        ctx.Args switch { UnsavedChangesArgs a => a.Documents, IReadOnlyList<EditorDocument> l => l, _ => ctx.Services.Documents.Dirty },
+        ctx.Args is UnsavedChangesArgs r ? r.Reason : UnsavedReason.Exit) { }
 
-    public UnsavedChangesDialog(IReadOnlyList<EditorDocument> dirty)
+    /// <summary>The dialog title for the action that would lose the changes.</summary>
+    public static string TitleFor(UnsavedReason reason) => reason switch
+    {
+        UnsavedReason.OpenProject => "Save changes before opening another project?",
+        UnsavedReason.CloseProject => "Save changes before closing the project?",
+        _ => "Save changes before exiting?",
+    };
+
+    public UnsavedChangesDialog(IReadOnlyList<EditorDocument> dirty, UnsavedReason reason = UnsavedReason.Exit)
     {
         Name = "UnsavedChangesDialog";
         var n = dirty.Count;
@@ -121,6 +140,6 @@ public sealed class UnsavedChangesDialog : FigmaDialog
         var footer = new DialogFooter { CancelText = "Don't Save", ConfirmText = "Save All" };
         footer.Cancel += (_, _) => Close("discard");
         footer.Confirm += (_, _) => Close("save");
-        Build("Save changes before exiting?", "warn", content, footer, 460);
+        Build(TitleFor(reason), "warn", content, footer, 460);
     }
 }

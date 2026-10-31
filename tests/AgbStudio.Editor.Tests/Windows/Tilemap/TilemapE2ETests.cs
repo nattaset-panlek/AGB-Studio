@@ -47,11 +47,14 @@ public class TilemapE2ETests : IDisposable
         _h.S.Commands.Execute("scene.backgroundLayers");
         _h.Pump();
         Assert.IsType<TilemapEditorPage>(_h.Win.CurrentPage);
+        // the same map keeps its unsaved edits when the page is opened again
+        Assert.Same(page.Session, MapLibrary.Of(_h.S).Active);
+        // Create › Tileset / Tilemap makes a new map and opens it
         _h.S.Commands.Execute("assets.create.tileset");
         _h.Pump();
         Assert.Equal("T-P03", _h.S.Windows.Requests[^1].Window);
-        // the same map keeps its unsaved edits when the page is opened again
-        Assert.Same(page.Session, MapLibrary.Of(_h.S).Active);
+        Assert.NotSame(page.Session, MapLibrary.Of(_h.S).Active);
+        Assert.EndsWith("Map_01.map", MapLibrary.Of(_h.S).Active!.Doc.Path);
     }
 
     // P11.28 Tileset panel with tileset dropdown, brush, stamp, random
@@ -63,6 +66,10 @@ public class TilemapE2ETests : IDisposable
         Assert.Equal("forest_tiles.png", _h.Find<InspectorField>("TilesetField").Value);
         _h.Click(_h.Find<InspectorField>("TilesetField").GetVisualDescendants().OfType<Button>().First(b => b.IsVisible));
         Assert.Equal(("T-O04", "TilesetDropdown"), _h.S.Windows.Requests[^1]);
+        // the Asset Picker opens on its Tilesets tab (T-O04) and lists the tilesets
+        var picker = Assert.IsType<AgbStudio.Editor.Windows.SceneEditor.AssetPicker>(_h.Win.Overlays.Open[^1]);
+        Assert.Equal("Tilesets", picker.Tab);
+        Assert.Contains(picker.Items, i => Path.GetFileName(i) == "forest_tiles.png");
         _h.Win.Overlays.CloseTop();
         _h.Pump();
         // brush tile from the tileset panel: click selects one tile, dragging selects a 2 x 1 stamp
