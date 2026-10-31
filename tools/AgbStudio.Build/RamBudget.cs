@@ -2,9 +2,11 @@ namespace AgbStudio.Build;
 
 /// <summary>IWRAM and EWRAM use of a linked ROM, read from its linker map and split into the rows of blueprint 10
 /// (G-HW.04). Hard limits, reported as build warnings: IWRAM code and data plus an 8 KB stack fit the 32 KB below the
-/// BIOS / IRQ area, EWRAM fits 256 KB. Each row also carries the blueprint's default budget; a row over its default is
-/// shown in report.json (<c>ramSplit</c>, <c>overBudget</c>) but is no warning, because the defaults are a plan that rows
-/// trade against the free reserve and the game cannot change the runtime's own rows.</summary>
+/// BIOS / IRQ area, EWRAM fits 256 KB. Each row also carries the blueprint's default budget (the EWRAM defaults as
+/// decided on 2026-10-31: arena 112 KB, map buffer 8 KB, save blocks 32 KB, text 4 KB, scratch 36 KB, 192 KB in all
+/// with 64 KB free); a row over its default is shown in report.json (<c>ramSplit</c>, <c>overBudget</c>) but is no
+/// warning, because the defaults are a plan that rows trade against the free reserve and the game cannot change the
+/// runtime's own rows.</summary>
 public sealed class RamBudget
 {
     public sealed record Row(string Region, string Name, long Bytes, long Budget, string Holds)
@@ -35,6 +37,12 @@ public sealed class RamBudget
         Rows.Select(r => $"{r.Region} {r.Name}: {r.Bytes / 1024.0:0.0} KB of {r.Budget / 1024} KB{(r.OverBudget ? " (over the default)" : "")} - {r.Holds}")
             .Append($"IWRAM stack space {StackSpace / 1024.0:0.0} KB (blueprint 8 KB); EWRAM {EwramStatic / 1024.0:0.0} KB of 256 KB");
 
+    /// <summary>Objects the game brings, not the runtime: generated code (<c>build/gen</c>, a test ROM's soundbank) and
+    /// the code of a runtime test ROM (<c>runtime/tests</c>). Everything else is the runtime and its libraries (libtonc,
+    /// Maxmod, libc, libgcc).</summary>
+    public static bool IsGameObject(string objectName) =>
+        objectName.Contains("_gen_", StringComparison.OrdinalIgnoreCase) || objectName.Contains("_runtime_tests_", StringComparison.OrdinalIgnoreCase);
+
     // Object files of the runtime by row (runtime/src/<folder>/<name>.cpp compiles to <...>_<folder>_<name>.o).
     static readonly string[] PoolObjects = ["core_task.o", "render_sprite.o", "framework_actor.o", "framework_bus.o"];
     static readonly string[] VmObjects = ["script_vm.o", "script_natives.o", "script_probe.o", "core_input.o"];
@@ -43,12 +51,21 @@ public sealed class RamBudget
 
     static bool From(LinkerSections.Section s, string[] objects) => objects.Any(o => s.ObjectName.EndsWith("_" + o, StringComparison.OrdinalIgnoreCase));
 
-    public static RamBudget FromMap(LinkerSections map)
+    /// <summary>The rows of a linked ROM. <paramref name="runtimeOnly"/> leaves out the game's own objects
+    /// (<see cref="IsGameObject"/>), so the rows show what the runtime itself takes (RamBudgetTests holds those in every
+    /// test ROM); the stack space and the hard limits are always those of the whole ROM.</summary>
+    public static RamBudget FromMap(LinkerSections map, bool runtimeOnly = false)
     {
         var b = new RamBudget();
         long code = 0, pools = 0, vm = 0, otherI = 0, arena = 0, maps = 0, save = 0, text = 0, scratch = 0;
         foreach (var s in map.Sections)
         {
+            if (runtimeOnly && IsGameObject(s.ObjectName))
+            {
+                if (s.Region == LinkerSections.MemoryRegion.Iwram) b.IwramStatic += s.Size;
+                else if (s.Region == LinkerSections.MemoryRegion.Ewram) b.EwramStatic += s.Size;
+                continue;
+            }
             if (s.Region == LinkerSections.MemoryRegion.Iwram)
             {
                 b.IwramStatic += s.Size;
@@ -74,10 +91,10 @@ public sealed class RamBudget
         b.Rows.Add(new Row("IWRAM", "VM + input", vm, 6 * 1024, "Event Script VM, natives, C# probes, input"));
         b.Rows.Add(new Row("IWRAM", "Other data", otherI, 4 * 1024, "not a blueprint row, measured against its free 4 KB: commit shadows, Maxmod mixing buffer, game data"));
         b.Rows.Add(new Row("EWRAM", "Screen arena", arena, 112 * 1024, "per-Screen arena; map shadows and text windows are allocated in it"));
-        b.Rows.Add(new Row("EWRAM", "Map buffer", maps, 40 * 1024, "map, affine and BG manager state outside the arena"));
+        b.Rows.Add(new Row("EWRAM", "Map buffer", maps, 8 * 1024, "map, affine and BG manager state outside the arena"));
         b.Rows.Add(new Row("EWRAM", "Save blocks", save, 32 * 1024, "save buffers"));
-        b.Rows.Add(new Row("EWRAM", "Text", text, 20 * 1024, "text, string table and menu state outside the arena"));
-        b.Rows.Add(new Row("EWRAM", "Scratch", scratch, 26 * 1024, "everything else in EWRAM: actor table, sprites, debug channel, audio buffers, game data"));
+        b.Rows.Add(new Row("EWRAM", "Text", text, 4 * 1024, "text, string table and menu state outside the arena"));
+        b.Rows.Add(new Row("EWRAM", "Scratch", scratch, 36 * 1024, "everything else in EWRAM: actor table, sprites, debug channel, audio buffers, game data"));
         return b;
     }
 }

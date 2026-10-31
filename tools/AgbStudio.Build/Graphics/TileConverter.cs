@@ -93,6 +93,17 @@ public sealed class TileSet4
         return (index, false, false);
     }
 
+    /// <summary>A copy that goes on from these tiles (P5.01 secondary tileset): the same tiles at the same indices,
+    /// and a tile added later that equals one of them (or a flip of it) is found instead of stored again. Tiles added
+    /// with <see cref="AddUnique"/> (animated) are never matched, as in the original.</summary>
+    public TileSet4 Extend()
+    {
+        var t = new TileSet4(false) { Dedupe = Dedupe };
+        t._tiles.AddRange(_tiles);
+        foreach (var kv in _lookup) t._lookup[kv.Key] = kv.Value;
+        return t;
+    }
+
     /// <summary>Adds a tile without deduplication (animated tiles must own their VRAM slot).</summary>
     public int AddUnique(byte[] pixels)
     {
@@ -136,18 +147,30 @@ public sealed class PaletteBanks
 
     /// <summary>Packs colour sets (one per tile) into as few 15-colour banks as possible (first fit, biggest first).
     /// Returns the bank of each set, or null when more than <paramref name="maxBanks"/> banks are needed.</summary>
-    public static (PaletteBanks Banks, int[] Assign)? Pack(IReadOnlyList<HashSet<ushort>> sets, int maxBanks, ushort backdrop = 0)
+    public static (PaletteBanks Banks, int[] Assign)? Pack(IReadOnlyList<HashSet<ushort>> sets, int maxBanks, ushort backdrop = 0) =>
+        Pack(sets, maxBanks, null, backdrop);
+
+    /// <summary>As <see cref="Pack(IReadOnlyList{HashSet{ushort}}, int, ushort)"/>, going on from the banks of a primary
+    /// tileset (P5.01): those come first, unchanged, and a set whose colours are all in one of them uses it; the other sets
+    /// are packed into new banks after them. <paramref name="maxBanks"/> counts the fixed banks too.</summary>
+    public static (PaletteBanks Banks, int[] Assign)? Pack(IReadOnlyList<HashSet<ushort>> sets, int maxBanks, PaletteBanks? fixedBanks, ushort backdrop = 0)
     {
         var order = Enumerable.Range(0, sets.Count).OrderByDescending(i => sets[i].Count).ToList();
         var bankSets = new List<HashSet<ushort>>();
+        var fixedCount = fixedBanks?.Banks.Count ?? 0;
+        if (fixedBanks != null)
+            foreach (var b in fixedBanks.Banks) bankSets.Add(b.Skip(1).ToHashSet());
         var assign = new int[sets.Count];
         foreach (var i in order)
         {
             if (sets[i].Count > 15) return null;
             var placed = -1;
-            // Prefer the bank that needs the fewest new colours.
+            // A fixed bank (the primary's) takes no new colours: it must already hold every colour of the set.
+            for (var b = 0; b < fixedCount && placed < 0; b++)
+                if (sets[i].IsSubsetOf(bankSets[b])) placed = b;
+            // Else the new bank that needs the fewest new colours.
             var bestNew = int.MaxValue;
-            for (var b = 0; b < bankSets.Count; b++)
+            for (var b = fixedCount; b < bankSets.Count && (placed < 0 || placed >= fixedCount); b++)
             {
                 var newColors = sets[i].Count(c => !bankSets[b].Contains(c));
                 if (bankSets[b].Count + newColors <= 15 && newColors < bestNew)
@@ -162,11 +185,12 @@ public sealed class PaletteBanks
                 bankSets.Add(new HashSet<ushort>());
                 placed = bankSets.Count - 1;
             }
-            bankSets[placed].UnionWith(sets[i]);
+            if (placed >= fixedCount) bankSets[placed].UnionWith(sets[i]);
             assign[i] = placed;
         }
         var pb = new PaletteBanks();
-        foreach (var s in bankSets)
+        if (fixedBanks != null) pb.Banks.AddRange(fixedBanks.Banks.Select(b => (ushort[])b.Clone()));
+        foreach (var s in bankSets.Skip(fixedCount))
         {
             var bank = new ushort[16];
             bank[0] = backdrop;
