@@ -38,6 +38,8 @@ public sealed class SceneEditorModel
     readonly EditorServices _s;
     SceneAssets? _assets;
     SceneItem? _selection;
+    // every selected actor when there are several (Ctrl / Shift + click, Select All), in scene order; null = _selection alone
+    List<int>? _actors;
     SnapshotAction? _lastEdit;
     string? _lastMergeKey;
     int _undoCountAfterLast = -1;
@@ -136,6 +138,7 @@ public sealed class SceneEditorModel
         Scene = file == null ? null : GameProject.Load<SceneFile>(file);
         LoadMap();
         _selection = Scene?.Actors.Count > 0 ? SceneItem.ForActor(DefaultActor()) : Scene == null ? null : new SceneItem(SceneItemKind.Scene);
+        _actors = null;
         Pan = (0, 0);
         _lastEdit = null;
         UpdateDocument();
@@ -174,6 +177,7 @@ public sealed class SceneEditorModel
         Scene = GameProject.Load<SceneFile>(ScenePath);
         LoadMap();
         if (_selection is { Kind: SceneItemKind.Actor } s && s.Index >= Scene.Actors.Count) _selection = null;
+        _actors = _selection is { Kind: SceneItemKind.Actor } && _actors?.Where(i => i < Scene.Actors.Count).ToList() is { Count: > 1 } still ? still : null;
         Changed?.Invoke();
         SelectionChanged?.Invoke();
     }
@@ -224,8 +228,9 @@ public sealed class SceneEditorModel
         get => _selection;
         set
         {
-            if (_selection == value) return;
+            if (_selection == value && _actors == null) return;
             _selection = value;
+            _actors = null;
             SelectedComponent = 0;
             SelectionChanged?.Invoke();
         }
@@ -238,6 +243,49 @@ public sealed class SceneEditorModel
     public ActorData? SelectedActor => SelectedActorIndex is var i and >= 0 ? Scene!.Actors[i] : null;
 
     public void SelectActor(int index) => Selection = index >= 0 && Scene != null && index < Scene.Actors.Count ? SceneItem.ForActor(index) : null;
+
+    // ---- several actors (Hierarchy Ctrl / Shift + click, Edit › Select All) ------------------------------------
+
+    /// <summary>
+    /// Every selected actor in scene order: several after Ctrl / Shift + click or Select All, else the selected actor
+    /// alone. <see cref="SelectedActorIndex"/> is the first one selected (the one the Inspector shows).
+    /// </summary>
+    public IReadOnlyList<int> SelectedActorIndices => _actors ?? (SelectedActorIndex is var i and >= 0 ? [i] : []);
+
+    public bool IsActorSelected(int index) => _actors?.Contains(index) ?? (index >= 0 && index == SelectedActorIndex);
+
+    /// <summary>Selects several actors; <paramref name="primary"/> (else the first) is the one the Inspector shows.</summary>
+    public void SelectActors(IEnumerable<int> indices, int? primary = null)
+    {
+        if (Scene == null) return;
+        var list = indices.Where(i => i >= 0 && i < Scene.Actors.Count).Distinct().Order().ToList();
+        if (list.Count == 0) { Selection = new SceneItem(SceneItemKind.Scene); return; }
+        SetActors(list, primary);
+        SelectedComponent = 0;
+        SelectionChanged?.Invoke();
+    }
+
+    void SetActors(List<int> list, int? primary = null)
+    {
+        _selection = SceneItem.ForActor(primary is { } p && list.Contains(p) ? p : list[0]);
+        _actors = list.Count > 1 ? list : null;
+    }
+
+    /// <summary>Ctrl + click: adds the actor to the selection, or takes it out (the first one selected stays first).</summary>
+    public void ToggleActor(int index)
+    {
+        var list = SelectedActorIndices.ToList();
+        if (!list.Remove(index)) list.Add(index);
+        SelectActors(list, SelectedActorIndex);
+    }
+
+    /// <summary>Edit › Select All in the scene: every actor (the scene when it has none).</summary>
+    public void SelectAllActors()
+    {
+        if (Scene is null) return;
+        if (Scene.Actors.Count == 0) { Selection = new SceneItem(SceneItemKind.Scene); return; }
+        SelectActors(Enumerable.Range(0, Scene.Actors.Count), SelectedActorIndex >= 0 ? SelectedActorIndex : null);
+    }
 
     // ---- view -----------------------------------------------------------------------------------------
 
@@ -318,21 +366,24 @@ public sealed class SceneEditorModel
         var beforeScene = SceneJson();
         var beforeMap = MapJson();
         var selection = _selection;
+        var actors = _actors;
         change();
         var afterScene = SceneJson();
         var afterMap = MapJson();
         if (afterScene == beforeScene && afterMap == beforeMap) { Changed?.Invoke(); return; }
         Write();
         var after = _selection;
+        var afterActors = _actors;
         if (mergeKey != null && mergeKey == _lastMergeKey && _lastEdit != null && _s.Undo.UndoCount == _undoCountAfterLast && _s.Undo.NextUndo == _lastEdit.Name)
         {
             _lastEdit.AfterScene = afterScene;
             _lastEdit.AfterMap = afterMap;
             _lastEdit.AfterSelection = after;
+            _lastEdit.AfterActors = afterActors;
         }
         else
         {
-            _lastEdit = new SnapshotAction(this, name, ScenePath, beforeScene, beforeMap, afterScene, afterMap, selection, after);
+            _lastEdit = new SnapshotAction(this, name, ScenePath, beforeScene, beforeMap, afterScene, afterMap, selection, after, actors, afterActors);
             _s.Undo.Push(_lastEdit);
             _lastMergeKey = mergeKey;
             _undoCountAfterLast = _s.Undo.UndoCount;
@@ -351,7 +402,7 @@ public sealed class SceneEditorModel
         }
     }
 
-    void Restore(string scenePath, string scene, string map, SceneItem? selection)
+    void Restore(string scenePath, string scene, string map, SceneItem? selection, List<int>? actors)
     {
         if (ScenePath == null || !string.Equals(Path.GetFullPath(ScenePath), Path.GetFullPath(scenePath), StringComparison.OrdinalIgnoreCase))
         {
@@ -362,19 +413,21 @@ public sealed class SceneEditorModel
         Write();
         _lastMergeKey = null;
         _selection = selection is { Kind: SceneItemKind.Actor } s && (Scene == null || s.Index >= Scene.Actors.Count) ? null : selection;
+        _actors = _selection is { Kind: SceneItemKind.Actor } && Scene != null && actors?.Where(i => i < Scene.Actors.Count).ToList() is { Count: > 1 } still ? still : null;
         Changed?.Invoke();
         SelectionChanged?.Invoke();
     }
 
     sealed class SnapshotAction(SceneEditorModel m, string name, string path, string beforeScene, string beforeMap, string afterScene, string afterMap,
-        SceneItem? beforeSel, SceneItem? afterSel) : IUndoableAction
+        SceneItem? beforeSel, SceneItem? afterSel, List<int>? beforeActors, List<int>? afterActors) : IUndoableAction
     {
         public string Name { get; } = name;
         public string AfterScene { get; set; } = afterScene;
         public string AfterMap { get; set; } = afterMap;
         public SceneItem? AfterSelection { get; set; } = afterSel;
-        public void Undo() => m.Restore(path, beforeScene, beforeMap, beforeSel);
-        public void Redo() => m.Restore(path, AfterScene, AfterMap, AfterSelection);
+        public List<int>? AfterActors { get; set; } = afterActors;
+        public void Undo() => m.Restore(path, beforeScene, beforeMap, beforeSel, beforeActors);
+        public void Redo() => m.Restore(path, AfterScene, AfterMap, AfterSelection, AfterActors);
     }
 
     // ---- actor operations (Hierarchy, Add Actor / Add to Scene, Actor Context Menu, Edit menu) ----------
@@ -407,6 +460,7 @@ public sealed class SceneEditorModel
             Scene.Actors.Add(actor);
             index = Scene.Actors.Count - 1;
             _selection = SceneItem.ForActor(index);
+            _actors = null;
         });
         SelectionChanged?.Invoke();
         return index;
@@ -457,36 +511,64 @@ public sealed class SceneEditorModel
         });
     }
 
-    public void DeleteActor(int index)
+    List<int> ValidActors(IEnumerable<int> indices) => Scene is { } s ? indices.Where(i => i >= 0 && i < s.Actors.Count).Distinct().Order().ToList() : [];
+
+    public void DeleteActor(int index) => DeleteActors([index]);
+
+    /// <summary>Deletes actors (and the links that start at them) in one undo step; the actor after them is selected.</summary>
+    public void DeleteActors(IReadOnlyList<int> indices)
     {
-        if (Scene == null || index < 0 || index >= Scene.Actors.Count) return;
+        var list = ValidActors(indices);
+        if (Scene == null || list.Count == 0) return;
         Edit("Delete", () =>
         {
-            var name = Scene.Actors[index].Name;
-            Scene.Actors.RemoveAt(index);
-            Scene.Links.RemoveAll(l => l.From == name);
-            _selection = Scene.Actors.Count == 0 ? new SceneItem(SceneItemKind.Scene) : SceneItem.ForActor(Math.Min(index, Scene.Actors.Count - 1));
+            foreach (var i in Enumerable.Reverse(list))
+            {
+                var name = Scene.Actors[i].Name;
+                Scene.Actors.RemoveAt(i);
+                Scene.Links.RemoveAll(l => l.From == name);
+            }
+            _actors = null;
+            _selection = Scene.Actors.Count == 0 ? new SceneItem(SceneItemKind.Scene) : SceneItem.ForActor(Math.Min(list[0], Scene.Actors.Count - 1));
         });
         SelectionChanged?.Invoke();
     }
 
-    public int DuplicateActor(int index)
+    public int DuplicateActor(int index) => DuplicateActors([index]) is [var at] ? at : -1;
+
+    /// <summary>Duplicates actors, each copy right after its actor, in one undo step; the copies are selected.</summary>
+    public IReadOnlyList<int> DuplicateActors(IReadOnlyList<int> indices)
     {
-        if (Scene == null || index < 0 || index >= Scene.Actors.Count) return -1;
-        var copy = Clone(Scene.Actors[index]);
-        var at = -1;
+        var list = ValidActors(indices);
+        if (Scene == null || list.Count == 0) return [];
+        var copies = list.Select(i => Clone(Scene.Actors[i])).ToList();
+        var made = new List<int>();
         Edit("Duplicate", () =>
         {
-            copy.Name = UniqueName(copy.Name);
-            Scene.Actors.Insert(index + 1, copy);
-            at = index + 1;
-            _selection = SceneItem.ForActor(at);
+            made.Clear();
+            for (var k = 0; k < list.Count; k++)
+            {
+                copies[k].Name = UniqueName(copies[k].Name);
+                Scene.Actors.Insert(list[k] + k + 1, copies[k]);
+                made.Add(list[k] + k + 1);
+            }
+            SetActors(made);
         });
         SelectionChanged?.Invoke();
-        return at;
+        return made;
+    }
+
+    /// <summary>Moves actors by (dx, dy) in one undo step (arrow keys on the selection).</summary>
+    public void MoveActorsBy(IReadOnlyList<int> indices, int dx, int dy)
+    {
+        var list = ValidActors(indices);
+        if (Scene == null || list.Count == 0 || (dx == 0 && dy == 0)) return;
+        Edit("Move", () => { foreach (var i in list) { Scene.Actors[i].X += dx; Scene.Actors[i].Y += dy; } });
     }
 
     public static ActorData Clone(ActorData a) => JsonSerializer.Deserialize<ActorData>(JsonSerializer.Serialize(a, GameProject.Json), GameProject.Json)!;
+
+    static LinkData Clone(LinkData l) => JsonSerializer.Deserialize<LinkData>(JsonSerializer.Serialize(l, GameProject.Json), GameProject.Json)!;
 
     public void MoveActor(int index, int x, int y, bool merge = false)
     {
@@ -542,21 +624,56 @@ public sealed class SceneEditorModel
         return true;
     }
 
-    /// <summary>Actor clipboard for Cut / Copy / Paste in the Hierarchy and viewport.</summary>
-    public ActorData? ActorClipboard { get; private set; }
+    // Actor clipboard for Cut / Copy / Paste in the Hierarchy and viewport: the actors and the links that start at them
+    List<ActorData> _clipboard = [];
+    List<LinkData> _clipboardLinks = [];
 
-    public void CopyActor(int index)
+    /// <summary>The first copied actor (null when nothing is copied).</summary>
+    public ActorData? ActorClipboard => _clipboard.FirstOrDefault();
+    public IReadOnlyList<ActorData> ActorClipboardItems => _clipboard;
+
+    public void CopyActor(int index) => CopyActors([index]);
+
+    public void CopyActors(IReadOnlyList<int> indices)
     {
-        if (Scene != null && index >= 0 && index < Scene.Actors.Count) ActorClipboard = Clone(Scene.Actors[index]);
+        var list = ValidActors(indices);
+        if (Scene == null || list.Count == 0) return;
+        _clipboard = list.Select(i => Clone(Scene.Actors[i])).ToList();
+        var names = _clipboard.Select(a => a.Name).ToHashSet();
+        _clipboardLinks = Scene.Links.Where(l => names.Contains(l.From)).Select(Clone).ToList();
     }
 
-    public int PasteActor()
+    public int PasteActor() => PasteActors() is [var first, ..] ? first : -1;
+
+    /// <summary>
+    /// Pastes the copied actors at the end of the scene in one undo step and selects them. An actor whose name is free
+    /// (Paste after Cut) comes back where it was, under its name and with its links; otherwise the copy is one grid step
+    /// down and right, with a new name.
+    /// </summary>
+    public IReadOnlyList<int> PasteActors()
     {
-        if (ActorClipboard == null) return -1;
-        var a = Clone(ActorClipboard);
-        a.X += Grid.Size;
-        a.Y += Grid.Size;
-        return AddActor(a, "Paste");
+        if (Scene == null || _clipboard.Count == 0) return [];
+        var made = new List<int>();
+        Edit("Paste", () =>
+        {
+            made.Clear();
+            foreach (var src in _clipboard)
+            {
+                var a = Clone(src);
+                if (Scene.Actors.Any(x => x.Name == a.Name))
+                {
+                    a.X += Grid.Size;
+                    a.Y += Grid.Size;
+                    a.Name = UniqueName(a.Name);
+                }
+                else Scene.Links.AddRange(_clipboardLinks.Where(l => l.From == a.Name).Select(Clone));
+                Scene.Actors.Add(a);
+                made.Add(Scene.Actors.Count - 1);
+            }
+            SetActors(made);
+        });
+        SelectionChanged?.Invoke();
+        return made;
     }
 
     // ---- tile painting (Paint tiles B, Fill, Erase) ------------------------------------------------------

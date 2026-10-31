@@ -23,12 +23,16 @@ assets from the bottom panel.
 - **Video mode chip** ("GBA · Mode 0 · 240×160"): opens Video Mode. **Undo / Redo** buttons on the right.
 - **Hierarchy** (left): the scene, Main Camera, the background layers and the actors. Actors of a group with two or
   more members sit in a folder. "Search scene…" filters the list. Click selects (the scene view and Inspector follow),
-  double click an actor to focus it in the view, F2 renames, right click opens the Actor Context Menu, + opens Add to
-  Scene.
+  Ctrl + click adds an actor to the selection or takes it out, Shift + click selects the actors from the first selected
+  one to the clicked one, and Edit › Select All (Ctrl+A) selects every actor. Cut, Copy, Paste, Duplicate and Delete
+  act on all selected actors as one undo step; after Cut, Paste puts them back where they were. Double click an actor
+  to focus it in the view, F2 renames, right click opens the Actor Context Menu, + opens Add to Scene.
 - **Document tabs**: Scene, Game, and open files. Game goes to Play Mode, a `.map` to the Tilemap Editor and a `.cs` to
   the Script Editor.
 - **Scene view**: the GBA screen, 240×160, drawn the way the game draws it.
-  - Click an actor to select it, drag to move it (it snaps to the grid when snapping is on). Arrow keys nudge it.
+  - Click an actor to select it, drag to move it (it snaps to the grid when snapping is on). Arrow keys nudge it (or
+    every selected actor). Each selected actor has an outline; the first one selected also has corner handles and its
+    name.
   - With Paint tiles, click or drag to paint map cells; with Erase, to empty them; with Fill, click to fill the
     connected cells that match the clicked one. The brush is the tile (or stamp) chosen in the Tilemap Editor when it
     has this map open, otherwise the first named tile of the tileset. The painted layer is the layer selected in the
@@ -38,7 +42,8 @@ assets from the bottom panel.
   - Pan with the middle mouse button, Space + drag, or the mouse wheel. Ctrl + wheel zooms from 100% to 800%.
   - Chips at the bottom: scene name and size (opens Scene Settings), cursor position, Grid (opens Grid & Snap), zoom
     (opens the Zoom menu).
-- **Inspector** (right): what is selected.
+- **Inspector** (right): what is selected. With several actors selected it says "N actors selected" and shows the
+  first one's values read-only.
   - Actor: name, layer and priority; Transform (position); Sprite (Sheet opens the Asset Picker, Animation opens the
     Animation List, frames, palette opens the Palette Manager); each behaviour with its fields; Collider; script
     fields (double click a script heading to open it); Add Component (opens the Component Picker). The "…" menu at
