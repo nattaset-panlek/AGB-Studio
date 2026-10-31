@@ -43,6 +43,8 @@ public static class Packager
         File.WriteAllText(Path.Combine(stage, RootMarker), Version + "\n");
         var bin = Path.Combine(stage, "bin");
         Directory.CreateDirectory(bin);
+        // The Launcher's "What's new" reads release-notes.md next to AGBStudio.exe (P16.05).
+        File.Copy(Path.Combine(root, "docs", "RELEASE-NOTES.md"), Path.Combine(bin, "release-notes.md"), true);
         // D-13: no online service is configured out of the box; editing this file points Help at real addresses.
         File.WriteAllText(Path.Combine(bin, "editor.json"),
             "{\n  \"websiteUrl\": \"\",\n  \"bugUrl\": \"\",\n  \"updateFeed\": \"\",\n  \"communityUrl\": \"\",\n  \"releaseNotesUrl\": \"\"\n}\n");
