@@ -37,7 +37,9 @@ public static class RuntimeTests
             var gen = Path.Combine(BuildDir, "gen", name);
             var inputs = Directory.EnumerateFiles(audioDir).Where(f => f.EndsWith(".mod") || f.EndsWith(".xm") || f.EndsWith(".wav")).Order().ToList();
             var sb = Audio.SoundbankBuilder.Build(new Toolchain(), inputs, gen);
-            if (!sb.Success) throw new InvalidOperationException("mmutil failed: " + sb.Log);
+            if (!sb.Success)
+                throw new InvalidOperationException($"mmutil could not make the soundbank of runtime test '{name}' from {audioDir}: " +
+                    $"{sb.Log.Trim().Split('\n')[^1].Trim().TrimEnd('.')}. Check that the files there are valid MOD, XM or WAV and that devkitPro's tools folder has mmutil.");
             t.Sources.Add(sb.CppPath);
             t.IncludeDirs.Add(gen);
         }

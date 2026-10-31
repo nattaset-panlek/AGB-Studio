@@ -59,9 +59,9 @@ public static class TextCodegen
             var (width, maxLines) = box(keys[k]);
             var layout = TextLayout.Layout(text, font.Font, width, thaiWrap);
             foreach (var m in layout.Missing)
-                diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]}: '{char.ConvertFromUtf32(m)}' (U+{m:X4}) is not in font {font.Font.Name}."));
+                diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]}: '{char.ConvertFromUtf32(m)}' (U+{m:X4}) is not in font {font.Font.Name}, so it is not drawn. Add it in Font Manager · Add characters."));
             if (layout.Lines > maxLines)
-                diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]} ({lang}) needs {layout.Lines} lines; the box shows {maxLines}."));
+                diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]} ({lang}) needs {layout.Lines} lines, but its text box shows {maxLines}, so the rest does not fit. Shorten the text, or give the key more lines in Localization."));
             var glyphs = layout.Glyphs.Where(g => font.Index.ContainsKey(g.CodePoint) && font.Font.Get(g.CodePoint)!.Width > 0).ToList();
             sb.Append($"const agb::data::PlacedGlyph r{k}g[] = {{");
             foreach (var g in glyphs)

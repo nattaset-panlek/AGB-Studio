@@ -64,7 +64,7 @@ internal sealed partial class CppTranslator
                     while (coll is IConversionOperation cv) coll = cv.Operand;
                     if (coll.Type is not IArrayTypeSymbol)
                     {
-                        Error(op, "foreach works over arrays only.");
+                        Error(op, "foreach works over arrays only in GBA scripts. Use a for loop with an index for other collections.");
                         break;
                     }
                     var v = fe.Locals.FirstOrDefault();
@@ -78,7 +78,7 @@ internal sealed partial class CppTranslator
                 Switch(sw, probe, file, line);
                 break;
             case IReturnOperation r:
-                if (r.Kind != OperationKind.Return) { Error(op, "yield is not supported."); break; }
+                if (r.Kind != OperationKind.Return) { Error(op, "yield is not supported in GBA scripts. Fill an array instead, or use a [Cutscene] to wait across frames."); break; }
                 _w.Line(probe + (r.ReturnedValue != null ? "return " + Expr(r.ReturnedValue).Text + ";" : "return;"), file, line);
                 break;
             case IBranchOperation br:
@@ -105,7 +105,7 @@ internal sealed partial class CppTranslator
                 Error(op, "Local functions are not supported; make it a method of the class.");
                 break;
             default:
-                Error(op, $"This statement is not supported in GBA scripts ({op.Kind}).");
+                Error(op, "This kind of statement can't be used in GBA scripts. Rewrite it with if, loops, switch, assignments and method calls.");
                 break;
         }
     }
@@ -191,7 +191,7 @@ internal sealed partial class CppTranslator
     void LocalDecl(IVariableDeclaratorOperation v, IVariableDeclarationOperation d, string probe, string file, int line)
     {
         var sym = v.Symbol;
-        if (sym.IsRef) { Error(v, "ref locals are not supported."); return; }
+        if (sym.IsRef) { Error(v, "ref locals are not supported in GBA scripts. Copy the value into a normal variable and write it back."); return; }
         var init = v.Initializer?.Value ?? d.Initializer?.Value;
         if (sym.Type is IArrayTypeSymbol arr)
         {
@@ -273,7 +273,7 @@ internal sealed partial class CppTranslator
                         UnaryOperatorKind.BitwiseNegation => "~",
                         _ => null,
                     };
-                    if (sym == null) { Error(op, $"The operator {u.OperatorKind} is not supported."); return e; }
+                    if (sym == null) { Error(op, $"The operator {ScriptModel.OperatorText(u.OperatorKind)} is not supported in GBA scripts. Write the step as a method call instead."); return e; }
                     return new CppExpr(sym + e.At(Unary), Unary);
                 }
             case IConditionalOperation c:
@@ -296,7 +296,7 @@ internal sealed partial class CppTranslator
                         if (ca.Parent is IExpressionStatementOperation) return new CppExpr(ExprStatement(ca), Assign);
                         Error(op, "This property can only be changed in a statement of its own.");
                     }
-                    if (ca.Target.Type?.SpecialType == SpecialType.System_String) { Error(op, "Strings cannot be joined at runtime on GBA."); return new CppExpr("0", Primary); }
+                    if (ca.Target.Type?.SpecialType == SpecialType.System_String) { Error(op, "Strings cannot be joined at runtime on GBA. Use Debug.Log($\"...\") to show values, or string keys from Localization for text."); return new CppExpr("0", Primary); }
                     var sym = OperatorSymbol(ca.OperatorKind, enumOp: false);
                     var target = Expr(ca.Target);
                     var value = Expr(ca.Value);
@@ -330,7 +330,7 @@ internal sealed partial class CppTranslator
             case IObjectCreationOperation oc:
                 return ObjectCreation(oc);
             case IArrayElementReferenceOperation ae:
-                if (ae.Indices.Length != 1) { Error(op, "Only one-dimensional arrays are supported."); return new CppExpr("0", Primary); }
+                if (ae.Indices.Length != 1) { Error(op, "Only one-dimensional arrays are supported in GBA scripts. Use one array of width × height and index it as y * width + x."); return new CppExpr("0", Primary); }
                 return new CppExpr($"{Expr(ae.ArrayReference).At(Primary)}[{Expr(ae.Indices[0]).Text}]", Primary);
             case IDefaultValueOperation dv:
                 return new CppExpr(dv.Type != null ? DefaultValue(dv.Type) : "{}", Primary);
@@ -356,13 +356,13 @@ internal sealed partial class CppTranslator
                 Error(op, "?. and ?? are not supported; check for null with an if statement.");
                 return new CppExpr("0", Primary);
             case IThrowOperation:
-                Error(op, "Exceptions are not available on GBA (GAE004).");
+                Error(op, "Exceptions are not available on GBA (GAE004): remove try / throw.");
                 return new CppExpr("0", Primary);
             case IArrayCreationOperation or ICollectionExpressionOperation:
                 Error(op, "Arrays can only be created where a field or local variable is declared (the GBA has no heap).");
                 return new CppExpr("nullptr", Primary);
             default:
-                Error(op, $"This expression is not supported in GBA scripts ({op.Kind}).");
+                Error(op, "This kind of expression can't be used in GBA scripts. Split it into simpler steps.");
                 return new CppExpr("0", Primary);
         }
     }
@@ -422,7 +422,7 @@ internal sealed partial class CppTranslator
                 return new CppExpr($"agb::fixed({Expr(operand).Text})", Primary);
             var map = ScriptModel.Cpp(conv.OperatorMethod);
             if (map != null) return Expand(map, null, [Expr(operand)], null, null, conv);
-            Error(conv, $"The conversion to '{to?.ToDisplayString()}' is not supported.");
+            Error(conv, $"The conversion to '{to?.ToDisplayString()}' is not supported on GBA. Convert between int, fixed and enums only.");
             return Expr(operand);
         }
         if (to == null || from == null || conv.Conversion.IsIdentity) return Expr(operand);
@@ -445,7 +445,7 @@ internal sealed partial class CppTranslator
         }
         if (to.SpecialType == SpecialType.System_Object || to.TypeKind == TypeKind.Interface || from.SpecialType == SpecialType.System_Object)
         {
-            Error(conv, "Boxing (object, interfaces) is not available on GBA.");
+            Error(conv, "A value can't be stored as object or as an interface on GBA (that would need the heap). Use the value's own type.");
             return Expr(operand);
         }
         return Expr(operand);
@@ -595,7 +595,7 @@ internal sealed partial class CppTranslator
         if (_m.IsUser(ct)) return new CppExpr(Receiver(fr.Instance, f.IsStatic, ct) + Names.Cpp(f.Name), Primary);
         if (f.IsConst && f.HasConstantValue) return Constant(f.ConstantValue, f.Type);
         if (ScriptModel.Cpp(ct) != null && !f.IsStatic) return new CppExpr(Receiver(fr.Instance, false, ct) + f.Name, Primary);
-        Error(fr, $"'{ct.Name}.{f.Name}' is not available on GBA.");
+        Error(fr, $"'{ct.Name}.{f.Name}' is not available on GBA. Scripts can use the GBA API and their own classes.");
         return new CppExpr("0", Primary);
     }
 
@@ -606,14 +606,14 @@ internal sealed partial class CppTranslator
         if (_m.IsUser(ct))
         {
             if (IsAutoProperty(p)) return new CppExpr(Receiver(pr.Instance, p.IsStatic, ct) + Names.Cpp(p.Name), Primary);
-            if (p.GetMethod == null) { Error(pr, $"'{p.Name}' has no getter."); return new CppExpr("0", Primary); }
+            if (p.GetMethod == null) { Error(pr, $"'{p.Name}' can only be set, not read. Keep its value in a field of your own."); return new CppExpr("0", Primary); }
             return new CppExpr(Receiver(pr.Instance, p.IsStatic, ct) + "get_" + Names.Cpp(p.Name) + "()", Primary);
         }
         if (p.Name == "Length" && pr.Instance?.Type is IArrayTypeSymbol)
             return new CppExpr($"agb_countof({Expr(pr.Instance).Text})", Primary);
         var map = ScriptModel.Cpp(p);
         if (map != null) return Expand(map, pr.Instance, ArgsOf(p.GetMethod ?? p.SetMethod!, pr.Arguments), null, null, pr);
-        Error(pr, $"'{ct.Name}.{p.Name}' is not available on GBA.");
+        Error(pr, $"'{ct.Name}.{p.Name}' is not available on GBA. Scripts can use the GBA API and their own classes.");
         return new CppExpr("0", Primary);
     }
 
@@ -621,7 +621,7 @@ internal sealed partial class CppTranslator
     {
         var type = oc.Type as INamedTypeSymbol;
         var ctor = oc.Constructor;
-        if (type == null || ctor == null) { Error(oc, "This object cannot be created."); return new CppExpr("nullptr", Primary); }
+        if (type == null || ctor == null) { Error(oc, $"'{ScriptModel.Excerpt(oc.Syntax)}' can't be created on GBA. Create objects of your own classes or of the GBA API."); return new CppExpr("nullptr", Primary); }
         if (oc.Initializer != null && oc.Initializer.Initializers.Length > 0)
             Error(oc, "Object initializers { ... } are not supported; set the fields after creating the object.");
         var map = ScriptModel.Cpp(ctor);
@@ -636,7 +636,7 @@ internal sealed partial class CppTranslator
             _diag.Error("AGB0120", oc.Syntax.GetLocation(), $"Behaviours are created by the scene, not with new. Add {type.Name} to an actor in the Inspector, or use Get<{type.Name}>().");
             return new CppExpr("nullptr", Primary);
         }
-        if (!_m.IsUser(type)) { Error(oc, $"'{type.Name}' cannot be created on GBA."); return new CppExpr("nullptr", Primary); }
+        if (!_m.IsUser(type)) { Error(oc, $"'{type.Name}' can't be created on GBA. Create objects of your own classes or of the GBA API."); return new CppExpr("nullptr", Primary); }
         // Classes live in the scene's memory arena (no garbage collector): created once, freed when the scene ends.
         return new CppExpr($"agb::screenArena().make<{name}>({string.Join(", ", args.Select(a => a.Text))})", Primary);
     }
@@ -690,7 +690,7 @@ internal sealed partial class CppTranslator
             return LogInterpolated(interp);
         if (_m.IsUser(m.ContainingType))
         {
-            if (m.MethodKind == MethodKind.LocalFunction) { Error(inv, "Local functions are not supported."); return new CppExpr("0", Primary); }
+            if (m.MethodKind == MethodKind.LocalFunction) { Error(inv, "Local functions are not supported; make it a method of the class."); return new CppExpr("0", Primary); }
             var args = Args(m, inv.Arguments);
             var recv = Receiver(inv.Instance, m.IsStatic, m.ContainingType);
             return new CppExpr($"{recv}{MethodName(m)}({string.Join(", ", args.Select(a => a.Text))})", Primary);
@@ -722,7 +722,7 @@ internal sealed partial class CppTranslator
         foreach (var a in Args(m, inv.Arguments).Zip(m.Parameters))
             args.Add(_m.IsFixed(a.Second.Type) ? a.First.At(Primary) + ".raw" : a.First.Text);
         var name = $"agb_cutscene::{Names.Identifier(m.ContainingType.Name)}_{Names.Identifier(m.Name)}";
-        if (id < 0) Error(inv, $"Cutscene {m.Name} was not compiled.");
+        if (id < 0) Error(inv, $"Cutscene {m.Name} could not be compiled (see its own error), so it can't be started here. Fix that error first.");
         return new CppExpr($"agb_start_script({name}{string.Concat(args.Select(a => ", " + a))})", Primary);
     }
 
@@ -747,7 +747,7 @@ internal sealed partial class CppTranslator
                         else if (t?.SpecialType == SpecialType.System_String) { fmt.Append("%s"); args.Add(x.Text); }
                         else if (t?.TypeKind == TypeKind.Enum || t?.SpecialType is >= SpecialType.System_Char and <= SpecialType.System_UInt64)
                         { fmt.Append("%ld"); args.Add($"static_cast<long>({x.Text})"); }
-                        else { Error(ip, "Debug.Log can show int, bool, fixed, enum and string values."); }
+                        else { Error(ip, $"Debug.Log can't show '{ScriptModel.Excerpt(e.Syntax)}' ({t?.Name ?? "no type"}). It shows int, bool, fixed, enum and string values."); }
                         break;
                     }
             }

@@ -9,9 +9,12 @@ public static class Program
     public static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        if (args.Length == 0)
+        if (args.Length == 0) return Usage("agb needs a command.");
+        // G-ERR.01: a command without its arguments says which ones it needs instead of an index error.
+        if (s_usage.TryGetValue(args[0], out var usage) && args.Length - 1 < s_required.GetValueOrDefault(args[0]))
         {
-            Console.Error.WriteLine("usage: agb romtest <rom.gba> [--frames N] [--shot out.png] [--memmap]");
+            Console.Error.WriteLine($"error: agb {args[0]} needs more arguments.");
+            Console.Error.WriteLine($"usage: agb {args[0]} {usage}");
             return 64;
         }
         try
@@ -37,15 +40,35 @@ public static class Program
         }
     }
 
+    // The commands and their arguments, for the usage text and the missing-argument check.
+    static readonly Dictionary<string, string> s_usage = new()
+    {
+        ["build"] = "[project folder] [--release] [--clean] [--verbose]",
+        ["romtest"] = "<rom.gba> [--frames N] [--shot out.png] [--memmap] [--dumpsave]",
+        ["runtime-test"] = "[test ...] [--verbose] [--shots]",
+        ["sample"] = "<mini|skyhopper> <folder>",
+        ["template"] = "<template id> <folder> [name]",
+        ["package"] = "[output folder]",
+        ["lint"] = "[repository folder]",
+        ["text-preview"] = "<font.ttf> <size px> <box width> <out.png> <text...>",
+        ["make-test-audio"] = "<folder>",
+    };
+
+    static readonly Dictionary<string, int> s_required = new()
+    {
+        ["romtest"] = 1, ["sample"] = 2, ["template"] = 2, ["text-preview"] = 5, ["make-test-audio"] = 1,
+    };
+
     static int Usage(string message)
     {
-        Console.Error.WriteLine(message);
+        Console.Error.WriteLine(message + " Run one of these commands:");
+        foreach (var (command, arguments) in s_usage) Console.Error.WriteLine($"  agb {command} {arguments}");
         return 64;
     }
 
     static int RomTest(string[] args)
     {
-        var rom = args.FirstOrDefault(a => !a.StartsWith("--")) ?? throw new ArgumentException("Missing ROM path.");
+        var rom = args.FirstOrDefault(a => !a.StartsWith("--")) ?? throw new ArgumentException($"agb romtest needs the ROM to run. usage: agb romtest {s_usage["romtest"]}");
         var frames = int.Parse(Option(args, "--frames") ?? "600");
         var shot = Option(args, "--shot");
         using var core = new LibretroCore();
@@ -78,7 +101,7 @@ public static class Program
         if (!build.Success)
         {
             Console.WriteLine(build.Log);
-            Console.WriteLine("build failed");
+            Console.WriteLine("The runtime test ROMs could not be built (the devkitARM output is above). Fix its first error, then run agb runtime-test again.");
             return 1;
         }
         Console.WriteLine($"built {names.Count} test ROMs in {build.Elapsed.TotalSeconds:0.0} s");
@@ -113,7 +136,7 @@ public static class Program
         foreach (var d in result.Diagnostics) Console.WriteLine($"{d.Severity.ToString().ToLowerInvariant()}: {d}");
         Console.WriteLine(result.Success
             ? $"Build OK in {result.Elapsed.TotalSeconds:0.00} s: {result.RomPath} ({new FileInfo(result.RomPath).Length / 1024} KB; {result.AssetsConverted} assets converted, {result.AssetsCached} cached)"
-            : $"Build failed at {result.FailedStep}");
+            : $"Build failed at {result.FailedStep}: {result.Errors.Count()} errors above. Fix them, then run agb build again.");
         return result.Success ? 0 : 1;
     }
 
@@ -125,7 +148,7 @@ public static class Program
         {
             "mini" => AgbStudio.Build.Content.SampleProjects.CreatePlatformerMini(dir),
             "skyhopper" => AgbStudio.Build.Content.SkyHopper.Create(dir),
-            _ => throw new ArgumentException($"Unknown sample '{kind}'."),
+            _ => throw new ArgumentException($"Unknown sample '{kind}'. Samples: mini, skyhopper."),
         };
         Console.WriteLine($"created {p.ProjectPath}");
         return 0;
@@ -134,7 +157,8 @@ public static class Program
     // agb template <id> <dir> [name]: creates a project from a New Project template (TemplateCatalog).
     static int Template(string[] args)
     {
-        var t = AgbStudio.Build.Content.Templates.TemplateCatalog.Find(args[0]) ?? throw new ArgumentException($"Unknown template '{args[0]}'.");
+        var t = AgbStudio.Build.Content.Templates.TemplateCatalog.Find(args[0]) ?? throw new ArgumentException(
+            $"Unknown template '{args[0]}'. Templates: {string.Join(", ", AgbStudio.Build.Content.Templates.TemplateCatalog.All.Select(x => x.Id))}.");
         var p = t.Create(args[1], args.Length > 2 ? args[2] : t.Name);
         Console.WriteLine($"created {p.ProjectPath} ({AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p)})");
         return 0;

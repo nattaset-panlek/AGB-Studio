@@ -147,8 +147,8 @@ public sealed class AnalyzerTests
             "GAE002 float or double — the GBA has no FPU, use fixed",
             "GAE003 new inside Update — allocate in Start or use a pool",
             "GAE004 try / throw — exceptions are not supported",
-            "GAE005 string concatenation in a loop",
-            "GAE006 lambda that captures variables",
+            "GAE005 string concatenation in a loop (a new string every pass)",
+            "GAE006 lambda that captures variables (hidden allocation)",
         ], titles);
         Assert.Equal("The GBA has no FPU, so floats are emulated and very slow. Use the 24.8 fixed-point type instead — same syntax, runs at full speed.",
             AgbStudio.Analyzers.GaeRules.FloatType.Description.ToString());

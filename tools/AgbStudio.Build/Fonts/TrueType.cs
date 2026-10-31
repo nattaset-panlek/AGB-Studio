@@ -19,7 +19,7 @@ public sealed class TrueType
     {
         _d = data;
         Name = name;
-        if (U32(0) != 0x00010000 && U32(0) != 0x74727565) throw new InvalidDataException($"{name} is not a TrueType font (CFF / OTF outlines are not supported).");
+        if (U32(0) != 0x00010000 && U32(0) != 0x74727565) throw new InvalidDataException($"{name} is not a TrueType font: it is an OpenType font with CFF outlines, or not a font file, and AGB Studio reads only TrueType outlines. Use the .ttf version of the font.");
         var n = U16(4);
         for (var i = 0; i < n; i++)
         {
@@ -28,7 +28,7 @@ public sealed class TrueType
             _tables[tag] = ((int)U32(rec + 8), (int)U32(rec + 12));
         }
         foreach (var t in new[] { "head", "maxp", "cmap", "hhea", "hmtx", "loca", "glyf" })
-            if (!_tables.ContainsKey(t)) throw new InvalidDataException($"{name} has no '{t}' table.");
+            if (!_tables.ContainsKey(t)) throw new InvalidDataException($"{name} is damaged or incomplete (its '{t}' table is missing), so it can't be read. Download the font again, or use another one.");
         var head = _tables["head"].Offset;
         UnitsPerEm = U16(head + 18);
         _locaFormat = S16(head + 50);
@@ -61,7 +61,7 @@ public sealed class TrueType
             if (!unicode) continue;
             if (format == 12 || (format == 4 && bestFormat != 12)) { best = off; bestFormat = format; }
         }
-        if (best < 0) throw new InvalidDataException($"{Name} has no Unicode cmap.");
+        if (best < 0) throw new InvalidDataException($"{Name} has no Unicode character map, so its letters can't be found. Use a Unicode .ttf font.");
         if (bestFormat == 4)
         {
             var segX2 = U16(best + 6);

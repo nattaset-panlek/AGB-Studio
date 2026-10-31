@@ -36,6 +36,8 @@ public static class SpriteConverter
                 if (meta.TrimEmptyFrames && img.IsEmpty(c * fw, r * fh, fw, fh)) continue;
                 frames.Add((c * fw, r * fh));
             }
+        if (fw > 64 || fh > 64)
+            throw new InvalidDataException($"Sprite {name}: frames are {fw}×{fh} pixels, but the biggest GBA sprite is 64×64. Set a frame size of 64×64 or less in the Sprite Editor.");
         var (ow, oh) = Gba.FitOam(fw, fh);
         var oam = Gba.OamSize(ow, oh)!.Value;
 

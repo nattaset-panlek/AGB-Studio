@@ -18,7 +18,7 @@ TaskId create(void (*func)(Task&), u8 priority) {
         g_tasks[i].id = static_cast<u8>(i);
         return i;
     }
-    debug::warnOnce(2, "task pool is full (16 tasks); the new task was not started");
+    debug::warnOnce(2, "16 tasks are already running, so the new task was not started. Let tasks finish before starting more.");
     return kNone;
 }
 

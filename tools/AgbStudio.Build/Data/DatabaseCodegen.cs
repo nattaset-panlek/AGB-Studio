@@ -170,7 +170,7 @@ public static class DatabaseCodegen
             case "text":
                 if (!f.Localized) return Cpp.Str(raw);
                 var key = stringKey(raw);
-                if (key < 0 && raw.Length > 0) warn($"string key '{raw}' is not in the Localization tables.");
+                if (key < 0 && raw.Length > 0) warn($"string key '{raw}' is not in the Localization tables, so the first string is used. Add the key in Localization, or fix the cell in Database.");
                 return Math.Max(0, key).ToString(CultureInfo.InvariantCulture);
             case "enum":
                 var idx = f.EnumValues.IndexOf(raw);
@@ -182,7 +182,7 @@ public static class DatabaseCodegen
                 return f.EnumValues.Count == 0 ? "{}" : $"{st}{Cpp.Ident(Capital(f.Name))}::{Cpp.Ident(f.EnumValues[idx])}";
             case "sprite":
                 if (raw.Length == 0) return "nullptr";
-                if (!spriteExists(raw)) { warn($"sprite '{raw}' is not in assets/sprites."); return "nullptr"; }
+                if (!spriteExists(raw)) { warn($"sprite '{raw}' is not in assets/sprites, so no sprite is used. Import the sprite, or fix the cell in Database."); return "nullptr"; }
                 return $"&agbasset_sprite_{Cpp.Ident(raw)}";
             case "sound":
                 return Math.Max(0, soundId(raw)).ToString(CultureInfo.InvariantCulture);
@@ -192,7 +192,7 @@ public static class DatabaseCodegen
             case "reference":
                 var target = tables.FirstOrDefault(t => t.Name == f.Reference);
                 var ri = target?.Rows.FindIndex(r => r.GetValueOrDefault(target.KeyField) == raw) ?? -1;
-                if (ri < 0 && raw.Length > 0) warn($"'{raw}' is not a row of {f.Reference}.");
+                if (ri < 0 && raw.Length > 0) warn($"'{raw}' is not a row of {f.Reference}, so its first row is used. Pick an existing row in the cell in Database.");
                 return Math.Max(0, ri).ToString(CultureInfo.InvariantCulture);
             default:
                 return "0";
@@ -294,7 +294,15 @@ public static class CsvImporter
             var fd = table.Fields.First(f => f.Name == field);
             def = string.IsNullOrEmpty(fd.Default) ? (fd.Type is "int" or "fixed" ? "0" : "empty") : fd.Default;
             var rowsText = list.Count == 1 ? $"Row {list[0]}" : $"Rows {string.Join(", ", list.Take(list.Count - 1))} and {list[^1]}";
-            warnings.Add($"{rowsText}: {what} — will use the default {def}.");
+            var expected = fd.Type switch
+            {
+                "int" => "a whole number",
+                "fixed" => "a number",
+                "bool" => "true or false",
+                "enum" => "one of " + string.Join(", ", fd.EnumValues),
+                _ => "a valid value",
+            };
+            warnings.Add($"{rowsText}: {what}, not {expected} — will use the default {def}. Fix the CSV and choose it again to keep the value.");
         }
         return new Result(rows, warnings, columns);
     }

@@ -77,7 +77,7 @@ const data::TextRun* run(u16 key) {
     if (!g_tables) return nullptr;
     if (translated(key, g_lang)) return g_tables[g_lang]->runs[key];
     if (translated(key, g_fallback)) return g_tables[g_fallback]->runs[key];
-    debug::logf("warning: string %u has no text in any language", key);
+    debug::logf("warning: string key number %u has no text in any language, so nothing is shown. Add its text in Localization and rebuild.", key);
     return nullptr;
 }
 
@@ -128,7 +128,7 @@ int pickBg() {
     if (g_style.bg <= last && !render::bg::visible(g_style.bg)) return g_style.bg;
     for (int bg = last; bg >= 0; --bg)
         if (!render::bg::visible(bg)) return bg;
-    debug::logf("warning: no free background layer for text; it shares BG%d with the scene", g_style.bg);
+    debug::logf("warning: no free background layer for text, so it shares BG%d with the scene and may cover it. Leave one layer free in this scene.", g_style.bg);
     return g_style.bg;
 }
 

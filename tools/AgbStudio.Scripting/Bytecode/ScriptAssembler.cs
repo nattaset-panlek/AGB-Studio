@@ -13,6 +13,10 @@ internal sealed class ScriptAssembler
 
     public ScriptAssembler(OpcodeTable ops) => _ops = ops;
 
+    /// <summary>A jump spans more than the 32 KB a VM jump can reach; BytecodeCompiler names the cutscene (G-ERR.01).</summary>
+    public sealed class TooLongException() : InvalidOperationException(
+        "A cutscene is too long to compile: a jump in it spans more than 32 KB of code. Split it into smaller cutscenes.");
+
     public int Pc => _code.Count;
 
     void Stack(int delta)
@@ -117,7 +121,7 @@ internal sealed class ScriptAssembler
             var target = _labels[label];
             if (target < 0) throw new InvalidOperationException("Jump to a label that was never placed.");
             var rel = target - (at + 2);
-            if (rel is < short.MinValue or > short.MaxValue) throw new InvalidOperationException("Script too long: a jump exceeds 32 KB.");
+            if (rel is < short.MinValue or > short.MaxValue) throw new TooLongException();
             _code[at] = (byte)(rel & 0xFF);
             _code[at + 1] = (byte)((rel >> 8) & 0xFF);
         }

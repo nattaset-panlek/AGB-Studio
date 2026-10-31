@@ -45,7 +45,7 @@ public static partial class DialogueCompiler
             var method = Names.Identifier(c.Id.Length > 0 ? c.Id : "conversation" + ci);
             if (!methods.Add(method))
             {
-                diagnostics.Add(new ScriptDiagnostic("AGB0400", ScriptSeverity.Error, $"Two conversations are named '{c.Id}'.", path, Line(f, $"/conversations/{ci}"), 1));
+                diagnostics.Add(new ScriptDiagnostic("AGB0400", ScriptSeverity.Error, $"Two conversations are named '{c.Id}', so scripts can't tell which one to start. Rename one in the Dialogue Editor.", path, Line(f, $"/conversations/{ci}"), 1));
                 continue;
             }
             var ids = c.Lines.Select((l, i) => l.Id ?? $"line{i}").ToList();
@@ -64,7 +64,7 @@ public static partial class DialogueCompiler
                 else Say(body, f, c, l, speakers, labels, at, path, file, diagnostics, ci, li);
                 if (l.Next != null)
                 {
-                    if (!labels.Contains(l.Next)) diagnostics.Add(new ScriptDiagnostic("AGB0401", ScriptSeverity.Error, $"Line '{l.Next}' does not exist in conversation '{c.Id}' (Next).", path, Line(f, at), 1));
+                    if (!labels.Contains(l.Next)) diagnostics.Add(new ScriptDiagnostic("AGB0401", ScriptSeverity.Error, $"Next goes to line '{l.Next}', which does not exist in conversation '{c.Id}'. Pick an existing line for Next.", path, Line(f, at), 1));
                     else body.Append($"goto {Label(l.Next)};");
                 }
                 var text = body.ToString().Trim();
@@ -120,7 +120,7 @@ public static partial class DialogueCompiler
             if (ch.Goto != null)
             {
                 if (!labels.Contains(ch.Goto))
-                    diags.Add(new ScriptDiagnostic("AGB0401", ScriptSeverity.Error, $"Choice {i + 1} goes to line '{ch.Goto}', which does not exist in conversation '{c.Id}'.", path, Line(f, $"{at}/choices/{i}"), 1));
+                    diags.Add(new ScriptDiagnostic("AGB0401", ScriptSeverity.Error, $"Choice {i + 1} goes to line '{ch.Goto}', which does not exist in conversation '{c.Id}'. Pick an existing line for the choice.", path, Line(f, $"{at}/choices/{i}"), 1));
                 else sb.Append($"goto {Label(ch.Goto)}; ");
             }
             else if (ch.Scene != null) sb.Append($"Scene.Load({Str(ch.Scene)}); return; ");

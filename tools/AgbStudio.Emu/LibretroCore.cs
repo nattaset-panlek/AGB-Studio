@@ -111,7 +111,7 @@ public sealed unsafe class LibretroCore : IDisposable
         Marshal.Copy(rom, 0, _romData, rom.Length);
         _romPath = Marshal.StringToHGlobalAnsi(path);
         var info = new GameInfo { Path = _romPath, Data = _romData, Size = (nuint)rom.Length, Meta = IntPtr.Zero };
-        if (_loadGame(&info) == 0) throw new InvalidOperationException("The emulator core could not load the ROM.");
+        if (_loadGame(&info) == 0) throw new InvalidOperationException($"The emulator could not start {Path.GetFileName(path)}: it is not a GBA ROM it can run. Build the ROM again; if it still fails, the file is damaged.");
         SystemAvInfo av;
         _getAvInfo(&av);
         Fps = av.Fps;
@@ -177,14 +177,14 @@ public sealed unsafe class LibretroCore : IDisposable
         var size = _serializeSize();
         var buf = new byte[(int)size];
         fixed (byte* p = buf)
-            if (_serialize((IntPtr)p, size) == 0) throw new InvalidOperationException("Save state failed.");
+            if (_serialize((IntPtr)p, size) == 0) throw new InvalidOperationException("The emulator could not make a save state of the running game. Try again; if it keeps failing, restart Play Mode.");
         return buf;
     }
 
     public void LoadState(byte[] state)
     {
         fixed (byte* p = state)
-            if (_unserialize((IntPtr)p, (nuint)state.Length) == 0) throw new InvalidOperationException("Load state failed.");
+            if (_unserialize((IntPtr)p, (nuint)state.Length) == 0) throw new InvalidOperationException("The emulator could not load this save state; it may come from another build of the game. Make a new save state.");
     }
 
     public void Dispose()

@@ -40,7 +40,7 @@ bool load(int bg, const data::MapLayer& layer) {
     for (int cb = 0; cb < 4 && charBlock < 0; ++cb)
         if (bg::uniqueTilesInBlock(cb) == 0) charBlock = cb;
     if (charBlock < 0) {
-        debug::log("warning: no empty character block for an affine layer");
+        debug::log("warning: no free 16 KB block of background memory for a rotate / scale layer, so it is not shown. Use fewer or smaller layers in this scene.");
         return false;
     }
     const auto placement = bg::loadTiles(layer.tileset->gfx, charBlock);

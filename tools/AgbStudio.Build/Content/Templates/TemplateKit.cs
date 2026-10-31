@@ -11,7 +11,7 @@ public static class TemplateKit
     public static GameProject NewProject(string dir, string name, string title, string romTitle, string gameCode, string startScene, Action<ProjectFile>? configure = null)
     {
         if (Directory.Exists(dir) && Directory.EnumerateFileSystemEntries(dir).Any())
-            throw new IOException($"The folder {dir} is not empty.");
+            throw new IOException($"The folder {dir} is not empty, and a new project could overwrite its files. Pick an empty or new folder.");
         var s = new ProjectFile { Name = name };
         s.General.GameTitle = title;
         s.General.RomTitle = romTitle;
