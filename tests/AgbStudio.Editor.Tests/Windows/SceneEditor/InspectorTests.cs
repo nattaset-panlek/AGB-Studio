@@ -99,13 +99,24 @@ public sealed class InspectorTests : IDisposable
         _w.S.Commands.Execute("edit.undo");
         Assert.Equal("0.25", OnDisk.Actors[0].Components[0].Fields["gravity"]);
 
-        // script fields are text fields with the script's names
+        // P6.06: script fields with the script's names; [Range(0.5, 3)] speed is a slider over its range, the others text
         var speed = Field("speed");
-        Assert.Equal(FieldKind.Text, speed.Kind);
-        Assert.Equal("1.5", speed.Value);
-        TypeInto(speed.GetVisualDescendants().OfType<TextBox>().Single(b => b.IsEffectivelyVisible), "2.25");
-        Assert.Equal("2.25", OnDisk.Actors[0].Components[1].Fields["speed"]);
-        Assert.Equal(("3.5", "3"), (Field("jumpPower").Value, Field("lives").Value));
+        Assert.Equal(FieldKind.Slider, speed.Kind);
+        Assert.Equal("1.50", speed.Value);
+        Assert.Equal(40, speed.SliderValue, 3);   // 1.5 in 0.5..3
+        var speedSlider = speed.GetVisualDescendants().OfType<AgbSlider>().Single();
+        var at = speedSlider.TranslatePoint(new Point(0, 6), _w.Win)!.Value;
+        undo = _w.S.Undo.UndoCount;
+        _w.Drag(new Point(at.X + speedSlider.Bounds.Width * 0.4, at.Y), new Point(at.X + speedSlider.Bounds.Width * 0.8, at.Y));
+        var dragged = double.Parse(OnDisk.Actors[0].Components[1].Fields["speed"], System.Globalization.CultureInfo.InvariantCulture);
+        Assert.InRange(dragged, 2.3, 2.7);   // 80% of 0.5..3
+        Assert.Equal(undo + 1, _w.S.Undo.UndoCount);
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal("1.5", OnDisk.Actors[0].Components[1].Fields["speed"]);
+        Assert.Equal((FieldKind.Text, FieldKind.Text), (Field("jumpPower").Kind, Field("lives").Kind));
+        TypeInto(Field("jumpPower").GetVisualDescendants().OfType<TextBox>().Single(b => b.IsEffectivelyVisible), "4.25");
+        Assert.Equal("4.25", OnDisk.Actors[0].Components[1].Fields["jumpPower"]);
+        Assert.Equal(("4.25", "3"), (Field("jumpPower").Value, Field("lives").Value));
 
         // Collider: "w × h" and "x, y" from the sprite, an override once edited
         var col = Field("Collider");

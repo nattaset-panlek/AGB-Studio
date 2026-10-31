@@ -267,7 +267,7 @@ public sealed class InspectorPanel : Panel
                         _m.SetComponentField(actor, ci, f.Name, field.IsOn ? "true" : "false");
                 };
                 break;
-            case FieldType.Fixed when f.Slider:
+            case FieldType.Fixed or FieldType.Int when f.Slider:
                 field.Kind = FieldKind.Slider;
                 var syncing = false;
                 Refresh(() =>
@@ -281,8 +281,9 @@ public sealed class InspectorPanel : Panel
                 field.PropertyChanged += (_, e) =>
                 {
                     if (syncing || e.Property != InspectorField.SliderValueProperty) return;
-                    var v = Math.Round((f.Min + field.SliderValue / 100 * (f.Max - f.Min)) * 256) / 256;   // fixed 24.8 steps
-                    _m.SetComponentField(actor, ci, f.Name, v.ToString("0.00###", CultureInfo.InvariantCulture));
+                    var raw = f.Min + field.SliderValue / 100 * (f.Max - f.Min);
+                    var v = f.Type == FieldType.Int ? Math.Round(raw) : Math.Round(raw * 256) / 256;   // whole numbers, or fixed 24.8 steps
+                    _m.SetComponentField(actor, ci, f.Name, v.ToString(f.Type == FieldType.Int ? "0" : "0.00###", CultureInfo.InvariantCulture));
                 };
                 break;
             default:
