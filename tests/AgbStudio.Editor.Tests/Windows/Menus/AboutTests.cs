@@ -54,10 +54,9 @@ public sealed class AboutTests : IDisposable
         var notices = Assert.Single(_opened);
         Assert.EndsWith("THIRD_PARTY.md", notices);
         var components = About.LicensedComponents(notices);
-        foreach (var c in new[] { "mGBA libretro core", "libtonc (Tonc library)", "maxmod (libmm)", "Avalonia", "Inter", "Noto Sans Thai" })
-            Assert.Contains(c, components);
-        // THIRD_PARTY.md names the Roslyn version and its resource folders in the row
-        Assert.Contains(components, c => c.StartsWith("Roslyn (Microsoft.CodeAnalysis", StringComparison.Ordinal));
+        // THIRD_PARTY.md rows may add a version or the shipped files after the name ("Avalonia 11.3 (incl. ...)")
+        foreach (var c in new[] { "mGBA libretro core", "libtonc (Tonc library)", "maxmod (libmm)", "Roslyn (Microsoft.CodeAnalysis", "Avalonia", "Inter", "Noto Sans Thai" })
+            Assert.Contains(components, x => x.StartsWith(c, StringComparison.Ordinal));
 
         Assert.True(about.WebsiteButton.IsEnabled);
         win.Click(about.WebsiteButton);
