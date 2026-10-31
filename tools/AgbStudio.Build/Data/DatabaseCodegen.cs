@@ -294,15 +294,8 @@ public static class CsvImporter
             var fd = table.Fields.First(f => f.Name == field);
             def = string.IsNullOrEmpty(fd.Default) ? (fd.Type is "int" or "fixed" ? "0" : "empty") : fd.Default;
             var rowsText = list.Count == 1 ? $"Row {list[0]}" : $"Rows {string.Join(", ", list.Take(list.Count - 1))} and {list[^1]}";
-            var expected = fd.Type switch
-            {
-                "int" => "a whole number",
-                "fixed" => "a number",
-                "bool" => "true or false",
-                "enum" => "one of " + string.Join(", ", fd.EnumValues),
-                _ => "a valid value",
-            };
-            warnings.Add($"{rowsText}: {what}, not {expected} — will use the default {def}. Fix the CSV and choose it again to keep the value.");
+            // Figma T-D19's wording; the Check column marks the field and the footer says the rows keep the default
+            warnings.Add($"{rowsText}: {what} — will use the default {def}.");
         }
         return new Result(rows, warnings, columns);
     }

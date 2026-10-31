@@ -124,7 +124,12 @@ public sealed class NewSpeakerDialog : FigmaDialog
         var plus = new Icon { Glyph = "plus", Size = 14, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, "text/muted");
         var add = new Border { Width = 56, Height = 56, Margin = new Thickness(8, 0, 0, 0), Background = Brushes.Transparent, Child = new Panel { Children = { dash, plus } }, Name = "Portrait_Add", Cursor = new Cursor(StandardCursorType.Hand) };
         add.PointerPressed += async (_, _) => await AddPortrait();
-        var scroll = new ScrollViewer { Content = _portraits, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Name = "PortraitScroll" };
+        // whole tiles only: six 56 px tiles (8 apart) fit beside the + tile in the 480 px row; more scroll, none is cut in half
+        var scroll = new ScrollViewer
+        {
+            Content = _portraits, MaxWidth = 6 * 64 - 8, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Hidden,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled, Name = "PortraitScroll",
+        };
         var row = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
         DockPanel.SetDock(add, Dock.Right);
         row.Children.AddRange([add, scroll]);

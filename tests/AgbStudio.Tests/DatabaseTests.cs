@@ -88,7 +88,7 @@ public sealed class DatabaseTests
         var r = CsvImporter.Import(csv.ToString(), table, map);
         Assert.Equal(24, r.Rows.Count);
         var w = Assert.Single(r.Warnings);
-        Assert.Equal("Rows 7 and 15: Cost is “N/A”, not a whole number — will use the default 0. Fix the CSV and choose it again to keep the value.", w);
+        Assert.Equal("Rows 7 and 15: Cost is “N/A” — will use the default 0.", w);
         Assert.Equal("0", r.Rows[6]["price"]);
         Assert.Equal("Item 1", r.Rows[0]["name"]);  // first language column wins for a localized field
         Assert.Equal(3, CsvImporter.Parse("a,\"b,c\",\"d \"\"q\"\"\"\n").Single().Length);

@@ -48,13 +48,14 @@ public sealed class NewScriptDialog : FigmaDialog
         };
         OpenExternally.IsChecked = false;
 
-        var templates = UI.Column(15,
+        // Figma: 58 px cards 14 px apart, 14 px under the TEMPLATE overline
+        var templates = UI.Column(14,
             Card(ScriptTemplates.Kind.Behaviour, "cube", "Behaviour", "Attach to an actor · Start(), Update(), OnTouch()"),
             Card(ScriptTemplates.Kind.StaticHelper, "code", "Static helper", "Shared functions with no actor, e.g. MathUtil"),
             Card(ScriptTemplates.Kind.SceneScript, "map", "Scene script", "Runs on scene enter / exit and holds scene state"));
         var content = UI.Column(14,
             ClassName,
-            UI.Column(16, UI.Text("Template", "Overline/11", "text/secondary"), templates),
+            UI.Column(14, UI.Text("Template", "Overline/11", "text/secondary"), templates),
             AttachTo,
             OpenExternally);
         content.Margin = new Thickness(20, 20, 20, 18);
@@ -76,7 +77,8 @@ public sealed class NewScriptDialog : FigmaDialog
     Border Card(ScriptTemplates.Kind kind, string glyph, string title, string description)
     {
         var icon = PageChrome.Glyph(glyph, 16, "text/secondary");
-        var check = PageChrome.Glyph("check", 14, "accent/default");
+        // Figma: a 16 px check 12 px inside the right border (ink x 513-522)
+        var check = PageChrome.Glyph("check", 16, "accent/default");
         check.IsVisible = false;
         var text = UI.Column(3, UI.Text(title, "Body/12 Semibold", "text/primary"), UI.Text(description, "Label/11", "text/muted"));
         text.VerticalAlignment = VerticalAlignment.Center;
@@ -84,8 +86,8 @@ public sealed class NewScriptDialog : FigmaDialog
         DockPanel.SetDock(icon, Dock.Left);
         DockPanel.SetDock(check, Dock.Right);
         row.Children.AddRange([icon, check, text]);
-        var card = UI.Frame(row, "bg/base", "border/default", new Thickness(1), new Thickness(14, 0, 16, 0), 8);
-        card.Height = 57;
+        var card = UI.Frame(row, "bg/base", "border/default", new Thickness(1), new Thickness(14, 0, 12, 0), 8);
+        card.Height = 58;
         card.Name = "Template_" + kind;
         card.Cursor = new Cursor(StandardCursorType.Hand);
         card.PointerPressed += (_, e) => { SelectTemplate(kind); e.Handled = true; };
@@ -103,7 +105,8 @@ public sealed class NewScriptDialog : FigmaDialog
             card.Token(Border.BackgroundProperty, on ? "accent/selected" : "bg/base");
             card.Token(Border.BorderBrushProperty, on ? "accent/default" : "border/default");
             check.IsVisible = on;
-            if (card.Child is DockPanel d && d.Children[0] is Icon i) i.Token(Icon.ForegroundProperty, on ? "text/on-selected" : "text/secondary");
+            // Figma draws the picked template's icon in the accent colour
+            if (card.Child is DockPanel d && d.Children[0] is Icon i) i.Token(Icon.ForegroundProperty, on ? "accent/default" : "text/secondary");
         }
         AttachTo.IsEnabled = kind == ScriptTemplates.Kind.Behaviour;
         AttachTo.Opacity = AttachTo.IsEnabled ? 1 : 0.5;

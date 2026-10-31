@@ -71,7 +71,9 @@ public sealed class FlashDialog : FigmaDialog
         info.Children.AddRange([_infoIcon, UI.Column(3, _infoTitle, _infoDetail)]);
         var infoBox = UI.Frame(info, "bg/base", pad: new Thickness(12, 10), radius: 8).Named("CartridgeInfo");
         infoBox.Height = 56;
-        var progress = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("70,12,*,16,70"), Margin = new Thickness(0, 2, 0, 0) };
+        // "128 / 412 KB" is 72 px of Mono/10 (Figma: bar 103-452, text 468-540); longer counts widen the column, never clip
+        var progress = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("70,12,*,16,Auto"), Margin = new Thickness(0, 2, 0, 0) };
+        progress.ColumnDefinitions[4].MinWidth = 72;
         _progressText.HorizontalAlignment = HorizontalAlignment.Right;
         _progressText.TextAlignment = Avalonia.Media.TextAlignment.Right;
         Grid.SetColumn(_bar, 2);

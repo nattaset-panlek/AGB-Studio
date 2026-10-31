@@ -72,7 +72,7 @@ public sealed class DataShotSource : IShotSource
             d.NameTh.Text = "ค้างคาว";
             d.Blip.Selected = "blip_low.wav";
             return d;
-        }));
+        }, unfocused: true));
         yield return ("T-M23", (path, w, h) => Menu(path, w, h, DialogueMenus.AddToDialogue()));
         yield return ("T-M24", (path, w, h) => Menu(path, w, h, DialogueMenus.CommandMenu()));
     }
@@ -99,12 +99,19 @@ public sealed class DataShotSource : IShotSource
         finally { win.Close(); }
     }
 
-    static void Dialog(string path, int w, int h, string id, Func<Fixture, object?> args, Func<WindowContext, Fixture, Control> create)
+    /// <param name="unfocused">The Figma frame shows the dialog after the names were typed, with no field focused.</param>
+    static void Dialog(string path, int w, int h, string id, Func<Fixture, object?> args, Func<WindowContext, Fixture, Control> create, bool unfocused = false)
     {
         using var fx = new Fixture();
         DataFixture.Open(fx);
         var ctx = new WindowContext { Services = fx.Services, Info = fx.Services.Windows.Info(id), Args = args(fx) };
-        Capture.ControlToPng(create(ctx, fx), w, h, path, Brushes.Black);
+        var host = Capture.Host(create(ctx, fx), w, h, Brushes.Black);
+        try
+        {
+            if (unfocused) host.FocusManager?.ClearFocus();
+            Capture.Save(Capture.Frame(host), path);
+        }
+        finally { host.Close(); }
     }
 
     static void Menu(string path, int w, int h, IReadOnlyList<AgbStudio.Editor.Commands.MenuEntry> entries)

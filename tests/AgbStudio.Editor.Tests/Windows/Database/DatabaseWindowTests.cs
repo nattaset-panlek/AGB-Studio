@@ -339,7 +339,7 @@ public class DatabaseWindowTests : DataE2E
         Assert.Equal("2 warnings", Find<Chip>("Check_Cost").Content);
         Assert.Equal("ok", Find<Chip>("Check_Power").Content);
         Assert.Equal("skipped", Find<Chip>("Check_Notes").Content);
-        Assert.Equal(["Rows 7 and 15: Cost is “N/A”, not a whole number — will use the default 0. Fix the CSV and choose it again to keep the value."], dlg.WarningTexts);
+        Assert.Equal(["Rows 7 and 15: Cost is “N/A” — will use the default 0."], dlg.WarningTexts);
         var footer = dlg.GetVisualDescendants().OfType<DialogFooter>().Single();
         Assert.Equal("2 rows have warnings and will use the default value.", footer.Hint);
         Assert.Equal("Import 24 rows", footer.ConfirmText);

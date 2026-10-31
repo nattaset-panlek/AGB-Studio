@@ -69,12 +69,17 @@ public sealed class NewFontDialog : FigmaDialog
         sizeRow.Children.Add(WidthField);
         _sets = SetChoices.Select(s => new CheckBox { Content = $"{s.Label} · {FontBuilder.CharacterSets[s.Set].Count}", IsChecked = true, Name = "NewFontSet_" + s.Label }).ToArray();
         foreach (var b in _sets) b.IsCheckedChanged += (_, _) => Update();
-        var sets = UI.Row(18, _sets);
+        // Figma: Latin, Thai and Symbols 16 px apart, the row 1 px lower than a bare column gap (boxes at x 21, 112, 199; y 306)
+        var sets = UI.Row(16, _sets);
+        sets.Margin = new Thickness(0, 1, 0, 0);
         _caption.Name = "PreviewCaption";
         RenderOptions.SetBitmapInterpolationMode(_sample, BitmapInterpolationMode.None);
-        var preview = new Border { Height = 64, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 9, 12, 0), Name = "PreviewBox", Child = UI.Column(2, _sample, _caption) };
-        var ui = project?.Settings.Ui ?? new UiSettings();
-        preview.Background = new SolidColorBrush(Avalonia.Media.Color.FromUInt32(TextPreviewColor(ui.Screen, 0xFF1E1A28)));
+        // Figma: a 62 px box in the GBA text box colour; the sample at the top, the caption 13 px above the bottom edge
+        _sample.VerticalAlignment = VerticalAlignment.Top;
+        DockPanel.SetDock(_caption, Dock.Bottom);
+        var body = new DockPanel { Children = { _caption, _sample } };
+        var preview = new Border { Height = 62, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 8, 12, 13), Name = "PreviewBox", Child = body };
+        preview.Background = new SolidColorBrush(Avalonia.Media.Color.FromUInt32(PreviewPaper));
         var content = new StackPanel
         {
             Spacing = 14, Margin = new Thickness(20, 20, 20, 17),
@@ -91,6 +96,9 @@ public sealed class NewFontDialog : FigmaDialog
         Build("New Font", "type", content, _footer, 560);
         Update();
     }
+
+    /// <summary>The paper of the sample: Figma draws every GBA text preview (New Font, Font Manager, dialogue) on #1B1630.</summary>
+    const uint PreviewPaper = 0xFF1B1630;
 
     static uint TextPreviewColor(string? hex, uint fallback)
     {
@@ -146,7 +154,7 @@ public sealed class NewFontDialog : FigmaDialog
         if (font != null)
         {
             var ui = _project?.Settings.Ui ?? new UiSettings();
-            var (px, w, h) = TextPreview.Line(Sample, font, TextPreviewColor(ui.ScreenInk, 0xFFE6E8EE), TextPreviewColor(ui.Screen, 0xFF1E1A28));
+            var (px, w, h) = TextPreview.Line(Sample, font, TextPreviewColor(ui.ScreenInk, 0xFFE6E8EE), PreviewPaper);
             var (top, bottom) = Rows(px, w, h);
             var cropped = px.Skip(top * w).Take((bottom - top) * w).ToArray();
             _sample.Source = Pixels.ToBitmap(cropped, w, bottom - top);

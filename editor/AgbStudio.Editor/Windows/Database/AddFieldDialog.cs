@@ -24,8 +24,10 @@ public sealed class AddFieldDialog : FigmaDialog
     readonly DatabasePage? _page;
     readonly int _rows;
     readonly StackPanel _enumSection;
-    readonly WrapPanel _values = new() { Name = "EnumValues", ItemSpacing = 8, LineSpacing = 8 };
-    readonly AgbButton _addValue = new() { Content = "Add value", Glyph = "plus", Kind = ButtonKind.Ghost, Name = "AddValue", Padding = new Thickness(6, 0) };
+    // Figma: chips 6 px apart (Common 21, Rare 92, Epic 140)
+    readonly WrapPanel _values = new() { Name = "EnumValues", ItemSpacing = 6, LineSpacing = 8 };
+    // Figma: "Add value" 10 px after the last chip
+    readonly AgbButton _addValue = new() { Content = "Add value", Glyph = "plus", Kind = ButtonKind.Ghost, Name = "AddValue", Padding = new Thickness(6, 0), Margin = new Thickness(4, 0, 0, 0) };
     readonly AgbProgress _bar = new() { Status = ProgressStatus.OK, VerticalAlignment = VerticalAlignment.Center, Name = "PerRowBar" };
     readonly TextBlock _perRow = UI.Text("", "Mono/10", "text/secondary").Named("PerRowText");
     readonly Panel _defaultHost = new() { Name = "DefaultHost" };
