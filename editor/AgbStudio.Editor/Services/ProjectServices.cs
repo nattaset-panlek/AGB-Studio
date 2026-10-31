@@ -65,6 +65,12 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
     CancellationTokenSource? _cancel;
 
     /// <summary>
+    /// Runs when a build starts, before it looks for the tools (tests hold a build "in progress" with it, so Build ROM
+    /// and Play Mode can be checked while they build without starting a tool). Cancel ends the wait with "Build cancelled.".
+    /// </summary>
+    public Func<CancellationToken, Task>? BeforeBuild { get; set; }
+
+    /// <summary>
     /// G-ERR.04: stops the running build (closing Build ROM while it builds). The build ends with "Build cancelled.";
     /// the ROM of the last good build stays as it was. False when nothing is building.
     /// </summary>
@@ -84,31 +90,44 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
         _cancel = CancellationTokenSource.CreateLinkedTokenSource(options?.Cancel ?? CancellationToken.None);
         options = new BuildOptions { Configuration = options?.Configuration, Clean = options?.Clean ?? false, Cancel = _cancel.Token };
         Started?.Invoke();
-        try
-        {
-            var tc = new Toolchain(devkitPro());
-            // without devkitPro's tools the build cannot start: one error per missing tool names its path (G-ERR.05)
-            MissingTools = FindMissingTools(tc);
-            if (MissingTools.Count > 0)
-            {
-                var failed = new BuildResult { Success = false, FailedStep = GameBuilder.StepCompile };
-                foreach (var (tool, path) in MissingTools)
-                    failed.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"{tool} is not at {path}. Set the devkitPro folder in Preferences › Paths."));
-                Last = failed;
-                Finished?.Invoke(failed);
-                return failed;
-            }
-            var result = await Task.Run(() => new GameBuilder(p, tc, observer) { Scripts = Scripts }.Build(options));
-            Last = result;
-            Finished?.Invoke(result);
-            return result;
-        }
+        BuildResult result;
+        try { result = await RunAsync(p, options, observer, _cancel.Token); }
         finally
         {
             IsBuilding = false;
             _cancel?.Dispose();
             _cancel = null;
         }
+        // the build is over before anyone hears of it: Play and Build ROM read IsBuilding when Finished re-enables them,
+        // and a handler may start the next build
+        Last = result;
+        Finished?.Invoke(result);
+        return result;
+    }
+
+    async Task<BuildResult> RunAsync(GameProject p, BuildOptions options, IBuildObserver? observer, CancellationToken cancel)
+    {
+        if (BeforeBuild is { } gate)
+        {
+            try { await gate(cancel); }
+            catch (OperationCanceledException)
+            {
+                var cancelled = new BuildResult { Success = false };
+                cancelled.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", "Build cancelled."));
+                return cancelled;
+            }
+        }
+        var tc = new Toolchain(devkitPro());
+        // without devkitPro's tools the build cannot start: one error per missing tool names its path (G-ERR.05)
+        MissingTools = FindMissingTools(tc);
+        if (MissingTools.Count > 0)
+        {
+            var failed = new BuildResult { Success = false, FailedStep = GameBuilder.StepCompile };
+            foreach (var (tool, path) in MissingTools)
+                failed.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"{tool} is not at {path}. Set the devkitPro folder in Preferences › Paths."));
+            return failed;
+        }
+        return await Task.Run(() => new GameBuilder(p, tc, observer) { Scripts = Scripts }.Build(options));
     }
 
     /// <summary>The last build report of the open project (Build Report page, T-P11), or null.</summary>
