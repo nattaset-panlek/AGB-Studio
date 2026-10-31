@@ -122,7 +122,8 @@ public sealed class ExportRomDialog : FigmaDialog
         var ok = true;
         void Check(TextField f, bool valid, string help) { f.Help = valid ? null : help; ok &= valid; }
         var name = (FileName.Text ?? "").Trim();
-        Check(FileName, name.Length > 0 && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0, "Enter a file name.");
+        Check(FileName, name.Length > 0 && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0,
+            name.Length == 0 ? "Enter a file name." : "Remove \\ / : * ? \" < > | from the file name; Windows does not allow them.");
         Check(RomTitle, Regex.IsMatch((RomTitle.Text ?? "").Trim().ToUpperInvariant(), "^[A-Z0-9 _]{1,12}$"), "Up to 12 letters, digits or spaces.");
         Check(GameCode, Regex.IsMatch((GameCode.Text ?? "").Trim().ToUpperInvariant(), "^[A-Z0-9]{4}$"), "4 letters or digits.");
         Check(Version, Regex.IsMatch((Version.Text ?? "").Trim(), @"^\d+\.\d+\.\d+$"), "major.minor.patch, e.g. 1.0.3");

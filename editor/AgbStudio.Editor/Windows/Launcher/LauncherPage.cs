@@ -189,7 +189,7 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         var folder = await _launcher.PickFolder("Open Project");
         if (folder is null) return;
         var file = Directory.Exists(folder) ? Directory.EnumerateFiles(folder, "*.agbproj").FirstOrDefault() : null;
-        if (file is null) { _s.Toasts.Show($"No .agbproj file in {folder}.", ToastStatus.Error); return; }
+        if (file is null) { _s.Toasts.Show($"No .agbproj file in {folder}, so it is not an AGB Studio project folder. Pick the folder that holds the project file.", ToastStatus.Error); return; }
         await _launcher.OpenAsync(file, "LauncherOpen");
     }
 
@@ -516,7 +516,7 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
     {
         // offline: the guide installed with the editor (docs/user)
         var guide = Menus.About.UserGuide("gba-hardware-guide.md");
-        if (guide is null) _s.Toasts.Show("The GBA hardware guide is not installed.", ToastStatus.Error);
+        if (guide is null) _s.Toasts.Show("The GBA hardware guide is missing from this install. Reinstall AGB Studio to get it back.", ToastStatus.Error);
         else _launcher.OpenDocument(guide);
     }
 }

@@ -32,7 +32,8 @@ and previews whether a text is too long for its box on the GBA.
   lines it takes and how Thai words were split.
 - **Status bar**: how many texts are missing in the selected language and the total number of keys.
 
-The Pause and Step buttons in the toolbar do nothing on this page; they act only on a running game in Play Mode.
+The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
+moves it one frame (F10). They are greyed out while no game runs.
 
 ## Related
 

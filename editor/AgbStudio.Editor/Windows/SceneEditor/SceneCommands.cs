@@ -54,7 +54,7 @@ public static class SceneCommands
         var bg = Enumerable.Range(0, 4).FirstOrDefault(b => !used.Contains(b), -1);
         if (bg < 0)
         {
-            s.Toasts.Show("All four backgrounds are in use (BG0-BG3).", AgbStudio.Editor.Controls.ToastStatus.Error);
+            s.Toasts.Show("All four backgrounds (BG0-BG3) are in use, and the GBA has no more. Delete a background layer before adding another.", AgbStudio.Editor.Controls.ToastStatus.Error);
             return;
         }
         var index = map.Layers.Count;
@@ -104,7 +104,7 @@ public static class SceneCommands
         if (m.SelectedActor is not { } a) return;
         var script = a.Components.Select(c => ScriptFile(m, c.Type)).FirstOrDefault(f => f != null);
         if (script != null) _ = Scripts.ScriptEditorPage.OpenScriptFile(s, script, source: "actor.editScript");
-        else s.Toasts.Show($"{a.Name} has no C# script behaviour.", AgbStudio.Editor.Controls.ToastStatus.Error);
+        else s.Toasts.Show($"{a.Name} has no C# script behaviour to edit. Add one with Add Component in the Inspector first.", AgbStudio.Editor.Controls.ToastStatus.Error);
     }
 
     /// <summary>The .cs file that defines a behaviour class (scripts/**/Name.cs, else the file declaring it).</summary>

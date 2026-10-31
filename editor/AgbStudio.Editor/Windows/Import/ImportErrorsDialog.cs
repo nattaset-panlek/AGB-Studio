@@ -122,8 +122,12 @@ public sealed class ImportErrorsDialog : FigmaDialog
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
             {
-                s.Toasts.Show($"{item.FileName} could not be imported: {e.Message}", ToastStatus.Error);
-                console.Add(ConsoleLevel.Error, $"Import: {item.FileName} could not be imported: {e.Message}", item.Source);
+                // a file the reader refuses says how to save it again; a file system error gets the fix here
+                var text = (e is InvalidDataException)
+                    ? $"{item.FileName} could not be imported: {e.Message}"
+                    : $"{item.FileName} could not be imported: {e.Message.TrimEnd('.')}. Close programs that use the file or the project folder, then import it again.";
+                s.Toasts.Show(text, ToastStatus.Error);
+                console.Add(ConsoleLevel.Error, "Import: " + text, item.Source);
             }
         }
         if (count > 0) s.Toasts.Show(count == 1 ? "Imported 1 file" : $"Imported {count} files");

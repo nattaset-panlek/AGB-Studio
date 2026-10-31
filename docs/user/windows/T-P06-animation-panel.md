@@ -18,14 +18,15 @@ frame order without opening the Sprite Editor.
 - **Play / Pause**: plays the animation at the game's speed (59.73 frames per second), and pauses it.
 - **Step**: shows the next frame. Animations that do not loop stop at the last frame.
 - **Info line**: the sprite file, the animation and its speed, for example "hero.png · idle · 6 ticks ≈ 10 fps". A
-  tick is one game frame.
+  tick is one game frame. Turn the mouse wheel over this line (or press + or - while the panel has the focus) to show
+  each frame one tick longer or shorter, from 1 to 60 ticks.
 - **Onion skin**: draws the previous frame faintly under the current one.
 - **Frames**: one picture per frame with its number and how many ticks it shows, for example "3 · 6t". Click a frame
-  to show it.
+  to show it. Turn the mouse wheel over a frame to change the ticks of that frame only. Drag a frame to another place
+  (or press Ctrl + Left / Right) to change the frame order.
+- **Saving**: speed and frame order changes are saved to the sprite at once and show in the Sprite Editor too. Each
+  change is one undo step.
 - When no actor with a sprite is selected the panel says "Select an actor with a sprite".
-
-Differs from Figma: the caption says you can change the speed and the frame order here; the panel only shows and plays
-them. Change them in the Sprite Editor.
 
 ## Related
 

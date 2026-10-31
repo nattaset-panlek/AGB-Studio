@@ -266,6 +266,16 @@ public sealed class PreferencesDialog : SettingsDialog
         return Detected(p)?.Status ?? EditorName(p.ScriptEditorPath) + " not found";
     }
 
+    /// <summary>The help line under Paths › Script editor: Figma's "… found · used when Script editor is External", and
+    /// what to do when the editor is not found.</summary>
+    string ScriptEditorHelp(Preferences p)
+    {
+        var status = ScriptEditorStatus(p);
+        return status.EndsWith(" not found", StringComparison.Ordinal)
+            ? $"{status} · Browse to its .exe or install it"
+            : $"{status} · used when Script editor is External";
+    }
+
     /// <summary>The editor an executable belongs to ("Code.exe" -> Visual Studio Code).</summary>
     public static string EditorName(string path) => IOPath.GetFileName(Preferences.Expand(path)).ToLowerInvariant() switch
     {
@@ -285,7 +295,7 @@ public sealed class PreferencesDialog : SettingsDialog
         var col = Column(8, Title("Paths"),
             PathRow("devkitPro", devkit, DevkitHelp(), v => Edit(() => p.DevkitPro = v), folder: true, "DevkitPro"),
             PathRow("Projects folder", p.ProjectsFolder, null, v => Edit(() => p.ProjectsFolder = v), folder: true, "ProjectsFolder"),
-            PathRow("Script editor", p.ScriptEditorPath, $"{ScriptEditorStatus(p)} · used when Script editor is External",
+            PathRow("Script editor", p.ScriptEditorPath, ScriptEditorHelp(p),
                 v => Edit(() => p.ScriptEditorPath = v), folder: false, "ScriptEditorPath"),
             PathRow("Image editor", p.ImageEditorPath, "Opens .png / .aseprite on double-click", v => Edit(() => p.ImageEditorPath = v), folder: false, "ImageEditorPath"),
             PathRow("Tiled", p.TiledPath, "Optional · only needed to edit .tmx maps", v => Edit(() => p.TiledPath = v), folder: false, "TiledPath"),
@@ -301,7 +311,8 @@ public sealed class PreferencesDialog : SettingsDialog
         string[] names = ["libtonc", "maxmod"];
         var missing = names.Where(n => tc.Find(n) is { Found: false }).ToList();
         if (tc.Find("devkitARM") is { Found: false }) missing.Insert(0, "devkitARM");
-        return missing.Count == 0 ? $"{arm} · libtonc · maxmod found" : string.Join(" · ", missing) + " missing";
+        return missing.Count == 0 ? $"{arm} · libtonc · maxmod found"
+            : string.Join(" · ", missing) + " not found here · Browse to the devkitPro folder or install devkitPro";
     }
 
     Control PathRow(string label, string value, string? help, Action<string> changed, bool folder, string name)

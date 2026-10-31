@@ -22,19 +22,27 @@ is empty) and **Browse…** to pick it. Paths can use Windows variables such as 
 - **devkitPro**: the folder with the GBA compiler and libraries. When it is not set, AGB Studio looks at the
   `DEVKITPRO` variable, then `C:\devkitPro` and `D:\devkitPro`. Below it: the devkitARM version and whether libtonc and
   maxmod were found, or what is missing.
-- **Projects folder**: a folder for your projects. Saved, but new projects do not use it yet.
+- **Projects folder**: a folder for your projects (`Documents\AGB Studio` at first). New Project suggests a location
+  inside it, and the sample projects of Launcher · Learn are copied into it.
 - **Script editor**: the program file of your external code editor, for example `Code.exe`. The line below says if it
   was found; it is used when Script editor is External on the Editor tab.
-- **Image editor**: meant to open `.png` / `.aseprite` files on double-click. Saved, but not used yet.
-- **Tiled**: optional, for `.tmx` maps. Saved, but not used yet.
+- **Image editor**: the program, for example Aseprite, that opens `.aseprite` files and the background images in
+  `assets/images` when you double-click them in the Assets panel or pick them in the Command Palette. Sprite and
+  tileset images still open in the Sprite Editor and the Tilemap Editor.
+- **Tiled**: optional. When set, `.tmx` and `.tsx` files open in Tiled, for example when you pick one in the Command
+  Palette.
+- When the image editor or Tiled is not set, or its program is not found, AGB Studio opens those files itself.
 - **Build cache card**: the open project's cache folder and its size. **Clear cache** empties it (and the compiled
   files), so the next build converts every asset again. Greyed out when no project is open.
 - **Footer**: Cancel (or Esc) drops the changes; Save keeps them. A changed devkitPro folder is checked again at once.
 
-Differs from Figma: the build cache is per project (the project's `build/cache` and `build/obj` folders), not the one
-shared cache folder under `%LOCALAPPDATA%` that the Figma frame shows.
+Differs from Figma: the build cache is per project (the `cache` and `obj` folders in the project's build output
+folder, `build` unless Project Settings › Build sets another), not the one shared cache folder under `%LOCALAPPDATA%`
+that the Figma frame shows.
 
-Differs from Figma: Projects folder, Image editor and Tiled are stored but have no effect yet.
+Differs from Figma: the hint under Image editor says it opens `.png` / `.aseprite` on double-click; AGB Studio opens
+only `.aseprite` files and the background images in `assets/images` with it. Sprite and tileset PNG files still open in
+the Sprite Editor and the Tilemap Editor.
 
 ## Related
 

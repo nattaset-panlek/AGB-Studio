@@ -14,15 +14,17 @@ All the keyboard shortcuts in one list you can search; you change them in Prefer
 ## What is on it
 
 - **Search shortcuts…**: shows only the rows whose name or keys contain the text, for example "grid" or "Ctrl".
-- **General** column: Command palette (Ctrl+K), Save (Ctrl+S), Play (F5), Build ROM (Ctrl+B) and Undo (Ctrl+Z).
-- **Scene** column: Select (V), Move (M), Paint tiles (B), Toggle grid (G) and Focus selection (F). These keys work
-  in the Scene Editor.
+- **Shortcut list**: every command that has a shortcut, in the groups General, Scene, Script, Logic Graph and
+  Launcher, set out in two columns that scroll. The groups take turns left and right, starting with General on the
+  left and Scene on the right. The rows of the Figma frame come first in their groups:
+  - **General**: Command palette (Ctrl+K), Save (Ctrl+S), Play (F5), Build ROM (Ctrl+B) and Undo (Ctrl+Z).
+  - **Scene**: Select (V), Move (M), Paint tiles (B), Toggle grid (G) and Focus selection (F). These keys work in the
+    Scene Editor.
 - **Keys**: each key is drawn as a key cap. The dialog shows the keys that are set now, so a shortcut you changed in
   Preferences › Shortcuts appears here with its new keys.
+- **Edit in Preferences › Shortcuts** (bottom left): closes this dialog and opens Preferences on the Shortcuts tab,
+  where you change the keys.
 - **Close**: closes the dialog.
-
-Differs from Figma: the caption says the dialog lists all shortcuts; the code lists the ten shortcuts shown in the
-Figma frame. The full list, with editing, is in Preferences › Shortcuts.
 
 ## Related
 

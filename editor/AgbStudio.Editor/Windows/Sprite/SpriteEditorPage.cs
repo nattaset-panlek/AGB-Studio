@@ -371,7 +371,10 @@ public sealed class SpriteEditorPage : DockPanel
         try { _ = _lib.Image(path); }
         catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException)
         {
-            _s.Toasts.Show($"Could not open {Path.GetFileName(path)}: {e.Message}", ToastStatus.Error);
+            // the image reader's own text (PNG, Aseprite) says how to save the file again
+            _s.Toasts.Show((e is InvalidDataException)
+                ? $"Could not open {Path.GetFileName(path)}: {e.Message}"
+                : $"Could not open {Path.GetFileName(path)}: {e.Message.TrimEnd('.')}. Close programs that use it, then open it again.", ToastStatus.Error);
             return;
         }
         Stop();
@@ -905,7 +908,9 @@ public sealed class SpriteEditorPage : DockPanel
             }
             catch (Exception e) when (e is IOException or InvalidDataException or ArgumentException)
             {
-                _s.Toasts.Show($"Could not import {Path.GetFileName(f)}: {e.Message}", ToastStatus.Error);
+                _s.Toasts.Show((e is InvalidDataException)
+                    ? $"Could not import {Path.GetFileName(f)}: {e.Message}"
+                    : $"Could not import {Path.GetFileName(f)}: {e.Message.TrimEnd('.')}. Close programs that use it, or save it again as PNG, then import it again.", ToastStatus.Error);
             }
         }
         if (last != null) Open(last);

@@ -234,7 +234,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M06 | menu Tools menu | 264x253 | 264x253 | 2.63 | 2.63 | 0,0 | 0 | 3.07 |
 | T-M07 | menu Help menu | 264x184 | 264x184 | 3.22 | 3.22 | 0,0 | 0 | 3.77 |
 | T-M08 | menu Open Recent | 264x123 | 264x123 | 2.16 | 2.16 | 0,0 | 0 | 2.47 |
-| T-P15 | frame Audio | 1440x900 | 1440x900 | 5.28 | 5.28 | 0,0 | 0 | 5.41 |
+| T-P15 | frame Audio | 1440x900 | 1440x900 | 5.29 | 5.29 | 0,0 | 0 | 5.41 |
 | T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 2.95 | 2.95 | 0,0 | 0 | 2.94 |
 | T-P11 | frame Build Report | 1440x900 | 1440x900 | 1.47 | 1.47 | 0,0 | 0 | 1.85 |
 | T-D06 | frame Build ROM | 600x440 | 600x440 | 2.32 | 2.32 | 0,0 | 0 | 2.76 |
@@ -246,7 +246,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P07 | frame Database | 1440x900 | 1440x900 | 1.75 | 1.75 | 0,0 | 0 | 2.07 |
 | T-D17 | frame New Table | 520x440 | 520x440 | 1.80 | 1.80 | 0,0 | 0 | 2.10 |
 | T-D18 | frame Add Field | 520x516 | 520x516 | 1.32 | 1.32 | 0,0 | 0 | 1.38 |
-| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.30 | 2.30 | 0,0 | 0 | 3.55 |
+| T-D19 | frame Import CSV | 780x478 | 780x478 | 2.69 | 2.69 | 0,0 | 0 | 4.23 |
 | T-P14 | frame Localization | 1440x900 | 1440x900 | 3.74 | 3.74 | 0,0 | 0 | 5.47 |
 | T-D20 | frame Add Language | 520x416 | 520x416 | 1.82 | 1.82 | 0,0 | 0 | 1.89 |
 | T-P16 | frame Dialogue Editor | 1440x900 | 1440x900 | 2.09 | 2.09 | 0,0 | 0 | 2.76 |
@@ -262,10 +262,10 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D01 | frame New Project | 1180x668 | 1180x668 | 2.16 | 2.16 | 0,0 | 0 | 2.59 |
 | T-L02 | frame New Project · Light | 1180x668 | 1180x668 | 2.28 | 2.28 | 0,0 | 0 | 2.79 |
 | T-P22 | frame Scene Editor · Empty project | 1440x900 | 1440x900 | 1.20 | 1.20 | 0,0 | 0 | 1.58 |
-| T-P02 | frame Play Mode | 1440x900 | 1440x900 | 13.08 | 13.08 | 0,0 | 0 | 12.45 |
+| T-P02 | frame Play Mode | 1440x900 | 1440x900 | 13.07 | 13.07 | 0,0 | 0 | 12.45 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
-| T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.26 | 5.26 | 0,0 | 0 | 6.39 |
-| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.20 | 3.20 | 0,0 | 0 | 3.62 |
+| T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.27 | 5.27 | 0,0 | 0 | 6.39 |
+| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.14 | 3.14 | 0,0 | 0 | 3.55 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.51 | 2.51 | 0,0 | 0 | 3.03 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 5.03 | 4.57 | 0,-2 | 2 | 7.46 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.70 | 2.70 | 0,0 | 0 | 3.17 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.75 | 2.75 | 0,0 | 0 | 3.26 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 3.01 | 3.01 | 0,0 | 0 | 3.57 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 5.47 | 5.47 | 0,0 | 0 | 7.36 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.34 | 1.34 | 0,0 | 0 | 1.60 |
@@ -299,7 +299,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-S01 | frame Project Settings · General | 900x620 | 900x620 | 0.92 | 0.92 | 0,0 | 0 | 1.05 |
 | T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.26 | 1.26 | 0,0 | 0 | 1.48 |
 | T-S03 | frame Project Settings · Build | 900x620 | 900x620 | 1.03 | 1.03 | 0,0 | 0 | 1.30 |
-| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 1.87 | 1.87 | 0,0 | 0 | 2.16 |
+| T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 2.07 | 2.07 | 0,0 | 0 | 2.46 |
 | T-S05 | frame Project Settings · Localization | 900x620 | 900x620 | 0.80 | 0.80 | 0,0 | 0 | 0.97 |
 | T-D09 | frame Preferences | 900x620 | 900x620 | 0.67 | 0.67 | 0,0 | 0 | 0.78 |
 | T-S06 | frame Preferences · Appearance | 900x620 | 900x620 | 0.87 | 0.87 | 0,0 | 0 | 1.52 |
@@ -309,7 +309,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.84 | 0.84 | 0,0 | 0 | 1.53 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.42 |
 | T-O12 | frame Record Shortcut | 340x264 | 340x264 | 1.95 | 1.95 | 0,0 | 0 | 2.17 |
-| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 1.69 | 1.69 | 0,0 | 0 | 2.43 |
+| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 1.67 | 1.67 | 0,0 | 0 | 2.39 |
 | T-P10 | frame Palette Manager | 1440x900 | 1440x900 | 2.41 | 2.41 | 0,0 | 0 | 3.31 |
 | T-D13 | frame New Sprite | 520x506 | 520x506 | 1.55 | 1.55 | 0,0 | 0 | 1.65 |
 | T-M19 | menu OAM Size | 264x175 | 264x175 | 3.70 | 3.70 | 0,0 | 0 | 4.30 |
@@ -320,8 +320,31 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P09 | frame Font Manager | 1440x900 | 1440x900 | 11.53 | 11.53 | 0,0 | 0 | 14.43 |
 | T-D15 | frame New Font | 560x506 | 560x506 | 1.98 | 1.98 | 0,0 | 0 | 2.91 |
 | T-D16 | frame Add Characters | 600x388 | 600x388 | 3.97 | 3.97 | 0,0 | 0 | 4.78 |
+| type/brand-13 | Type specimen Brand/13 | 209x16 | 209x16 | 20.93 | 19.80 | 0,1 | 1 | 26.37 |
+| type/title-18 | Type specimen Title/18 | 68x24 | 68x24 | 6.86 | 6.86 | 0,0 | 0 | 8.29 |
+| type/title-14 | Type specimen Title/14 | 228x18 | 228x18 | 15.40 | 15.40 | 0,0 | 0 | 16.98 |
+| type/body-12 | Type specimen Body/12 | 1160x16 | 1160x16 | 11.48 | 7.30 | -1,0 | 1 | 12.65 |
+| type/body-12-medium | Type specimen Body/12 Medium | 194x16 | 194x16 | 19.49 | 19.49 | 0,0 | 0 | 22.01 |
+| type/body-12-semibold | Type specimen Body/12 Semibold | 196x16 | 196x16 | 15.18 | 15.18 | 0,0 | 0 | 15.47 |
+| type/label-11 | Type specimen Label/11 | 176x14 | 176x14 | 21.83 | 19.60 | -1,0 | 1 | 26.07 |
+| type/label-11-medium | Type specimen Label/11 Medium | 55x14 | 55x14 | 14.16 | 14.16 | 0,0 | 0 | 16.93 |
+| type/caption-10 | Type specimen Caption/10 | 160x12 | 160x12 | 29.32 | 28.33 | -1,0 | 1 | 35.99 |
+| type/overline-11 | Type specimen Overline/11 | 207x14 | 207x14 | 17.53 | 17.53 | 0,0 | 0 | 19.33 |
+| type/mono-10 | Type specimen Mono/10 | 42x12 | 42x12 | 2.98 | 2.98 | 0,0 | 0 | 6.43 |
+| type/mono-11 | Type specimen Mono/11 | 170x14 | 170x14 | 0.04 | 0.04 | 0,0 | 0 | 0.72 |
+| type/mono-11-bold | Type specimen Mono/11 Bold | 205x14 | 205x14 | 11.64 | 11.64 | 0,0 | 0 | 11.43 |
+| type/mono-13 | Type specimen Mono/13 | 242x20 | 242x20 | 10.95 | 10.95 | 0,0 | 0 | 12.43 |
+| type/thai-13 | Type specimen Thai/13 | 229x20 | 229x20 | 20.55 | 11.20 | 0,-1 | 1 | 27.17 |
+| type/thai-13-medium | Type specimen Thai/13 Medium | 232x20 | 232x20 | 21.62 | 10.67 | 0,-1 | 1 | 29.43 |
+| type/pixel-10 | Type specimen Pixel/10 | 100x12 | 100x12 | 24.83 | 24.83 | 0,0 | 0 | 25.15 |
+| T-P02-game-view | Play Mode game view · Hitboxes and Tile collision on | 860x510 | 860x510 | 32.91 | 32.91 | 0,0 | 0 | 29.34 |
 
 Components: 215 variants, offset within 2 px: 213, median diff 1.84 %, max diff 10.40 %.
+
+Type specimen (P10.03, T-K02; rows `type/<style>`): the sample text Figma uses for each text style (`docs/evidence/figma/type/`, one text node per style) rendered with the app's text style and colour token at the node's size. 17 styles, offset within 2 px: 17, median diff 15.40 %, max diff 29.32 %, max diff at best shift 28.33 %.
+No sample in Figma (no text node uses the style, so nothing to compare): Header 1, Header 2, Body. Figma gives them a mixed font; the app has them as Inter Regular (`Theme/TextStyles.cs`) and no window uses them.
+
+Play Mode game view (P12.05; row `T-P02-game-view`): the app's T-P02 page with Hitboxes and Tile collision on, cropped to the Game View rectangle of the Figma frame (`docs/evidence/figma/T-P02-game-view.json`), against the Figma Game View: diff 32.91 %, at best shift 32.91 %, offset 0 px. The game pixels come from the running Sky Hopper ROM; the Figma frame is a drawing of it.
 
 Scene Editor chrome regions (Phase 10 builds the chrome; panel contents are Phase 11 and stay empty, so whole-frame numbers for T-P01 / T-L01 include that content):
 

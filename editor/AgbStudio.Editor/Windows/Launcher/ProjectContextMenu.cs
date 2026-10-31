@@ -60,11 +60,13 @@ public sealed class DeleteProjectDialog : FigmaDialog
         path.TextWrapping = TextWrapping.Wrap;
         var what = contents is { } c
             ? $"{c.Scenes} {Plural(c.Scenes, "scene")} · {c.Assets} {Plural(c.Assets, "asset")} · {c.Scripts} {Plural(c.Scripts, "script")}"
-            : "The project file could not be read.";
+            : "The project file could not be read, so its scenes, assets and scripts are not counted. The whole folder still goes to the Recycle Bin.";
         var row = new DockPanel { HorizontalSpacing = 8 };
         var icon = new Icon { Glyph = "folder", Size = 14, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 1, 0, 0) }.Token(Icon.ForegroundProperty, "text/secondary");
         DockPanel.SetDock(icon, Dock.Left);
-        row.Children.AddRange([icon, UI.Column(4, path, UI.Text(what, "Label/11", "text/muted"))]);
+        var whatText = UI.Text(what, "Label/11", "text/muted");
+        whatText.TextWrapping = TextWrapping.Wrap;
+        row.Children.AddRange([icon, UI.Column(4, path, whatText)]);
         var content = UI.Column(14, message, UI.Frame(row, "bg/base", pad: new Thickness(10, 8), radius: 6));
         content.Margin = new Thickness(20);
         var footer = new DialogFooter { CancelText = "Cancel", ConfirmText = "Delete project", ConfirmKind = ButtonKind.Danger, Name = "DeleteFooter" };

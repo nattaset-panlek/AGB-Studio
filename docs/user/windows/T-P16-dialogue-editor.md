@@ -36,7 +36,8 @@ Writes conversations as a list of lines, each with a speaker and a portrait, plu
 - **Status bar**: the conversation with its line and choice counts, and "Saved" when there is nothing to save. Every
   edit can be undone.
 
-The Pause and Step buttons in the toolbar do nothing on this page; they act only on a running game in Play Mode.
+The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
+moves it one frame (F10). They are greyed out while no game runs.
 
 ## Related
 

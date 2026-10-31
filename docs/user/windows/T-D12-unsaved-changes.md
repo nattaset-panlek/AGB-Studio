@@ -15,7 +15,9 @@ Appears when you close AGB Studio or open another project while some files still
 
 ## What is on it
 
-- **Title**: "Save changes before exiting?". The same title is used when you are opening another project.
+- **Title**: names what would lose the changes: "Save changes before exiting?", "Save changes before opening another
+  project?" (from the Launcher or File › Open Recent), or "Save changes before closing the project?" (Create Project in
+  New Project).
 - **Message**: how many files have changes, for example "2 files have changes that will be lost if you don't save
   them."
 - **File list**: one row per changed file, with its icon, its name (such as `Forest_01.scene` or

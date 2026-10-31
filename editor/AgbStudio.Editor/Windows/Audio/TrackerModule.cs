@@ -83,7 +83,7 @@ public sealed class TrackerModule
         var m = new TrackerModule { _raw = data };
         if (data.Length > 60 && Encoding.ASCII.GetString(data, 0, 17) == "Extended Module: ") m.ParseXm();
         else if (data.Length >= 1084) m.ParseMod();
-        else throw new InvalidDataException("Not a MOD or XM module.");
+        else throw new InvalidDataException("It is not a MOD or XM song inside (too short for one). Save it again from your tracker as .mod or .xm.");
         return m;
     }
 

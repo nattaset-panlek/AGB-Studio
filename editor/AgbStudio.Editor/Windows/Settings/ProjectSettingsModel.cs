@@ -77,16 +77,12 @@ public sealed partial class ProjectSettingsModel
     public static readonly IReadOnlyList<string> Severities = ["Error", "Warning", "Info", "None"];
     public static readonly IReadOnlyList<string> GamepadButtons = ["South", "East", "West", "North", "LB", "RB", "LT", "RT", "Menu", "View", "D-pad", "Stick", "Stick / D-pad"];
 
-    /// <summary>Figma texts of the analyzer rules (Project Settings · Scripting).</summary>
+    /// <summary>
+    /// The analyzer rules of Project Settings · Scripting: id and what each one catches, the titles of the analyzer itself
+    /// (AgbStudio.Analyzers <see cref="AgbStudio.Analyzers.GaeRules"/>), so the dialog and the Problems list say the same.
+    /// </summary>
     public static readonly IReadOnlyList<(string Id, string Catches)> AnalyzerRules =
-    [
-        ("GAE001", "class allocated in Update / OnTouch (no garbage collector)"),
-        ("GAE002", "float or double — the GBA has no FPU, use fixed"),
-        ("GAE003", "new inside Update — allocate in Start or use a pool"),
-        ("GAE004", "try / throw — exceptions are not supported"),
-        ("GAE005", "string concatenation in a loop"),
-        ("GAE006", "lambda that captures variables"),
-    ];
+        AgbStudio.Analyzers.GaeRules.All.Select(d => (d.Id, d.Title.ToString(CultureInfo.InvariantCulture))).ToList();
 
     public string Severity(string rule) => Draft.Scripting.AnalyzerRules.TryGetValue(rule, out var s) ? s : rule is "GAE001" or "GAE004" ? "Error" : "Warning";
 
@@ -171,18 +167,26 @@ public sealed partial class ProjectSettingsModel
         if (g.Maker.Length != 2 || !HeaderRx().IsMatch(g.Maker)) return "Maker must be 2 capital letters or digits.";
         var names = Draft.Input.Where(a => a.Button != "D-pad").Select(a => a.Action.Trim()).ToList();
         if (names.Any(n => !IdentRx().IsMatch(n))) return "Action names must be one word (letters, digits, _).";
-        if (names.Distinct().Count() != names.Count) return "Two buttons have the same action name.";
+        if (names.GroupBy(n => n).FirstOrDefault(same => same.Count() > 1) is { } twice)
+        {
+            var buttons = Draft.Input.Where(a => a.Button != "D-pad" && a.Action.Trim() == twice.Key).Select(a => a.Button).ToList();
+            return $"{buttons[0]} and {buttons[1]} both use the action name {twice.Key}. Rename one of them.";
+        }
         foreach (var f in Draft.Save.Fields.Where(f => f.Name.Trim().Length > 0))
         {
             if (!IdentRx().IsMatch(f.Name.Trim())) return $"Save field \"{f.Name.Trim()}\" must be one word (letters, digits, _).";
-            if (SafeSize(f.Type) is null) return $"Save field \"{f.Name.Trim()}\" has an unknown type \"{f.Type.Trim()}\".";
+            if (SafeSize(f.Type) is null) return $"Save field \"{f.Name.Trim()}\": \"{f.Type.Trim()}\" is not a type. Use int, byte, short, bool, fixed, fixed2, bitset N or Table[N].";
         }
         if (Draft.Save.Slots is < 1 or > 16) return "Slots must be 1 to 16.";
         var cap = SaveCapacity(Draft.Save.Type);
-        if (cap > 0 && BytesPerSlot * Draft.Save.Slots > cap) return "The save slots do not fit in the save chip.";
+        if (cap > 0 && BytesPerSlot * Draft.Save.Slots > cap)
+        {
+            var chip = SaveTypeOptions[Math.Max(0, SaveTypes.ToList().IndexOf(Draft.Save.Type))].Split(" · ")[0];
+            return $"{Draft.Save.Slots} slots of {Kb(BytesPerSlot)} need {Kb(BytesPerSlot * Draft.Save.Slots)}, but {chip} holds {Kb(cap)}. Use fewer slots or fields, or a bigger save type.";
+        }
         if (Draft.Build.WarnRomMegabytes is < 1 or > 32) return "Warn ROM must be 1 to 32 MB.";
-        if (Draft.Build.Output.Trim().Length == 0) return "Output folder is empty.";
-        if (Draft.Scripting.Generated.Trim().Length == 0) return "Generated folder is empty.";
+        if (Draft.Build.Output.Trim().Length == 0) return "Build · Output folder is empty. Enter a folder for the ROM, like build/.";
+        if (Draft.Scripting.Generated.Trim().Length == 0) return "Scripting · Generated folder is empty. Enter a folder, like build/gen.";
         if (Draft.Scripting.Namespace.Trim().Length > 0 && !Draft.Scripting.Namespace.Split('.').All(p => IdentRx().IsMatch(p))) return "Namespace must be a C# name, like SkyHopper.";
         return null;
     }

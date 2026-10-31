@@ -251,7 +251,7 @@ public sealed class ProjectSettingsTests : IDisposable
         var card = d.Find<Border>("ToolchainCard").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         var devkit = _fx.Services.Toolchain.Find("devkitPro")!;
         Assert.Contains(card, t => t != null && t.EndsWith(devkit.Path));
-        Assert.Contains(card, t => t != null && (t.EndsWith("found") || t.EndsWith("missing")));
+        Assert.Contains(card, t => t != null && (t.EndsWith("found") || t.EndsWith("not found · set the devkitPro folder, or install devkitPro")));
     }
 
     [AvaloniaFact]

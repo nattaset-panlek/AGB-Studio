@@ -10,8 +10,10 @@ node does.
 ## Opens from
 
 - Logic Graph › Right-click canvas (empty space)
-- Nodes › Add node…
-- Also: double-click empty canvas, or drop a wire on empty canvas (the new node is then connected to that wire)
+- Nodes › Add node… (click the box, or start typing in it: what you type goes into the search; the node is added in
+  the middle of the view)
+- Also: double-click empty canvas, or drop a wire on empty canvas (the new node is then connected to that wire), also
+  a wire drawn with the Link tool
 
 ## What is on it
 
@@ -23,9 +25,6 @@ node does.
 - **Shift+Enter (add and connect)**: adds the node and wires it to the pin you dragged from. If the popover was not
   opened from a wire, it connects from the selected node.
 - **No node matches.**: shown when nothing fits the search.
-
-Differs from Figma: "Nodes › Add node…" is a search box in the Nodes panel that filters the node list (Enter adds the
-first match in the middle of the view); it does not open this popover.
 
 ## Related
 

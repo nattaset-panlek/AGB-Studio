@@ -19,8 +19,9 @@ or press Open externally to use VS Code or Rider as set in Preferences.
 ## What is on it
 
 - **Toolbar**: Find (Ctrl+F), the Code view button, and Debug, which opens the Debugger. Play (F5) runs the game;
-  Pause and Step have no action on this page. Undo and Redo are on the right.
-- **Analyzer: GBA rules on**: a chip that opens Project Settings. The Analyzer rules themselves are on its Scripting tab.
+  Pause pauses and resumes a running game and Step moves it one frame (F10); both are greyed out while no game runs.
+  Undo and Redo are on the right.
+- **Analyzer: GBA rules on**: a chip that opens Project Settings on its Scripting tab, where the Analyzer rules are.
 - **Open externally**: opens the current script in the external editor set in Preferences, at the caret line. If that
   editor is not found, a message tells you to set it in Preferences › Paths.
 - **C# → C++ → devkitARM**: a chip that opens the Build Report.
@@ -42,11 +43,14 @@ or press Open externally to use VS Code or Rider as set in Preferences.
 - **Terminal**: type a command and press Enter to run it in the project folder.
 - **Output**: the full log of checks, builds and hot reloads.
 - **Status line**: problem count (click to show Problems), caret line and column, the script language and the devkitARM
-  version (or "devkitARM not found").
+  version (or "devkitARM not found · set it in Preferences › Paths").
 - **Saving**: File › Save (Ctrl+S) tidies the code when format on save is on in Preferences, then checks every script.
   When a script is saved in an external editor, AGB Studio reloads it, checks it and, if the game is running, updates
   the running game (hot reload). Preferences and Project Settings can turn hot reload off.
 - **Graph scripts**: scripts written by the Logic Graph open read-only; edit the graph instead.
+
+Differs from Figma: in the Figma prototype, clicking Scene in the title bar menus goes back to the Scene Editor; in
+AGB Studio it opens the Scene menu, and the Scene document tab goes back to the Scene Editor.
 
 ## Related
 

@@ -10,9 +10,34 @@ using Avalonia.Media;
 
 namespace AgbStudio.Editor.Tests.Windows.Play;
 
-/// <summary>SHOT renders of Play Mode (T-P02), Play Speed (T-M18) and the Debugger (T-P19, T-P23, T-P24) with the Sky Hopper fixture running.</summary>
-public sealed class PlayShots : IShotSource
+/// <summary>
+/// SHOT renders of Play Mode (T-P02), Play Speed (T-M18) and the Debugger (T-P19, T-P23, T-P24) with the Sky Hopper
+/// fixture running, and P12.05: the Play Mode game view with the Hitboxes and Tile collision overlays on, cropped to
+/// the Game View rectangle of the Figma frame (docs/evidence/figma/T-P02-game-view.json).
+/// </summary>
+public sealed class PlayShots : IShotSource, IShotSpecimen
 {
+    public IEnumerable<(string Id, string Set, string FigmaPng, Action<string> Render)> Specimens()
+    {
+        yield return ("T-P02-game-view", "Play Mode game view · Hitboxes and Tile collision on", Path.Combine(Repo.FigmaEvidence, "T-P02-game-view.png"), path =>
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Repo.FigmaEvidence, "T-P02-game-view.json")));
+            int Get(string k) => (int)Math.Round(json.RootElement.GetProperty(k).GetDouble());
+            var full = Path.Combine(Path.GetDirectoryName(path)!, "T-P02-overlays-full.png");
+            // both overlays on, as the toolbar chips of the Figma frame show them
+            RenderPage(full, 1440, 900, "T-P02", m => { m.Play.Hitboxes = true; m.Play.TileCollision = true; });
+            using (var src = SkiaSharp.SKBitmap.Decode(full))
+            using (var crop = new SkiaSharp.SKBitmap(Get("w"), Get("h")))
+            {
+                using (var canvas = new SkiaSharp.SKCanvas(crop))
+                    canvas.DrawBitmap(src, SkiaSharp.SKRect.Create(Get("x"), Get("y"), Get("w"), Get("h")), SkiaSharp.SKRect.Create(0, 0, Get("w"), Get("h")));
+                using var data = crop.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+                File.WriteAllBytes(path, data.ToArray());
+            }
+            File.Delete(full);
+        });
+    }
+
     public IEnumerable<(string Id, Action<string, int, int> Render)> Windows()
     {
         yield return ("T-P02", (path, w, h) => RenderPage(path, w, h, "T-P02", null));

@@ -41,8 +41,8 @@ jargon or ids, or no context. Placeholders are written as `{name}`; runtime stri
 | Project files | 9 | 9 | 0 | 0 |
 | CLI | 16 | 16 | 0 | 0 |
 | Runtime Console | 45 | 45 | 0 | 0 |
-| Editor | 152 | 75 | 64 | 13 |
-| **Total** | **395** | **318** | **64** | **13** |
+| Editor | 153 | 153 | 0 | 0 |
+| **Total** | **396** | **396** | **0** | **0** |
 
 At the review snapshot the counts were 149 OK, 193 PARTIAL and 53 POOR (Build pipeline 12 / 33 / 7, Scripting compiler
 53 / 44 / 6, Analyzer 9 / 8 / 1, Project files 0 / 6 / 3, CLI 2 / 12 / 2, Runtime Console 1 / 25 / 19, Editor 72 / 65 /
@@ -53,9 +53,20 @@ including the three `tools/AgbStudio.Emu/LibretroCore.cs` rows of the Editor sec
 what to do; those rows show the new text and current File:line, with Verdict OK. Two Build pipeline rows
 (BuildReport.cs:143/144) were already gone from the code; their checks live in `CheckHardwareLimits` with the T-D23
 wording. Runtime lines keep the `warning: ` prefix, use only printf arguments and stay within the 159 characters
-`logf` keeps (`runtime/src/core/debug.cpp`); they say what a number is where a name is not known at run time. The
-`editor/` rows are unchanged and wait for their own pass; the editor copy of the analyzer rule titles
-(`ProjectSettingsModel.AnalyzerRules`) still has the old GAE005 / GAE006 titles.
+`logf` keeps (`runtime/src/core/debug.cpp`); they say what a number is where a name is not known at run time.
+
+Editor pass (branch `fix-editor2`, 2026-10-31): every PARTIAL and POOR row of the Editor section (77 rows) now says
+what happened, why and what to do; those rows show the new text and current File:line, with Verdict OK. 12 of them
+needed no code change: an earlier editor pass had reworded 11, and `GBxCart RW not available` only ever shows the
+reworded serial port texts as its reason. Where a reader already says how to fix the file (PNG, WAV, MOD / XM, Tiled,
+project files), the editor keeps that text as the reason and adds its own fix only for file system errors, so the fix
+is not given twice. Figma's texts are kept as they are: the success forms `Build OK`, `Compiled to C#`,
+`{version} found`, `{editor} found · used when Script editor is External` and the T-D23 title; only the failure forms
+next to them, which no Figma frame shows, were reworded. One row was added for Run in mGBA with a ROM the emulator
+refuses (`PlayController.Run`). The window pages in `docs/user/windows/` that quote a reworded text were updated.
+Project Settings · Scripting now takes its analyzer rule titles from `tools/AgbStudio.Analyzers/GaeRules.cs`
+(`ProjectSettingsModel.AnalyzerRules`), so it shows the reworded GAE005 / GAE006 titles and always says the same as the
+Problems list.
 
 A row can cover the same text at several places (all are listed in its File:line cell), so rows are fewer than the
 call sites.
@@ -381,93 +392,94 @@ errors. `warnOnce` texts are logged once per run with a `warning: ` prefix.
 | Services/ProjectServices.cs:81 | `{tool} is not at {path}. Set the devkitPro folder in Preferences › Paths.` | OK | - |
 | Windows/Settings/ToolchainHelp.cs:88, 101, 115 | title `devkitPro not found` + `AGB Studio builds games with devkitPro (devkitARM, libtonc and maxmod). It was not found in these folders:` + folder list + `Install devkitPro with its installer, or set the folder it is in under Preferences › Paths.` + buttons | OK | - |
 | Windows/Settings/ToolchainHelp.cs:89, 115 | title `A build tool is missing` + `The build could not start because these tools are not where the devkitPro folder says:` + tool list + "Open Preferences · Paths" | OK | - |
-| Windows/Build/BuildRomDialog.cs:72 | `No project is open.` (Build ROM log) | PARTIAL (no fix) | `No project is open. Open or create a project, then build.` |
-| Windows/Build/BuildRomDialog.cs:72, Services/ProjectServices.cs:69 | `A build is already running.` | PARTIAL (no fix) | `A build is already running. Wait for it to finish, or cancel it in Build ROM.` |
+| Windows/Build/BuildRomDialog.cs:75 | `No project is open. Open or create a project, then build.` (Build ROM log) | OK | - |
+| Windows/Build/BuildRomDialog.cs:76, Services/ProjectServices.cs:88 | `A build is already running. Wait for it to finish, then try again.` | OK | - |
 | Windows/Build/BuildRomDialog.cs:217-218 | `Build failed · {n} errors` + failed and skipped steps + clickable error lines + `Fix them, then build again.` + "Go to first error" (T-D23) | OK | - |
-| Windows/Build/BuildRomDialog.cs:98 | status bar `Build failed` | PARTIAL (no count, no fix; Build ROM · Failed carries the detail) | `Build failed · {n} errors` |
-| Windows/Build/BuildRomDialog.cs:128 | `Could not write {file}: {e.Message}` | PARTIAL (no fix) | `Could not write {file}: {reason}. Pick another folder, or close programs that use the file.` |
-| Windows/Play/PlayController.cs:188 | toast `Build failed · see Console` | PARTIAL (no count; fix only by pointer) | `Build failed · {n} errors. Open the Console to go to the first one.` |
-| Windows/Play/PlayController.cs:196, Windows/SceneEditor/ConsolePanel.cs:73 | `Build failed at {step}` | PARTIAL (no fix) | `Build failed at {step}: {n} errors above. Fix them and press Play again.` |
-| Windows/Play/PlayController.cs:156 | `No project is open.` (Console) | PARTIAL (no fix) | `No project is open. Open a project, then press Play.` |
+| Windows/Build/BuildRomDialog.cs:105 | status bar `Build failed · 1 error` / `Build failed · {n} errors` (`Build failed` if no error was reported); Build ROM · Failed opens with it and carries the errors and the fix | OK | - |
+| Windows/Build/BuildRomDialog.cs:143 | `Could not write {file}: {reason}. Pick another folder, or close programs that use the file, then export again.` | OK | - |
+| Windows/Play/PlayController.cs:206-207 | toast `Build failed · {n} errors. The Console shows what to fix; then press Play again.` (`Build failed. The Console ...` when the build did not start; not a Figma text, so `· see Console` was replaced) | OK | - |
+| Windows/Play/PlayController.cs:221-223, Windows/SceneEditor/ConsolePanel.cs:89-91 | `Build failed at {step}: {n} errors above. Fix them, then press Play again.` (Play; Build ROM builds end `... then build again.`; with no error reported: `Build failed at {step}. Build › Build ROM shows which step stopped and why.`) | OK | - |
+| Windows/Play/PlayController.cs:173 | `No project is open. Open a project, then press Play.` (Console) | OK | - |
+| Windows/Play/PlayController.cs:250-253 | Run in mGBA / Play with a ROM the emulator refuses: the Console line is the core's own text (`The emulator could not start {rom}: it is not a GBA ROM it can run. ...`, LibretroCore.cs:114), so the file is named once; a ROM that can't be read: `The emulator could not read {rom}: {reason}. Build the ROM again, or close programs that use it.`; toast `Could not run {rom}. The Console says why and what to do.` (added after the review as `{rom}: {e.Message}` and `Could not run {rom} · see Console`) | OK | - |
 | Windows/Play/PlayController.cs:581 | `Hot reload: {name} rebuilt; the game restarted` | OK | - |
 | Windows/Build/BuildReportPage.cs:93 | `Build the ROM first.` | OK | - |
-| Windows/Build/BuildReportPage.cs:109 | status `Build failed` | PARTIAL (no what) | `Build failed · {first error}` (the history entry already keeps it) |
+| Windows/Build/BuildReportPage.cs:111 | status `Build failed · 1 error` / `Build failed · {n} errors` (Figma's `Build OK` is the success form; the history line under it shows the first error and Build again is in the toolbar) | OK | - |
 | tools/AgbStudio.Emu/LibretroCore.cs:114 | `The emulator could not start {rom}: it is not a GBA ROM it can run. Build the ROM again; if it still fails, the file is damaged.` | OK | - |
 | tools/AgbStudio.Emu/LibretroCore.cs:180 | `The emulator could not make a save state of the running game. Try again; if it keeps failing, restart Play Mode.` | OK | - |
 | tools/AgbStudio.Emu/LibretroCore.cs:187 | `The emulator could not load this save state; it may come from another build of the game. Make a new save state.` | OK | - |
 | Windows/Build/FlashDialog.cs:87 | `No device found` / `Connect a GBxCart RW or insert a flash cart's SD card` | OK | - |
-| Windows/Build/FlashDialog.cs:113 | `Device error` / `{e.Message}` | POOR (bare title, raw detail) | `Can't talk to {device}: {reason}. Check the cable, then try again.` |
-| Windows/Build/CartridgeDevices.cs:71 | `No SD card` / `{e.Message}` | PARTIAL (no fix) | `No SD card in {drive}. Insert the flash cart's SD card.` |
+| Windows/Build/FlashDialog.cs:115 | `Can't talk to {device}` / `{reason} Check the cable, then choose the device again.` (earlier editor pass) | OK | - |
+| Windows/Build/CartridgeDevices.cs:93 | `No SD card` / `{reason}. Insert the flash cart's SD card, then choose the device again.` | OK | - |
 | Windows/Build/CartridgeDevices.cs:160 | `GBxCart RW not responding` / `Check the USB cable and the firmware` | OK | - |
 | Windows/Build/CartridgeDevices.cs:169, 175 | `No cartridge` / `Insert a cartridge into the GBxCart RW` | OK | - |
-| Windows/Build/CartridgeDevices.cs:180 | `GBxCart RW not available` / `{e.Message}` | PARTIAL (no fix) | `GBxCart RW not available: {reason}. Plug it in again and check the USB cable.` |
-| Windows/Build/CartridgeDevices.cs:226 | `{port} cannot be opened (error {code}).` | POOR (Windows error number, no fix) | `{port} can't be opened; another program may be using it. Close that program and plug the GBxCart RW in again.` |
-| Windows/Build/CartridgeDevices.cs:234 | `{port} does not accept {baud} baud.` | POOR (jargon, no fix) | `The device on {port} does not answer at the GBxCart RW speed. Check it is a GBxCart RW and update its firmware.` |
-| Windows/Build/CartridgeDevices.cs:241 | `Serial write failed.` | POOR (no where, no fix) | `Lost the connection to the GBxCart RW while writing. Check the USB cable and flash again.` |
+| Windows/Build/CartridgeDevices.cs:211 | `GBxCart RW not available` / `{reason}`, where the reason is always one of the serial port texts of the next three rows, which say why and what to do | OK | - |
+| Windows/Build/CartridgeDevices.cs:257 | `{port} can't be opened (Windows error {code}); another program may be using it. Close that program and plug the GBxCart RW in again.` (earlier editor pass) | OK | - |
+| Windows/Build/CartridgeDevices.cs:265 | `The device on {port} does not work at the GBxCart RW speed ({baud} baud). Check that it is a GBxCart RW and update its firmware.` (earlier editor pass) | OK | - |
+| Windows/Build/CartridgeDevices.cs:272 | `Lost the connection to the GBxCart RW while sending data. Check the USB cable and try again.` (earlier editor pass) | OK | - |
 | Windows/Build/FlashDialog.cs:185 | `Verify failed: the cartridge does not match the ROM. Flash again.` | OK | - |
 | Windows/Build/FlashDialog.cs:196 | `Flashing cancelled. Flash again before playing the cartridge.` | OK | - |
-| Windows/Build/FlashDialog.cs:201 | `{e.Message}` (toast) | POOR (raw text only) | `Flashing failed: {reason}. The cartridge may hold a broken game; flash again.` |
-| Windows/Scripts/ScriptEditorPage.cs:386, Windows/Launcher/LauncherService.cs:159 | status `devkitARM not found` | PARTIAL (no fix) | `devkitARM not found · set it in Preferences › Paths` |
-| Windows/Settings/PreferencesDialog.cs:304 | `{tools} missing` (under the devkitPro folder field) | PARTIAL (no fix) | `{tools} not found in this folder. Pick the devkitPro folder, or install devkitPro.` |
-| Windows/Settings/ProjectSettingsDialog.cs:321 | `{tools} found · {tools} missing` | PARTIAL (no fix) | `... {tools} missing. Set the devkitPro folder in Preferences › Paths.` |
-| Windows/Settings/PreferencesDialog.cs:266 | `{editor} not found` | PARTIAL (no fix) | `{editor} not found · set its path here` |
-| Windows/Import/AssetImporter.cs:119 | `Has {n} colours. A GBA palette holds at most 256.` | PARTIAL (no fix) | `Has {n} colours; a GBA palette holds at most 256. Reduce it to 256 colours or fewer in your paint program, then import it again.` |
+| Windows/Build/FlashDialog.cs:204 | toast `Flashing failed: {reason} The cartridge may now hold a broken game; flash again.` (earlier editor pass) | OK | - |
+| Windows/Scripts/ScriptEditorPage.cs:407, Windows/Launcher/LauncherService.cs:159 | status `devkitARM not found · set it in Preferences › Paths` (Script Editor) / `devkitARM not found · set it in Settings › Paths` (Launcher, whose Settings opens Preferences); the found form `{version} found` is Figma's | OK | - |
+| Windows/Settings/PreferencesDialog.cs:315 | `{tools} not found here · Browse to the devkitPro folder or install devkitPro` (under the devkitPro folder field) | OK | - |
+| Windows/Settings/ProjectSettingsDialog.cs:324 | `{tools} found · {tools} not found · set the devkitPro folder, or install devkitPro` (next to "Change in Preferences…" / "Change…") | OK | - |
+| Windows/Settings/PreferencesDialog.cs:275 | `{editor} not found · Browse to its .exe or install it` (Paths › Script editor; the found form keeps Figma's `{editor} found · used when Script editor is External`) | OK | - |
+| Windows/Import/AssetImporter.cs:120 | `Has {n} colours; a GBA palette holds at most 256. Remove colours in your paint program until 256 or fewer are left, then import it again.` | OK | - |
 | Windows/Import/AssetImporter.cs:133 | `{EXT} is not supported on GBA. Use .wav for sound effects or .mod / .xm for music.` + button "How to convert" | OK | - |
 | Windows/Import/ImportErrorsDialog.cs:91 | `Open {file} in an audio editor and export it as .wav (sound effect, 11 kHz mono), or rebuild the song in a tracker and save it as .xm or .mod (music).` | OK | - (it is help, but shows as an error toast) |
-| Windows/Import/AssetImporter.cs:139 | `AGB Studio can't import {ext} files.` | PARTIAL (no fix) | `AGB Studio can't import {ext} files. It imports .png, .tmx, .wav, .mod, .xm, .pal, .gpl, .ttf, .otf, .bdf and .cs.` |
-| Windows/Import/AssetImporter.cs:146 | `{file} can't be read: {e.Message}` | PARTIAL (no fix; the reason is the reader's text) | `{file} can't be read: {reason}. Open it in the program that made it, save it again, and import the new file.` |
-| Windows/Import/AssetImporter.cs:176 | `Frames are {w} × {h}; the biggest GBA sprite is 64 × 64.` | PARTIAL (no fix) | `Frames are {w} × {h}; the biggest GBA sprite is 64 × 64. Set a frame size of 64 × 64 or less, or cut the sheet into smaller frames.` |
-| Windows/Import/AssetImporter.cs:206 | `Empty TMX file.` | POOR (via "can't be read"; no fix) | `{file} is empty. Save the map again in Tiled.` |
-| Windows/Import/AssetImporter.cs:227 | `A layer has no data.` | POOR (no which layer, no fix) | `Layer {layer} of {file} has no tiles. Save the map again in Tiled.` |
+| Windows/Import/AssetImporter.cs:140 | `AGB Studio can't import {ext} files. Save it as one of the kinds it imports: .png, .aseprite, .tmx, .wav, .mod, .xm, .pal, .gpl, .ttf, .otf, .bdf or .cs.` | OK | - |
+| Windows/Import/AssetImporter.cs:148, 152, 156 | `{file} can't be read: {reason}`, where the reader's own text (PNG, WAV, MOD / XM, Tiled, palettes) says what to do; a damaged file: `{file} can't be read: it is damaged or not the kind of file its name says ({reason}). Save it again from the program that made it and import the new file.`; a file system error: `{file} can't be read: {reason}. Check that the file is still there and no other program has it open, then import it again.` | OK | - |
+| Windows/Import/AssetImporter.cs:186, 215 | `Frames are {w} × {h}; the biggest GBA sprite is 64 × 64. Make the sheet a grid of frames of 8, 16, 32 or 64 pixels a side in your paint program, then import it again.` (an Aseprite file, 215: `... Make the canvas 64 × 64 or smaller in Aseprite, then import it again.`) | OK | - |
+| Windows/Import/AssetImporter.cs:238 | `The map file is empty. Save the map again in Tiled.` (after `{file} can't be read: `, so the name is not repeated) | OK | - |
+| Windows/Import/AssetImporter.cs:259 | `Layer "{layer}" has no tiles. Save the map again in Tiled.` (after `{file} can't be read: `) | OK | - |
 | Windows/Import/AssetImporter.cs:243 | `Tiled {compression} compression is not supported; save the map as CSV.` | OK | - |
-| Windows/Import/AssetImporter.cs:256 | `Tiles are {n} px; AGB Studio maps use 16 × 16 tiles.` | PARTIAL (no fix) | `Tiles are {n} px; AGB Studio maps use 16 × 16 tiles. Use a 16 × 16 tileset in Tiled and save the map again.` |
-| Windows/Import/AssetImporter.cs:257 | `The map has no tile layers.` | PARTIAL (no fix) | `The map has no tile layers. Add one in Tiled and save the map again.` |
-| Windows/Import/AssetImporter.cs:258 | `The map has {n} layers; the GBA shows at most 4 backgrounds.` | PARTIAL (no fix) | `The map has {n} layers; the GBA shows at most 4 backgrounds. Merge or delete layers in Tiled until 4 are left.` |
-| Windows/Audio/WavFile.cs:16 | `Not a WAV file.` | PARTIAL (no fix) | `{file} is not really a WAV file. Export it again as .wav.` |
-| Windows/Audio/WavFile.cs:37 | `The WAV file has no audio data.` | PARTIAL (no fix) | `{file} has no sound in it. Export it again from your audio editor.` |
-| Windows/Audio/WavFile.cs:38 | `Only PCM and float WAV files can be imported.` | PARTIAL (no fix) | `{file} is a compressed WAV. Export it again as 16-bit PCM WAV.` |
-| Windows/Audio/WavFile.cs:55 | `{bits}-bit WAV files are not supported.` | PARTIAL (no fix) | `{file} is {bits}-bit. Export it again as 8-, 16-, 24- or 32-bit WAV.` |
-| Windows/Audio/TrackerModule.cs:86 | `Not a MOD or XM module.` | PARTIAL (no fix) | `{file} is not a MOD or XM song. Save it again from your tracker.` |
-| Windows/Audio/TrackerModule.cs:154 | `Unknown MOD signature '{sig}'.` | POOR (jargon, no fix; old 15-sample MOD files end here) | `{file} is a MOD variant AGB Studio can't read. Save it again as a ProTracker .mod or as .xm.` |
+| Windows/Import/AssetImporter.cs:288 | `Tiles are {n} px; AGB Studio maps use 16 × 16 tiles. Use a 16 × 16 tileset in Tiled and save the map again.` | OK | - |
+| Windows/Import/AssetImporter.cs:289 | `The map has no tile layers. Add one in Tiled and save the map again.` | OK | - |
+| Windows/Import/AssetImporter.cs:290 | `The map has {n} layers; the GBA shows at most 4 backgrounds. Merge or delete layers in Tiled until 4 are left, then save the map again.` | OK | - |
+| Windows/Audio/WavFile.cs:16 | `It is not a WAV file inside, only named like one. Export it again as .wav from your audio editor.` (the callers put `{file} can't be read: ` or `{file} could not be played: ` in front) | OK | - |
+| Windows/Audio/WavFile.cs:38 | `The WAV file has no sound in it. Export it again from your audio editor.` | OK | - |
+| Windows/Audio/WavFile.cs:39 | `The WAV file is compressed, and AGB Studio reads only uncompressed (PCM or float) WAV. Export it again as 16-bit PCM WAV.` | OK | - |
+| Windows/Audio/WavFile.cs:56 | `{bits}-bit WAV files are not supported; AGB Studio reads 8-, 16-, 24- and 32-bit PCM and 32-bit float. Export it again as 16-bit PCM WAV.` | OK | - |
+| Windows/Audio/TrackerModule.cs:86 | `It is not a MOD or XM song inside (too short for one). Save it again from your tracker as .mod or .xm.` | OK | - |
+| Windows/Audio/TrackerModule.cs:154 | `This is a MOD variant AGB Studio can't read (signature '{sig}'). Save it again as a ProTracker .mod or as .xm.` (earlier editor pass) | OK | - |
 | Windows/Import/ImportErrorsDialog.cs:109 | `Open a project before importing.` | OK | - |
-| Windows/Import/ImportErrorsDialog.cs:120 | `{file} could not be imported: {e.Message}` | PARTIAL (no fix) | `{file} could not be imported: {reason}. Close programs that use the project folder and try again.` |
+| Windows/Import/ImportErrorsDialog.cs:127-128 | `{file} could not be imported: {reason}. Close programs that use the file or the project folder, then import it again.` (a file the reader refuses keeps the reader's own text as the fix; the Console line adds `Import: `) | OK | - |
 | Windows/Import/ImportErrorsDialog.cs:37 | hint `Files with errors are skipped.` | OK | - |
 | Windows/Sprite/SpriteModel.cs:184 | `{file}: only PNG sheets can be imported.` | OK | - |
-| Windows/Launcher/LauncherPage.cs:192 | `No .agbproj file in {folder}.` | PARTIAL (no fix) | `No .agbproj file in {folder}. Pick the folder that holds the project file.` |
-| Windows/Launcher/LauncherPage.cs:519 | `The GBA hardware guide is not installed.` | PARTIAL (no fix) | `The GBA hardware guide is not installed. Reinstall AGB Studio to get it back.` |
-| Windows/Launcher/LauncherService.cs:292 | `{sample} is not installed.` | PARTIAL (no fix) | `{sample} is not installed. Reinstall AGB Studio to get the samples back.` |
-| Windows/Launcher/LauncherService.cs:316 | `{project} was not found.` | PARTIAL (no why, no fix) | `{project} was not found at {path}; it was moved or deleted. Open it from its new folder.` |
-| Windows/Launcher/LauncherService.cs:351 | `Could not duplicate {project}: {e.Message}` | PARTIAL (no fix) | `Could not duplicate {project}: {reason}. Check there is free space and try again.` |
-| Windows/Launcher/LauncherService.cs:382 | `Could not rename {project}: {e.Message}` | PARTIAL (no fix) | `Could not rename {project}: {reason}. Close programs that use its files and try again.` |
-| Windows/Launcher/LauncherService.cs:409 | `Could not delete {folder}.` | POOR (no why, no fix) | `Could not move {folder} to the Recycle Bin. Close programs that use files in it, then try again.` |
-| Windows/Launcher/NewProjectDialog.cs:254 | `Could not create the project: {e.Message}` | PARTIAL (depends on the inner text) | `Could not create the project: {reason}. Check the location and try again.` |
+| Windows/Launcher/LauncherPage.cs:192 | `No .agbproj file in {folder}, so it is not an AGB Studio project folder. Pick the folder that holds the project file.` (the words of GameProject.cs:48) | OK | - |
+| Windows/Launcher/LauncherPage.cs:519 | `The GBA hardware guide is missing from this install. Reinstall AGB Studio to get it back.` | OK | - |
+| Windows/Launcher/LauncherService.cs:294 | `The {sample} sample is missing from this install. Reinstall AGB Studio to get the samples back.` | OK | - |
+| Windows/Launcher/LauncherService.cs:319 | `{project} was not found in {folder}; it was moved or deleted. Use Open… to pick its new folder, or remove it from the list.` | OK | - |
+| Windows/Launcher/LauncherService.cs:356-357 | `Could not duplicate {project}: {reason}. Check that the drive has free space and no program is using the project's files, then try again.` (a damaged project file shows its own text, see Project files) | OK | - |
+| Windows/Launcher/LauncherService.cs:389-390 | `Could not rename {project}: {reason}. Close programs that use its project file (.agbproj), then try again.` (a damaged project file shows its own text) | OK | - |
+| Windows/Launcher/LauncherService.cs:417 | `Could not move {folder} to the Recycle Bin. Close programs that use files in it, then try again.` (earlier editor pass) | OK | - |
+| Windows/Launcher/NewProjectDialog.cs:254 | `Could not create the project: {reason}. Pick another location or project name, then press Create Project again.` | OK | - |
 | Windows/Launcher/ProjectCreator.cs:132 | `The project needs a name.` | OK | - |
 | Windows/Launcher/ProjectCreator.cs:133 | `ROM title: 12 characters max (A-Z, 0-9).` | OK | - |
 | Windows/Launcher/ProjectCreator.cs:134 | `Game code: 4 characters (A-Z, 0-9).` | OK | - |
-| Windows/Launcher/ProjectCreator.cs:136, Windows/Launcher/NewProjectDialog.cs:191 | `{folder} is not empty.` / `{folder} is not empty` | PARTIAL (no fix) | `{folder} is not empty. Pick an empty folder or another project name.` |
-| Windows/Launcher/ProjectCreator.cs:137 | `The location needs a parent folder.` | PARTIAL (no why, no fix) | `{location} is a drive root. Pick a folder inside it.` |
+| Windows/Launcher/NewProjectDialog.cs:191, Windows/Launcher/ProjectCreator.cs:137 | help `{folder} is not empty · change the project name or pick another location`; ProjectCreator (reached only when the folder fills up after that check): `{folder} is not empty, and a new project needs an empty folder.` inside the toast of NewProjectDialog.cs:254, which says what to do | OK | - |
+| Windows/Launcher/ProjectCreator.cs:138 | `{folder} is the top of a drive, and a project needs a folder of its own.` (inside the toast of NewProjectDialog.cs:254, which says to pick another location) | OK | - |
 | Windows/Launcher/NewProjectDialog.cs:191 | `A folder outside {devkitPro} is safer for updates` | OK | - |
-| Windows/Launcher/ProjectCreator.cs:248 (toast via LauncherService.cs:276) | `Noto Sans Thai was not found, so the Thai font was not added.` | PARTIAL (no fix; shown as an error toast though the project was made) | `The project was made without the Thai font (Noto Sans Thai not found). Add a Thai font later in Font Manager.` |
-| Windows/Launcher/ProjectCreator.cs:283 (toast via LauncherService.cs:276) | `git init failed: {git output}` | POOR (raw git output, no consequence, no fix) | `The project was made, but without a Git repository (git init failed: {first line}). Run git init in the project folder if you want one.` |
-| Windows/Launcher/ProjectCreator.cs:287 (toast via LauncherService.cs:276) | `Git was not found, so no repository was made.` | PARTIAL (no fix) | `Git was not found, so no repository was made. Install Git and run git init in the project folder if you want version control.` |
-| Windows/Launcher/OpeningProjectDialog.cs:241 | `{n} assets of {project} could not be read.` | PARTIAL (no which, no fix) | `{n} assets of {project} could not be read (first: {file}). Their cards say "cannot read"; open them or import them again.` |
-| Windows/Launcher/OpeningProjectDialog.cs:250 | `Could not open {project}: {e.Message}` | PARTIAL (depends on the inner text, see Project files) | `Could not open {project}: {reason}.` with the inner texts fixed as under Project files |
-| Windows/Launcher/ProjectContextMenu.cs:63 | `The project file could not be read.` (Delete project dialog) | PARTIAL (no why) | `The project file could not be read, so its contents are not listed. The whole folder is still deleted.` |
+| Windows/Launcher/ProjectCreator.cs:249 (toast via LauncherService.cs:278) | `The project was made without the Thai font: Noto Sans Thai is missing from this install. Add a Thai font later in the Font Manager, or reinstall AGB Studio.` | OK | - |
+| Windows/Launcher/ProjectCreator.cs:285 (toast via LauncherService.cs:278) | `The project was made, but without a Git repository (git init failed: {first line}). Run git init in the project folder to add one.` (earlier editor pass) | OK | - |
+| Windows/Launcher/ProjectCreator.cs:289 (toast via LauncherService.cs:278) | `The project was made, but without a Git repository: Git was not found. Install Git and run git init in the project folder if you want one.` | OK | - |
+| Windows/Launcher/OpeningProjectDialog.cs:245-246 | `{file} of {project} could not be read. Its card in Assets says why; fix the file or import it again.` / `{n} assets of {project} could not be read (first: {file}). Their cards in Assets say why; fix those files or import them again.` | OK | - |
+| Windows/Launcher/OpeningProjectDialog.cs:259-260 | `Could not open {project}: {reason}`, where the reason is a Project files text (which now says what to do); a file system error: `Could not open {project}: {reason}. Check that the project folder is still there and no other program has it open, then open it again.` | OK | - |
+| Windows/Launcher/ProjectContextMenu.cs:63 | `The project file could not be read, so its scenes, assets and scripts are not counted. The whole folder still goes to the Recycle Bin.` (Delete project dialog; the line now wraps) | OK | - |
 | Windows/Launcher/ProjectContextMenu.cs:57, 73 | `Delete {name}?` + `The project folder and everything in it is moved to the Recycle Bin and removed from the recent list:` | OK | - |
 | Shell/Dialogs.cs:107, 124 | `Save changes before exiting?` + `{n} files have changes that will be lost if you don't save them.` | OK | - |
-| Windows/SceneEditor/SceneCommands.cs:57 | `All four backgrounds are in use (BG0-BG3).` | PARTIAL (no fix) | `All four backgrounds (BG0-BG3) are in use. Delete or merge a layer before adding another.` |
-| Windows/SceneEditor/SceneCommands.cs:107 | `{actor} has no C# script behaviour.` | PARTIAL (no fix) | `{actor} has no C# script behaviour. Add one in the Inspector first.` |
+| Windows/SceneEditor/SceneCommands.cs:57 | `All four backgrounds (BG0-BG3) are in use, and the GBA has no more. Delete a background layer before adding another.` | OK | - |
+| Windows/SceneEditor/SceneCommands.cs:107 | `{actor} has no C# script behaviour to edit. Add one with Add Component in the Inspector first.` | OK | - |
 | Windows/SceneEditor/SceneCommands.cs:218 | `{type} is a built-in behaviour; it has no C# script.` | OK | - |
-| Windows/SceneEditor/AssetActions.cs:161 | asset card `cannot read` | POOR (no why, no fix; the reason is dropped) | `can't read · {reason}` |
+| Windows/SceneEditor/AssetActions.cs:162 | asset card `can't read · {reason}` (`broken file` for a JSON error; earlier editor pass) | OK | - |
 | Windows/SceneEditor/AssetActions.cs:365-366 | `{asset}: {problem}` + `Reimported {asset} · {n} warnings` | OK | - (problem texts are judged under Build pipeline) |
 | Windows/Scripts/ExternalEditors.cs:244 | `{editor} was not found. Set the Script editor in Preferences › Paths.` | OK | - |
-| Windows/Scripts/ExternalEditors.cs:258 | `Could not start {exe}: {e.Message}` | PARTIAL (no fix) | `Could not start {exe}: {reason}. Check the Script editor path in Preferences › Paths.` |
-| Windows/Scripts/ScriptWorkspace.cs:259 | `Script check failed: {e.Message}` | PARTIAL (no where, no fix) | `Script check failed in {file}: {reason}.` |
+| Windows/Scripts/ExternalEditors.cs:258 | `Could not start {exe}: {reason}. Check the Script editor path in Preferences › Paths.` | OK | - |
+| Windows/Scripts/ScriptWorkspace.cs:259 | `Script check failed: {reason}. Close programs that use the project's build folder, then save the script again to check it.` (the check covers all scripts at once, so no one file can be named; the reason is a file system error) | OK | - |
 | Windows/Scripts/ScriptWorkspace.cs:392 | `{file} changed on disk; your unsaved edits are kept` | OK | - |
-| Windows/LogicGraph/LogicGraphPage.cs:227 | status `C# generation failed` (+ `// {e.Message}` in the code pane) | PARTIAL (no fix) | `C# generation failed: {reason}. Fix the graph and the code updates.` |
+| Windows/LogicGraph/LogicGraphPage.cs:232-235 | status `C# generation failed · see Generated C#`; the Generated C# pane shows `// No C# could be made from this graph:`, `// {reason}`, `// Fix that node setting or wire in the graph; this code updates as you edit.` (Figma's `Compiled to C#` is the success form) | OK | - |
 | Windows/Database/DatabasePage.cs:242 | `{field} must be a whole number.` | OK | - |
 | Windows/Database/DatabasePage.cs:245 | `{field} must be a number.` | OK | - |
-| Windows/Database/DatabasePage.cs:251 | `“{value}” is not a valid id.` | PARTIAL (no rule) | `“{value}” is not a valid id. Use letters, digits and _, starting with a letter.` |
+| Windows/Database/DatabasePage.cs:251 | `“{value}” is not a valid id. An id uses only letters A-Z, digits and _, and does not start with a digit.` | OK | - |
 | Windows/Database/DatabasePage.cs:252 | `{value} is already a row of {table}.` | OK | - |
 | Windows/Database/AddFieldDialog.cs:172 | `Enter a field name.` | OK | - |
 | Windows/Database/AddFieldDialog.cs:173, Windows/Database/NewTableDialog.cs:117 | `Use letters, digits and _ (a C# name).` | OK | - |
@@ -502,34 +514,34 @@ errors. `warnOnce` texts are logged once per run with a `warning: ` prefix.
 | Windows/Settings/ProjectSettingsModel.cs:170 | `Game code must be 4 capital letters or digits.` | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:171 | `Maker must be 2 capital letters or digits.` | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:173 | `Action names must be one word (letters, digits, _).` | OK | - |
-| Windows/Settings/ProjectSettingsModel.cs:174 | `Two buttons have the same action name.` | PARTIAL (no which) | `{button} and {button} both use the action {name}. Rename one.` |
+| Windows/Settings/ProjectSettingsModel.cs:173 | `{button} and {button} both use the action name {name}. Rename one of them.` | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:177 | `Save field "{name}" must be one word (letters, digits, _).` | OK | - |
-| Windows/Settings/ProjectSettingsModel.cs:178 | `Save field "{name}" has an unknown type "{type}".` | PARTIAL (no list of types) | `Save field "{name}" has an unknown type "{type}". Use one of: {types}.` |
+| Windows/Settings/ProjectSettingsModel.cs:178 | `Save field "{name}": "{type}" is not a type. Use int, byte, short, bool, fixed, fixed2, bitset N or Table[N].` (kept short: footer hints do not wrap) | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:180 | `Slots must be 1 to 16.` | OK | - |
-| Windows/Settings/ProjectSettingsModel.cs:182 | `The save slots do not fit in the save chip.` | PARTIAL (no numbers, no fix) | `{slots} slots need {n} bytes; the {type} chip holds {cap}. Use fewer slots or save fields, or a bigger save type.` |
+| Windows/Settings/ProjectSettingsModel.cs:185 | `{n} slots of {size} need {total}, but {chip} holds {capacity}. Use fewer slots or fields, or a bigger save type.` (for example `3 slots of 12000 B need 36000 B, but SRAM holds 32 KB.`) | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:183 | `Warn ROM must be 1 to 32 MB.` | OK | - |
-| Windows/Settings/ProjectSettingsModel.cs:184 | `Output folder is empty.` | PARTIAL (no tab named; shown in the footer) | `Build · Output folder is empty. Enter a folder, like build.` |
-| Windows/Settings/ProjectSettingsModel.cs:185 | `Generated folder is empty.` | PARTIAL (no tab named; shown in the footer) | `Scripting · Generated folder is empty. Enter a folder.` |
+| Windows/Settings/ProjectSettingsModel.cs:188 | `Build · Output folder is empty. Enter a folder for the ROM, like build/.` (footer) | OK | - |
+| Windows/Settings/ProjectSettingsModel.cs:189 | `Scripting · Generated folder is empty. Enter a folder, like build/gen.` (footer) | OK | - |
 | Windows/Settings/ProjectSettingsModel.cs:186 | `Namespace must be a C# name, like SkyHopper.` | OK | - |
-| Windows/Build/ExportRomDialog.cs:125 | `Enter a file name.` | PARTIAL (also shown for a name with characters Windows does not allow) | `Enter a file name without \ / : * ? " < > \| characters.` |
+| Windows/Build/ExportRomDialog.cs:126 | `Enter a file name.` when the name is empty; `Remove \ / : * ? " < > \| from the file name; Windows does not allow them.` when it has those characters | OK | - |
 | Windows/Build/ExportRomDialog.cs:126 | `Up to 12 letters, digits or spaces.` | OK | - |
 | Windows/Build/ExportRomDialog.cs:127 | `4 letters or digits.` | OK | - |
 | Windows/Build/ExportRomDialog.cs:128 | `major.minor.patch, e.g. 1.0.3` | OK | - |
 | Windows/Build/ExportRomDialog.cs:129 | `Choose a folder.` | OK | - |
-| Windows/Audio/AudioPage.cs:212 | `{file} could not be read: {e.Message}` | PARTIAL (no fix) | `{file} could not be read: {reason}. Import it again.` |
-| Windows/Audio/AudioPage.cs:411 | `{file} could not be played: {e.Message}` | PARTIAL (no fix) | `{file} could not be played: {reason}. Check the audio output in Windows.` |
-| Windows/Audio/SfxDesignerPage.cs:281 | `{file} could not be read: {e.Message}` | PARTIAL (no fix; the sound is replaced by an empty one) | `{file} could not be read: {reason}. An empty sound is shown; do not save over the file until it is fixed.` |
-| Windows/Palette/PaletteManagerPage.cs:356 | `Could not import {file}` | POOR (reason dropped, no fix) | `Could not import {file}: {reason}. Palettes must be JASC .pal or GIMP .gpl files.` |
-| Windows/Sprite/SpriteEditorPage.cs:365 | `Could not open {file}: {e.Message}` | PARTIAL (no fix) | `Could not open {file}: {reason}. Open it in a paint program and save it again as PNG.` |
-| Windows/Sprite/SpriteEditorPage.cs:865 | `Could not import {file}: {e.Message}` | PARTIAL (no fix) | `Could not import {file}: {reason}. Save it again as PNG and import it.` |
-| Windows/Menus/AboutDialog.cs:45 | `The third-party notices (THIRD_PARTY.md) are missing from this install.` | PARTIAL (no fix) | `The third-party notices (THIRD_PARTY.md) are missing from this install. Reinstall AGB Studio to restore them.` |
+| Windows/Audio/AudioPage.cs:215-217 | `{file} could not be read: {reason}`, where the reason is the MOD / XM reader's own text with its fix; a file system error: `... {reason}. Close programs that use it, then select it again.`; a damaged file: `{file} could not be read: it is damaged ({reason}). Save it again from your tracker and import it again.` | OK | - |
+| Windows/Audio/AudioPage.cs:419-420 | `{file} could not be played: {reason}`, where the reason is the WAV reader's own text with its fix; a file system error: `... {reason}. Close programs that use it, then play it again.` (the error comes from reading the file, so the suggested "check the audio output" did not fit) | OK | - |
+| Windows/Audio/SfxDesignerPage.cs:284 | `{file} could not be read: {reason}. An empty sound is shown instead; fix the file before you edit here, or the empty sound is saved over it.` | OK | - |
+| Windows/Palette/PaletteManagerPage.cs:368 | `Could not import {file}: {reason}. Palettes must be JASC .pal or GIMP .gpl files.` (earlier editor pass) | OK | - |
+| Windows/Sprite/SpriteEditorPage.cs:376-377 | `Could not open {file}: {reason}`, where the reason is the PNG / Aseprite reader's own text with its fix; a file system error: `... {reason}. Close programs that use it, then open it again.` | OK | - |
+| Windows/Sprite/SpriteEditorPage.cs:912-913 | `Could not import {file}: {reason}`, with the reader's own text; otherwise `... {reason}. Close programs that use it, or save it again as PNG, then import it again.` | OK | - |
+| Windows/Menus/AboutDialog.cs:45 | `The third-party notices (THIRD_PARTY.md) are missing from this install. Reinstall AGB Studio to restore them.` | OK | - |
 | Windows/Menus/MenuActions.cs:108 | `Start the game to take a screenshot.` | OK | - |
-| Windows/Menus/MenuActions.cs:146 | `Could not clean the build folder: {e.Message}` | PARTIAL (no fix) | `Could not clean the build folder: {reason}. Stop the game and close programs that use the build folder, then try again.` |
-| Windows/Menus/EditorLinks.cs:69 | `No update source configured` | PARTIAL (no fix) | `No update source is set. Add updateFeed to editor.json next to AGBStudio.exe.` |
-| Windows/Menus/EditorLinks.cs:74 | `Could not check for updates: {e.Message}` | PARTIAL (no fix) | `Could not check for updates: {reason}. Check the internet connection and try again.` |
-| Windows/Menus/EditorLinks.cs:84 | `Could not check for updates: the feed has no version` | PARTIAL (no fix) | `Could not check for updates: the update feed has no version. Check updateFeed in editor.json.` |
-| Windows/Menus/EditorLinks.cs:91 | `Could not check for updates: the feed is not JSON` | PARTIAL (no fix) | `Could not check for updates: the update feed is not JSON. Check updateFeed in editor.json.` |
-| Shell/WindowService.cs:176 | `{id} {name} is not built yet. Requested by {source}.` (for example "T-D23 ... Requested by BuildRomFailed.") | POOR (shows internal design ids and caller names, no fix) | `{name} is not in this version of AGB Studio yet.` (keep the ids for the log only) |
+| Windows/Menus/MenuActions.cs:146 | `Could not clean the build folder: {reason}. Stop the game and close programs that use files in the build folder, then try again.` | OK | - |
+| Windows/Menus/EditorLinks.cs:70 | `Could not check for updates: no update source is set. Add an updateFeed address to editor.json next to AGBStudio.exe.` | OK | - |
+| Windows/Menus/EditorLinks.cs:75 | `Could not check for updates: {reason}. Check the internet connection and the updateFeed address in editor.json, then try again.` | OK | - |
+| Windows/Menus/EditorLinks.cs:85 | `Could not check for updates: the update feed has no version number. Check the updateFeed address in editor.json.` | OK | - |
+| Windows/Menus/EditorLinks.cs:92 | `Could not check for updates: the update feed is not JSON. Check the updateFeed address in editor.json.` | OK | - |
+| Shell/WindowService.cs:177 | `{name} is not in this version of AGB Studio yet.` (the design ids and caller names are no longer shown; earlier editor pass) | OK | - |
 
 ## Not checked
 
@@ -552,8 +564,8 @@ errors. `warnOnce` texts are logged once per run with a `warning: ` prefix.
 - `GraphCodeGen.Parse` messages (`tools/AgbStudio.Scripting/Graph/GraphCodeGen.cs:243-505`): not called from the
   editor or the build at this snapshot.
 - `tools/AgbStudio.Build/Audio/AudioWriters.cs:73` (ModWriter, used only for generated test and sample audio).
-- Where the emulator exceptions (`LibretroCore.cs:114/180/187`) surface was not traced end to end; no catch for them
-  was seen in `PlayController.Run`.
+- `LibretroCore.cs:114` now reaches the Console through the catch in `PlayController.Run` (Editor row
+  PlayController.cs:250-253); where `LibretroCore.cs:180/187` (save states) surface was not traced end to end.
 - The analyzer help links point to `https://agbstudio.local/docs/scripting/rules#` (`GaeRules.cs:11`), which is not a
   public address; whether the editor shows them was not checked.
 - No crash or unhandled-exception message exists in the editor at this snapshot (G-ERR.06), so there was nothing to review.

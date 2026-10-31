@@ -170,7 +170,7 @@ public sealed class PlayController : IDisposable
         StartedAs = how;
         if (how != PlayStart.RunBuilt || romPath == null)
         {
-            if (project == null) { Console.Add(ConsoleLevel.Error, "No project is open."); return Fail(); }
+            if (project == null) { Console.Add(ConsoleLevel.Error, "No project is open. Open a project, then press Play."); return Fail(); }
             if (how == PlayStart.RunBuilt && File.Exists(LastRomOf(project))) romPath = LastRomOf(project);
             else
             {
@@ -190,7 +190,7 @@ public sealed class PlayController : IDisposable
                 }
                 LastBuild = r;
                 ReportBuild(r);
-                if (!r.Success) return Fail();
+                if (!r.Success) return Fail(r.Diagnostics.Count(d => d.Severity == Severity.Error));
                 romPath = r.RomPath;
             }
         }
@@ -199,10 +199,12 @@ public sealed class PlayController : IDisposable
 
     static string LastRomOf(GameProject p) => new GameBuilder(p, new AgbStudio.Build.Toolchain()).RomPath;
 
-    bool Fail()
+    /// <summary>The build did not give a ROM: the Console has the errors (or why it did not start) and what to do.</summary>
+    bool Fail(int errors = 0)
     {
         State = PlayState.BuildFailed;
-        _s.Toasts.Show("Build failed · see Console", ToastStatus.Error, TimeSpan.FromSeconds(4));
+        var what = errors == 0 ? "Build failed" : errors == 1 ? "Build failed · 1 error" : $"Build failed · {errors} errors";
+        _s.Toasts.Show($"{what}. The Console shows what to fix; then press Play again.", ToastStatus.Error, TimeSpan.FromSeconds(4));
         Changed?.Invoke();
         return false;
     }
@@ -210,7 +212,18 @@ public sealed class PlayController : IDisposable
     void ReportBuild(BuildResult r)
     {
         foreach (var d in r.Diagnostics.Where(d => d.Severity == Severity.Error)) Console.Add(ConsoleLevel.Error, d.ToString());
-        if (!r.Success) { Console.Add(ConsoleLevel.Error, $"Build failed at {r.FailedStep}"); return; }
+        if (!r.Success)
+        {
+            var errors = r.Diagnostics.Count(d => d.Severity == Severity.Error);
+            var at = r.FailedStep.Length > 0 ? " at " + r.FailedStep : "";
+            Console.Add(ConsoleLevel.Error, errors switch
+            {
+                0 => $"Build failed{at}. Build › Build ROM shows which step stopped and why.",
+                1 => $"Build failed{at}: 1 error above. Fix it, then press Play again.",
+                _ => $"Build failed{at}: {errors} errors above. Fix them, then press Play again.",
+            });
+            return;
+        }
         var kb = File.Exists(r.RomPath) ? new FileInfo(r.RomPath).Length / 1024 : 0;
         Console.Add(ConsoleLevel.Success, string.Create(CultureInfo.InvariantCulture, $"Build OK in {r.Elapsed.TotalSeconds:0.00} s · {Path.GetFileName(r.RomPath)} {kb} KB"));
         _s.Status.Build = string.Create(CultureInfo.InvariantCulture, $"Build OK · {r.Elapsed.TotalSeconds:0.0} s");
@@ -227,9 +240,23 @@ public sealed class PlayController : IDisposable
         Elf = ElfSymbols.TryLoad(Path.ChangeExtension(Path.Combine(Path.GetDirectoryName(romPath)!, "obj", Path.GetFileName(romPath)), ".elf"))
               ?? ElfSymbols.TryLoad(Path.ChangeExtension(romPath, ".elf"));
         WorldReader = _s.Project.Current is { } p ? new LiveWorldReader(p, Elf) : null;
-        Session = new PlaySession(core) { Speed = _speed, FastForward = Options.FastForwardSpeed };
+        var session = new PlaySession(core) { Speed = _speed, FastForward = Options.FastForwardSpeed };
+        try { session.Start(romPath); }
+        catch (Exception e) when (e is InvalidOperationException or IOException or UnauthorizedAccessException)
+        {
+            // G-ERR: a file the core refuses (not a GBA ROM, unreadable) leaves no half-made session behind; asking the
+            // core for its save RAM with no game loaded would crash the editor on Stop
+            // the core's own text names the ROM and says why and what to do; a file that can't be read gets that here
+            Console.Add(ConsoleLevel.Error, (e is InvalidOperationException)
+                ? e.Message
+                : $"The emulator could not read {Path.GetFileName(romPath)}: {e.Message.TrimEnd('.')}. Build the ROM again, or close programs that use it.");
+            _s.Toasts.Show($"Could not run {Path.GetFileName(romPath)}. The Console says why and what to do.", ToastStatus.Error, TimeSpan.FromSeconds(4));
+            State = PlayState.Stopped;
+            Changed?.Invoke();
+            return false;
+        }
+        Session = session;
         Session.LogLine += ReceiveGameLine;
-        Session.Start(romPath);
         LoadSaveFile();
         State = PlayState.Running;
         _userPaused = false;

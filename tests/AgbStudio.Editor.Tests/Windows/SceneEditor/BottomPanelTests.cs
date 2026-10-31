@@ -146,7 +146,7 @@ public sealed class BottomPanelTests : IDisposable
         r.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", "devkitARM build failed"));
         log.AddBuild(r);
         Assert.Equal(before + 2, log.Entries.Count);
-        Assert.Equal("Build failed at Compile (devkitARM g++ -O2)", log.Entries[^1].Text);
+        Assert.Equal("Build failed at Compile (devkitARM g++ -O2): 1 error above. Fix it, then build again.", log.Entries[^1].Text);
         Assert.Equal(ConsoleLevel.Error, log.Entries[^1].Level);
     }
 
@@ -191,8 +191,15 @@ public sealed class BottomPanelTests : IDisposable
         int Sprites() => p.SpriteFiles().Count();
         var n = Sprites();
         Capture.Pump();
+        // whatever had the keyboard before (here the Hierarchy search box; in a full run possibly a control another test
+        // left focused), clicking a card gives it to the Assets panel
+        var search = _w.Find<SearchField>("HierarchySearch");
+        search.Focus();
+        Capture.Pump();
+        Assert.True(search.IsFocused);
         _w.Click(Card("coin.png"));
         Capture.Pump();
+        Assert.True(Assets.IsKeyboardFocusWithin);
         // the shortcuts go to the Assets panel that has the selection
         _w.Key(PhysicalKey.C, RawInputModifiers.Control);
         _w.Key(PhysicalKey.V, RawInputModifiers.Control);

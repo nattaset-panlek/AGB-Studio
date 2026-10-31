@@ -7,7 +7,7 @@ namespace AgbStudio.Editor.Windows.Menus;
 
 /// <summary>
 /// editor.json next to AGBStudio.exe (D-13): the online places Help and About open. Empty values mean "not configured"
-/// (Report a Bug… and Website are then disabled; Check for Updates says "No update source configured").
+/// (Report a Bug… and Website are then disabled; Check for Updates says no update source is set and how to add one).
 /// </summary>
 public sealed class EditorConfig
 {
@@ -66,12 +66,13 @@ public sealed class EditorLinks
     /// </summary>
     public async Task<UpdateResult> CheckForUpdatesAsync(string current, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(Config.UpdateFeed)) return new(false, false, "No update source configured", null);
+        if (string.IsNullOrWhiteSpace(Config.UpdateFeed))
+            return new(false, false, "Could not check for updates: no update source is set. Add an updateFeed address to editor.json next to AGBStudio.exe.", null);
         string text;
         try { text = await Fetch(Config.UpdateFeed.Trim(), ct); }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or UriFormatException or InvalidOperationException)
         {
-            return new(false, false, "Could not check for updates: " + e.Message, null);
+            return new(false, false, $"Could not check for updates: {e.Message.TrimEnd('.')}. Check the internet connection and the updateFeed address in editor.json, then try again.", null);
         }
         try
         {
@@ -81,14 +82,14 @@ public sealed class EditorLinks
             var latest = Str("version", "tag_name")?.TrimStart('v', 'V');
             var url = Str("url", "html_url");
             if (latest is null || !Version.TryParse(Normalize(latest), out var lv) || !Version.TryParse(Normalize(current), out var cv))
-                return new(false, false, "Could not check for updates: the feed has no version", null);
+                return new(false, false, "Could not check for updates: the update feed has no version number. Check the updateFeed address in editor.json.", null);
             return lv > cv
                 ? new(true, true, $"AGB Studio {latest} is available", url)
                 : new(true, false, $"AGB Studio is up to date ({current})", null);
         }
         catch (JsonException)
         {
-            return new(false, false, "Could not check for updates: the feed is not JSON", null);
+            return new(false, false, "Could not check for updates: the update feed is not JSON. Check the updateFeed address in editor.json.", null);
         }
     }
 

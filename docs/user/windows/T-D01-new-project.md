@@ -24,7 +24,8 @@ and basic scripts; then name the game and fill in the cartridge header.
   the name until you change them yourself.
 - **Location**: the folder the project is made in. Click it to pick a different parent folder. The help line reads
   "A folder outside D:\devkitPro is safer for updates" (with your devkitPro folder) and turns amber when the location
-  is inside devkitPro. The folder must be new or empty; otherwise the line turns red and says "... is not empty".
+  is inside devkitPro. The folder must be new or empty; otherwise the line turns red and says "... is not empty ·
+  change the project name or pick another location".
 - **ROM title**: the name in the cartridge header, up to 12 characters: capital letters, digits, space, `_` or `-`.
   Letters are made capital as you type.
 - **Game code**: exactly 4 capital letters or digits. It is made from the ROM title, for example SKYHOPPER gives

@@ -133,8 +133,9 @@ public static class ProjectCreator
         if (!NewProjectRules.IsValidRomTitle(o.RomTitle)) throw new ArgumentException("ROM title: 12 characters max (A-Z, 0-9).");
         if (!NewProjectRules.IsValidGameCode(o.GameCode)) throw new ArgumentException("Game code: 4 characters (A-Z, 0-9).");
         var target = Path.GetFullPath(o.Folder);
-        if (!NewProjectRules.IsUsableFolder(target)) throw new IOException($"{target} is not empty.");
-        var parent = Path.GetDirectoryName(target) ?? throw new IOException("The location needs a parent folder.");
+        // what and why; New Project's toast adds what to do (another location or name)
+        if (!NewProjectRules.IsUsableFolder(target)) throw new IOException($"{target} is not empty, and a new project needs an empty folder.");
+        var parent = Path.GetDirectoryName(target) ?? throw new IOException($"{target} is the top of a drive, and a project needs a folder of its own.");
         Directory.CreateDirectory(parent);
         var staging = Path.Combine(parent, $".{Path.GetFileName(target)}.creating-{Guid.NewGuid().ToString("N")[..8]}");
         var warnings = new List<string>();
@@ -245,7 +246,7 @@ public static class ProjectCreator
     {
         if (ThaiFontSource() is not { } ttf)
         {
-            warnings.Add("Noto Sans Thai was not found, so the Thai font was not added.");
+            warnings.Add("The project was made without the Thai font: Noto Sans Thai is missing from this install. Add a Thai font later in the Font Manager, or reinstall AGB Studio.");
             return;
         }
         Directory.CreateDirectory(p.FontsDir);
@@ -285,7 +286,7 @@ public static class ProjectCreator
         }
         catch (Exception e) when (e is Win32Exception or InvalidOperationException or IOException)
         {
-            warnings.Add("Git was not found, so no repository was made.");
+            warnings.Add("The project was made, but without a Git repository: Git was not found. Install Git and run git init in the project folder if you want one.");
         }
     }
 

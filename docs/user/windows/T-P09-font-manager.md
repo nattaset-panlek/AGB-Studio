@@ -11,7 +11,7 @@ vowels and stacked tone marks in the right place, automatic Thai word wrap, and 
 
 - Double-click a font asset (#26)
 - Tools › Font Manager
-- Create › Font (opens this page; use **Fonts +** to make the font)
+- Create › Font (opens this page with the New Font dialog on top; the new font is shown when it is made)
 
 ## What is on it
 

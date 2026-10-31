@@ -19,13 +19,12 @@ this frame, and tells you what uses a colour.
   select it.
 - **Colour panel**: the selected entry (for example "BG 1 · index 7") with a swatch, its address, its value in the
   GBA's 15-bit BGR555 form, and its RGB values.
-- **Used by**: which layers and tiles use that background palette, or which actors use that sprite palette, and how
-  many frames ago the colour last changed ("Not changed while playing" if it has not).
+- **Used by**: which layers and tiles use that background palette, or which actors (with their OAM slots) use that
+  sprite palette; the palette effect of the project that changes this colour, for example "Palette effect · water
+  cycle (6–9)" (an effect on every palette, such as a screen fade, is not listed); and how many frames ago the colour
+  last changed ("Not changed while playing" if it has not).
 - **Open in Palette Manager**: opens the Palette Manager at that palette bank.
 - **Break when this colour changes**: pauses the game the next time this colour changes. Click again to turn it off.
-
-Differs from Figma: Figma's Used by list also names the palette effect on the colour ("Palette effect · water cycle
-(6–9)"); the code lists only layers (BG banks) or actors with their OAM slots (OBJ banks), plus when it last changed.
 
 ## Related
 

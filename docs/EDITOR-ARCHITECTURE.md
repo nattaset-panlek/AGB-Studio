@@ -109,6 +109,13 @@ public static void BuildRom(EditorServices s) { ... }
      `docs/evidence/diff/<T-ID>.png` (Figma | app | differing pixels in red) and `docs/evidence/shot-report.md` / `.json`
      with the diff percent and the layout offset (tolerance 2 px). Fix differences or log them in the Scope log.
 3. Light theme frames (T-L01..T-L03) are rendered with `Preferences.Theme = ThemeMode.Light`.
+4. Prototype links (T-X01..T-X03): `tests/AgbStudio.Editor.Tests/Prototype` reads `docs/evidence/figma/prototype.json`
+   (exported with `figma-export.mjs prototype`) and makes one E2E case per link plus one walk per flow. A link whose
+   node has no entry in `LinkControls.For` fails, so when Figma links a control of your window, give the control a
+   stable `Name` and add the node path there. `AppSession` starts the app with nothing outside the process: no
+   toolchain, builds held "in progress" by `BuildService.BeforeBuild` until cancelled, fake audio and devices.
+5. Parts of frames and single samples (the type specimen, the Play Mode game view) are SHOT entries through
+   `IShotSpecimen` (`Shot/TypeSpecimenShots.cs`, `Windows/Play/PlayShots.cs`); they go into the same report.
 
 ## Regenerating design data from Figma
 

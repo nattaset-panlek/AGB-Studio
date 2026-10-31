@@ -42,7 +42,7 @@ public sealed class AboutDialog : FigmaDialog
         LicensesButton.Click += (_, _) =>
         {
             if (About.LicensesFile() is { } f) links.Open(f);
-            else s.Toasts.Show("The third-party notices (THIRD_PARTY.md) are missing from this install.", ToastStatus.Error);
+            else s.Toasts.Show("The third-party notices (THIRD_PARTY.md) are missing from this install. Reinstall AGB Studio to restore them.", ToastStatus.Error);
         };
         WebsiteButton = new AgbButton { Kind = ButtonKind.Secondary, Glyph = "globe", Content = "Website", Name = "Website", IsEnabled = links.Config.WebsiteUrl.Trim().Length > 0 };
         WebsiteButton.Click += (_, _) => links.Open(links.Config.WebsiteUrl.Trim());

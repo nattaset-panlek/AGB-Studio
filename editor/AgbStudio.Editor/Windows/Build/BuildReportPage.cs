@@ -106,7 +106,9 @@ public sealed class BuildReportPage : DockPanel
         BuildHeaderFields();
         var last = History.FirstOrDefault();
         var ok = last is null ? Report != null : last.Errors == 0;
-        _statusBuild.Content = Report is null && last is null ? "No build yet" : ok ? "Build OK" : "Build failed";
+        // a failed build names its error count (the history line below shows the first error; Build again is in the toolbar)
+        _statusBuild.Content = Report is null && last is null ? "No build yet" : ok ? "Build OK"
+            : last!.Errors == 1 ? "Build failed · 1 error" : $"Build failed · {last!.Errors} errors";
         _statusBuild.Classes.Set("warn", !ok);
         _statusTime.Content = Report is null ? null : $"{Secs(Report.BuildSeconds)} s · {Report.BuiltAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
         _statusTime.IsVisible = Report != null;

@@ -14,8 +14,9 @@ copy straight away.
 
 ## What is on it
 
-- **Toolbar**: Search (puts the cursor in the search box) and the Docs view button. Play (F5) runs the game; Pause and
-  Step have no action on this page. The "GBA · Mode 0 · 240×160" chip opens Video Mode. Undo and Redo are on the right.
+- **Toolbar**: Search (puts the cursor in the search box) and the Docs view button. Play (F5) runs the game; Pause
+  pauses and resumes a running game and Step moves it one frame (F10); both are greyed out while no game runs. The
+  "GBA · Mode 0 · 240×160" chip opens Video Mode. Undo and Redo are on the right.
 - **API tree**: the reference pages: Behaviour, Actor, Input (with Key), Sound, Music, Scene, Camera, Save,
   Text & Dialogue, Items (Database) and fixed (math). Click one to show it.
 - **Search API…**: type to list matching members instead of the tree, for example "Input.Pressed". Click a result to

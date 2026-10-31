@@ -15,10 +15,14 @@ filter by level and click a line to go to the code.
 
 - **Console tab badge**: the number of messages in the Console.
 - **Message lines**: each line has the time, an icon for its level and the text. The Console collects:
-  - build results: "Build OK in 0.80 s · sky_hopper.gba 412 KB", or "Build failed" with the step;
+  - build results: "Build OK in 0.80 s · sky_hopper.gba 412 KB", "Build failed" with the step, the number of errors
+    above it and what to do, or "Build cancelled · the last built ROM is unchanged";
   - build warnings and errors, each with the file and line it points at;
+  - the running game's own lines, the same as in Play Mode's Console: `Debug.Log` output, engine warnings (counted
+    under Warnings) and failed asserts (counted under Errors);
   - "Scene Forest_01 loaded (BG 3 · OBJ 9)" when a scene opens;
-  - the results of Find Usages and Reimport from the Asset Context Menu.
+  - the results of Find Usages and Reimport from the Asset Context Menu;
+  - each file that Import Asset did not import, with the reason.
 - **All**: shows every message.
 - **Warnings · n**: shows only warnings. The chip turns orange when there are warnings.
 - **Errors · n**: shows only errors. The chip turns red when there are errors.
@@ -26,9 +30,6 @@ filter by level and click a line to go to the code.
 - **Click a line with a file**: opens that script at that line, in the Script Editor or in your external editor, as
   chosen in Preferences › Editor.
 - The list scrolls to the newest message. The Console keeps the last 1000 messages.
-
-Differs from Figma: Figma shows lines from the running game here (`Debug.Log`, `Player.OnTouch`). Logs from the game
-appear in the Console of Play Mode instead; this Console shows build and editor messages.
 
 ## Related
 

@@ -32,10 +32,9 @@ All three open the dialog on the Emulator tab.
 - **Change…**: pick the devkitPro folder. The dialog then switches to the Paths tab so you can see the result.
 - **Cancel** (or Esc, or the close button): closes and drops every change made in any tab.
 - **Save**: keeps the changes for this user and applies them at once (theme, accent, scale, autosave, undo history,
-  devkitPro folder and shortcuts). If the devkitPro folder changed, the toolchain is checked again.
-
-Differs from Figma: Core, Scale, Filter, Audio, Pause when unfocused and Fast-forward are saved, but Play Mode does not
-read them yet; it always uses its own defaults (3x, Pixel-perfect, audio on, no pause, Tab at 4x).
+  devkitPro folder and shortcuts). Play Mode takes the emulator settings (scale, filter, audio, pause when unfocused
+  and fast-forward) at once, also while a game is running, and every new Play starts with them. If the devkitPro
+  folder changed, the toolchain is checked again.
 
 ## Related
 

@@ -74,6 +74,18 @@ public class ShotTests(ITestOutputHelper log)
             results.Add((ImageDiff.Compare(id, FigmaPng(id), AppPng(id), DiffPng(id), FrameBg), m.set + " " + m.variant));
         }
 
+        // parts of frames and samples exported on their own: the type specimen (P10.03), the Play Mode game view (P12.05)
+        var specimens = typeof(ShotTests).Assembly.GetTypes()
+            .Where(t => typeof(IShotSpecimen).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false } && t.GetConstructor(Type.EmptyTypes) != null)
+            .OrderBy(t => t.FullName, StringComparer.Ordinal)
+            .SelectMany(t => ((IShotSpecimen)Activator.CreateInstance(t)!).Specimens());
+        foreach (var (id, set, figma, render) in specimens)
+        {
+            render(AppPng(id));
+            // text samples are exported without a background: compare them on the panel colour, like the components
+            results.Add((ImageDiff.Compare(id, figma, AppPng(id), DiffPng(id), id.StartsWith("type/", StringComparison.Ordinal) ? ComponentBg : FrameBg), set));
+        }
+
         // Every window and menu that is built must be in SHOT; frames of windows not built yet are only listed.
         // In-game screens (IG-*) are captured by the emulator tests (AgbStudio.Tests.UiKitTests).
         using var built = new Fixture(withApp: false);
@@ -199,6 +211,18 @@ public class ShotTests(ITestOutputHelper log)
         var comps = results.Where(x => x.R.Id.StartsWith("C-", StringComparison.Ordinal)).Select(x => x.R).ToList();
         md.AppendLine();
         md.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Components: {comps.Count} variants, offset within 2 px: {comps.Count(r => r.LayoutOffset <= 2)}, median diff {Median(comps.Select(r => r.DiffPercent)):0.00} %, max diff {comps.Max(r => r.DiffPercent):0.00} %."));
+        var type = results.Where(x => x.R.Id.StartsWith("type/", StringComparison.Ordinal)).Select(x => x.R).ToList();
+        if (type.Count > 0)
+        {
+            md.AppendLine();
+            md.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Type specimen (P10.03, T-K02; rows `type/<style>`): the sample text Figma uses for each text style (`docs/evidence/figma/type/`, one text node per style) rendered with the app's text style and colour token at the node's size. {type.Count} styles, offset within 2 px: {type.Count(r => r.LayoutOffset <= 2)}, median diff {Median(type.Select(r => r.DiffPercent)):0.00} %, max diff {type.Max(r => r.DiffPercent):0.00} %, max diff at best shift {type.Max(r => r.BestShiftDiffPercent):0.00} %."));
+            md.AppendLine($"No sample in Figma (no text node uses the style, so nothing to compare): {string.Join(", ", TypeSpecimenShots.WithoutSample())}. Figma gives them a mixed font; the app has them as Inter Regular (`Theme/TextStyles.cs`) and no window uses them.");
+        }
+        if (results.FirstOrDefault(x => x.R.Id == "T-P02-game-view").R is { } game)
+        {
+            md.AppendLine();
+            md.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Play Mode game view (P12.05; row `T-P02-game-view`): the app's T-P02 page with Hitboxes and Tile collision on, cropped to the Game View rectangle of the Figma frame (`docs/evidence/figma/T-P02-game-view.json`), against the Figma Game View: diff {game.DiffPercent:0.00} %, at best shift {game.BestShiftDiffPercent:0.00} %, offset {game.LayoutOffset} px. The game pixels come from the running Sky Hopper ROM; the Figma frame is a drawing of it."));
+        }
         md.AppendLine();
         md.AppendLine("Scene Editor chrome regions (Phase 10 builds the chrome; panel contents are Phase 11 and stay empty, so whole-frame numbers for T-P01 / T-L01 include that content):");
         md.AppendLine();

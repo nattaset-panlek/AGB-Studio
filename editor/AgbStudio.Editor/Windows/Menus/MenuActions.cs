@@ -143,7 +143,7 @@ public static partial class MenuActions
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            s.Toasts.Show("Could not clean the build folder: " + e.Message, ToastStatus.Error);
+            s.Toasts.Show($"Could not clean the build folder: {e.Message.TrimEnd('.')}. Stop the game and close programs that use files in the build folder, then try again.", ToastStatus.Error);
         }
     }
 

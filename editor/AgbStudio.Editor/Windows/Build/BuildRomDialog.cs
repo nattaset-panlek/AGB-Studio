@@ -71,7 +71,9 @@ public sealed class BuildRomDialog : FigmaDialog
         var p = _s.Project.Current;
         if (p is null || _s.Build.IsBuilding)
         {
-            Stream.Log.Add(new BuildLogLine(DateTime.Now, ConsoleLevel.Error, p is null ? "No project is open." : "A build is already running."));
+            Stream.Log.Add(new BuildLogLine(DateTime.Now, ConsoleLevel.Error, p is null
+                ? "No project is open. Open or create a project, then build."
+                : "A build is already running. Wait for it to finish, then try again."));
             Render();
             return null;
         }
@@ -97,7 +99,10 @@ public sealed class BuildRomDialog : FigmaDialog
         Stream.Complete(result);
         var p = _s.Project.Current;
         var kb = File.Exists(result.RomPath) ? new FileInfo(result.RomPath).Length / 1024 : 0;
-        _s.Status.Build = result.Success ? $"Build OK · {result.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} s" : "Build failed";
+        // a failed build names its error count, as the title of Build ROM · Failed (T-D23) that opens with it
+        var errors = result.Diagnostics.Count(d => d.Severity == Severity.Error);
+        _s.Status.Build = result.Success ? $"Build OK · {result.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} s"
+            : errors == 0 ? "Build failed" : errors == 1 ? "Build failed · 1 error" : $"Build failed · {errors} errors";
         if (result.Success) _s.Status.Rom = $"ROM {kb} KB / 32 MB";
         Completed?.Invoke(result);
         if (!result.Success && result.Diagnostics.Any(d => d.Message == "Build cancelled."))
@@ -135,7 +140,7 @@ public sealed class BuildRomDialog : FigmaDialog
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            _s.Toasts.Show($"Could not write {Path.GetFileName(dest)}: {e.Message}", ToastStatus.Error);
+            _s.Toasts.Show($"Could not write {Path.GetFileName(dest)}: {e.Message.TrimEnd('.')}. Pick another folder, or close programs that use the file, then export again.", ToastStatus.Error);
         }
     }
 

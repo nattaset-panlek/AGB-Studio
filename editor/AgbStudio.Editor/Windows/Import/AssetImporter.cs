@@ -117,7 +117,7 @@ public static class AssetImporter
                     item.Kind = ImportKind.Palette;
                     var colors = PaletteFiles.Read(file);
                     item.Ready = $"Ready · {colors.Count} colours.";
-                    if (colors.Count > 256) item.Error = $"Has {colors.Count} colours. A GBA palette holds at most 256.";
+                    if (colors.Count > 256) item.Error = $"Has {colors.Count} colours; a GBA palette holds at most 256. Remove colours in your paint program until 256 or fewer are left, then import it again.";
                     break;
                 case ".ttf" or ".otf" or ".bdf":
                     item.Kind = ImportKind.Font;
@@ -137,14 +137,23 @@ public static class AssetImporter
                     else
                     {
                         item.Kind = ImportKind.Unsupported;
-                        item.Error = $"AGB Studio can't import {(ext.Length > 0 ? ext : "this kind of")} files.";
+                        item.Error = $"AGB Studio can't import {(ext.Length > 0 ? ext : "this kind of")} files. Save it as one of the kinds it imports: .png, .aseprite, .tmx, .wav, .mod, .xm, .pal, .gpl, .ttf, .otf, .bdf or .cs.";
                     }
                     break;
             }
         }
-        catch (Exception e) when (e is IOException or InvalidDataException or System.Xml.XmlException or FormatException or IndexOutOfRangeException or ArgumentException or UnauthorizedAccessException)
+        catch (InvalidDataException e)
         {
+            // the readers' own texts (PNG, WAV, MOD / XM, Tiled, palettes) say what is wrong and how to save the file again
             item.Error = $"{item.FileName} can't be read: {e.Message}";
+        }
+        catch (Exception e) when (e is System.Xml.XmlException or FormatException or IndexOutOfRangeException or ArgumentException or EndOfStreamException)
+        {
+            item.Error = $"{item.FileName} can't be read: it is damaged or not the kind of file its name says ({e.Message.TrimEnd('.')}). Save it again from the program that made it and import the new file.";
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            item.Error = $"{item.FileName} can't be read: {e.Message.TrimEnd('.')}. Check that the file is still there and no other program has it open, then import it again.";
         }
         return item;
     }
@@ -174,7 +183,7 @@ public static class AssetImporter
                 var owner = item.Name[..under];
                 if (project.SpriteFiles().Any(f => GameProject.AssetName(f) == owner)) item.SharePalette = owner;
             }
-            if (item.FrameWidth > 64 || item.FrameHeight > 64) item.Error = $"Frames are {item.FrameWidth} × {item.FrameHeight}; the biggest GBA sprite is 64 × 64.";
+            if (item.FrameWidth > 64 || item.FrameHeight > 64) item.Error = $"Frames are {item.FrameWidth} × {item.FrameHeight}; the biggest GBA sprite is 64 × 64. Make the sheet a grid of frames of 8, 16, 32 or 64 pixels a side in your paint program, then import it again.";
             var problem = SpriteConverter.Convert(item.Name, img, new SpriteMeta { FrameWidth = Math.Min(64, item.FrameWidth), FrameHeight = Math.Min(64, item.FrameHeight), ReduceColors = false }, null, item.Source).Problems.FirstOrDefault();
             if (problem != null && item.SharePalette.Length == 0) { item.Warning = problem.Message; item.Fixes = problem.Fixes; }
             item.Ready = "Ready.";
@@ -203,7 +212,7 @@ public static class AssetImporter
         (item.FrameWidth, item.FrameHeight) = (ase.Width, ase.Height);
         item.CreateAnimation = false;
         item.AnimationName = ase.Tags.FirstOrDefault()?.Name ?? "idle";
-        if (ase.Width > 64 || ase.Height > 64) item.Error = $"Frames are {ase.Width} × {ase.Height}; the biggest GBA sprite is 64 × 64.";
+        if (ase.Width > 64 || ase.Height > 64) item.Error = $"Frames are {ase.Width} × {ase.Height}; the biggest GBA sprite is 64 × 64. Make the canvas 64 × 64 or smaller in Aseprite, then import it again.";
         var problem = SpriteConverter.Convert(item.Name, img, new SpriteMeta { FrameWidth = Math.Min(64, ase.Width), FrameHeight = Math.Min(64, ase.Height), ReduceColors = false }, null, item.Source).Problems.FirstOrDefault();
         if (problem != null) { item.Warning = problem.Message; item.Fixes = problem.Fixes; }
         item.Ready = $"Ready · {ase.Frames.Count} frames, {ase.Tags.Count} {(ase.Tags.Count == 1 ? "tag" : "tags")}.";
@@ -225,7 +234,8 @@ public static class AssetImporter
     static TmxMap ReadTmx(string file)
     {
         var doc = XDocument.Load(file);
-        var map = doc.Root ?? throw new InvalidDataException($"{Path.GetFileName(file)} is empty. Save the map again in Tiled.");
+        // the file name is in front of these texts already ("{file} can't be read: ...", "{file} could not be imported: ...")
+        var map = doc.Root ?? throw new InvalidDataException("The map file is empty. Save the map again in Tiled.");
         int Int(XElement e, string a) => int.Parse(e.Attribute(a)?.Value ?? "0", CultureInfo.InvariantCulture);
         var ts = map.Element("tileset");
         string? image = null;
@@ -246,7 +256,7 @@ public static class AssetImporter
         var layers = new List<(string, int[])>();
         foreach (var l in map.Elements("layer"))
         {
-            var data = l.Element("data") ?? throw new InvalidDataException($"Layer \"{l.Attribute("name")?.Value}\" of {Path.GetFileName(file)} has no tiles. Save the map again in Tiled.");
+            var data = l.Element("data") ?? throw new InvalidDataException($"Layer \"{l.Attribute("name")?.Value}\" has no tiles. Save the map again in Tiled.");
             var enc = data.Attribute("encoding")?.Value;
             int[] gids;
             if (enc == "csv") gids = data.Value.Split([',', '\n', '\r', ' '], StringSplitOptions.RemoveEmptyEntries).Select(v => (int)(uint.Parse(v, CultureInfo.InvariantCulture) & 0x1FFFFFFF)).ToArray();
@@ -275,9 +285,9 @@ public static class AssetImporter
     {
         item.Kind = ImportKind.Tilemap;
         var m = ReadTmx(item.Source);
-        if (m.TileWidth != 16) item.Error = $"Tiles are {m.TileWidth} px; AGB Studio maps use 16 × 16 tiles.";
-        else if (m.Layers.Count == 0) item.Error = "The map has no tile layers.";
-        else if (m.Layers.Count > 4) item.Error = $"The map has {m.Layers.Count} layers; the GBA shows at most 4 backgrounds.";
+        if (m.TileWidth != 16) item.Error = $"Tiles are {m.TileWidth} px; AGB Studio maps use 16 × 16 tiles. Use a 16 × 16 tileset in Tiled and save the map again.";
+        else if (m.Layers.Count == 0) item.Error = "The map has no tile layers. Add one in Tiled and save the map again.";
+        else if (m.Layers.Count > 4) item.Error = $"The map has {m.Layers.Count} layers; the GBA shows at most 4 backgrounds. Merge or delete layers in Tiled until 4 are left, then save the map again.";
         item.Detail = $"{m.Width} × {m.Height} tiles · {m.Layers.Count} layers";
         item.Ready = $"Ready · {m.Width} × {m.Height} tiles, {m.Layers.Count} layer{(m.Layers.Count == 1 ? "" : "s")}.";
     }

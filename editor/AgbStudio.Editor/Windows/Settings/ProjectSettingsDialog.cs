@@ -320,7 +320,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
         var missing = keys.Where(k => tools.Count > 0 && s.Toolchain.Find(k) is { Found: false }).ToList();
         var detail = tools.Count == 0 ? "Checking the toolchain…"
             : missing.Count == 0 ? string.Join(" · ", shown) + " found"
-            : string.Join(" · ", keys.Where(k => !missing.Contains(k))) + (keys.Length > missing.Count ? " found · " : "") + string.Join(" · ", missing) + " missing";
+            : string.Join(" · ", keys.Where(k => !missing.Contains(k))) + (keys.Length > missing.Count ? " found · " : "") + string.Join(" · ", missing)
+              + " not found · set the devkitPro folder, or install devkitPro";
         var text = UI.Column(2, title, Caption(detail));
         text.VerticalAlignment = VerticalAlignment.Center;
         button.VerticalAlignment = VerticalAlignment.Center;
