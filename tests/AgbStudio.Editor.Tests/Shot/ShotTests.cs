@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using AgbStudio.Editor.Commands;
@@ -222,7 +222,7 @@ public class ShotTests(ITestOutputHelper log)
         if (results.FirstOrDefault(x => x.R.Id == "T-P02-game-view").R is { } game)
         {
             md.AppendLine();
-            md.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Play Mode game view (P12.05; row `T-P02-game-view`): the app's T-P02 page with Hitboxes and Tile collision on, cropped to the Game View rectangle of the Figma frame (`docs/evidence/figma/T-P02-game-view.json`), against the Figma Game View: diff {game.DiffPercent:0.00} %, at best shift {game.BestShiftDiffPercent:0.00} %, offset {game.LayoutOffset} px. The game pixels come from the running Sky Hopper ROM; the Figma frame is a drawing of it."));
+            md.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Play Mode game view (P12.05; row `T-P02-game-view`): the app's T-P02 page with Hitboxes on and Tile collision off (as the Figma Game View), cropped to the Game View rectangle of the Figma frame (`docs/evidence/figma/T-P02-game-view.json`), against the Figma Game View: diff {game.DiffPercent:0.00} %, at best shift {game.BestShiftDiffPercent:0.00} %, offset {game.LayoutOffset} px. The game pixels come from the running Sky Hopper ROM; the Figma frame is a drawing of it."));
         }
         md.AppendLine();
         md.AppendLine("Scene Editor chrome regions (Phase 10 builds the chrome; panel contents are Phase 11 and stay empty, so whole-frame numbers for T-P01 / T-L01 include that content):");

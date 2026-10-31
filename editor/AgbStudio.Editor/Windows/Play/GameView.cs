@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.InteropServices;
 using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
@@ -86,7 +86,7 @@ public sealed class GameScreen : Control
         var k = Scale;
         foreach (var a in w.Actors)
         {
-            if (a.ColliderW == 0 || !a.Actor.Alive) continue;
+            if (a.ColliderW == 0 || !a.Actor.Alive || !HasBody(a)) continue;
             var token = a.Data?.Kind switch
             {
                 AgbStudio.Core.Project.ActorKind.Player => "status/success",
@@ -102,6 +102,18 @@ public sealed class GameScreen : Control
                 DrawVelocity(ctx, new Point(box.Center.X, box.Y), new Vector(a.Actor.Vx, a.Actor.Vy) * 8 * k, k);
         }
     }
+
+    static readonly HashSet<string> BodyTypes = SceneEditor.Behaviours.Builtins.Where(b => b.Category == "Physics").Select(b => b.Name).ToHashSet(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Hitboxes are drawn for the actors that move with a physics body, as the Figma T-P02 Game View outlines the player
+    /// and the slime only: a Physics behaviour (Platformer Body, Top-down Mover, Projectile), or a player or enemy. HUD
+    /// actors (the hearts) and static triggers (flag, coins, the ? block) get none.
+    /// </summary>
+    internal static bool HasBody(LiveActorInfo a) =>
+        a.Data?.Kind is ActorKind.Player or ActorKind.Enemy
+        || a.Data?.Components.Any(c => BodyTypes.Contains(c.Type)) == true
+        || a.Behaviours.Any(b => BodyTypes.Contains(b.Type));
 
     /// <summary>Velocity arrow of a moving actor (Figma T-P02 Game View): from the top of its hitbox, 8 frames of travel long.</summary>
     void DrawVelocity(DrawingContext ctx, Point from, Vector v, int k)
