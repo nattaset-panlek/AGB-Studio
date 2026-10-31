@@ -17,29 +17,40 @@ public sealed class ProjectModelTests
         Assert.EndsWith("SkyHopper.agbproj", reopened.ProjectPath);
         Assert.Single(reopened.Settings.Save.Fields);
 
-        void RoundTrip<T>(string name, T value)
+        void RoundTrip<T>(string name, T value, bool versioned = true)
         {
             var path = Path.Combine(dir, name);
             GameProject.Save(path, value);
             var text = File.ReadAllText(path);
             GameProject.Save(path, GameProject.Load<T>(path));
             Assert.Equal(text, File.ReadAllText(path));
-            Assert.Contains("\"format\": 1", text);
+            if (versioned) Assert.Contains("\"format\": 1", text);
+            // P1.04: the file is valid against its schema (docs/schemas).
+            var schema = SchemaTests.SchemaFor(dir, path);
+            Assert.NotNull(schema);
+            var errors = SchemaTests.Validate(schema!, text);
+            Assert.True(errors.Count == 0, $"{name}: {string.Join("; ", errors)}");
         }
 
-        RoundTrip("a.scene", new SceneFile
+        RoundTrip("SkyHopper.agbproj", p.Settings);
+        RoundTrip("scenes/a.scene", new SceneFile
         {
             Name = "Forest_01",
             Actors = { new ActorData { Name = "Player", Kind = ActorKind.Player, Components = { new ComponentData { Type = "PlatformerBody", Fields = { ["gravity"] = "0.25" } } } } },
             Links = { new LinkData { From = "Goal Flag", To = "Forest_02", OnlyIf = "Game.coins >= 10" } },
         });
-        RoundTrip("a.map", new MapFile { Name = "Forest_01", Layers = { new MapLayerData { Name = "Ground", Cells = { 1, 2, 3 } } } });
-        RoundTrip("a.meta.json", new SpriteMeta { Animations = { new AnimationData { Name = "run", Frames = { 0, 1, 2 } } } });
-        RoundTrip("t.meta.json", new TilesetMeta { Tiles = { [3] = new TileProperties { Collision = CollisionType.OneWay } } });
-        RoundTrip("a.sfx", new SfxFile { Name = "jump" });
-        RoundTrip("a.font", new FontFile { Name = "thai_vwf", CharacterSets = { "Thai" } });
-        RoundTrip("a.db", new TableFile { Fields = { new FieldDef { Name = "rarity", Type = "enum", EnumValues = { "Common", "Rare" } } } });
-        RoundTrip("strings.th.json", new StringTable { Language = "th", Strings = { ["ui.menu.start"] = "เริ่มเกม" } });
+        RoundTrip("maps/a.map", new MapFile { Name = "Forest_01", Layers = { new MapLayerData { Name = "Ground", Cells = { 1, 2, 3 } } } });
+        RoundTrip("assets/sprites/a.png.meta.json", new SpriteMeta { Animations = { new AnimationData { Name = "run", Frames = { 0, 1, 2 } } } });
+        RoundTrip("assets/tilesets/t.png.meta.json", new TilesetMeta { Tiles = { [3] = new TileProperties { Collision = CollisionType.OneWay } } });
+        RoundTrip("audio/sfx/a.sfx", new SfxFile { Name = "jump" });
+        RoundTrip("fonts/a.font", new FontFile { Name = "thai_vwf", CharacterSets = { "Thai" } });
+        RoundTrip("data/a.db", new TableFile { Fields = { new FieldDef { Name = "rarity", Type = "enum", EnumValues = { "Common", "Rare" } } } });
+        RoundTrip("text/strings.th.json", new StringTable { Language = "th", Strings = { ["ui.menu.start"] = "เริ่มเกม" } });
+        RoundTrip("text/strings.meta.json", new StringMeta { Keys = { ["dlg.forest.hopper_01"] = new StringInfo { Group = "Dialogue", Speaker = "Hopper", BoxWidth = 200, MaxLines = 2 } } });
+        RoundTrip("assets/audio/music/bgm_forest.xm.meta.json", new MusicMeta { Volume = 0.5, LoopStart = 2, FadeOnSceneChange = false });
+        RoundTrip("assets/audio/sfx/jump.wav.meta.json", new SoundMeta { Rate = 11025, Volume = 0.75 });
+        // Make Prefab writes the actor as it is in the scene (no format field of its own).
+        RoundTrip("prefabs/Slime.prefab", new ActorData { Name = "Slime", Kind = ActorKind.Enemy, Sprite = "slime", Components = { new ComponentData { Type = "Patrol" } } }, versioned: false);
     }
 
     [Fact]

@@ -37,7 +37,8 @@ public sealed class DialogueFile
     public List<DialogueSpeaker> Speakers { get; set; } = new();
     public List<Conversation> Conversations { get; set; } = new();
 
-    /// <summary>JSON pointer ("/conversations/0/lines/2") to the 1-based line in the file, for diagnostics.</summary>
+    /// <summary>JSON pointer ("/conversations/0/lines/2") to the 1-based line in the file, for diagnostics (not saved).</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public Dictionary<string, int> LineOf { get; } = new(StringComparer.Ordinal);
 
     static readonly JsonSerializerOptions s_json = new()

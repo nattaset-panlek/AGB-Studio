@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio tileset meta (assets/tilesets/<file>.meta.json)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "tiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "collision": {
+            "enum": [
+              "None",
+              "Solid",
+              "OneWay",
+              "Ladder",
+              "Hazard",
+              "Water",
+              "SlopeUp",
+              "SlopeDown"
+            ]
+          },
+          "tag": {
+            "type": "string"
+          },
+          "animation": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer"
+            }
+          },
+          "animationTicks": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "autoTiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "mask": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "tile": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "compress": {
+      "type": "boolean"
+    }
+  }
+}

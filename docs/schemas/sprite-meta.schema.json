@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AGB Studio sprite meta (assets/sprites/<file>.meta.json)",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "integer"
+    },
+    "frameWidth": {
+      "type": "integer"
+    },
+    "frameHeight": {
+      "type": "integer"
+    },
+    "oamSize": {
+      "type": "string"
+    },
+    "originX": {
+      "type": "integer"
+    },
+    "originY": {
+      "type": "integer"
+    },
+    "collider": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "w": {
+          "type": "integer"
+        },
+        "h": {
+          "type": "integer"
+        }
+      }
+    },
+    "palette": {
+      "type": "string"
+    },
+    "reduceColors": {
+      "type": "boolean"
+    },
+    "trimEmptyFrames": {
+      "type": "boolean"
+    },
+    "compress": {
+      "type": "boolean"
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ticks": {
+            "type": "integer"
+          },
+          "frameTicks": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer"
+            }
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "pingPong": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
