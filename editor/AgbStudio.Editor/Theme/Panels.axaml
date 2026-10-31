@@ -275,8 +275,10 @@
         <Panel>
           <Rectangle Name="PART_Box" RadiusX="6" RadiusY="6" Fill="{DynamicResource bg/base}" Stroke="{DynamicResource border/default}" StrokeThickness="1" />
           <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- IBM Plex Sans Thai is 1.65 em tall (29.7 px at 18 px). Figma centres that box in the 20 px line, Avalonia
+                 keeps the baseline at the ascent when the line is smaller, so the glyph is lifted by half the difference. -->
             <TextBlock Name="PART_Char" Text="{TemplateBinding Char}" FontFamily="{x:Static t:Fonts.Thai}" FontWeight="Medium" FontSize="18" LineHeight="20"
-                       Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
+                       Margin="0,-5,0,5" Foreground="{DynamicResource text/primary}" HorizontalAlignment="Center" />
             <TextBlock Text="{TemplateBinding Code}" t:Fig.Style="Mono/10" Foreground="{DynamicResource text/muted}" HorizontalAlignment="Center" />
           </StackPanel>
         </Panel>
