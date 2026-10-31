@@ -199,10 +199,10 @@ AGB_TEST(thirty_third_affine_matrix_is_refused) {
     const u32 head = debug::channel().logHead;
     for (int i = 0; i < 32; ++i) sprites::setAffine(ids[i], static_cast<u8>(i * 8), fixed(1), fixed(1));
     CHECK_EQ(sprites::affineUsed(), 32);
-    CHECK(!loggedSince(head, "affine matrices"));
+    CHECK(!loggedSince(head, "rotated or scaled"));
     sprites::setAffine(ids[32], 16, fixed(2), fixed(2));
     CHECK_EQ(sprites::affineUsed(), 32);
-    CHECK(loggedSince(head, "all 32 affine matrices are in use"));
+    CHECK(loggedSince(head, "32 sprites are already rotated or scaled"));
     CHECK_EQ(sprites::build(), 33);
     const commit::ObjAttr* oam = commit::oam();
     int regular = 0;

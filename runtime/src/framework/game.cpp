@@ -199,7 +199,7 @@ public:
                 const u32 t0 = profile::cyclesNow();
                 while (g_scene.loadedLayers < end && g_scene.loadedLayers < kMaxLayers) {
                     const int i = g_scene.loadedLayers++;
-                    if (!g_scene.views[i].init(d->layers[i])) debug::logf("warning: layer %d of %s could not be loaded", i, d->name);
+                    if (!g_scene.views[i].init(d->layers[i])) debug::logf("warning: layer %d of %s could not be loaded (see the warning above), so it is not shown.", i, d->name);
                     if (g_scene.loadedLayers < end && profile::cyclesNow() - t0 > profile::kCyclesPerFrame / 2) {
                         holdLoadStep();
                         break;
@@ -401,7 +401,7 @@ public:
                                                render::effects::kObj | render::effects::kBackdrop, -16);
             return false;
         }
-        if (!s.image || !view_.init(*s.image, render::bg::Size::S32x32)) debug::log("warning: the boot splash image could not be loaded");
+        if (!s.image || !view_.init(*s.image, render::bg::Size::S32x32)) debug::log("warning: the boot splash could not be shown (no image, or no free background memory). Turn it off in Project Settings (General) if this repeats.");
         view_.setCamera(0, 0);
         view_.drawAll();
         render::effects::beginIn(render::effects::Transition::Fade, kFade);
@@ -571,7 +571,7 @@ void frame() {
     system::waitVBlank();
     // The first frame also holds system start-up (not a game frame).
     if (profile::stats().overruns != overruns && system::frame() > 1)
-        debug::logf("warning: frame %lu took longer than one frame (%s: %s)", system::frame(), s->name(),
+        debug::logf("warning: frame %lu took longer than one frame (%s: %s), so the game slowed down. The Profiler shows why.", system::frame(), s->name(),
                     stepBefore >= 0 ? scene::loadStepName(stepBefore) : "update");
 }
 
@@ -582,7 +582,7 @@ void run(const GameDef& def) {
 
 void push(Screen* screen) {
     if (g_depth >= kMaxScreens) {
-        debug::log("warning: screen stack is full");
+        debug::logf("warning: too many screens are open on top of each other (%d), so a new menu or screen was not opened. Close one first.", kMaxScreens);
         return;
     }
     g_stack[g_depth++] = screen;
@@ -638,7 +638,7 @@ bool loadSceneByName(const char* name) {
             return true;
         }
     }
-    debug::logf("warning: Scene.Load(\"%s\"): no scene with that name", name);
+    debug::logf("warning: Scene.Load(\"%s\"): no scene has that name, so nothing loaded. Use a scene name from the World Map.", name);
     return false;
 }
 
@@ -767,12 +767,12 @@ Actor* spawn(const char* name, int x, int y) {
     }
     if (!def) def = game::prefab(name);
     if (!def) {
-        debug::logf("warning: Spawn: no actor or prefab named %s in %s", name, d->name);
+        debug::logf("warning: Spawn: %s has no actor or prefab named %s, so nothing spawned. Add a prefab or hidden actor of that name.", d->name, name);
         return nullptr;
     }
     Actor* actor = actors::spawnAt(*def, screenArena(), x, y);
     if (actor) actor->setVisible(true);
-    else debug::logf("warning: Spawn %s: all %d actor slots are in use", name, actors::kMaxActors);
+    else debug::logf("warning: Spawn %s: all %d actor slots are in use, so it was not spawned. Destroy actors you no longer need.", name, actors::kMaxActors);
     return actor;
 }
 

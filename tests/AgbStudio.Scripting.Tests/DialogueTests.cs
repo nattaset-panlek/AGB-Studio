@@ -62,7 +62,7 @@ public sealed class DialogueTests
         var bad = File.ReadAllText(Path.Combine(TestSupport.ScriptsDir, "forest_intro.dlg")).Replace("\"goto\": \"bye\"", "\"goto\": \"byee\"");
         var r = TestSupport.Compile("dialogue-err", TestSupport.Context(), TestSupport.Inline("forest_intro.dlg", bad));
         var d = Assert.Single(r.Diagnostics, x => x.IsError);
-        Assert.Equal("Choice 2 goes to line 'byee', which does not exist in conversation 'intro'.", d.Message);
+        Assert.Equal("Choice 2 goes to line 'byee', which does not exist in conversation 'intro'. Pick an existing line for the choice.", d.Message);
         Assert.Equal(("Scripts/forest_intro.dlg", 18), (d.File, d.Line));
 
         var missingKey = File.ReadAllText(Path.Combine(TestSupport.ScriptsDir, "forest_intro.dlg")).Replace("forest_intro.bye", "forest_intro.later");

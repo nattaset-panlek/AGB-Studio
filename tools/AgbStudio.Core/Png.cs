@@ -54,7 +54,7 @@ public static class Png
 
     public static Image Decode(byte[] data)
     {
-        if (data.Length < 8 || data[0] != 0x89 || data[1] != 'P') throw new InvalidDataException("Not a PNG file.");
+        if (data.Length < 8 || data[0] != 0x89 || data[1] != 'P') throw new InvalidDataException("This is not a PNG file (maybe a renamed JPG or BMP), so it can't be read. Save it again as PNG from your paint program.");
         int width = 0, height = 0, depth = 0, colorType = 0;
         uint[]? palette = null;
         byte[]? trns = null;
@@ -72,7 +72,7 @@ public static class Png
                     height = BinaryPrimitives.ReadInt32BigEndian(body[4..]);
                     depth = body[8];
                     colorType = body[9];
-                    if (body[12] != 0) throw new InvalidDataException("Interlaced PNG files are not supported.");
+                    if (body[12] != 0) throw new InvalidDataException("This PNG is interlaced, which AGB Studio can't read. Save it again with interlacing turned off.");
                     break;
                 case "PLTE":
                     palette = new uint[len / 3];
@@ -92,8 +92,8 @@ public static class Png
             for (var i = 0; i < Math.Min(trns.Length, palette.Length); i++)
                 palette[i] = (palette[i] & 0x00FFFFFFu) | ((uint)trns[i] << 24);
 
-        int channels = colorType switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => throw new InvalidDataException("Unknown PNG colour type.") };
-        if (depth != 8 && !(colorType == 3 && depth is 1 or 2 or 4)) throw new InvalidDataException($"PNG bit depth {depth} is not supported.");
+        int channels = colorType switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => throw new InvalidDataException("This PNG uses a colour format AGB Studio can't read. Save it again as an RGBA or indexed (palette) PNG.") };
+        if (depth != 8 && !(colorType == 3 && depth is 1 or 2 or 4)) throw new InvalidDataException($"This PNG uses {depth}-bit colour channels, which AGB Studio can't read. Save it again as an 8-bit RGBA or indexed PNG.");
         var bitsPerPixel = channels * depth;
         var stride = (width * bitsPerPixel + 7) / 8;
         var bpp = Math.Max(1, bitsPerPixel / 8);
@@ -150,7 +150,7 @@ public static class Png
                 2 => (byte)(cur[i] + b),
                 3 => (byte)(cur[i] + (a + b) / 2),
                 4 => (byte)(cur[i] + Paeth(a, b, c)),
-                _ => throw new InvalidDataException("Bad PNG filter."),
+                _ => throw new InvalidDataException("This PNG is damaged: its pixel data can't be decoded. Save it again from your paint program."),
             };
         }
     }

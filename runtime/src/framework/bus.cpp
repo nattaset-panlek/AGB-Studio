@@ -36,7 +36,7 @@ void reset() {
 
 bool post(const Command& cmd) {
     if (g_count >= kQueueSize) {
-        debug::warnOnce(40, "command bus queue is full");
+        debug::warnOnce(40, "32 commands for the screen (damage, animations, Say ...) are already waiting, so a new one was dropped. Wait at a sync point first.");
         return false;
     }
     g_queue[(g_head + g_count) % kQueueSize] = cmd;

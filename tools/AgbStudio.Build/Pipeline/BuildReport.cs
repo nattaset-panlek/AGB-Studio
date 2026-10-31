@@ -120,7 +120,7 @@ public sealed class BuildReport
         r.Warnings.AddRange(result.Diagnostics.Where(d => d.Severity == Severity.Warning).Select(d => d.ToString()));
         if (RomSizeWarning(r.RomBytes, s.Build.WarnRomMegabytes) is { } romWarning) r.Warnings.Add(romWarning);
         if (r.IwramBytes > r.IwramCapacity - 8 * 1024)
-            r.Warnings.Add($"IWRAM uses {r.IwramBytes / 1024} KB of 32 KB; less than 8 KB is left for the stack.");
+            r.Warnings.Add($"Fast RAM (IWRAM) uses {r.IwramBytes / 1024} KB of 32 KB; less than 8 KB is left for the stack, so deep calls can crash the game. Use fewer or smaller global arrays in scripts.");
         if (result.ElfPath.Length > 0 && File.Exists(mapPath))
         {
             var ram = RamBudget.FromMap(LinkerSections.Read(mapPath));  // sections by blueprint 10 row (G-HW.04)
@@ -135,7 +135,7 @@ public sealed class BuildReport
     /// <summary>G-HW.05: the warning above the size set in Project Settings · Build ("Warn when ROM is over N MB").</summary>
     public static string? RomSizeWarning(long romBytes, int warnMegabytes) =>
         romBytes > warnMegabytes * 1024L * 1024L
-            ? string.Create(CultureInfo.InvariantCulture, $"ROM is {romBytes / 1048576.0:0.0} MB, over the {warnMegabytes} MB warning set in Project Settings · Build.")
+            ? string.Create(CultureInfo.InvariantCulture, $"ROM is {romBytes / 1048576.0:0.0} MB, over the {warnMegabytes} MB warning set in Project Settings · Build. See Build Report · Largest assets for what to shrink, or raise the limit.")
             : null;
 
     /// <summary>G-HW.05: a ROM over 32 MB cannot be addressed by the GBA; the build fails with this message.</summary>

@@ -79,8 +79,8 @@ public sealed class RuntimeRomTests(EmulatorFixture emu)
     // P2.07: in a Debug build a stale pool handle and a double free stop the game with the assert message, file and
     // line in the Console; a Release build has no asserts and the pool refuses both without harm.
     [Theory]
-    [InlineData(false, "stale handle used after the object was destroyed")]
-    [InlineData(true, "double free or stale handle")]
+    [InlineData(false, "an object was used after it was destroyed; check scripts that keep a reference after Destroy()")]
+    [InlineData(true, "an object was destroyed that was already gone; check scripts that call Destroy() twice")]
     public void PoolAssertsCatchStaleHandlesAndDoubleFrees(bool doubleFree, string message)
     {
         var input = new Dictionary<int, GbaKeys> { [0] = doubleFree ? GbaKeys.A : GbaKeys.None };

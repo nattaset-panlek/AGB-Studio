@@ -35,7 +35,9 @@ public sealed class NativeBuild
         _buildDir = Path.GetFullPath(buildDir);
     }
 
-    public static string RepoRoot => FindRoot(AppContext.BaseDirectory) ?? throw new InvalidOperationException("Cannot find the AGB Studio repository root.");
+    public static string RepoRoot => FindRoot(AppContext.BaseDirectory) ?? throw new InvalidOperationException(
+        $"Cannot find the AGB Studio folder (AGB-Studio.sln or {Packager.RootMarker}) above {AppContext.BaseDirectory}, so the engine sources can't be found. " +
+        "Run the agb or AGB Studio that sits inside its AGB Studio folder, or reinstall AGB Studio.");
 
     /// <summary>The folder above <paramref name="start"/> holding the repository (AGB-Studio.sln) or an installed copy
     /// (Packager.RootMarker next to bin, runtime and third_party); null when there is none.</summary>

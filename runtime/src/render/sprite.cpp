@@ -99,7 +99,7 @@ int acquireFrame(const data::SpriteSheet* sheet, u16 frame) {
         for (int i = 0; i < kCacheSize; ++i)
             if (g_cache[i].tiles && !g_cache[i].refs && (oldest < 0 || g_cache[i].lastUse < g_cache[oldest].lastUse)) oldest = i;
         if (oldest < 0) {
-            debug::warnOnce(10, "OBJ VRAM is full; a sprite frame could not be shown");
+            debug::warnOnce(10, "sprite memory is full, so a sprite frame could not be shown. Use fewer or smaller sprites in this scene.");
             return -1;
         }
         evict(g_cache[oldest]);
@@ -160,7 +160,7 @@ Id create(const data::SpriteSheet* sheet, u8 priority) {
         s.palBank = static_cast<s8>(bank < 0 ? 0 : bank);
         return static_cast<Id>(i);
     }
-    debug::warnOnce(11, "all 128 sprites are in use; a new sprite was not created");
+    debug::warnOnce(11, "all 128 sprites are in use, so a new sprite was not created. Destroy sprites or actors you no longer need.");
     return kNone;
 }
 
@@ -248,7 +248,7 @@ void setAffine(Id id, u8 angle, fixed sx, fixed sy, bool doubleSize) {
                 break;
             }
         if (s->affine < 0) {
-            debug::warnOnce(12, "all 32 affine matrices are in use");
+            debug::warnOnce(12, "32 sprites are already rotated or scaled, so this one is drawn without it. Rotate or scale fewer sprites at once.");
             return;
         }
     }
@@ -401,7 +401,7 @@ int build() {
         for (int y = 1; y < 160; ++y)
             if (lineCycles[y] > lineCycles[worst]) worst = y;
         if (lineCycles[worst] > kLineCycles)
-            debug::logf("warning: screen line %d needs %d sprite cycles and the hardware has %d; some sprites on it will not show",
+            debug::logf("warning: screen line %d needs %d sprite cycles of the %d the hardware has, so some sprites on it are hidden. Use fewer on that row.",
                         worst, lineCycles[worst], kLineCycles);
     }
 #endif

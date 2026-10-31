@@ -147,7 +147,7 @@ TilesetPlacement reserveTiles(u16 tiles, bool bpp8) {
         g_tilesInBlock[cb] = static_cast<u16>(endByte / 32);
         return p;
     }
-    debug::logf("warning: background VRAM is full; %u tiles could not be placed", tiles);
+    debug::logf("warning: background memory is full; %u tiles could not be placed, so a layer or text is missing. Use fewer layers or a smaller tileset.", tiles);
     return {};
 }
 
@@ -204,7 +204,7 @@ int allocScreenBlocks(Size size) {
             markUnits(first, count);
             return first;
         }
-    debug::log("warning: no free screen blocks for a background layer");
+    debug::log("warning: no free background memory for a layer's map, so the layer is not shown. Use fewer layers in this scene.");
     return -1;
 }
 
@@ -216,7 +216,7 @@ int allocAffineScreenBlocks(AffineSize size) {
             markUnits(first, count);
             return first;
         }
-    debug::log("warning: no free screen blocks for an affine layer");
+    debug::log("warning: no free background memory for a rotate / scale layer's map, so the layer is not shown. Use fewer layers in this scene.");
     return -1;
 }
 

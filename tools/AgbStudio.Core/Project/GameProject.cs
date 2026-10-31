@@ -45,9 +45,9 @@ public sealed class GameProject
     {
         if (Directory.Exists(path))
             path = Directory.EnumerateFiles(path, "*.agbproj").FirstOrDefault()
-                   ?? throw new FileNotFoundException($"No .agbproj file in {path}.");
+                   ?? throw new FileNotFoundException($"No .agbproj file in {path}, so it is not an AGB Studio project folder. Pick the folder that holds the project file.");
         var settings = Load<ProjectFile>(path);
-        if (settings.Format > 1) throw new InvalidDataException($"{Path.GetFileName(path)} was made by a newer AGB Studio (format {settings.Format}).");
+        if (settings.Format > 1) throw new InvalidDataException($"{Path.GetFileName(path)} was made by a newer AGB Studio (format {settings.Format}); this one reads format 1. Update AGB Studio to open it.");
         return new GameProject(path, settings);
     }
 
@@ -69,8 +69,32 @@ public sealed class GameProject
 
     public void SaveSettings() => Save(ProjectPath, Settings);
 
-    public static T Load<T>(string path) =>
-        JsonSerializer.Deserialize<T>(File.ReadAllText(path), Json) ?? throw new InvalidDataException($"{path} is empty.");
+    /// <summary>Reads a project file (.agbproj, .scene, .map, .meta ...). A broken file throws with its name, the line and
+    /// what to do (G-ERR.01); JSON errors stay <see cref="JsonException"/> so callers that skip broken files still do.</summary>
+    public static T Load<T>(string path)
+    {
+        T? value;
+        try
+        {
+            value = JsonSerializer.Deserialize<T>(File.ReadAllText(path), Json);
+        }
+        catch (JsonException e)
+        {
+            throw new JsonException(BrokenJson(Path.GetFileName(path), e), e.Path, e.LineNumber, e.BytePositionInLine, e);
+        }
+        return value ?? throw new InvalidDataException($"{Path.GetFileName(path)} is empty, so it can't be read. Restore it from a backup or version control.");
+    }
+
+    /// <summary>"Forest.scene is not valid JSON at line 12: ..." from a System.Text.Json error, without its Path / LineNumber tail.</summary>
+    public static string BrokenJson(string file, JsonException e)
+    {
+        var reason = e.Message;
+        var cut = reason.IndexOf(" Path: ", StringComparison.Ordinal);
+        if (cut < 0) cut = reason.IndexOf(" LineNumber: ", StringComparison.Ordinal);
+        if (cut > 0) reason = reason[..cut];
+        var line = e.LineNumber is { } l ? $" at line {l + 1}" : "";
+        return $"{file} is not valid JSON{line}: {reason.TrimEnd('.')}. Undo the hand edit, or restore the file from a backup or version control.";
+    }
 
     public static void Save<T>(string path, T value)
     {

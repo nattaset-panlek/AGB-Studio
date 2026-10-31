@@ -187,7 +187,7 @@ void setDmgTable(const DmgSfx* table, u16 count) {
 
 void playDmgId(u16 index) {
     if (g_dmgTable && index < g_dmgCount) playDmg(g_dmgTable[index]);
-    else debug::logf("warning: no DMG sound effect %u", index);
+    else debug::logf("warning: SFX Designer sound number %u is not in this ROM, so nothing played. Rebuild the game, or check the sound name.", index);
 }
 
 void playDmg(const DmgSfx& s) {
