@@ -221,8 +221,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | C-brand-app-icon-light | brand/app-icon | 128x128 | 128x128 | 0.24 | 0.24 | 0,0 | 0 | 0.60 |
 | C-brand-app-icon-dark | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.20 |
 | C-brand-app-icon-indigo | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.21 |
-| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 2.80 | 2.80 | 0,0 | 0 | 4.36 |
-| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 2.93 | 2.93 | 0,0 | 0 | 4.64 |
+| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 2.77 | 2.77 | 0,0 | 0 | 4.31 |
+| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 2.88 | 2.88 | 0,0 | 0 | 4.57 |
 | T-O07 | frame Command Palette | 640x325 | 640x325 | 0.87 | 0.87 | 0,0 | 0 | 1.08 |
 | T-D10 | frame Keyboard Shortcuts | 760x390 | 760x390 | 1.16 | 1.16 | 0,0 | 0 | 1.28 |
 | T-D12 | frame Unsaved Changes | 460x262 | 460x262 | 2.22 | 2.22 | 0,0 | 0 | 2.42 |
@@ -241,7 +241,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D23 | frame Build ROM · Failed | 600x382 | 600x382 | 1.32 | 1.32 | 0,0 | 0 | 1.43 |
 | T-D05 | frame Export ROM | 560x488 | 560x488 | 1.89 | 1.89 | 0,0 | 0 | 2.05 |
 | T-D07 | frame Flash to Cartridge | 560x368 | 560x368 | 3.11 | 3.11 | 0,0 | 0 | 3.62 |
-| T-D04 | frame Import Asset | 900x460 | 900x460 | 2.77 | 2.23 | -1,0 | 1 | 3.04 |
+| T-D04 | frame Import Asset | 900x460 | 900x460 | 2.77 | 2.22 | -1,0 | 1 | 3.03 |
 | T-D24 | frame Import Asset · Errors | 720x436 | 720x436 | 2.62 | 2.45 | -1,0 | 1 | 3.08 |
 | T-P07 | frame Database | 1440x900 | 1440x900 | 1.59 | 1.59 | 0,0 | 0 | 1.86 |
 | T-D17 | frame New Table | 520x440 | 520x440 | 1.77 | 1.77 | 0,0 | 0 | 2.07 |
@@ -261,14 +261,14 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D22 | frame Opening Project | 480x322 | 480x322 | 0.86 | 0.86 | 0,0 | 0 | 1.17 |
 | T-D01 | frame New Project | 1180x668 | 1180x668 | 1.06 | 1.06 | 0,0 | 0 | 1.24 |
 | T-L02 | frame New Project · Light | 1180x668 | 1180x668 | 1.13 | 1.13 | 0,0 | 0 | 1.28 |
-| T-P22 | frame Scene Editor · Empty project | 1440x900 | 1440x900 | 0.96 | 0.96 | 0,0 | 0 | 1.23 |
+| T-P22 | frame Scene Editor · Empty project | 1440x900 | 1440x900 | 0.94 | 0.94 | 0,0 | 0 | 1.20 |
 | T-P02 | frame Play Mode | 1440x900 | 1440x900 | 2.80 | 2.80 | 0,0 | 0 | 3.84 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
 | T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.14 | 5.14 | 0,0 | 0 | 6.28 |
 | T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 2.94 | 2.94 | 0,0 | 0 | 3.35 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.29 | 2.29 | 0,0 | 0 | 2.76 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
-| T-P06 | frame Animation panel | 860x250 | 860x250 | 2.90 | 2.90 | 0,0 | 0 | 3.14 |
+| T-P06 | frame Animation panel | 860x250 | 860x250 | 2.89 | 2.89 | 0,0 | 0 | 3.13 |
 | T-D02 | frame New Scene | 520x470 | 520x470 | 1.77 | 1.77 | 0,0 | 0 | 1.73 |
 | T-D03 | frame Scene Settings | 600x646 | 600x646 | 2.02 | 1.29 | 0,1 | 1 | 3.47 |
 | T-O01 | frame Scene Switcher | 320x356 | 320x356 | 6.81 | 6.44 | 0,-1 | 1 | 6.28 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.52 | 2.52 | 0,0 | 0 | 2.96 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.49 | 2.49 | 0,0 | 0 | 2.89 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |

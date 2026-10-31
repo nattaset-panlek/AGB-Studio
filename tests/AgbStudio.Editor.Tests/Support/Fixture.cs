@@ -33,11 +33,13 @@ public sealed class Fixture : IDisposable
     /// <summary>Creates and opens the Sky Hopper project with the documents, status and files of the Figma Scene Editor.</summary>
     /// <param name="paletteFiles">Also adds the files the Figma Command Palette (T-O07) finds for "pla" (an empty
     /// player.png and Platform_tiles.png) and its recent-file order; the Scene Editor frame (T-P01) has neither file.</param>
-    public string OpenSkyHopper(bool paletteFiles = true)
+    public string OpenSkyHopper(bool paletteFiles = true, string? language = null)
     {
         var root = Path.Combine(Folder, "SkyHopper");
         // the Sky Hopper content (AgbStudio.Build.Content.SkyHopper: scenes, maps, sprites, scripts ...) the Scene Editor frames show
-        AgbStudio.Build.Content.SkyHopper.Create(root);
+        var created = AgbStudio.Build.Content.SkyHopper.Create(root);
+        // the game language is set before the project opens: the viewport reads its text tables once, when it opens
+        if (language != null) { created.Settings.General.DefaultLanguage = language; created.SaveSettings(); }
         Services.Project.Open(root);
         if (paletteFiles)
         {

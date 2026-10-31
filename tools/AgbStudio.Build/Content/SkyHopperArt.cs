@@ -72,7 +72,7 @@ public static class SkyHopperArt
     ];
 
     /// <summary>The yellow hero (T-P08): 8 frames of 16x16. Even frames are the Figma drawing; odd frames breathe
-    /// (the body one pixel lower, the feet in place), and frame 4 blinks. idle plays all 8; run, jump and hurt reuse them.</summary>
+    /// (the body one pixel lower, the feet in place). idle plays all 8; run, jump and hurt reuse them.</summary>
     public static Canvas Hero8()
     {
         var map = new Dictionary<char, uint> { ['a'] = Ink, ['b'] = Yellow, ['c'] = White, ['d'] = Cheek, ['e'] = Red, ['f'] = Purple };
@@ -80,7 +80,6 @@ public static class SkyHopperArt
         for (var f = 0; f < 8; f++)
         {
             var rows = (string[])HeroRows.Clone();
-            if (f == 4) rows[5] = rows[6] = "..abbaabbaabba..";   // blink: the eyes close to a line
             if (f % 2 == 1)
             {
                 // breathe: rows 1-12 move down one pixel; the feet (13-15) stay
