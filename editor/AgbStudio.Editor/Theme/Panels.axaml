@@ -228,7 +228,8 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="8">
-          <StackPanel>
+          <!-- Figma: a 150 px column at border + padding (the stroke takes layout space), running into the right padding -->
+          <StackPanel Width="150" HorizontalAlignment="Left">
             <Border Width="150" Height="100" CornerRadius="8" ClipToBounds="True">
               <g:ArtImage Source="{TemplateBinding Preview}" Width="150" Height="100" />
             </Border>
@@ -250,7 +251,8 @@
     <Setter Property="Template">
       <ControlTemplate>
         <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="6">
-          <StackPanel>
+          <!-- Figma: a 240 px column at border + padding, running into the right padding; the description is 228 px wide -->
+          <StackPanel Width="240" HorizontalAlignment="Left">
             <Border Width="240" Height="160" CornerRadius="8" ClipToBounds="True">
               <g:ArtImage Source="{TemplateBinding Preview}" Width="240" Height="160" />
             </Border>
