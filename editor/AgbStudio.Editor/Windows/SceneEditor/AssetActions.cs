@@ -175,7 +175,13 @@ public sealed class AssetActions
         Changed?.Invoke();
     }
 
-    public Task<object?> Open(AssetItem a) => S.Windows.Open(a.Window, a.Path, source: "AssetCard");
+    /// <summary>Opens the asset in its editor; scripts as Preferences › "Open .cs with" says (the Script Editor or the external editor).</summary>
+    public async Task<object?> Open(AssetItem a)
+    {
+        if (a.Window != "T-P04") return await S.Windows.Open(a.Window, a.Path, source: "AssetCard");
+        await Scripts.ScriptEditorPage.OpenScriptFile(S, a.Path, source: "AssetCard");
+        return null;
+    }
 
     // ---- undoable file operations -----------------------------------------------------------------------
 

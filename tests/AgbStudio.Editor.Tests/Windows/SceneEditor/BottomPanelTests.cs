@@ -3,6 +3,7 @@ using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Windows.SceneEditor;
+using AgbStudio.Editor.Windows.Scripts;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -62,7 +63,11 @@ public sealed class BottomPanelTests : IDisposable
             _w.Click(_w.Find<ListRow>("Category_" + category));
             _w.DoubleClick(Card(card));
             Assert.Equal((window, "AssetCard"), req[^1]);
+            // the editor replaced the Scene Editor; back to it for the next card
+            Assert.Equal(window, _w.Win.CurrentPageId);
             if (_w.Win.Overlays.IsOpen) _w.Key(PhysicalKey.Escape);
+            _ = _w.S.Windows.Open("T-P01", source: "test");
+            Capture.Pump();
         }
         // dialogue files open the Dialogue Editor (T-P16)
         var dlg = Path.Combine(_w.S.Project.Current!.DialogueDir, "forest.dlg");
@@ -118,7 +123,13 @@ public sealed class BottomPanelTests : IDisposable
         var line = _w.All<ConsoleLine>().Single();
         _w.Click(line);
         Assert.Equal(("T-P04", "ConsoleLine"), _w.S.Windows.Requests[^1]);
-        _w.Key(PhysicalKey.Escape);
+        var script = Assert.IsType<ScriptEditorPage>(_w.Win.CurrentPage);
+        Assert.Equal((file, 19), (script.Buffer!.Path, script.Editor.CaretLine));
+        // back to the Scene Editor's Console
+        _ = _w.S.Windows.Open("T-P01", source: "test");
+        Capture.Pump();
+        OpenTab("Console");
+        panel = _w.All<ConsolePanel>().Single();
         Press("Filter_Warnings");
         Assert.Single(panel.Visible);
         Press("Filter_All");

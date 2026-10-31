@@ -263,18 +263,23 @@ public sealed class WorldMapPage : DockPanel
     public void OpenSceneMenu(string name)
     {
         if (Canvas.CardOf(name) is not { } card) return;
-        PageChrome.OpenMenu(_s, "T-M22", "SceneCard", card, SceneContextMenu(), id => id == "worldmap.setStart" && Model.StartScene == name, MenuShortcuts);
+        _ = _s.Windows.Open("T-M22", name, card, source: "SceneCard");
     }
 
-    /// <summary>Shortcuts shown in the Scene Context Menu; Enter and F2 are handled by the map canvas.</summary>
-    public static readonly IReadOnlyDictionary<string, string> MenuShortcuts = new Dictionary<string, string> { ["worldmap.open"] = "Enter", ["worldmap.rename"] = "F2" };
-
-    [EditorMenu("T-M22")]
-    public static IReadOnlyList<MenuEntry> SceneContextMenu() =>
+    /// <summary>
+    /// The Scene Context Menu as Figma draws it; <paramref name="isStart"/> checks "Set as start scene". Enter and F2 are
+    /// handled by the map canvas, so they are only shown on the items.
+    /// </summary>
+    public static IReadOnlyList<MenuEntry> SceneContextMenu(Func<bool>? isStart = null) =>
     [
-        new CommandEntry("worldmap.open", ShowIcon: true), new CommandEntry("worldmap.rename"), new CommandEntry("edit.duplicate"),
-        new CommandEntry("worldmap.setStart", Checkable: true), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
+        new CommandEntry("worldmap.open", ShowIcon: true, Keys: "Enter"), new CommandEntry("worldmap.rename", Keys: "F2"), new CommandEntry("edit.duplicate"),
+        new CommandEntry("worldmap.setStart", Checkable: true, IsChecked: isStart), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
     ];
+
+    /// <summary>T-M22 for one scene card (args: the scene name).</summary>
+    [EditorMenu("T-M22")]
+    public static IReadOnlyList<MenuEntry> SceneContextMenu(WindowContext ctx) =>
+        SceneContextMenu(() => ctx.Args is string name && Current(ctx.Services)?.Model.StartScene == name);
 
     static WorldMapPage? Current(EditorServices s) => (s.Top as MainWindow)?.CurrentPage as WorldMapPage;
 

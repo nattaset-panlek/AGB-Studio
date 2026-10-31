@@ -2,8 +2,14 @@ namespace AgbStudio.Editor.Commands;
 
 public abstract record MenuEntry;
 
-/// <summary>A command in a menu. Label overrides the command title (e.g. "Import…" in Assets). ShowIcon follows the Figma item.</summary>
-public sealed record CommandEntry(string CommandId, bool ShowIcon = false, string? Label = null, bool Danger = false, bool Checkable = false) : MenuEntry;
+/// <summary>
+/// A command in a menu. Label overrides the command title (e.g. "Import…" in Assets). ShowIcon follows the Figma item.
+/// A Checkable item is checked when <paramref name="IsChecked"/> says so (else the builder's own check). Keys is a
+/// shortcut only shown on the item, for keys a canvas handles itself (World Map Enter / F2, Logic Graph Ctrl+G): it is
+/// not a command shortcut, so it never conflicts with one.
+/// </summary>
+public sealed record CommandEntry(string CommandId, bool ShowIcon = false, string? Label = null, bool Danger = false, bool Checkable = false,
+    Func<bool>? IsChecked = null, string? Keys = null) : MenuEntry;
 
 public sealed record SeparatorEntry : MenuEntry
 {

@@ -50,7 +50,7 @@ public sealed class MenuBuilder(CommandRegistry commands, ShortcutService shortc
                 {
                     Header = c.Label ?? cmd.Title,
                     Command = cmd,
-                    InputGesture = shortcuts.GestureOf(cmd.Id),
+                    InputGesture = GestureOf(c),
                     Icon = c.ShowIcon && cmd.Glyph != null ? new Icon { Glyph = cmd.Glyph, Size = 14 } : null,
                     Tag = c,
                 };
@@ -58,7 +58,7 @@ public sealed class MenuBuilder(CommandRegistry commands, ShortcutService shortc
                 if (c.Checkable)
                 {
                     mi.ToggleType = MenuItemToggleType.CheckBox;
-                    mi.IsChecked = isChecked?.Invoke(cmd.Id) ?? false;
+                    mi.IsChecked = IsChecked(c);
                 }
                 return mi;
             case RecentEntry r:
@@ -70,6 +70,10 @@ public sealed class MenuBuilder(CommandRegistry commands, ShortcutService shortc
         }
     }
 
+    Avalonia.Input.KeyGesture? GestureOf(CommandEntry c) => c.Keys is { } keys ? Theme.Shortcuts.Parse(keys) : shortcuts.GestureOf(c.CommandId);
+
+    bool IsChecked(CommandEntry c) => c.IsChecked?.Invoke() ?? isChecked?.Invoke(c.CommandId) ?? false;
+
     /// <summary>Re-reads shortcuts, checked states and dynamic submenus (Open Recent) when a menu opens.</summary>
     public void Refresh(MenuItem item)
     {
@@ -78,8 +82,8 @@ public sealed class MenuBuilder(CommandRegistry commands, ShortcutService shortc
             switch (child.Tag)
             {
                 case CommandEntry c:
-                    child.InputGesture = shortcuts.GestureOf(c.CommandId);
-                    if (c.Checkable) child.IsChecked = isChecked?.Invoke(c.CommandId) ?? false;
+                    child.InputGesture = GestureOf(c);
+                    if (c.Checkable) child.IsChecked = IsChecked(c);
                     break;
                 case SubmenuEntry s:
                     Fill(child.Items, s.Entries());

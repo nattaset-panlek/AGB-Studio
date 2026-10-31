@@ -128,28 +128,12 @@ public static class PageChrome
         return f;
     }
 
-    /// <summary>
-    /// The Toggle kind of a Field: the Switch inside starts On by itself, so its state is set and read here once the
-    /// template is applied.
-    /// </summary>
+    /// <summary>The Toggle kind of a Field: its Switch shows IsOn, and a click changes IsOn and reports the new value.</summary>
     public static InspectorField Toggle(InspectorField f, bool on, Action<bool> changed)
     {
         f.Kind = FieldKind.Toggle;
         f.IsOn = on;
-        var current = on;
-        f.TemplateApplied += (_, e) =>
-        {
-            if (e.NameScope.Find<AgbSwitch>("PART_Toggle") is not { } sw) return;
-            sw.IsChecked = current;
-            sw.IsCheckedChanged += (_, _) =>
-            {
-                var value = sw.IsChecked == true;
-                if (value == current) return;
-                current = value;
-                f.IsOn = value;
-                changed(value);
-            };
-        };
+        f.PropertyChanged += (_, e) => { if (e.Property == InspectorField.IsOnProperty) changed(f.IsOn); };
         return f;
     }
 
@@ -165,30 +149,7 @@ public static class PageChrome
         return i.Token(Icon.ForegroundProperty, token);
     }
 
-    /// <summary>Opens a registered menu at a control with this builder (checked items and display shortcuts).</summary>
-    public static ContextMenu OpenMenu(EditorServices s, string id, string source, Control anchor, IReadOnlyList<MenuEntry> entries,
-        Func<string, bool>? isChecked = null, IReadOnlyDictionary<string, string>? shortcuts = null)
-    {
-        s.Windows.Requests.Add((id, source));
-        var items = new MenuBuilder(s.Commands, s.Shortcuts, isChecked).BuildItems(entries);
-        if (shortcuts != null)
-            foreach (var mi in items.OfType<MenuItem>())
-                if (mi.Tag is CommandEntry ce && shortcuts.TryGetValue(ce.CommandId, out var keys))
-                    mi.InputGesture = AgbStudio.Editor.Theme.Shortcuts.Parse(keys);
-        var cm = new ContextMenu { ItemsSource = items, Tag = id };
-        cm.Open(anchor);
-        return cm;
-    }
-
     /// <summary>The menu items a menu definition shows (SHOT capture of T-M21 / T-M22 with the Figma state).</summary>
-    public static MenuSurface MenuSurfaceOf(EditorServices s, IReadOnlyList<MenuEntry> entries, Func<string, bool>? isChecked = null,
-        IReadOnlyDictionary<string, string>? shortcuts = null)
-    {
-        var items = new MenuBuilder(s.Commands, s.Shortcuts, isChecked).BuildItems(entries);
-        if (shortcuts != null)
-            foreach (var mi in items.OfType<MenuItem>())
-                if (mi.Tag is CommandEntry ce && shortcuts.TryGetValue(ce.CommandId, out var keys))
-                    mi.InputGesture = AgbStudio.Editor.Theme.Shortcuts.Parse(keys);
-        return new MenuSurface { ItemsSource = items };
-    }
+    public static MenuSurface MenuSurfaceOf(EditorServices s, IReadOnlyList<MenuEntry> entries) =>
+        new() { ItemsSource = new MenuBuilder(s.Commands, s.Shortcuts).BuildItems(entries) };
 }

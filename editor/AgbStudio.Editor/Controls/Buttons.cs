@@ -83,10 +83,13 @@ public class Chip : Button
     public string? Glyph { get => GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
 }
 
-/// <summary>Figma "Switch": On / Off, 32 x 18.</summary>
+/// <summary>
+/// Figma "Switch": On / Off, 32 x 18. On by default; the default is the property's default value, not a local value, so
+/// a template binding (the Toggle kind of an Inspector Field binds IsChecked to IsOn) still decides the state.
+/// </summary>
 public class AgbSwitch : ToggleButton
 {
-    public AgbSwitch() => IsChecked = true;
+    static AgbSwitch() => IsCheckedProperty.OverrideDefaultValue<AgbSwitch>(true);
 }
 
 /// <summary>Figma "Segment": Default / Active / Hover; one of a group (RadioButton).</summary>

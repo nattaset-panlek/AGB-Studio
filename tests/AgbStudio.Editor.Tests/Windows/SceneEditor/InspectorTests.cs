@@ -124,7 +124,10 @@ public sealed class InspectorTests : IDisposable
         Assert.Equal(("T-P04", "ScriptComponent"), _w.S.Windows.Requests[^1]);
         Assert.Equal(1, _w.M.SelectedComponent);
         Assert.True(header.IsOpen);
-        _w.Key(PhysicalKey.Escape);   // the Script Editor (another group) shows its notice here
+        Assert.Equal("PlayerController.cs", Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptEditorPage>(_w.Win.CurrentPage).Buffer!.Name);
+        // back to the Scene Editor
+        _ = _w.S.Windows.Open("T-P01", source: "test");
+        Capture.Pump();
         _w.Click(_w.Find<Button>("AddComponentButton"));
         Assert.Equal(("T-O05", "AddComponent"), _w.S.Windows.Requests[^1]);
         var picker = Assert.IsType<ComponentPicker>(_w.Win.Overlays.Open.Single());

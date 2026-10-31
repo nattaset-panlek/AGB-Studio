@@ -241,17 +241,9 @@ public sealed class BuildFailedDialog : FigmaDialog
                    ?? p.ScriptFiles().FirstOrDefault(f => Path.GetFileName(f) == Path.GetFileName(file)) ?? Path.Combine(p.Root, file);
         Opened = file;
         Close(d);
+        // scripts open at the line as Preferences › "Open .cs with" says, like the Console's lines
         if (file.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-        {
-            var doc = _s.Documents.Open.FirstOrDefault(x => x.Path != null && string.Equals(Path.GetFullPath(x.Path), Path.GetFullPath(file), StringComparison.OrdinalIgnoreCase))
-                      ?? _s.Documents.Add(new EditorDocument { Name = Path.GetFileName(file), Glyph = "code", Path = file });
-            _s.Documents.Active = doc;
-            _s.Set(new SourceLocation(file, d.Line, d.Column));
-            _ = _s.Windows.Open("T-P04", doc, source: "BuildFailedGoToError");
-        }
+            _ = Scripts.ScriptEditorPage.OpenScriptFile(_s, file, Math.Max(1, d.Line), Math.Max(1, d.Column), source: "BuildFailedGoToError");
         else _s.System.ShowInExplorer(file);
     }
 }
-
-/// <summary>The file and line a "go to error" asked for (the Script Editor reads it with Services.Get&lt;SourceLocation&gt;()).</summary>
-public sealed record SourceLocation(string File, int Line, int Column);

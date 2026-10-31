@@ -61,7 +61,7 @@ public sealed class Phase11ScriptShots : IShotSource
         yield return ("T-M21", (path, w, h) =>
         {
             using var fx = new Fixture(withApp: false);
-            Capture.ControlToPng(PageChrome.MenuSurfaceOf(fx.Services, LogicGraphPage.NodeContextMenu(), shortcuts: LogicGraphPage.MenuShortcuts), w, h, path, Brushes.Black);
+            Capture.ControlToPng(PageChrome.MenuSurfaceOf(fx.Services, LogicGraphPage.NodeContextMenu()), w, h, path, Brushes.Black);
         });
         yield return ("T-P13", (path, w, h) => WorldMap(path, w, h));
         yield return ("T-O09", (path, w, h) =>
@@ -74,7 +74,7 @@ public sealed class Phase11ScriptShots : IShotSource
         yield return ("T-M22", (path, w, h) =>
         {
             using var fx = new Fixture(withApp: false);
-            Capture.ControlToPng(PageChrome.MenuSurfaceOf(fx.Services, WorldMapPage.SceneContextMenu(), id => id == "worldmap.setStart", WorldMapPage.MenuShortcuts), w, h, path, Brushes.Black);
+            Capture.ControlToPng(PageChrome.MenuSurfaceOf(fx.Services, WorldMapPage.SceneContextMenu(() => true)), w, h, path, Brushes.Black);
         });
     }
 

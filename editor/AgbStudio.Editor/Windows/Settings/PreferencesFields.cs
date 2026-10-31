@@ -11,6 +11,8 @@ public sealed partial class Preferences
     // Editor (T-S07): Script editor
     public ScriptEditorMode ScriptEditor { get; set; } = ScriptEditorMode.External;
     public string ExternalEditor { get; set; } = "Visual Studio Code";
+    /// <summary>Command line of Custom…: {file}, {line}, {column} and {project} are replaced.</summary>
+    public string ExternalEditorArguments { get; set; } = "\"{file}\"";
     public bool OpenCsExternally { get; set; } = true;
     public bool GenerateCsproj { get; set; } = true;
     public bool HotReloadOnExternalSave { get; set; } = true;

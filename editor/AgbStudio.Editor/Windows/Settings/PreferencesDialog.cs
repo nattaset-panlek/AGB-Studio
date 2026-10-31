@@ -6,6 +6,7 @@ using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
+using AgbStudio.Editor.Windows.Scripts;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -216,7 +217,7 @@ public sealed class PreferencesDialog : SettingsDialog
         
         var left = Column(8, Overline("General"), general, generalChecks);
 
-        var exe = TextRow("Executable", ExecutableText(p.ScriptEditorPath), _ => { }, "Executable");
+        var exe = TextRow("Executable", ExecutableText(p), _ => { }, "Executable");
         exe.TemplateApplied += (_, e) => { if (e.NameScope.Find<TextBox>("PART_Text") is { } t) t.IsReadOnly = true; };
         var scriptChecks = Column(8,
             Check("Generate .csproj for IntelliSense", p.GenerateCsproj, v => Edit(() => p.GenerateCsproj = v), "GenerateCsproj"),
@@ -247,7 +248,23 @@ public sealed class PreferencesDialog : SettingsDialog
         return Column(12, Title("Editor"), TwoColumns(left, right, 300), builtInTitle, builtIn, builtInChecks);
     }
 
-    static string ExecutableText(string path) => Preferences.Expand(path) is { Length: > 0 } p ? IOPath.GetFileName(p) + " · set in Paths" : "not set · set in Paths";
+    // The Script Editor's settings are these preferences (ScriptEditorSettings is a view over them); the editor that is not
+    // set in Paths is the one ExternalEditors.Detect finds for the Editor choice.
+    ExternalEditorInfo? Detected(Preferences p) =>
+        ScriptEditorSettings.KindOf(p.ExternalEditor) is var kind && kind != ExternalEditorKind.Custom ? ExternalEditorService.Of(_s).Detector.Detect(kind) : null;
+
+    string ExecutableText(Preferences p)
+    {
+        if (Preferences.Expand(p.ScriptEditorPath) is { Length: > 0 } set) return IOPath.GetFileName(set) + " · set in Paths";
+        return Detected(p) is { Found: true } d ? IOPath.GetFileName(d.Path!) + " · detected" : "not set · set in Paths";
+    }
+
+    /// <summary>Paths › Script editor status: the executable set there, else the chosen editor where it is installed.</summary>
+    string ScriptEditorStatus(Preferences p)
+    {
+        if (_exists(Preferences.Expand(p.ScriptEditorPath))) return EditorName(p.ScriptEditorPath) + " found";
+        return Detected(p)?.Status ?? EditorName(p.ScriptEditorPath) + " not found";
+    }
 
     /// <summary>The editor an executable belongs to ("Code.exe" -> Visual Studio Code).</summary>
     public static string EditorName(string path) => IOPath.GetFileName(Preferences.Expand(path)).ToLowerInvariant() switch
@@ -268,7 +285,7 @@ public sealed class PreferencesDialog : SettingsDialog
         var col = Column(8, Title("Paths"),
             PathRow("devkitPro", devkit, DevkitHelp(), v => Edit(() => p.DevkitPro = v), folder: true, "DevkitPro"),
             PathRow("Projects folder", p.ProjectsFolder, null, v => Edit(() => p.ProjectsFolder = v), folder: true, "ProjectsFolder"),
-            PathRow("Script editor", p.ScriptEditorPath, $"{EditorName(p.ScriptEditorPath)} {(_exists(Preferences.Expand(p.ScriptEditorPath)) ? "found" : "not found")} · used when Script editor is External",
+            PathRow("Script editor", p.ScriptEditorPath, $"{ScriptEditorStatus(p)} · used when Script editor is External",
                 v => Edit(() => p.ScriptEditorPath = v), folder: false, "ScriptEditorPath"),
             PathRow("Image editor", p.ImageEditorPath, "Opens .png / .aseprite on double-click", v => Edit(() => p.ImageEditorPath = v), folder: false, "ImageEditorPath"),
             PathRow("Tiled", p.TiledPath, "Optional · only needed to edit .tmx maps", v => Edit(() => p.TiledPath = v), folder: false, "TiledPath"),

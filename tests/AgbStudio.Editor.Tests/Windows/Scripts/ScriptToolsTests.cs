@@ -182,8 +182,9 @@ public sealed class ScriptToolsTests : IDisposable
         Phase11ScriptShots.Wait(ScriptEditorPage.OpenScriptFile(_h.S, SkyHopperProject.Script(_h.Fx, "Coin"), 4));
         Assert.Equal(("Coin.cs", 4), (_h.Page<ScriptEditorPage>().Buffer!.Name, _h.Page<ScriptEditorPage>().Editor.CaretLine));
         page = _h.Page<ScriptEditorPage>();
-        // no executable: a toast, nothing started
+        // no executable (the path set does not exist and the editor is not installed): a toast, nothing started
         ScriptEditorSettings.Of(_h.S).ExecutablePath = Path.Combine(_h.Fx.Folder, "missing.exe");
+        svc.Detector = new ExternalEditors(env: _ => null, fileExists: _ => false, directories: _ => [], appPath: _ => null, vswhere: () => []);
         var count = svc.Launches.Count;
         Assert.False(page.OpenExternally());
         Assert.Equal(count, svc.Launches.Count);
@@ -272,7 +273,8 @@ public sealed class ExternalEditorDetectionTests(Xunit.Abstractions.ITestOutputH
         var dir = Directory.CreateTempSubdirectory("agb-se-").FullName;
         try
         {
-            var path = Path.Combine(dir, "script-editor.json");
+            // the settings are the Preferences fields of T-S07 / T-S08 (preferences.json), not a file of their own
+            var path = Path.Combine(dir, "preferences.json");
             var s = ScriptEditorSettings.Load(path);
             Assert.True(s.UseExternal);
             Assert.Equal(ExternalEditorKind.VsCode, s.Editor);
@@ -284,6 +286,9 @@ public sealed class ExternalEditorDetectionTests(Xunit.Abstractions.ITestOutputH
             var back = ScriptEditorSettings.Load(path);
             Assert.Equal(ExternalEditorKind.Rider, back.Editor);
             Assert.Equal(2, back.TabSize);
+            var prefs = new AgbStudio.Editor.Services.PreferencesStore(path).Current;
+            Assert.Equal(("JetBrains Rider", 2), (prefs.ExternalEditor, prefs.TabSize));
+            Assert.Equal(["preferences.json"], Directory.EnumerateFiles(dir).Select(Path.GetFileName));
         }
         finally { Directory.Delete(dir, true); }
     }

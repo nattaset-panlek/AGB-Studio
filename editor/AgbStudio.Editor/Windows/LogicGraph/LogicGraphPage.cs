@@ -447,19 +447,17 @@ public sealed class LogicGraphPage : DockPanel
         Canvas.Cursor = tool == GraphTool.Hand ? new Cursor(StandardCursorType.Hand) : Cursor.Default;
     }
 
-    /// <summary>Static shortcuts shown in the Node Context Menu (handled by the canvas, not global shortcuts).</summary>
-    public static readonly IReadOnlyDictionary<string, string> MenuShortcuts = new Dictionary<string, string> { ["graph.groupIntoComment"] = "Ctrl+G" };
-
     public void OpenNodeMenu(string nodeId)
     {
         if (Canvas.ViewOf(nodeId) is not { } anchor) return;
-        PageChrome.OpenMenu(_s, "T-M21", "GraphNode", anchor, NodeContextMenu(), shortcuts: MenuShortcuts);
+        _ = _s.Windows.Open("T-M21", nodeId, anchor, source: "GraphNode");
     }
 
+    /// <summary>The Node Context Menu; Ctrl+G is handled by the canvas, so it is only shown on its item.</summary>
     [EditorMenu("T-M21")]
     public static IReadOnlyList<MenuEntry> NodeContextMenu() =>
     [
-        new CommandEntry("edit.duplicate"), new CommandEntry("graph.disable"), new CommandEntry("graph.groupIntoComment"), new CommandEntry("graph.collapse"),
+        new CommandEntry("edit.duplicate"), new CommandEntry("graph.disable"), new CommandEntry("graph.groupIntoComment", Keys: "Ctrl+G"), new CommandEntry("graph.collapse"),
         SeparatorEntry.Instance, new CommandEntry("graph.showCode", ShowIcon: true), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
     ];
 

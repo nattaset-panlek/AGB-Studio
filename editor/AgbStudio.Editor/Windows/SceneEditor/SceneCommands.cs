@@ -103,7 +103,7 @@ public static class SceneCommands
         var m = M(s);
         if (m.SelectedActor is not { } a) return;
         var script = a.Components.Select(c => ScriptFile(m, c.Type)).FirstOrDefault(f => f != null);
-        if (script != null) _ = s.Windows.Open("T-P04", script, source: "actor.editScript");
+        if (script != null) _ = Scripts.ScriptEditorPage.OpenScriptFile(s, script, source: "actor.editScript");
         else s.Toasts.Show($"{a.Name} has no C# script behaviour.", AgbStudio.Editor.Controls.ToastStatus.Error);
     }
 
@@ -214,7 +214,7 @@ public static class SceneCommands
         var (a, c) = CurrentComponent(m);
         var comp = m.Scene?.Actors.ElementAtOrDefault(a)?.Components.ElementAtOrDefault(c);
         var file = comp == null ? null : ScriptFile(m, comp.Type);
-        if (file != null) _ = s.Windows.Open("T-P04", file, source: "component.editScript");
+        if (file != null) _ = Scripts.ScriptEditorPage.OpenScriptFile(s, file, source: "component.editScript");
         else if (comp != null) s.Toasts.Show($"{comp.Type} is a built-in behaviour; it has no C# script.", AgbStudio.Editor.Controls.ToastStatus.Error);
     }
 

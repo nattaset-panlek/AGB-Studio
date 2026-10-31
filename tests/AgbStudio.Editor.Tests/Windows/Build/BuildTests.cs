@@ -90,8 +90,10 @@ public class BuildRomTests
             win.MouseUp(pt, MouseButton.Left);
             Capture.Pump();
             Assert.Equal(Path.Combine(p.ScriptsDir, "PlayerController.cs"), d.Opened);
-            Assert.Equal("T-P04", fx.Services.Windows.Requests[^1].Window);
-            Assert.Equal(new SourceLocation(d.Opened!, 22, 9), fx.Services.Get<SourceLocation>());
+            Assert.Equal(("T-P04", (string?)"BuildFailedGoToError"), fx.Services.Windows.Requests[^1]);
+            // the Script Editor shows the file with the caret on the error
+            var script = Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptEditorPage>(win.CurrentPage);
+            Assert.Equal((d.Opened, 22, 9), (script.Buffer!.Path, script.Editor.CaretLine, script.Editor.CaretColumn));
             Assert.Equal("PlayerController.cs", fx.Services.Documents.Active!.Name);
             Assert.DoesNotContain(d, win.Overlays.Open);
         }

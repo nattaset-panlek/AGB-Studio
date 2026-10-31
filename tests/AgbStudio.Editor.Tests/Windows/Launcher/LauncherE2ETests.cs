@@ -5,6 +5,7 @@ using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Windows.Launcher;
+using AgbStudio.Editor.Windows.Menus;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -178,11 +179,18 @@ public class LauncherE2ETests
         h.Key(PhysicalKey.Escape);
         h.Click(h.Find<Button>("Doc_Scripting_API"));
         Assert.Contains(h.S.Windows.Requests, r => r is { Window: "T-P18", Source: "help.scriptingApi" });
-        h.Key(PhysicalKey.Escape);
+        // the Scripting API page replaced the Launcher; back to Learn
+        Assert.Equal("T-P18", h.Win.CurrentPageId);
+        _ = h.S.Windows.Open("T-P21", source: "test");
+        Capture.Pump();
+        // Report a bug runs Help › Report a Bug…, which needs the bug page of editor.json (D-13)
+        var urls = new List<string>();
+        h.S.Set(new EditorLinks { Config = new EditorConfig { BugUrl = "https://bugs.example/new" }, Open = urls.Add, Fetch = (_, _) => throw new InvalidOperationException("no network in tests") });
         var ran = new List<string>();
         h.S.Commands.Executed += c => ran.Add(c.Id);
         h.Click(h.Find<Button>("Community_Report_a_bug"));
         Assert.Contains("help.reportBug", ran);
+        Assert.Equal(["https://bugs.example/new"], urls);
         h.Click(h.Find<Button>("Community_Release_notes"));
         var notes = Assert.Single(h.Opened);
         Assert.Contains("## 0.1", File.ReadAllText(notes));

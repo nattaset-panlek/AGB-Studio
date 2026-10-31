@@ -656,14 +656,15 @@ public sealed class ScriptEditorPage : DockPanel
     /// <summary>
     /// Opens a script the way Preferences · Editor › "Open .cs with" says (P14.03): in the external editor at the line when
     /// the Script editor is External and the editor is found, otherwise in the built-in Script Editor. For the Assets panel,
-    /// the Console and other places that open scripts.
+    /// the Console, Build ROM's "go to error" and other places that open scripts (<paramref name="source"/> names the place).
     /// </summary>
-    public static async Task OpenScriptFile(EditorServices s, string path, int line = 1, int column = 1)
+    public static async Task OpenScriptFile(EditorServices s, string path, int line = 1, int column = 1, string source = "OpenScriptFile")
     {
         var settings = ScriptEditorSettings.Of(s);
         var external = ExternalEditorService.Of(s);
-        if (settings.UseExternal && settings.OpenCsExternally && !Scripting.Graph.GraphCodeGen.IsGenerated(File.ReadAllText(path)) && external.Executable() != null && external.Open(path, line, column)) return;
-        await s.Windows.Open("T-P04", new ScriptLocation(path, line, column), source: "OpenScriptFile");
+        if (settings.UseExternal && settings.OpenCsExternally && File.Exists(path) && !Scripting.Graph.GraphCodeGen.IsGenerated(File.ReadAllText(path))
+            && external.Executable() != null && external.Open(path, line, column)) return;
+        await s.Windows.Open("T-P04", new ScriptLocation(path, line, column), source: source);
     }
 
     /// <summary>Find &amp; Replace popover (T-O11) for this editor.</summary>

@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 
@@ -10,61 +8,59 @@ namespace AgbStudio.Editor.Windows.Scripts;
 public enum ExternalEditorKind { VsCode, Rider, VisualStudio, Custom }
 
 /// <summary>
-/// Script editor options of Preferences · Editor (T-S07, "Script editor" and "Built-in code editor") and the Script editor path
-/// of Preferences · Paths (T-S08), with the Figma defaults. Stored next to preferences.json as script-editor.json so the
-/// Preferences dialog and the Script Editor share them (P14.01).
+/// Script editor options of Preferences · Editor (T-S07, "Script editor" and "Built-in code editor") and the Script editor
+/// path of Preferences · Paths (T-S08), typed for the Script Editor and <see cref="ExternalEditorService"/>. The values
+/// live in <see cref="Preferences"/> (preferences.json), so the Preferences dialog and the Script Editor share one copy
+/// (P14.01); setting a property changes the editor's preferences, <see cref="Save"/> writes them.
 /// </summary>
 public sealed class ScriptEditorSettings
 {
-    static readonly JsonSerializerOptions Json = new() { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+    readonly PreferencesStore _store;
+    Preferences P => _store.Current;
+
+    public ScriptEditorSettings(PreferencesStore store)
+    {
+        _store = store;
+        // the Preferences dialog saves through the store: the Script Editor applies its changes
+        store.Saved += () => Changed?.Invoke();
+    }
 
     /// <summary>Built-in / External segment.</summary>
-    public bool UseExternal { get; set; } = true;
-    public ExternalEditorKind Editor { get; set; } = ExternalEditorKind.VsCode;
-    /// <summary>Executable chosen in Preferences · Paths › Script editor; empty = the detected one.</summary>
-    public string ExecutablePath { get; set; } = "";
+    public bool UseExternal { get => P.ScriptEditor == ScriptEditorMode.External; set => P.ScriptEditor = value ? ScriptEditorMode.External : ScriptEditorMode.BuiltIn; }
+    public ExternalEditorKind Editor { get => KindOf(P.ExternalEditor); set => P.ExternalEditor = ExternalEditors.NameOf(value); }
+    /// <summary>Executable chosen in Preferences · Paths › Script editor; when it does not exist the chosen editor is detected.</summary>
+    public string ExecutablePath { get => P.ScriptEditorPath; set => P.ScriptEditorPath = value; }
     /// <summary>Arguments for Custom…: {file}, {line}, {column} and {project} are replaced.</summary>
-    public string CustomArguments { get; set; } = "\"{file}\"";
+    public string CustomArguments { get => P.ExternalEditorArguments; set => P.ExternalEditorArguments = value; }
     /// <summary>"Open .cs with": External editor / Built-in editor (double-click on a script asset).</summary>
-    public bool OpenCsExternally { get; set; } = true;
-    public bool GenerateCsproj { get; set; } = true;
-    public bool HotReloadOnExternalSave { get; set; } = true;
+    public bool OpenCsExternally { get => P.OpenCsExternally; set => P.OpenCsExternally = value; }
+    public bool GenerateCsproj { get => P.GenerateCsproj; set => P.GenerateCsproj = value; }
+    public bool HotReloadOnExternalSave { get => P.HotReloadOnExternalSave; set => P.HotReloadOnExternalSave = value; }
     // Built-in code editor
-    public string Font { get; set; } = "JetBrains Mono";
-    public int TabSize { get; set; } = 4;
-    public string Theme { get; set; } = "Studio Dark";
-    public bool FormatOnSave { get; set; } = true;
-    public bool AutocompleteAsYouType { get; set; } = true;
-    public bool UnderlineAnalyzerWarnings { get; set; } = true;
+    public string Font { get => P.CodeFont; set => P.CodeFont = value; }
+    public int TabSize { get => Math.Clamp(P.TabSize, 1, 16); set => P.TabSize = value; }
+    public string Theme { get => P.CodeTheme; set => P.CodeTheme = value; }
+    public bool FormatOnSave { get => P.FormatOnSave; set => P.FormatOnSave = value; }
+    public bool AutocompleteAsYouType { get => P.AutocompleteAsYouType; set => P.AutocompleteAsYouType = value; }
+    public bool UnderlineAnalyzerWarnings { get => P.UnderlineAnalyzerWarnings; set => P.UnderlineAnalyzerWarnings = value; }
 
-    [JsonIgnore] public string FilePath { get; private set; } = "";
+    public string FilePath => _store.FilePath;
     public event Action? Changed;
 
-    public static string FileFor(PreferencesStore prefs) => Path.Combine(Path.GetDirectoryName(prefs.FilePath) ?? ".", "script-editor.json");
+    /// <summary>The editor kind of a Preferences "Editor" name ("JetBrains Rider"); unknown names are Custom….</summary>
+    public static ExternalEditorKind KindOf(string name) =>
+        ExternalEditors.Kinds.FirstOrDefault(k => string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase)) is { Name: not null } k ? k.Kind : ExternalEditorKind.Custom;
 
-    public static ScriptEditorSettings Load(string path)
-    {
-        ScriptEditorSettings s;
-        try { s = File.Exists(path) ? JsonSerializer.Deserialize<ScriptEditorSettings>(File.ReadAllText(path), Json) ?? new() : new(); }
-        catch (JsonException) { s = new(); }
-        s.FilePath = path;
-        s.TabSize = Math.Clamp(s.TabSize, 1, 16);
-        return s;
-    }
+    /// <summary>The settings of a preferences.json (tests; the editor uses <see cref="Of"/>).</summary>
+    public static ScriptEditorSettings Load(string preferencesPath) => new(new PreferencesStore(preferencesPath));
 
-    public void Save()
-    {
-        if (FilePath.Length == 0) return;
-        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Json));
-        Changed?.Invoke();
-    }
+    public void Save() => _store.Save();
 
-    /// <summary>The shared settings of an editor instance (created on first use).</summary>
+    /// <summary>The shared settings of an editor instance: a view over its preferences (created on first use).</summary>
     public static ScriptEditorSettings Of(EditorServices s)
     {
         if (s.GetService(typeof(ScriptEditorSettings)) is ScriptEditorSettings existing) return existing;
-        var created = Load(FileFor(s.Preferences));
+        var created = new ScriptEditorSettings(s.Preferences);
         s.Set(created);
         return created;
     }
@@ -230,11 +226,12 @@ public sealed class ExternalEditorService
 
     ScriptEditorSettings Settings => ScriptEditorSettings.Of(_s);
 
-    /// <summary>The executable that will be used: the path set in Preferences · Paths, else the detected one.</summary>
+    /// <summary>The executable that will be used: the path set in Preferences · Paths when it exists, else the chosen editor where it is installed.</summary>
     public string? Executable()
     {
-        var set = Settings.ExecutablePath.Trim().Trim('"');
-        if (set.Length > 0) return File.Exists(Environment.ExpandEnvironmentVariables(set)) ? Environment.ExpandEnvironmentVariables(set) : null;
+        // the Figma default path (VS Code per user) may not be where the editor is installed: then it is detected
+        var set = Preferences.Expand(Settings.ExecutablePath.Trim().Trim('"'));
+        if (set.Length > 0 && File.Exists(set)) return set;
         return Settings.Editor == ExternalEditorKind.Custom ? null : Detector.Detect(Settings.Editor).Path;
     }
 
