@@ -236,7 +236,7 @@ public class NewProjectTests
         Assert.Equal("Scene_01", p.Settings.General.StartScene);
         Assert.Empty(p.FontFiles());
         Assert.Equal("", p.Settings.General.DefaultFont);
-        var graph = LogicGraph.Parse(File.ReadAllText(p.GraphFiles().Single()));
+        var graph = AgbStudio.Scripting.Graph.LogicGraph.Parse(File.ReadAllText(p.GraphFiles().Single()));
         Assert.Equal("PlayerLogic", graph.Class);
         Assert.Contains("class PlayerLogic", GraphCodeGen.Generate(graph, "PlayerLogic.graph"));
         Assert.False(Directory.Exists(Path.Combine(p.Root, ".git")));

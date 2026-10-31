@@ -249,7 +249,7 @@ public static class ProjectCreator
     /// <summary>A Logic Graph example (scripts/PlayerLogic.graph): jump when A is pressed on the ground.</summary>
     public static void AddLogicGraph(GameProject p)
     {
-        var g = new LogicGraph { Class = "PlayerLogic" };
+        var g = new AgbStudio.Scripting.Graph.LogicGraph { Class = "PlayerLogic" };
         g.Nodes.Add(new GraphNode { Id = "n1", Type = "OnUpdate", X = 40, Y = 60 });
         g.Nodes.Add(new GraphNode { Id = "n2", Type = "ButtonPressed", X = 40, Y = 180, Props = { ["button"] = "A" } });
         g.Nodes.Add(new GraphNode { Id = "n3", Type = "IsOnGround", X = 40, Y = 260 });
