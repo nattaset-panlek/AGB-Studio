@@ -122,8 +122,9 @@ copies it in any scene when the scene has no actor of that name.
   `direction` `Left` / `Right` / `PingPong`, 15-bit `color`, `enabled`).
 - `fonts/<name>.font` (`FontFile`): source kind (`Ttf`, `Bdf`, `Image`) and file, pixel size, variable or fixed width,
   character sets, extra characters, line height, baseline, spacing, bits per pixel, drop shadow, Thai mark stacking
-  and lower-vowel placement, glyph overrides (edited pixels by code point). OpenType CFF fonts are refused by the
-  build.
+  and lower-vowel placement, glyph overrides (edited pixels by code point). `Ttf` takes a `.ttf` or an `.otf` file:
+  TrueType outlines or CFF (PostScript) outlines, name-keyed or CID-keyed. Font collections (`.ttc`), web fonts
+  (`.woff`) and variable fonts with CFF2 outlines are refused with a message.
 - `data/<Table>.db` (`TableFile`): key field, keep in ROM, `fields` (name, type `int` / `fixed` / `bool` / `text` /
   `enum` / `sprite` / `sound` / `script` / `reference`, enum values, default, localized) and `rows`.
 - `text/strings.<lang>.json` (`StringTable`): `language` and a sorted `strings` map from key to text.

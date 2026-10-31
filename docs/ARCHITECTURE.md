@@ -170,8 +170,9 @@ see D-24.
 
 ## Text (blueprint 13)
 
-Text is laid out at build time (`Fonts/TextLayout.cs`): fonts come from TrueType, BDF or image sheets
-(`Fonts/GameFont.cs`; OpenType CFF fonts are refused), Thai upper vowels, tone marks and lower vowels are stacked from
+Text is laid out at build time (`Fonts/TextLayout.cs`): fonts come from TrueType or OpenType (`.ttf` / `.otf`, TrueType
+outlines or CFF outlines with Type 2 charstrings, `Fonts/TrueType.cs` and `Fonts/Cff.cs`), BDF or image sheets
+(`Fonts/GameFont.cs`), Thai upper vowels, tone marks and lower vowels are stacked from
 the font's metrics so marks clear tall consonants, lines break at dictionary word boundaries (ICU word list,
 `Fonts/ThaiText.cs`, never inside a word), and each string becomes a `TextRun` per language. The runtime only places
 the glyphs (`render/text.cpp`, 1bpp or 2bpp with drop shadow). The C# `TextRenderer` draws runs exactly like the

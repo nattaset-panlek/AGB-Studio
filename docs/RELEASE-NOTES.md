@@ -52,5 +52,6 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 - Writing to a GBxCart RW cartridge is turned off until it has been verified on hardware.
 - Video Mode 3 sets the display mode only; there is no bitmap drawing yet.
 - Scene links of kind Door and Respawn behave like On touch.
-- Aseprite files are not decoded yet: export sprites as PNG. OpenType (CFF) fonts are refused by the build: use TrueType, BDF or an image sheet.
+- Aseprite files are not decoded yet: export sprites as PNG.
+- OpenType variable fonts (CFF2 outlines), font collections (.ttc) and web fonts (.woff) are refused: use a static .otf or .ttf, BDF or an image sheet.
 - THIRD_PARTY.txt does not yet include the AGB Studio runtime's own MIT notice; the licence page in the user docs gives the text to add.
