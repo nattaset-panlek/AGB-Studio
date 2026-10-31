@@ -218,7 +218,7 @@ public sealed partial class BuildReportTests(EmulatorFixture emu)
         Assert.Equal(debug.Frame, releaseLogs.Frame);
         Assert.Equal(debug.Frame, release.Frame);
         // Strip Debug.Log: log text is in Debug ROMs and in Release ROMs that keep logs, not in stripped ones.
-        var marker = "OBJ VRAM is full"u8.ToArray();
+        var marker = "sprite memory is full"u8.ToArray();
         Assert.True(debug.Rom.AsSpan().IndexOf(marker) >= 0);
         Assert.True(releaseLogs.Rom.AsSpan().IndexOf(marker) >= 0);
         Assert.Equal(-1, release.Rom.AsSpan().IndexOf(marker));

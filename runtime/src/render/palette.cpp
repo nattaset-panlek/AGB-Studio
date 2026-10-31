@@ -99,7 +99,8 @@ int acquire(const data::Palette* palette, bool obj) {
         }
         return i;
     }
-    debug::logf("warning: all 16 %s palette banks are in use", obj ? "OBJ" : "BG");
+    debug::logf("warning: all 16 %s palettes are in use, so some colours may look wrong. %s", obj ? "sprite" : "background",
+                obj ? "Let sprites share a palette (Sprite Editor, Palette)." : "Use fewer colours in this scene's tilesets and images.");
     return -1;
 }
 
@@ -159,7 +160,7 @@ int startCycle(bool obj, int bank, u8 first, u8 last, u8 ticks, Direction direct
         g_cycles[i] = {true, obj, static_cast<u8>(bank), first, last, static_cast<u8>(ticks ? ticks : 1), 0, direction, 1, 0};
         return i;
     }
-    debug::log("warning: all 4 palette cycle slots are in use");
+    debug::log("warning: 4 palette cycles are already running, so the new one does not start. Stop one first.");
     return -1;
 }
 

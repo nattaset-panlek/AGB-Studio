@@ -172,7 +172,8 @@ s32 Move(Context& ctx, const s32* args, int argc) {
     Actor* a = actorArg(arg(args, argc, 0, kNoActor));
     const s32 path = arg(args, argc, 1, -1);
     if (!a || path < 0 || path >= g_pathCount) {
-        debug::logf("warning: Move: no actor %ld or path %ld", static_cast<long>(arg(args, argc, 0, kNoActor)), static_cast<long>(path));
+        debug::logf("warning: Move: no actor number %ld or path number %ld in this scene, so nothing moved. Check the actor and path given to Move.",
+                    static_cast<long>(arg(args, argc, 0, kNoActor)), static_cast<long>(path));
         return 0;
     }
     ++g_stats.moves;

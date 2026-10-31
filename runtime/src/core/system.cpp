@@ -93,7 +93,7 @@ void addVBlankHook(void (*hook)()) {
             h = hook;
             return;
         }
-    debug::log("warning: no free VBlank hook slot");
+    debug::log("warning: all 4 VBlank hook slots are taken, so a new per-frame callback does not run. Remove one from native code (system::addVBlankHook).");
 }
 
 void removeVBlankHook(void (*hook)()) {

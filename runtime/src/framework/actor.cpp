@@ -102,7 +102,7 @@ Actor* spawnAt(const ActorDef& def, Arena& arena, int x, int y) {
         }
         return &a;
     }
-    debug::warnOnce(20, "all 64 actors are in use; an actor was not spawned");
+    debug::warnOnce(20, "all 64 actors are in use, so an actor was not spawned. Destroy actors you no longer need.");
     return nullptr;
 }
 

@@ -128,7 +128,7 @@ void markPaletteDirty() { g_palDirty = true; }
 bool queueCopy(void* dst, const void* src, u32 bytes) {
     if (g_queueLen >= kDmaQueueSize || g_queueBytes + bytes > g_budget) {
         ++g_deferred;
-        debug::warnOnce(1, "DMA budget for this frame is used up; transfer deferred to the next frame");
+        debug::warnOnce(1, "too much graphics data changed this frame, so the rest is copied next frame. Change fewer tiles or palettes per frame.");
         return false;
     }
     g_queue[g_queueLen++] = {dst, src, bytes};

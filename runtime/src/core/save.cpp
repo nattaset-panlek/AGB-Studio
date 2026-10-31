@@ -66,7 +66,7 @@ void flashEraseSector(u32 offset) {
     kSram[0x5555] = 0xAA;
     kSram[0x2AAA] = 0x55;
     *sector = 0x30;
-    if (!flashWait(sector, 0xFF)) debug::log("warning: flash sector erase timed out");
+    if (!flashWait(sector, 0xFF)) debug::log("warning: the save chip did not finish erasing, so this save may be lost. Check that the emulator's or cartridge's save type matches Project Settings (Save data).");
 }
 
 void flashProgram(u32 offset, u8 value) {
@@ -74,7 +74,7 @@ void flashProgram(u32 offset, u8 value) {
     volatile u8* p = kSram + (offset & 0xFFFF);
     flashCommand(0xA0);
     *p = value;
-    if (!flashWait(p, value)) debug::log("warning: flash program timed out");
+    if (!flashWait(p, value)) debug::log("warning: the save chip did not finish writing, so this save may be lost. Check that the emulator's or cartridge's save type matches Project Settings (Save data).");
 }
 
 // ---- EEPROM 8 KB (64-bit blocks, 14-bit addresses, bit-serial through DMA3) ----------------------
@@ -119,7 +119,7 @@ void eepromWriteBlock(u32 block, const u8* data) {
     eepromDma(const_cast<u16*>(kEeprom), bits, 81);
     for (int i = 0; i < 100000; ++i)
         if (*kEeprom & 1) return;
-    debug::log("warning: EEPROM write timed out");
+    debug::log("warning: the EEPROM save chip did not finish writing, so this save may be lost. Check that the emulator's or cartridge's save type matches Project Settings (Save data).");
 }
 
 // Bytes reserved per copy. It depends only on the save type and slot count, never on the payload
@@ -162,7 +162,7 @@ void configure(const Config& config, MigrateFn migrate) {
     g_migrate = migrate;
     g_flashBank = -1;
     if (config.type != Type::None && (copyBytes() < sizeof(Header) + config.payloadSize || config.payloadSize > 4096))
-        debug::logf("warning: save data needs %u bytes per slot but the save type has room for %lu", config.payloadSize, maxPayload() < 4096 ? maxPayload() : 4096);
+        debug::logf("warning: save data needs %u bytes per slot but the save type has room for %lu, so saves may be lost. Use fewer save fields or slots.", config.payloadSize, maxPayload() < 4096 ? maxPayload() : 4096);
 }
 
 const Config& config() { return g_config; }
@@ -250,7 +250,7 @@ bool write(int slot, const void* data) {
     const u32 total = sizeof(Header) + g_config.payloadSize;
     AGB_EWRAM_BSS static u8 buffer[sizeof(Header) + 4096];
     if (total > sizeof buffer) {
-        debug::log("warning: save payload larger than 4 KB is not supported");
+        debug::log("warning: save data over 4 KB per slot is not supported, so the game was not saved. Use fewer save fields in Project Settings (Save data).");
         return false;
     }
     Header h{kMagic, counter, g_config.formatVersion, g_config.payloadSize, crc32(data, g_config.payloadSize)};

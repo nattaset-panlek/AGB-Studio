@@ -33,7 +33,8 @@ s32 read32(const u8* p) { return static_cast<s32>(p[0] | (p[1] << 8) | (p[2] << 
 
 void push(Context& c, s32 v) {
     if (c.sp >= kStackSize) {
-        debug::log("warning: script stack overflow");
+        debug::logf("warning: cutscene %s ran out of stack space (%d values), so a value was lost. Simplify its long expressions or nested calls.",
+                    c.depth ? g_scripts[c.frames[c.depth - 1].script].name : "?", kStackSize);
         return;
     }
     c.stack[c.sp++] = v;
@@ -41,13 +42,17 @@ void push(Context& c, s32 v) {
 s32 pop(Context& c) { return c.sp ? c.stack[--c.sp] : 0; }
 
 bool enterScript(Context& c, u16 id, int argc) {
-    if (id >= g_scriptCount || c.depth >= kCallDepth) {
-        debug::logf("warning: script call failed (id %u, depth %u)", id, c.depth);
+    if (id >= g_scriptCount) {
+        debug::logf("warning: cutscene number %u is not in this ROM, so it did not run. Rebuild the game.", id);
+        return false;
+    }
+    if (c.depth >= kCallDepth) {
+        debug::logf("warning: cutscenes are nested more than %d deep, so %s did not run. Call fewer cutscenes inside each other.", kCallDepth, g_scripts[id].name);
         return false;
     }
     const Script& s = g_scripts[id];
     if (c.localTop + s.locals > kMaxLocals * 2) {
-        debug::log("warning: script locals exhausted");
+        debug::logf("warning: cutscene %s needs more variables than are free (%d for all nested calls), so it did not run. Use fewer variables.", s.name, kMaxLocals * 2);
         return false;
     }
     Frame& f = c.frames[c.depth++];
@@ -147,7 +152,7 @@ bool step(Context& c, int budget, bool immediate) {
                     if (i < 8) args[i] = v;
                 }
                 if (id >= g_nativeCount) {
-                    debug::logf("warning: unknown script native %u", id);
+                    debug::logf("warning: cutscene %s calls engine function %u, which this ROM does not have, so it got 0. Rebuild the game.", s.name, id);
                     push(c, 0);
                     break;
                 }
@@ -155,7 +160,7 @@ bool step(Context& c, int budget, bool immediate) {
                 const s32 r = g_natives[id].fn(c, args, argc);
                 if (c.wait) {
                     if (immediate) {
-                        debug::logf("warning: %s waits, which is not allowed in an immediate script", g_natives[id].name);
+                        debug::logf("warning: %s waits, but this script must finish in one frame (OnLoad), so it did not wait. Use a [Cutscene] to wait.", g_natives[id].name);
                         c.wait = nullptr;
                         push(c, r);
                         break;
@@ -179,7 +184,7 @@ bool step(Context& c, int budget, bool immediate) {
                 // The condition was just evaluated; while it is false, go back to it and try again next frame.
                 if (pop(c)) break;
                 if (immediate) {
-                    debug::logf("warning: WaitUntil in %s waits, which is not allowed in an immediate script", s.name);
+                    debug::logf("warning: WaitUntil in %s: this script must finish in one frame (OnLoad), so it did not wait. Use a [Cutscene] to wait.", s.name);
                     break;
                 }
                 f.pc = static_cast<u16>(f.pc + read16(p + 1));
@@ -204,7 +209,7 @@ bool step(Context& c, int budget, bool immediate) {
                 break;
             }
             default:
-                debug::logf("warning: bad opcode %u in %s", p[0], s.name);
+                debug::logf("warning: cutscene %s is damaged or from another build (unknown code %u), so it was stopped. Rebuild the game.", s.name, p[0]);
                 c.depth = 0;
                 return false;
         }
@@ -294,7 +299,7 @@ int start(u16 id, Priority priority, const s32* args, int argc) {
         }
         return i;
     }
-    debug::warnOnce(30, "all 8 script contexts are busy; a script did not start");
+    debug::warnOnce(30, "8 cutscenes and triggers are already running, so a new one did not start. Let one finish first.");
     return -1;
 }
 

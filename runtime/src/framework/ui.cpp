@@ -559,7 +559,7 @@ const Kit* kit() { return g_kit; }
 
 void openSceneMenu(const MenuDef& def) {
     if (!g_kit) {
-        debug::log("warning: this scene has a menu but the game has no UI kit");
+        debug::log("warning: this scene's menu can't be shown because the game has no font for menus. Add a font in Font Manager and build again.");
         return;
     }
     g_sceneMenu.open(def, *g_kit);

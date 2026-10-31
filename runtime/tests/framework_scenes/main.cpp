@@ -282,7 +282,7 @@ AGB_TEST(screen_stack_push_pop_resume_replace) {
     const u32 head = debug::channel().logHead;
     game::push(&g_menu);
     CHECK_EQ(game::depth(), game::kMaxScreens);
-    CHECK(loggedSince(head, "screen stack is full"));
+    CHECK(loggedSince(head, "too many screens are open"));
     while (game::depth()) game::pop();
     CHECK(game::top() == nullptr);
 }

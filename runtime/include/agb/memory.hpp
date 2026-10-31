@@ -16,7 +16,7 @@ public:
     void* alloc(u32 bytes, u32 align = 4) {
         const u32 start = (used_ + align - 1) & ~(align - 1);
         if (start + bytes > size_) {
-            if (name_) debug::logf("warning: arena '%s' is full (%lu of %lu bytes); allocation of %lu failed", name_, used_, size_, bytes);
+            if (name_) debug::logf("warning: scene memory is full (arena '%s', %lu of %lu bytes), so %lu bytes were not given. Allocate in Start, not every frame (GAE003).", name_, used_, size_, bytes);
             return nullptr;
         }
         used_ = start + bytes;
@@ -69,14 +69,14 @@ public:
             ++count_;
             return Handle<T>{static_cast<u16>(i), gen_[i]};
         }
-        debug::logf("warning: pool '%s' is full (%d); the new object was not created", name_, N);
+        debug::logf("warning: pool '%s' is full (%d objects), so the new object was not created. Destroy objects you no longer need.", name_, N);
         return {};
     }
 
     T* get(Handle<T> h) {
         if (!h.valid() || h.index >= N) return nullptr;
         if (!live_[h.index] || gen_[h.index] != h.gen) {
-            AGB_ASSERT(false, "stale handle used after the object was destroyed");
+            AGB_ASSERT(false, "an object was used after it was destroyed; check scripts that keep a reference after Destroy()");
             return nullptr;
         }
         return &slot(h.index);
@@ -84,7 +84,7 @@ public:
 
     void destroy(Handle<T> h) {
         if (!h.valid() || h.index >= N || !live_[h.index] || gen_[h.index] != h.gen) {
-            AGB_ASSERT(false, "double free or stale handle");
+            AGB_ASSERT(false, "an object was destroyed that was already gone; check scripts that call Destroy() twice");
             return;
         }
         slot(h.index).~T();
