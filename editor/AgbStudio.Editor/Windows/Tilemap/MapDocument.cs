@@ -265,6 +265,22 @@ public sealed class MapDocument
         return true;
     }
 
+    /// <summary>Tileset · Primary (P5.01): the shared tileset this one extends, or null for none. Kept in the tileset's meta file.</summary>
+    public bool SetPrimary(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) name = null;
+        var old = string.IsNullOrEmpty(Meta.Primary) ? null : Meta.Primary;
+        if (name == old) return false;
+        if (name != null && (string.Equals(name, Map.Tileset, StringComparison.OrdinalIgnoreCase)
+                || !Project.TilesetFiles().Any(f => string.Equals(GameProject.AssetName(f), name, StringComparison.OrdinalIgnoreCase)))) return false;
+        Do("Primary tileset", () => Meta.Primary = name, () => Meta.Primary = old, MapChange.Tileset);
+        return true;
+    }
+
+    /// <summary>The tilesets this one can extend: every other tileset of the project.</summary>
+    public IReadOnlyList<string> PrimaryChoices() =>
+        Project.TilesetFiles().Select(GameProject.AssetName).Where(n => !string.Equals(n, Map.Tileset, StringComparison.OrdinalIgnoreCase)).ToList();
+
     public void SetCollisionLayer(int index)
     {
         var old = Map.CollisionLayer;

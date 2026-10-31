@@ -77,6 +77,12 @@
     },
     "compress": {
       "type": "boolean"
+    },
+    "primary": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

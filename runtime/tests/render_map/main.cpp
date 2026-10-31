@@ -135,6 +135,40 @@ AGB_TEST(map_streams_rows_and_columns) {
     CHECK(maxBytes <= 2 * 1024);
 }
 
+// P5.01: a secondary tileset's own tiles load right after its primary's, and a tileset without a primary is unchanged.
+AGB_TEST(secondary_tileset_loads_after_its_primary) {
+    screenArena().reset();
+    bg::reset();
+    palettes::reset();
+    bg::setVideoMode(0);
+    setup();
+    static u32 ownTiles[2 * 8];
+    for (int t = 0; t < 2; ++t)
+        for (int r = 0; r < 8; ++r) ownTiles[t * 8 + r] = static_cast<u32>(t + 8) * 0x11111111u & 0xFFFFFFFFu;
+    static const u16 mergedColors[32] = {0, 0x001F, 0x03E0, 0x7C00, 0x7FFF, 0x4210, 0x7C1F, 0x03FF, 0, 0, 0, 0, 0, 0, 0, 0,
+                                         0, 0x1234};
+    static const data::Palette mergedPal{mergedColors, 2};
+    data::Tileset secondary{};
+    secondary.gfx = {ownTiles, sizeof ownTiles, 2, 4, false};
+    secondary.palette = &mergedPal;
+    secondary.metatiles = kMeta;
+    secondary.collision = kCol;
+    secondary.metatileCount = 6;
+    secondary.primary = &g_tileset;
+    const auto p = bg::loadTileset(&secondary);
+    CHECK(p.valid());
+    system::waitVBlank();
+    const u32* vram = reinterpret_cast<const u32*>(commit::bgTiles(p.charBlock)) + p.firstTile * 8;
+    CHECK_EQ(vram[0], 0x00000000u);
+    CHECK_EQ(vram[7 * 8], 0x77777777u);
+    CHECK_EQ(vram[8 * 8], 0x88888888u);
+    CHECK_EQ(vram[9 * 8], 0x99999999u);
+    CHECK_EQ(palettes::baseColor(p.paletteBank * 16 + 16 + 1), 0x1234);
+    // Without a primary the same tileset loads on its own, eight tiles.
+    const auto own = bg::loadTileset(&g_tileset);
+    CHECK(own.valid());
+}
+
 AGB_TEST(parallax_scroll_registers) {
     screenArena().reset();
     bg::reset();

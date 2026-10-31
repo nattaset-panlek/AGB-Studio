@@ -55,6 +55,10 @@ struct Tileset {
     u16 metatileCount;
     const TileAnim* anims;
     u8 animCount;
+    // P5.01: the shared primary tileset this one extends, or null. `gfx` then holds only this tileset's own tiles, which
+    // load right after the primary's (tile indices of the metatiles count from the primary's first tile); `palette`
+    // holds the primary's banks followed by the own banks.
+    const Tileset* primary = nullptr;
 };
 
 enum class LayerType : u8 { Tile, Image, Affine, CollisionOnly };

@@ -347,7 +347,7 @@ public sealed class GameBuilder
         if (!string.IsNullOrEmpty(meta.Primary) && meta.Primary != name)
         {
             // P5.01: the primary is converted first; this tileset goes on from its tiles and palette banks. The merged
-            // tileset is emitted whole (the runtime does not yet share a primary in VRAM between scenes).
+            // tileset stores only its own tiles, and the runtime loads the primary's before them (data::Tileset::primary).
             if (!_tilesets.TryGetValue(meta.Primary, out primary))
             {
                 var pf = Directory.EnumerateFiles(Path.GetDirectoryName(file)!, "*.png").FirstOrDefault(f => GameProject.AssetName(f) == meta.Primary);
@@ -358,13 +358,13 @@ public sealed class GameBuilder
         var t = TilesetConverter.Convert(name, img, meta, _p.Settings.Tags, 13, file, primary);
         _tilesets[name] = t;
         foreach (var pr in t.Problems) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", pr.Message));
-        var tiles = t.Tiles.ToBytes();
+        var tiles = t.OwnTileBytes();
         var compress = meta.Compress && _p.Settings.Build.CompressGraphics;
         var stored = compress ? Lz77.Compress(tiles) : tiles;
         // Loaded: every tile in BG VRAM (LZ77 tiles are decompressed by the BIOS straight into VRAM, no RAM buffer) and
         // its palette banks.
         Assets.Tilesets[name] = new AssetInfo(name, "Tileset", file, stored.Length + t.Palette.Banks.Count * 32 + t.Metatiles.Count * 10, t.Tiles.Count,
-            $"{t.Tiles.Count} tiles · 4bpp") { Vram = "BG", VramTileBytes = t.Tiles.Count * 32L, PaletteBytes = t.Palette.Banks.Count * 32L };
+            $"{t.Tiles.Count} tiles · 4bpp{(t.Primary != null ? $" · {t.OwnTileCount} own, primary {t.Primary.Name}" : "")}") { Vram = "BG", VramTileBytes = t.Tiles.Count * 32L, PaletteBytes = t.Palette.Banks.Count * 32L };
         var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, compress, string.Join(',', _p.Settings.Tags), primary == null ? "" : Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(primary.Tiles.ToBytes())));
         if (_cache.IsCurrent("tileset:" + name, hash, [outFile]))
         {
@@ -398,7 +398,7 @@ public sealed class GameBuilder
         }
         sb.Append("}  // namespace\n");
         sb.Append($"extern const agb::data::Tileset agbasset_tileset_{id} = {{\n");
-        sb.Append($"    {{agbasset_tileset_{id}_tiles, {stored.Length}, {t.Tiles.Count}, 4, {(compress ? "true" : "false")}}},\n");
+        sb.Append($"    {{agbasset_tileset_{id}_tiles, {stored.Length}, {t.OwnTileCount}, 4, {(compress ? "true" : "false")}}},\n");
         sb.Append($"    &agbasset_tileset_{id}_pal, agbasset_tileset_{id}_meta, agbasset_tileset_{id}_col, agbasset_tileset_{id}_tags,\n");
         sb.Append($"    {t.Metatiles.Count}, {(t.Anims.Count > 0 ? $"agbasset_tileset_{id}_anims" : "nullptr")}, {t.Anims.Count}}};\n");
         Write(outFile, sb.ToString());

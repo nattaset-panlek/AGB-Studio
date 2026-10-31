@@ -173,7 +173,21 @@ TilesetPlacement loadTiles(const data::TileGfx& gfx, int charBlock) {
 TilesetPlacement loadTileset(const data::Tileset* ts) {
     for (int i = 0; i < g_loadedCount; ++i)
         if (g_loaded[i].tileset == ts) return g_loaded[i].placement;
-    TilesetPlacement p = loadTiles(ts->gfx);
+    TilesetPlacement p;
+    if (ts->primary) {
+        // P5.01: the primary's tiles and this tileset's own go into one run, the primary's first.
+        const data::TileGfx& pg = ts->primary->gfx;
+        p = reserveTiles(static_cast<u16>(pg.tileCount + ts->gfx.tileCount), false);
+        if (!p.valid()) return p;
+        u8* dst = reinterpret_cast<u8*>(commit::bgTiles(p.charBlock)) + static_cast<u32>(p.firstTile) * 32;
+        if (pg.lz77) bios::lz77ToVram(pg.data, dst);
+        else commit::copyNow(dst, pg.data, pg.bytes);
+        dst += static_cast<u32>(pg.tileCount) * 32;
+        if (ts->gfx.lz77) bios::lz77ToVram(ts->gfx.data, dst);
+        else commit::copyNow(dst, ts->gfx.data, ts->gfx.bytes);
+    } else {
+        p = loadTiles(ts->gfx);
+    }
     if (!p.valid()) return p;
     const int bank = ts->palette ? palettes::acquire(ts->palette, false) : 0;
     p.paletteBank = static_cast<u8>(bank < 0 ? 0 : bank);
