@@ -495,6 +495,7 @@ void boot(const GameDef& def) {
     audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8), def.audioMixKHz ? def.audioMixKHz : static_cast<u8>(21)});
     if (def.dmgSfx) audio::setDmgTable(static_cast<const audio::DmgSfx*>(def.dmgSfx), def.dmgSfxCount);
     rng::seed(0xA6B5);
+    text::clearLabels();  // a boot starts with no labels (a language switch would redraw a previous game's)
     if (def.textTables) {
         text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
         text::setLanguage(def.textLanguage);

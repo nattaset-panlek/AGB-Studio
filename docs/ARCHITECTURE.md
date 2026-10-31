@@ -146,7 +146,9 @@ converts assets first.
 | Runtime, Console warnings | 64 actors, 128 sprites, 32 affine matrices, OBJ VRAM full, sprite cycles per screen line, 16 palette banks per type, background VRAM full, 16 tasks, 8 script contexts, command bus queue, DMA budget per frame (deferred to the next frame), load step and frame overruns, save data larger than the save type |
 | Editor | Budget Details popover and the GBA Budget block (T-O06), Build Report (T-P11), Tilemap Editor VRAM plan (T-P03), Project Settings · Save data meter (T-S02), Audio channel use (T-P15) |
 
-The default split of IWRAM and EWRAM shown in blueprint 10 is not encoded or checked.
+The split of IWRAM and EWRAM into the rows of blueprint 10 is measured from the linker map (`RamBudget.cs`, report.json
+`ramSplit`, G-HW.04): code in IWRAM (Maxmod's `.iwram` sections and the `*.iwram.cpp` files) is "Hot ARM code"; the
+rows the runtime controls are held to their defaults by `RamBudgetTests`, the others are reported when over.
 
 ## Debug channel and logs
 
