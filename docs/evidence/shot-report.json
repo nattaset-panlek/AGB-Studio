@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 06:05:14Z",
+  "generated": "2026-10-31 06:33:27Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3893,8 +3893,8 @@
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.16,
-      "BestShiftDiffPercent": 3.16,
+      "DiffPercent": 3.15,
+      "BestShiftDiffPercent": 3.15,
       "shift": [
         0,
         0
@@ -4553,15 +4553,15 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.67,
-      "BestShiftDiffPercent": 1.67,
+      "DiffPercent": 2.63,
+      "BestShiftDiffPercent": 2.63,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.39,
-      "ColourDiffPercent": 5.06
+      "MeanChannelError": 2.92,
+      "ColourDiffPercent": 5.99
     },
     {
       "Id": "T-P10",

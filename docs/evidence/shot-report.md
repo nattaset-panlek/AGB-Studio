@@ -265,7 +265,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P02 | frame Play Mode | 1440x900 | 1440x900 | 13.07 | 13.07 | 0,0 | 0 | 12.45 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
 | T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.27 | 5.27 | 0,0 | 0 | 6.39 |
-| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.16 | 3.16 | 0,0 | 0 | 3.56 |
+| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.15 | 3.15 | 0,0 | 0 | 3.56 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.51 | 2.51 | 0,0 | 0 | 3.03 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 5.03 | 4.57 | 0,-2 | 2 | 7.46 |
@@ -309,7 +309,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-L03 | frame Preferences · Appearance · Light | 900x620 | 900x620 | 0.84 | 0.84 | 0,0 | 0 | 1.53 |
 | T-D11 | frame About | 460x304 | 460x304 | 2.73 | 2.73 | 0,0 | 0 | 3.42 |
 | T-O12 | frame Record Shortcut | 340x264 | 340x264 | 1.95 | 1.95 | 0,0 | 0 | 2.17 |
-| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 1.67 | 1.67 | 0,0 | 0 | 2.39 |
+| T-P08 | frame Sprite Editor | 1440x900 | 1440x900 | 2.63 | 2.63 | 0,0 | 0 | 2.92 |
 | T-P10 | frame Palette Manager | 1440x900 | 1440x900 | 2.41 | 2.41 | 0,0 | 0 | 3.31 |
 | T-D13 | frame New Sprite | 520x506 | 520x506 | 1.55 | 1.55 | 0,0 | 0 | 1.65 |
 | T-M19 | menu OAM Size | 264x175 | 264x175 | 3.70 | 3.70 | 0,0 | 0 | 4.30 |
