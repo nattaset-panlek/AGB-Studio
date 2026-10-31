@@ -86,6 +86,31 @@ public class TrackerModuleTests
         Assert.True(once.Render(buf) < 22050 * 15);
         Assert.True(once.Ended);
     }
+
+    /// <summary>G-PERF.05: the Audio page's Mixer CPU comes from the runtime measurements of D-26 (docs/DECISIONS.md).</summary>
+    [Fact]
+    public void MixerCpu_FollowsTheMeasuredCostPerRateAndChannelCount()
+    {
+        // 8 channels: the measured share at every mixing rate of Project Settings · Audio
+        foreach (var (khz, measured) in new[] { (21, 14.49), (18, 12.95), (16, 11.66), (13, 10.36), (10, 8.84), (8, 7.55) })
+            Assert.Equal(measured, AudioPage.MixerCpu(8, khz), 2);
+        // 1 channel at 21 kHz was measured too; each channel costs (14.49 - 5.57) / 7 = 1.27 % at 21 kHz
+        Assert.Equal(5.57, AudioPage.MixerCpu(1, 21), 2);
+        Assert.Equal(14.49 - 4 * 8.92 / 7, AudioPage.MixerCpu(4, 21), 2);
+        // a channel's cost scales with the rate like the rate-dependent part (3.2 % does not depend on it)
+        var perChannel8k = AudioPage.MixerCpu(8, 8) - AudioPage.MixerCpu(7, 8);
+        Assert.Equal(8.92 / 7 * (7.55 - 3.2) / (14.49 - 3.2), perChannel8k, 3);
+        // between two measured rates the cost lies between them, and more channels or a higher rate always cost more
+        Assert.InRange(AudioPage.MixerCpu(8, 19.5), 12.95, 14.49);
+        for (var ch = 1; ch <= 16; ch++)
+            foreach (var khz in new[] { 8, 10, 13, 16, 18, 21 })
+            {
+                Assert.True(AudioPage.MixerCpu(ch, khz) > AudioPage.MixerCpu(ch - 1, khz));
+                if (khz > 8) Assert.True(AudioPage.MixerCpu(ch, khz) > AudioPage.MixerCpu(ch, khz - 1));
+            }
+        // Figma's 6 % for 8 channels is out of reach at every Maxmod rate (D-26)
+        Assert.True(AudioPage.MixerCpu(8, 8) > 6);
+    }
 }
 
 static class Ext
@@ -279,7 +304,10 @@ public class AudioPageTests : IDisposable
         Assert.Equal("SFX hurt", ch["Noise"].Value);
         Assert.Equal(["Lead", "Bass", "Drums", "Pad", "Arp"], page.MixerLevels.Select(m => m.Name));
         Assert.InRange(page.MixerLevels[0].Db, -6.5, -5.5);  // pulse at 100/128, volume 40/64
-        Assert.Equal(6, page.MixerCpuPercent);
+        // Project Settings · Audio defaults, 8 channels at 21 kHz: 14.49 % measured on the runtime (D-26)
+        Assert.Equal(14, page.MixerCpuPercent);
+        Assert.Equal("14 %", Find<Meter>("MixerCpuMeter").ValueText);
+        Assert.Equal("CPU 14%", Find<StatusItem>("Status_Cpu").Content);
         var expectedRom = page.MusicFiles.Sum(f => new FileInfo(f).Length) + page.SoundFiles.Sum(f => (long)Math.Ceiling(AudioPage.SoundSeconds(f) * 11025));
         Assert.Equal(expectedRom, page.AudioRomBytes);
         Assert.Equal($"Audio ROM {Math.Round(expectedRom / 1024.0)} KB", Find<StatusItem>("Status_AudioRom").Content);

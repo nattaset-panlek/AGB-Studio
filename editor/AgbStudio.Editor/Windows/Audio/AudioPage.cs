@@ -589,15 +589,47 @@ public sealed class AudioPage : DockPanel
         _romMeter.Percent = Math.Clamp(100.0 * AudioRomBytes / capacity, 0, 100);
         _romMeter.ValueText = $"{Math.Round(AudioRomBytes / 1024.0).ToString(CultureInfo.InvariantCulture)} KB";
         var a = p?.Settings.Audio ?? new AudioSettings();
-        MixerCpuPercent = MixerCpu(a.Channels, a.MixKHz);
-        _cpuMeter.Percent = MixerCpuPercent;
+        var cpu = MixerCpu(a.Channels, a.MixKHz);
+        MixerCpuPercent = (int)Math.Round(cpu, MidpointRounding.AwayFromZero);
+        _cpuMeter.Percent = Math.Clamp(cpu, 0, 100);
         _cpuMeter.ValueText = $"{MixerCpuPercent} %";
         _statusRom.Content = $"Audio ROM {Math.Round(AudioRomBytes / 1024.0).ToString(CultureInfo.InvariantCulture)} KB";
         _statusCpu.Content = $"CPU {MixerCpuPercent}%";
     }
 
-    /// <summary>Maxmod software mixing cost: about 6 % of the CPU for 8 channels at 21 kHz, linear in both.</summary>
-    public static int MixerCpu(int channels, int khz) => (int)Math.Round(channels * khz / 28.0);
+    /// <summary>
+    /// Maxmod mixing cost with 8 channels in % of the CPU frame, measured with the runtime profiler at each mixing rate
+    /// of Project Settings · Audio (G-PERF.05, docs/DECISIONS.md D-26).
+    /// </summary>
+    static readonly (double KHz, double Percent)[] MeasuredEightChannels = [(8, 7.55), (10, 8.84), (13, 10.36), (16, 11.66), (18, 12.95), (21, 14.49)];
+    /// <summary>One channel at 21 kHz (5.57 %, D-26): each channel fewer than 8 saves (14.49 - 5.57) / 7 = 1.27 %.</summary>
+    const double OneChannelAt21KHz = 5.57;
+    /// <summary>The share that does not depend on the rate (Maxmod's module player, D-26).</summary>
+    const double RateIndependent = 3.2;
+
+    /// <summary>
+    /// Maxmod software mixing cost in % of the CPU frame for <paramref name="channels"/> mixing channels at
+    /// <paramref name="khz"/>, from the measurements of D-26: the 8-channel cost at the rate (interpolated between the
+    /// measured rates, extended along the nearest two outside them), less the cost of each missing channel. A channel
+    /// costs 1.27 % at 21 kHz and scales with the rate like the rate-dependent part of the 8-channel cost.
+    /// 8 channels at 21 kHz: 14.49 %; 1 channel at 21 kHz: 5.57 %.
+    /// </summary>
+    public static double MixerCpu(int channels, double khz)
+    {
+        double EightAt(double k)
+        {
+            var m = MeasuredEightChannels;
+            var i = 1;
+            while (i < m.Length - 1 && k > m[i].KHz) i++;
+            var (k0, p0) = m[i - 1];
+            var (k1, p1) = m[i];
+            return p0 + (p1 - p0) * (k - k0) / (k1 - k0);
+        }
+        var eight = EightAt(khz);
+        var at21 = MeasuredEightChannels[^1].Percent;
+        var perChannel = (at21 - OneChannelAt21KHz) / 7 * (eight - RateIndependent) / (at21 - RateIndependent);
+        return Math.Max(0, eight - (8 - Math.Max(0, channels)) * perChannel);
+    }
 
     void UpdateStatus()
     {

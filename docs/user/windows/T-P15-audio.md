@@ -36,7 +36,9 @@ a preview, and see how many of the GBA sound channels are in use.
   Square 2, Wave, Noise) are, and which effect uses each one.
 - **Preview SFX**: one button per sound effect to hear it.
 - **Audio ROM and Mixer CPU** (bottom right, also in the status bar): the ROM space of all audio and the share of the
-  CPU the music mixer needs.
+  CPU the music mixer needs at the mixing rate and channel count of Project Settings › Audio. The share comes from
+  measurements on the GBA runtime: 8 channels take about 14 % at 21 kHz and about 8 % at 8 kHz, and each channel fewer
+  saves about 1.3 % at 21 kHz (less at lower rates).
 
 The Pause and Step buttons in the toolbar act on a running game from this page too: Pause pauses and resumes it, Step
 moves it one frame (F10). They are greyed out while no game runs.
