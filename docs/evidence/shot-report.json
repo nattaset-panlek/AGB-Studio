@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 01:10:56Z",
+  "generated": "2026-10-31 01:31:16Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -4193,14 +4193,14 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.73,
-      "BestShiftDiffPercent": 2.73,
+      "DiffPercent": 2.74,
+      "BestShiftDiffPercent": 2.74,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.23,
+      "MeanChannelError": 3.24,
       "ColourDiffPercent": 4.96
     },
     {
@@ -4478,8 +4478,8 @@
       "set": "frame Preferences \u00B7 Paths",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.39,
-      "BestShiftDiffPercent": 1.39,
+      "DiffPercent": 1.38,
+      "BestShiftDiffPercent": 1.38,
       "shift": [
         0,
         0
@@ -4553,15 +4553,15 @@
       "set": "frame Sprite Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 1.7,
-      "BestShiftDiffPercent": 1.7,
+      "DiffPercent": 1.72,
+      "BestShiftDiffPercent": 1.72,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.43,
-      "ColourDiffPercent": 5.09
+      "MeanChannelError": 2.47,
+      "ColourDiffPercent": 5.11
     },
     {
       "Id": "T-P10",
