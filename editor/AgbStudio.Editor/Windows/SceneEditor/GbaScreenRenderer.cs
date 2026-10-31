@@ -133,7 +133,9 @@ public static class GbaScreenRenderer
     }
 
     /// <summary>Renders the GBA screen with the camera at (<paramref name="camX"/>, <paramref name="camY"/>).</summary>
-    public static ScreenFrame Render(SceneAssets assets, SceneFile scene, MapFile? map, int camX, int camY, ScreenLayers show = ScreenLayers.All)
+    /// <param name="tick">Game frames since the scene loaded: animated sprites show the frame of their animation at that
+    /// time (0 = the first frame, as right after loading).</param>
+    public static ScreenFrame Render(SceneAssets assets, SceneFile scene, MapFile? map, int camX, int camY, ScreenLayers show = ScreenLayers.All, long tick = 0)
     {
         var frame = new ScreenFrame { CameraX = camX, CameraY = camY };
         var bgPal = new PaletteBanks(false);
@@ -194,7 +196,7 @@ public static class GbaScreenRenderer
             {
                 var meta = assets.SpriteMeta(a.Sprite);
                 var bank = objPal.Acquire(sheet, sheet.Palette);
-                var f = a.Animation.Length > 0 ? FirstFrame(sheet, meta, a.Animation) : 0;
+                var f = a.Animation.Length > 0 ? FrameAt(sheet, meta, a.Animation, tick) : 0;
                 if (!a.Hidden) sprites.Add((i, sheet, meta, bank < 0 ? 0 : bank, f));
             }
             if (a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && labels.Count < MaxLabels && assets.Text.HasKey(a.Text) && assets.Text.Run(a.Text) is { } run)
@@ -272,6 +274,28 @@ public static class GbaScreenRenderer
                 frame.Source[y * ScreenFrame.Width + x] = src;
             }
         return frame;
+    }
+
+    /// <summary>The frame an animation shows <paramref name="tick"/> game frames after it started (ticks per frame,
+    /// per-frame ticks, loop / ping-pong; a non-looping animation stays on its last frame).</summary>
+    public static int FrameAt(ConvertedSprite sheet, SpriteMeta meta, string animation, long tick)
+    {
+        if (tick <= 0) return FirstFrame(sheet, meta, animation);
+        var a = meta.Animations.FirstOrDefault(x => x.Name == animation);
+        var frames = a?.Frames.Where(f => f < sheet.FrameCount).ToList() ?? [];
+        if (a is null || frames.Count <= 1) return FirstFrame(sheet, meta, animation);
+        var order = Enumerable.Range(0, frames.Count).ToList();
+        if (a.PingPong) order.AddRange(Enumerable.Range(1, frames.Count - 2).Reverse());
+        int Ticks(int k) => Math.Max(1, a.FrameTicks != null && k < a.FrameTicks.Count ? a.FrameTicks[k] : a.Ticks);
+        var cycle = order.Sum(Ticks);
+        if (!a.Loop && tick >= cycle) return frames[^1];
+        var t = tick % cycle;
+        foreach (var k in order)
+        {
+            if (t < Ticks(k)) return frames[k];
+            t -= Ticks(k);
+        }
+        return frames[order[^1]];
     }
 
     /// <summary>The frame an animation starts on (GameBuilder keeps frames inside the sheet; none = frame 0).</summary>
