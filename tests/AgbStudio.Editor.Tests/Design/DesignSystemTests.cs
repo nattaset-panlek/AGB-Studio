@@ -34,6 +34,29 @@ public class DesignSystemTests
         }
     }
 
+    // P10.05 Scene Card (review F10): art at a fractional scale (240 x 160 drawn at 150 x 100) blends two bands that
+    // share an edge by area; no pixel may be darker than both colours (the 1 px seam of per-shape anti-aliasing).
+    [AvaloniaFact]
+    public void Art_AtAFractionalScaleHasNoSeamBetweenBands()
+    {
+        var img = SvgImage.Parse("<svg width=\"240\" height=\"160\" xmlns=\"http://www.w3.org/2000/svg\">"
+            + "<rect x=\"0\" y=\"0\" width=\"240\" height=\"65.6\" fill=\"#58B4FF\"/><rect x=\"0\" y=\"65.6\" width=\"240\" height=\"94.4\" fill=\"#A6DBFF\"/></svg>");
+        using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(150, 100), new Vector(96, 96));
+        using (var dc = bmp.CreateDrawingContext(true)) img.Render(dc, new Size(150, 100));
+        var buf = new byte[150 * 100 * 4];
+        var h = System.Runtime.InteropServices.GCHandle.Alloc(buf, System.Runtime.InteropServices.GCHandleType.Pinned);
+        try { bmp.CopyPixels(new PixelRect(0, 0, 150, 100), h.AddrOfPinnedObject(), buf.Length, 150 * 4); }
+        finally { h.Free(); }
+        for (var y = 0; y < 100; y++)
+        {
+            var i = (y * 150 + 75) * 4;   // BGRA
+            Assert.Equal(255, buf[i + 3]);
+            Assert.InRange(buf[i + 2], 0x58, 0xA6);   // red between the two bands
+            Assert.InRange(buf[i + 1], 0xB4, 0xDB);
+            Assert.InRange(buf[i], 0xFF, 0xFF);
+        }
+    }
+
     [AvaloniaFact]
     public void Icons_EveryNameUsedInTheUiExists()
     {
