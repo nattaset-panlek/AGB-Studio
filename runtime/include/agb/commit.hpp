@@ -29,6 +29,7 @@ void flush();  // called by system::waitVBlank only
 void setReg(Reg r, u16 value);
 u16 reg(Reg r);
 void setBgRef(int bg, s32 x, s32 y);  // BG2 / BG3 affine reference point (24.8 screen coordinates)
+s32 bgRef(int bg, int axis);           // shadow value of setBgRef: axis 0 = x, 1 = y
 
 // OAM shadow: 128 entries; entries not written this frame keep their previous value.
 ObjAttr* oam();

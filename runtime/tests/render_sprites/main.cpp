@@ -186,6 +186,42 @@ AGB_TEST(overloaded_screen_line_is_reported) {
     for (int i = 0; i < 60; ++i) sprites::destroy(ids[i]);
 }
 
+AGB_TEST(thirty_third_affine_matrix_is_refused) {
+    // OAM holds 32 affine matrices: the 33rd rotated sprite is refused (it stays a regular sprite) and reported.
+    palettes::reset();
+    sprites::reset();
+    setup();
+    sprites::Id ids[33];
+    for (int i = 0; i < 33; ++i) {
+        ids[i] = sprites::create(&g_sheet, 1);
+        sprites::setPosition(ids[i], 20 + (i % 11) * 20, 30 + (i / 11) * 30);
+    }
+    const u32 head = debug::channel().logHead;
+    for (int i = 0; i < 32; ++i) sprites::setAffine(ids[i], static_cast<u8>(i * 8), fixed(1), fixed(1));
+    CHECK_EQ(sprites::affineUsed(), 32);
+    CHECK(!loggedSince(head, "affine matrices"));
+    sprites::setAffine(ids[32], 16, fixed(2), fixed(2));
+    CHECK_EQ(sprites::affineUsed(), 32);
+    CHECK(loggedSince(head, "all 32 affine matrices are in use"));
+    CHECK_EQ(sprites::build(), 33);
+    const commit::ObjAttr* oam = commit::oam();
+    int regular = 0;
+    u32 matrices = 0;
+    for (int i = 0; i < 33; ++i) {
+        if ((oam[i].attr0 & 0x0300) == ATTR0_AFF) matrices |= 1u << ((oam[i].attr1 >> 9) & 31);
+        else if ((oam[i].attr0 & 0x0300) == 0) ++regular;
+    }
+    CHECK_EQ(matrices, 0xFFFFFFFFu);  // every matrix in use, each by one sprite
+    CHECK_EQ(regular, 1);
+    // A freed matrix goes to the next sprite that asks.
+    sprites::clearAffine(ids[5]);
+    CHECK_EQ(sprites::affineUsed(), 31);
+    sprites::setAffine(ids[32], 16, fixed(2), fixed(2));
+    CHECK_EQ(sprites::affineUsed(), 32);
+    for (auto id : ids) sprites::destroy(id);
+    CHECK_EQ(sprites::affineUsed(), 0);
+}
+
 int main() {
     system::init();
     test::runAll();
