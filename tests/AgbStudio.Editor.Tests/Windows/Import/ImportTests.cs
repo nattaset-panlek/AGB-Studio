@@ -147,6 +147,8 @@ public class ImportDialogTests : IDisposable
         Assert.Equal("jump2.wav", d.Selected!.FileName);
         Assert.Equal("11 kHz mono 8-bit", In<InspectorField>(d, "Opt_Detail").Value);
         Click(In<AgbButton>(d, "PART_Confirm"));
+        // the files are converted off the UI thread; the dialog closes when they are in
+        GroupFixture.PumpUntil(() => !_win.Overlays.IsOpen, 30_000);
         Assert.False(_win.Overlays.IsOpen);
         Assert.True(File.Exists(Path.Combine(_p.AssetsDir, "sprites", "hero_run.png")));
         Assert.True(File.Exists(Path.Combine(_p.MapsDir, "forest2.map")));
@@ -173,9 +175,113 @@ public class ImportDialogTests : IDisposable
         Assert.Equal("Import Asset · 1 problem", errors.Title);
         Assert.Equal("Import 2 files", errors.ConfirmText);
         Click(In<AgbButton>(errors, "PART_Confirm"));
+        GroupFixture.PumpUntil(() => !_win.Overlays.IsOpen, 30_000);
         Assert.False(_win.Overlays.IsOpen);
         Assert.True(File.Exists(Path.Combine(_p.AssetsDir, "sprites", "hero_big.png")));
         Assert.False(File.Exists(Path.Combine(_p.AssetsDir, "audio", "music", "theme.mp3")));
         Assert.Contains(_fx.Services.Toasts.Visible, t => t.Text == "Imported 2 files");
+    }
+}
+
+/// <summary>
+/// G-ERR.04: an import can be cancelled and leaves the project consistent. File › Import Asset with 41 sound effects
+/// (one replaces a sound of the project), Cancel while it converts the 21st: no file of the import is left, the replaced
+/// sound is back, the Assets panel lists what it listed; Import again brings all 41 in.
+/// </summary>
+public sealed class ImportCancelTests : IDisposable
+{
+    readonly AgbStudio.Editor.Tests.Windows.SceneEditor.SceneWindow _w = new();
+    public void Dispose() => _w.Dispose();
+
+    static Button Part(Control d, string name) => d.GetVisualDescendants().OfType<Button>().First(b => b.Name == name);
+
+    /// <summary>Every file of the project folder with its content hash.</summary>
+    static SortedDictionary<string, string> Snapshot(string root) =>
+        new(Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).ToDictionary(
+            f => Path.GetRelativePath(root, f), f => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(f)))), StringComparer.OrdinalIgnoreCase);
+
+    static string[] Cards(AgbStudio.Editor.Windows.SceneEditor.AssetsPanel panel) => panel.Cards.Select(c => c.NameText ?? "").ToArray();
+    static string[] Counts(AgbStudio.Editor.Windows.SceneEditor.AssetsPanel panel) => panel.CategoryRows.Select(r => $"{r.Label} {r.Meta}").ToArray();
+
+    [AvaloniaFact]
+    public void Cancel_DuringAManyFileImport_LeavesTheProjectAndTheAssetsPanelAsTheyWere_AndImportAgainWorks()
+    {
+        var p = _w.S.Project.Current!;
+        var panel = _w.All<AgbStudio.Editor.Windows.SceneEditor.AssetsPanel>().Single();
+        _w.Click(_w.Find<ListRow>("Category_Audio"));
+        var cardsBefore = Cards(panel);
+        var countsBefore = Counts(panel);
+        var audioBefore = p.MusicFiles().Count() + p.SoundFiles().Count();
+        var incoming = Directory.CreateDirectory(Path.Combine(_w.Fx.Fx.Folder, "incoming-many")).FullName;
+        var replaced = p.SoundFiles().First();
+        var files = new List<string> { Path.Combine(incoming, Path.GetFileName(replaced)) };
+        File.WriteAllBytes(files[0], AgbStudio.Build.Audio.WavWriter.Encode(AgbStudio.Build.Audio.WavWriter.Tone(330, 0.2, 11025, true), 11025));
+        for (var i = 0; i < 40; i++)
+        {
+            files.Add(Path.Combine(incoming, $"step_{i:00}.wav"));
+            File.WriteAllBytes(files[^1], AgbStudio.Build.Audio.WavWriter.Encode(AgbStudio.Build.Audio.WavWriter.Tone(200 + 10 * i, 0.25, 11025, true), 11025));
+        }
+        var before = Snapshot(p.Root);
+        var sfx = Path.Combine(p.AssetsDir, "audio", "sfx");
+
+        _w.S.Commands.Execute("file.importAsset");
+        Capture.Pump();
+        var d = Assert.IsType<ImportAssetDialog>(_w.Win.Overlays.Open.Single());
+        d.Add(files);
+        Capture.Pump();
+        Assert.Equal(41, d.Items.Count);
+        Assert.All(d.Items, i => Assert.True(i.IsReady, i.FileName));
+        // the import is held before its 21st file, as a long import would be there
+        var held = new TaskCompletionSource();
+        d.BeforeFile = async (i, ct) =>
+        {
+            if (i < 20) return;
+            held.TrySetResult();
+            await Task.Delay(Timeout.Infinite, ct);
+        };
+        _w.Click(Part(d, "PART_Confirm"));
+        GroupFixture.PumpUntil(() => held.Task.IsCompleted && d.Hint == "Importing 21 of 41: step_19.wav", 30_000);
+        Assert.True(d.IsImporting);
+        Assert.Equal("Importing 21 of 41: step_19.wav", d.Hint);
+        Assert.False(Part(d, "PART_Confirm").IsEnabled);
+        // 20 files are in the project already, one of them over a sound it had
+        Assert.True(File.Exists(Path.Combine(sfx, "step_18.wav")));
+        Assert.False(File.Exists(Path.Combine(sfx, "step_19.wav")));
+        Assert.NotEqual(before[Path.GetRelativePath(p.Root, replaced)], Snapshot(p.Root)[Path.GetRelativePath(p.Root, replaced)]);
+
+        _w.Click(Part(d, "PART_Cancel"));
+        GroupFixture.PumpUntil(() => !d.IsImporting, 30_000);
+        Assert.False(d.IsImporting);
+        // no file of the import is left and the replaced sound is back: the project folder is as it was
+        Assert.Equal(before, Snapshot(p.Root));
+        // the dialog stays open with its files, says so, and Import is enabled again
+        Assert.Same(d, _w.Win.Overlays.Open.Single());
+        Assert.Equal(41, d.Items.Count);
+        Assert.Equal("Import cancelled. Press Import to try again.", d.Hint);
+        Assert.True(Part(d, "PART_Confirm").IsEnabled);
+        Assert.Contains(_w.S.Toasts.Visible, t => t.Text == "Import cancelled. Nothing was added to the project.");
+        Assert.Contains(AgbStudio.Editor.Windows.SceneEditor.ConsoleLog.Of(_w.S).Entries, e => e.Level == ConsoleLevel.Warning && e.Text == "Import cancelled. Nothing was added to the project.");
+        Assert.DoesNotContain(_w.S.Toasts.Visible, t => t.Text.StartsWith("Imported", StringComparison.Ordinal));
+        // the Assets panel, read again from the disk, lists what it listed
+        _w.Click(_w.Find<ListRow>("Category_Audio"));
+        Assert.Equal(cardsBefore, Cards(panel));
+        Assert.Equal(countsBefore, Counts(panel));
+
+        // Import again: all 41 files come in and the Assets panel lists them
+        d.BeforeFile = null;
+        _w.Click(Part(d, "PART_Confirm"));
+        GroupFixture.PumpUntil(() => !_w.Win.Overlays.IsOpen, 30_000);
+        Assert.False(_w.Win.Overlays.IsOpen);
+        Assert.Contains(_w.S.Toasts.Visible, t => t.Text == "Imported 41 files");
+        Assert.All(Enumerable.Range(0, 40), i =>
+        {
+            Assert.True(File.Exists(Path.Combine(sfx, $"step_{i:00}.wav")));
+            Assert.True(File.Exists(GameProject.MetaPath(Path.Combine(sfx, $"step_{i:00}.wav"))));
+        });
+        var wav = WavData.Load(replaced);
+        Assert.Equal((11025, 8, 1), (wav.Rate, wav.Bits, wav.Channels));
+        Assert.Equal(audioBefore + 40, p.MusicFiles().Count() + p.SoundFiles().Count());
+        Assert.Contains($"Audio {audioBefore + 40}", Counts(panel));
+        Assert.Contains("step_00.wav", Cards(panel));
     }
 }

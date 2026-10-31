@@ -29,11 +29,17 @@ public sealed class ImportAssetDialog : FigmaDialog
     readonly ContentControl _options = new() { Name = "ImportOptions" };
     readonly TextBlock _dropText = UI.Text("", "Body/12", "text/secondary");
     readonly DialogFooter _footer;
+    readonly ImportRun _run;
     readonly List<ImportItem> _items = [];
 
     public IReadOnlyList<ImportItem> Items => _items;
     readonly Action<ImportItem>? _adjust;
     public ImportItem? Selected { get; private set; }
+    /// <summary>True while Import converts the files (Cancel then stops it, G-ERR.04).</summary>
+    public bool IsImporting => _run.IsImporting;
+    public string Hint => _footer.Hint ?? "";
+    /// <summary>Runs before each file of an import (tests hold an import in progress with it, as BuildService.BeforeBuild does a build).</summary>
+    public Func<int, CancellationToken, Task>? BeforeFile { get => _run.BeforeFile; set => _run.BeforeFile = value; }
 
     public ImportAssetDialog(WindowContext ctx) : this(ctx.Services, ctx.Args switch { ImportRequest r => r.Files, IEnumerable<string> l => l, _ => null }, (ctx.Args as ImportRequest)?.Adjust) { }
 
@@ -68,9 +74,13 @@ public sealed class ImportAssetDialog : FigmaDialog
         var content = UI.Row(20, left, right);
         content.Margin = new Thickness(21, 20, 21, 0);
         _footer = new DialogFooter { CancelText = "Cancel", ConfirmText = "Import", Name = "ImportFooter" };
-        _footer.Cancel += (_, _) => Close(null);
+        _run = new ImportRun(s, content, _footer);
+        // Cancel while it imports stops the import and leaves the project as it was (G-ERR.04); otherwise it closes
+        _footer.Cancel += (_, _) => { if (!_run.Cancel()) Close(null); };
         _footer.Confirm += (_, _) => _ = ImportAsync();
         Build("Import Asset", "upload", content, _footer, 900);
+        // closing the dialog (X, Esc) while it imports stops the import too
+        DetachedFromVisualTree += (_, _) => _run.Cancel();
         if (files != null) Add(files);
         Refresh();
     }
@@ -295,17 +305,20 @@ public sealed class ImportAssetDialog : FigmaDialog
 
     // ---- import -----------------------------------------------------------------------------------------
 
-    /// <summary>Imports when every file is ready; otherwise opens Import Asset · Errors with the problems.</summary>
+    /// <summary>
+    /// Imports when every file is ready; otherwise opens Import Asset · Errors with the problems. A cancelled import
+    /// keeps the dialog open with its files, so Import tries again; the result is then null.
+    /// </summary>
     public async Task<IReadOnlyList<string>?> ImportAsync()
     {
-        if (_items.Count == 0) return null;
+        if (_items.Count == 0 || _run.IsImporting) return null;
         if (_items.Any(i => i.HasProblem))
         {
             Close(null);
             return await _s.Windows.Open("T-D24", _items.ToList(), source: "ImportAssetErrors") as IReadOnlyList<string>;
         }
-        var written = ImportErrorsDialog.ImportReady(_s, _items);
-        Close(written);
+        var written = await _run.RunAsync(_items);
+        if (written != null) Close(written);
         return written;
     }
 }

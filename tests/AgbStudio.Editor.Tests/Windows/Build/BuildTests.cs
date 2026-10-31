@@ -452,6 +452,114 @@ public class FlashTests
         Assert.Equal([9, 8, 7], Await(sd.ReadSaveAsync("game.gba", new SyncProgress(_ => { }), CancellationToken.None)));
     }
 
+    /// <summary>
+    /// G-ERR.04: Build › Flash to Cartridge, Flash, Cancel at 128 of 412 KB. The write stops on the device, which keeps
+    /// the game it had (no half-written game); the dialog stays open, says where it stopped and shows what the device
+    /// reports again; the save backup made first is whole; Flash again writes the ROM.
+    /// </summary>
+    [AvaloniaFact]
+    public void Cancel_MidWrite_LeavesTheCartridgeAsItWas_AndFlashAgainWorks()
+    {
+        using var fx = new Fixture();
+        var p = GroupFixture.SkyHopper(fx);
+        GroupFixture.WriteReport(p);
+        var romPath = Path.Combine(p.BuildDir, "sky_hopper.gba");
+        var rom = GameRom("SKYHOPPER", "SKYH", (int)new FileInfo(romPath).Length, 0x11);
+        File.WriteAllBytes(romPath, rom);
+        var old = GameRom("OLDGAME", "OLDG", 256 * 1024, 0x22);
+        var dev = new FakeCartridge { Flash = old.ToArray(), PauseAt = 128 * 1024 };
+        fx.Services.Set<ICartridgeDeviceProvider>(new FakeDevices(dev));
+        var win = new MainWindow(fx.Services) { Width = 1440, Height = 900 };
+        win.Show();
+        try
+        {
+            fx.Services.Commands.Execute("build.flash");
+            Capture.Pump();
+            var d = Assert.IsType<FlashDialog>(win.Overlays.Open.Single());
+            GroupFixture.PumpUntil(() => d.Detection.IsCompleted, 10_000);
+            Assert.Equal("Current game: OLDGAME rev 0", d.InfoDetail);
+            Click(win, Part(d, "PART_Confirm"));
+            GroupFixture.PumpUntil(() => d.ProgressText.StartsWith("128 /", StringComparison.Ordinal), 10_000);
+            Assert.True(d.IsFlashing);
+            Assert.Equal(("Writing", "128 / 412 KB"), (d.StageText, d.ProgressText));
+            Assert.False(Part(d, "PART_Confirm").IsEnabled);
+
+            Click(win, Part(d, "PART_Cancel"));
+            GroupFixture.PumpUntil(() => !d.IsFlashing && d.Detection.IsCompleted, 10_000);
+            // the device stopped writing and still holds the game it had
+            Assert.Equal(1, dev.CancelledWrites);
+            Assert.Equal(old, dev.Flash);
+            // the dialog stays open and says where it stopped; the device is asked again and reports the old game
+            Assert.Same(d, win.Overlays.Open.Single());
+            Assert.Equal(("Cancelled", "128 / 412 KB"), (d.StageText, d.ProgressText));
+            Assert.Equal("Flashing cancelled at 128 / 412 KB. Flash again before playing the cartridge.", d.Hint);
+            Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Flashing cancelled. Flash again before playing the cartridge.");
+            Assert.Equal("Current game: OLDGAME rev 0", d.InfoDetail);
+            // the save backup made before the write is whole
+            Assert.Equal(dev.Save, File.ReadAllBytes(d.BackupPath!));
+            Assert.Single(Directory.GetFiles(Path.Combine(p.BuildDir, "save-backups")));
+
+            // Flash again: the whole ROM is written and verified, the dialog closes
+            dev.PauseAt = -1;
+            Assert.True(d.CanFlash);
+            Assert.True(Part(d, "PART_Confirm").IsEnabled);
+            Click(win, Part(d, "PART_Confirm"));
+            GroupFixture.PumpUntil(() => !win.Overlays.IsOpen, 10_000);
+            Assert.False(win.Overlays.IsOpen);
+            Assert.Equal(rom, dev.Flash);
+            Assert.Equal(1, dev.CancelledWrites);
+            Assert.Contains(fx.Services.Toasts.Visible, t => t.Text.StartsWith("Flashed sky_hopper.gba", StringComparison.Ordinal));
+            var now = dev.DetectAsync(CancellationToken.None).Result;
+            Assert.Equal(("Current game: SKYHOPPER rev 0", "SKYHOPPER"), (now.Detail, now.CurrentTitle));
+        }
+        finally { win.Close(); }
+    }
+
+    /// <summary>G-ERR.04 on a flash cart's SD card: a cancelled copy leaves no .part file and the game on the card as it was.</summary>
+    [AvaloniaFact]
+    public void SdCardFlashCart_CancelledWrite_LeavesTheCardAsItWas()
+    {
+        using var fx = new Fixture();
+        var root = Directory.CreateDirectory(Path.Combine(fx.Folder, "sd")).FullName;
+        File.WriteAllBytes(Path.Combine(root, "game.gba"), [1, 2, 3]);
+        var sd = new SdCardFlashCart(root);
+        using var cts = new CancellationTokenSource();
+        var rom = Enumerable.Range(0, 200_000).Select(i => (byte)i).ToArray();
+        // Cancel arrives after the first 32 KB went to the card
+        var write = sd.WriteRomAsync("game.gba", rom, new SyncProgress(n => { if (n >= 32 * 1024) cts.Cancel(); }), cts.Token);
+        GroupFixture.PumpUntil(() => write.IsCompleted, 10_000);
+        Assert.True(write.IsCanceled);
+        Assert.Equal(["game.gba"], Directory.GetFiles(root).Select(Path.GetFileName));
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(Path.Combine(root, "game.gba")));
+        // writing again works
+        var again = sd.WriteRomAsync("game.gba", rom, new SyncProgress(_ => { }), CancellationToken.None);
+        GroupFixture.PumpUntil(() => again.IsCompleted, 10_000);
+        Assert.True(again.IsCompletedSuccessfully);
+        Assert.Equal(rom, File.ReadAllBytes(Path.Combine(root, "game.gba")));
+    }
+
+    /// <summary>A ROM of <paramref name="size"/> bytes with a cartridge header: title, game code and the fixed byte 0x96.</summary>
+    static byte[] GameRom(string title, string code, int size, byte fill)
+    {
+        var rom = Enumerable.Repeat(fill, size).ToArray();
+        Array.Clear(rom, 0xA0, 0x20);
+        System.Text.Encoding.ASCII.GetBytes(title).CopyTo(rom, 0xA0);
+        System.Text.Encoding.ASCII.GetBytes(code).CopyTo(rom, 0xAC);
+        rom[0xB2] = 0x96;
+        return rom;
+    }
+
+    static Button Part(Control d, string name) => d.GetVisualDescendants().OfType<Button>().First(b => b.Name == name);
+
+    static void Click(MainWindow win, Control c)
+    {
+        var p = c.TranslatePoint(new Point(c.Bounds.Width / 2, c.Bounds.Height / 2), win)!.Value;
+        win.MouseMove(p);
+        win.MouseDown(p, MouseButton.Left);
+        win.MouseUp(p, MouseButton.Left);
+        Capture.Pump();
+    }
+
     sealed class SyncProgress(Action<long> a) : IProgress<long>
     {
         public void Report(long value) => a(value);

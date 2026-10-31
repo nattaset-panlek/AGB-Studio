@@ -318,15 +318,29 @@ public static class AssetImporter
         return owners.IndexOf(sprite);
     }
 
-    /// <summary>Converts a ready file into the project. Returns the files written.</summary>
-    public static IReadOnlyList<string> Import(GameProject p, ImportItem item)
+    /// <summary>
+    /// Converts a ready file into the project. Returns the files written. <paramref name="journal"/> keeps what each
+    /// written file was before, so the import can be undone (a cancelled or failed import, G-ERR.04).
+    /// </summary>
+    public static IReadOnlyList<string> Import(GameProject p, ImportItem item, ImportJournal? journal = null)
     {
         if (!item.IsReady) throw new InvalidOperationException($"{item.FileName} is not ready to import.");
         var written = new List<string>();
+        void Will(string path)
+        {
+            journal?.Before(path);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        }
+        void Save<T>(string path, T value)
+        {
+            Will(path);
+            GameProject.Save(path, value);
+            written.Add(path);
+        }
         string Copy(string dir)
         {
-            Directory.CreateDirectory(dir);
             var dest = Path.Combine(dir, item.FileName);
+            Will(dest);
             if (!string.Equals(Path.GetFullPath(dest), Path.GetFullPath(item.Source), StringComparison.OrdinalIgnoreCase)) File.Copy(item.Source, dest, true);
             written.Add(dest);
             return dest;
@@ -335,48 +349,87 @@ public static class AssetImporter
         {
             case ImportKind.SpriteSheet:
                 var dir = Path.Combine(p.AssetsDir, "sprites");
-                if (item.Fix?.StartsWith("Split", StringComparison.Ordinal) == true) written.AddRange(SplitSprite(item, dir));
+                if (item.Fix?.StartsWith("Split", StringComparison.Ordinal) == true) written.AddRange(SplitSprite(item, dir, journal));
                 else
                 {
                     var dest = Copy(dir);
-                    GameProject.Save(GameProject.MetaPath(dest), SpriteMeta(item, item.Fix != null || item.Colors <= 15 || item.SharePalette.Length > 0));
-                    written.Add(GameProject.MetaPath(dest));
+                    Save(GameProject.MetaPath(dest), SpriteMeta(item, item.Fix != null || item.Colors <= 15 || item.SharePalette.Length > 0));
                 }
                 break;
             case ImportKind.Tileset:
-                var t = Copy(Path.Combine(p.AssetsDir, "tilesets"));
-                GameProject.Save(GameProject.MetaPath(t), new TilesetMeta());
-                written.Add(GameProject.MetaPath(t));
+                Save(GameProject.MetaPath(Copy(Path.Combine(p.AssetsDir, "tilesets"))), new TilesetMeta());
                 break;
             case ImportKind.Background: Copy(Path.Combine(p.AssetsDir, "images")); break;
             case ImportKind.SoundEffect:
                 var sfx = Path.Combine(p.AssetsDir, "audio", "sfx", item.FileName);
-                Directory.CreateDirectory(Path.GetDirectoryName(sfx)!);
-                File.WriteAllBytes(sfx, WavWriter.Encode(WavData.Load(item.Source).ToGba8(), 11025));
-                GameProject.Save(GameProject.MetaPath(sfx), new SoundMeta());
-                written.AddRange([sfx, GameProject.MetaPath(sfx)]);
+                var pcm = WavWriter.Encode(WavData.Load(item.Source).ToGba8(), 11025);
+                Will(sfx);
+                File.WriteAllBytes(sfx, pcm);
+                written.Add(sfx);
+                Save(GameProject.MetaPath(sfx), new SoundMeta());
                 break;
             case ImportKind.Music:
-                var music = Copy(Path.Combine(p.AssetsDir, "audio", "music"));
-                GameProject.Save(GameProject.MetaPath(music), new MusicMeta());
-                written.Add(GameProject.MetaPath(music));
+                Save(GameProject.MetaPath(Copy(Path.Combine(p.AssetsDir, "audio", "music"))), new MusicMeta());
                 break;
             case ImportKind.Palette: Copy(p.PalettesDir); break;
             case ImportKind.Font:
                 var font = Copy(p.FontsDir);
-                var fontFile = Path.Combine(p.FontsDir, item.Name + ".font");
-                GameProject.Save(fontFile, new FontFile
+                Save(Path.Combine(p.FontsDir, item.Name + ".font"), new FontFile
                 {
                     Name = item.Name, Source = Path.GetFileName(font),
                     SourceKind = font.EndsWith(".bdf", StringComparison.OrdinalIgnoreCase) ? FontSourceKind.Bdf : FontSourceKind.Ttf,
                 });
-                written.Add(fontFile);
                 break;
             case ImportKind.Script: Copy(p.ScriptsDir); break;
-            case ImportKind.Tilemap: written.AddRange(ImportTmx(p, item)); break;
+            case ImportKind.Tilemap: written.AddRange(ImportTmx(p, item, journal)); break;
             default: throw new InvalidOperationException($"{item.FileName} can't be imported.");
         }
         return written;
+    }
+
+    /// <summary>
+    /// Imports the ready files one after the other (Import Asset and Import Asset · Errors run it off the UI thread).
+    /// G-ERR.04: cancelling <paramref name="ct"/> stops between two files and puts every file the import wrote or
+    /// overwrote back as it was, then throws <see cref="ImportCancelledException"/>. A file that fails is undone the
+    /// same way and listed in the outcome; the others go on. <paramref name="beforeFile"/> runs before each file (tests
+    /// hold an import in progress with it).
+    /// </summary>
+    public static async Task<ImportOutcome> ImportAllAsync(GameProject p, IReadOnlyList<ImportItem> items, IProgress<ImportProgress>? progress = null,
+        Func<int, CancellationToken, Task>? beforeFile = null, CancellationToken ct = default)
+    {
+        var ready = items.Where(i => i.IsReady).ToList();
+        var done = new List<ImportJournal>();
+        var written = new List<string>();
+        var failed = new List<(ImportItem, Exception)>();
+        try
+        {
+            for (var i = 0; i < ready.Count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                progress?.Report(new ImportProgress(i, ready.Count, ready[i].FileName));
+                if (beforeFile != null) await beforeFile(i, ct).ConfigureAwait(false);
+                ct.ThrowIfCancellationRequested();
+                var journal = new ImportJournal();
+                try
+                {
+                    written.AddRange(Import(p, ready[i], journal));
+                    done.Add(journal);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
+                {
+                    failed.Add((ready[i], e));
+                    journal.Rollback();
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            var left = new List<string>();
+            for (var j = done.Count - 1; j >= 0; j--) left.AddRange(done[j].Rollback());
+            throw new ImportCancelledException(left);
+        }
+        progress?.Report(new ImportProgress(ready.Count, ready.Count, ""));
+        return new ImportOutcome(written, ready.Count - failed.Count, failed);
     }
 
     static SpriteMeta SpriteMeta(ImportItem item, bool reduce)
@@ -392,26 +445,29 @@ public static class AssetImporter
     }
 
     /// <summary>"Split into N palettes": colours sorted by hue in groups of 15; one sprite per group, layered at the same position.</summary>
-    static IEnumerable<string> SplitSprite(ImportItem item, string dir)
+    static List<string> SplitSprite(ImportItem item, string dir, ImportJournal? journal)
     {
         var img = item.Image!;
         var colors = Quantizer.SortByHue(img.Histogram().Keys).ToList();
         var groups = colors.Chunk(15).Select(g => g.ToHashSet()).ToList();
-        Directory.CreateDirectory(dir);
+        var written = new List<string>();
         for (var gi = 0; gi < groups.Count; gi++)
         {
             var px = new uint[img.Width * img.Height];
             for (var i = 0; i < px.Length; i++)
                 if (!img.Transparent[i] && groups[gi].Contains(img.Colors[i])) px[i] = item.Pixels![i] | 0xFF000000u;
             var dest = Path.Combine(dir, $"{item.Name}_{gi}.png");
+            journal?.Before(dest);
+            journal?.Before(GameProject.MetaPath(dest));
+            Directory.CreateDirectory(dir);
             Png.WriteArgb(dest, px, img.Width, img.Height);
             GameProject.Save(GameProject.MetaPath(dest), SpriteMeta(item, true));
-            yield return dest;
-            yield return GameProject.MetaPath(dest);
+            written.AddRange([dest, GameProject.MetaPath(dest)]);
         }
+        return written;
     }
 
-    static IEnumerable<string> ImportTmx(GameProject p, ImportItem item)
+    static IEnumerable<string> ImportTmx(GameProject p, ImportItem item, ImportJournal? journal)
     {
         var m = ReadTmx(item.Source);
         var written = new List<string>();
@@ -419,9 +475,14 @@ public static class AssetImporter
         if (m.TilesetImage != null && File.Exists(m.TilesetImage))
         {
             var dest = Path.Combine(p.AssetsDir, "tilesets", Path.GetFileName(m.TilesetImage));
+            journal?.Before(dest);
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             File.Copy(m.TilesetImage, dest, true);
-            if (!File.Exists(GameProject.MetaPath(dest))) GameProject.Save(GameProject.MetaPath(dest), new TilesetMeta());
+            if (!File.Exists(GameProject.MetaPath(dest)))
+            {
+                journal?.Before(GameProject.MetaPath(dest));
+                GameProject.Save(GameProject.MetaPath(dest), new TilesetMeta());
+            }
             written.AddRange([dest, GameProject.MetaPath(dest)]);
             tileset = GameProject.AssetName(dest);
         }
@@ -432,8 +493,67 @@ public static class AssetImporter
             map.Layers.Add(new MapLayerData { Name = name, Bg = i, Type = LayerType.Tile, Priority = i, Cells = [.. gids.Select(g => g == 0 ? 0 : Math.Max(0, g - m.FirstGid))] });
         }
         var file = Path.Combine(p.MapsDir, item.Name + ".map");
+        journal?.Before(file);
         GameProject.Save(file, map);
         written.Add(file);
         return written;
+    }
+}
+
+/// <summary>How far an import is: <paramref name="Done"/> of <paramref name="Total"/> files converted, <paramref name="File"/> the next one.</summary>
+public readonly record struct ImportProgress(int Done, int Total, string File);
+
+/// <summary>The end of an import: the files written, how many sources were imported, and the ones that failed with why.</summary>
+public sealed record ImportOutcome(IReadOnlyList<string> Written, int Imported, IReadOnlyList<(ImportItem Item, Exception Error)> Failed);
+
+/// <summary>An import stopped by Cancel; the project is as it was before it, except <see cref="NotRestored"/>.</summary>
+public sealed class ImportCancelledException(IReadOnlyList<string> notRestored) : OperationCanceledException("Import cancelled.")
+{
+    /// <summary>Files that could not be put back (another program held them).</summary>
+    public IReadOnlyList<string> NotRestored { get; } = notRestored;
+}
+
+/// <summary>
+/// What one import changed in the project: each file it writes is recorded before it is written (its old bytes, or
+/// that it was new) with the folders the write creates, so <see cref="Rollback"/> leaves the project as it was (G-ERR.04).
+/// </summary>
+public sealed class ImportJournal
+{
+    readonly List<(string Path, byte[]? Before)> _files = [];
+    readonly List<string> _folders = [];
+    readonly HashSet<string> _seen = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Call before writing <paramref name="path"/>.</summary>
+    public void Before(string path)
+    {
+        var full = Path.GetFullPath(path);
+        if (!_seen.Add(full)) return;
+        for (var dir = Path.GetDirectoryName(full); dir != null && !Directory.Exists(dir); dir = Path.GetDirectoryName(dir)) _folders.Add(dir);
+        _files.Add((full, File.Exists(full) ? File.ReadAllBytes(full) : null));
+    }
+
+    /// <summary>Deletes the new files and folders and writes back the old bytes of overwritten files. Returns the files it could not put back.</summary>
+    public IReadOnlyList<string> Rollback()
+    {
+        var left = new List<string>();
+        for (var i = _files.Count - 1; i >= 0; i--)
+        {
+            var (path, before) = _files[i];
+            try
+            {
+                if (before is null) { if (File.Exists(path)) File.Delete(path); }
+                else File.WriteAllBytes(path, before);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { left.Add(path); }
+        }
+        foreach (var dir in _folders.OrderByDescending(d => d.Length))
+        {
+            try { if (Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any()) Directory.Delete(dir); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+        _files.Clear();
+        _folders.Clear();
+        _seen.Clear();
+        return left;
     }
 }

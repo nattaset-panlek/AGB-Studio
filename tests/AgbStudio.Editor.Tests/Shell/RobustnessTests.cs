@@ -71,7 +71,9 @@ public sealed class RobustnessTests : IDisposable
         var items = new[] { AssetImporter.Inspect(broken, _fx.Services.Project.Current), AssetImporter.Inspect(good, _fx.Services.Project.Current) };
         Assert.False(items[0].IsReady);
         var log = ConsoleLog.Of(_fx.Services);
-        ImportErrorsDialog.ImportReady(_fx.Services, items);
+        var import = ImportErrorsDialog.ImportReadyAsync(_fx.Services, items);
+        AgbStudio.Editor.Tests.Windows.Build.GroupFixture.PumpUntil(() => import.IsCompleted, 30_000);
+        Assert.True(import.IsCompletedSuccessfully);
         var line = Assert.Single(log.Entries, e => e.Text.StartsWith("Import: broken.png was not imported: ", StringComparison.Ordinal));
         Assert.Equal(ConsoleLevel.Warning, line.Level);
         Assert.DoesNotContain(log.Entries, e => e.Text.Contains("beep.wav"));

@@ -36,8 +36,13 @@ the GBA format, with options you can set for each file.
     `hero_run.png`).
   - Other files: what they become, for example "11 kHz mono 8-bit" for sound effects or "XM → Maxmod bank" for
     music, and the ready message or the problem.
-- **Import N files**: converts the files into the project folders and shows "Imported N files". If any file still has
-  a problem, this dialog closes and Import Asset · Errors opens instead. **Cancel** closes without importing.
+- **Import N files**: converts the files into the project folders and shows "Imported N files"; the Assets panel then
+  lists the new files. While it converts, the hint at the bottom left names the file ("Importing 21 of 41:
+  step_19.wav"). If any file still has a problem, this dialog closes and Import Asset · Errors opens instead.
+- **Cancel**: closes without importing. While the files are being converted, Cancel (or closing the window) stops the
+  import and takes back every file it had already written, including files it had replaced: the project is as it was
+  and "Import cancelled. Nothing was added to the project." shows. The window stays open with its files, so **Import**
+  tries again.
 - **Opened from another window**: from the Sprite Editor drop zone, PNG files arrive with that page's import options
   already set (reduce to 16 colours, split into frames of the open sprite's size, share its palette), and after Import
   the first new PNG sprite opens in the Sprite Editor. From Palette Manager › Import .pal / .gpl, the palette file is

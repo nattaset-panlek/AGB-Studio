@@ -27,8 +27,10 @@ Writes your game to a real cartridge through a USB cartridge writer, or copies i
   you to flash again.
 - **Progress**: the stage (Backing up, Writing, Verifying) with a bar and "x / y KB".
 - **Hint** (bottom left): "Keep the cartridge connected until it finishes."
-- **Cancel**: closes the window, or stops a flash that is running (a message reminds you to flash again before
-  playing the cartridge).
+- **Cancel**: closes the window, or stops a flash that is running. The window then stays open: the stage reads
+  "Cancelled", the hint says where it stopped ("Flashing cancelled at 128 / 412 KB. Flash again before playing the
+  cartridge."), the cartridge line is read from the device again, and **Flash** starts again. A cancelled copy to an SD
+  card leaves the game that was on the card. Closing the window while it flashes also stops the flash.
 - **Flash**: writes the ROM of the last build. It is only available when the device has a cartridge or card and a
   built ROM exists. When done, a message shows the file and size and the window closes.
 
