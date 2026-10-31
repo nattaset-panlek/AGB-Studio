@@ -179,11 +179,25 @@ public sealed class BuildReport
     {
         var opts = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         File.WriteAllText(Path.Combine(buildDir, "report.json"), JsonSerializer.Serialize(this, opts));
-        // History (Build Report "History"): newest first, last 20 builds.
+        AddHistory(buildDir, new HistoryEntry(BuiltAt, RomBytes, BuildSeconds, Warnings.Count, Errors, ""));
+    }
+
+    /// <summary>Build Report "History": newest first, the last 20 builds, failed builds included (no ROM size, the first error).</summary>
+    public static void AddHistory(string buildDir, HistoryEntry entry)
+    {
+        var opts = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        Directory.CreateDirectory(buildDir);
         var historyPath = Path.Combine(buildDir, "report-history.json");
         var history = File.Exists(historyPath) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(historyPath), opts) ?? new() : new();
-        history.Insert(0, new HistoryEntry(BuiltAt, RomBytes, BuildSeconds, Warnings.Count, Errors, ""));
+        history.Insert(0, entry);
         File.WriteAllText(historyPath, JsonSerializer.Serialize(history.Take(20).ToList(), opts));
+    }
+
+    public static List<HistoryEntry> LoadHistory(string buildDir)
+    {
+        var path = Path.Combine(buildDir, "report-history.json");
+        var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        return File.Exists(path) ? JsonSerializer.Deserialize<List<HistoryEntry>>(File.ReadAllText(path), opts) ?? new() : new();
     }
 
     public static BuildReport? Load(string buildDir)

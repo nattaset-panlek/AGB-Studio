@@ -66,8 +66,10 @@ struct MapLayer {
     bool wrap;
     s16 parallaxX;      // 256 = moves with the camera, 51 = x0.2
     s16 parallaxY;
-    u16 width, height;  // in metatiles (Image layers: in hardware tiles)
-    const u16* cells;   // metatile indices, row-major (Image layers: screen entries)
+    u16 width, height;  // in metatiles (Image and Affine layers: in hardware tiles)
+    // Metatile indices, row-major (Image layers: screen entries; Affine layers: one tile byte per cell, two cells
+    // per u16, the low byte first, as the hardware map stores them).
+    const u16* cells;
     const Tileset* tileset;
 };
 

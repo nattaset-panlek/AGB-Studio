@@ -19,6 +19,7 @@ constexpr u32 kMagic = 0x53424741;  // "AGBS"
 
 Config g_config;
 MigrateFn g_migrate = nullptr;
+int g_lastSlot = 0;
 bool g_migrated = false;
 
 constexpr u32 makeCrcEntry(u32 n) {
@@ -236,8 +237,11 @@ void deviceWrite(u32 offset, const void* data, u32 size) {
     }
 }
 
+int lastSlot() { return g_lastSlot; }
+
 bool write(int slot, const void* data) {
     if (g_config.type == Type::None || slot < 0 || slot >= g_config.slots) return false;
+    g_lastSlot = slot;
     Header a{}, b{};
     const bool va = readHeader(slot, 0, a), vb = readHeader(slot, 1, b);
     const u32 counter = (va && (!vb || a.counter >= b.counter) ? a.counter : vb ? b.counter : 0) + 1;
@@ -262,6 +266,7 @@ bool write(int slot, const void* data) {
 bool read(int slot, void* data) {
     g_migrated = false;
     if (g_config.type == Type::None || slot < 0 || slot >= g_config.slots) return false;
+    g_lastSlot = slot;
     AGB_EWRAM_BSS static u8 bufA[4096];
     AGB_EWRAM_BSS static u8 bufB[4096];
     Header a{}, b{};

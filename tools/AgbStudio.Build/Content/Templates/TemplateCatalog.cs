@@ -60,6 +60,14 @@ public static class TemplateCatalog
             "A turn-based role-playing game: the party explores, meets enemies in battles, and buys items from a shop; stats come from the Database.",
             ["Party of two with stats from the Database", "Turn-based battles: fight, magic, item, run", "Gold and experience", "Shop that sells potions", "Title screen and pause menu"],
             RpgTemplate.Create),
+        new("racing", "Racing (Mode 7)", "Racing", "Rotating ground plane, laps, timer.",
+            "A racing game: a rotating ground plane in Mode 1, laps and a race timer.",
+            ["Rotating ground plane", "Laps and checkpoints", "Race timer", "Opponent cars"],
+            RacingTemplate.Create),
+        new("brawler", "Beat 'em up", "Action", "Side-scrolling fights, combos, enemy waves.",
+            "A side-scrolling brawler: the player fights waves of enemies with combos.",
+            ["Side-scrolling fights", "Combos", "Enemy waves", "Health and lives"],
+            BrawlerTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);

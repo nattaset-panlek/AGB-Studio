@@ -29,6 +29,7 @@ public sealed class GameProject
     public string FontsDir => Path.Combine(Root, "fonts");
     public string DialogueDir => Path.Combine(Root, "dialogue");
     public string SfxDir => Path.Combine(Root, "audio", "sfx");
+    public string PalettesDir => Path.Combine(AssetsDir, "palettes");  // imported .pal / .gpl palettes (Import Asset)
     public string BuildDir => Path.Combine(Root, "build");
 
     GameProject(string projectPath, ProjectFile settings)
@@ -51,7 +52,7 @@ public sealed class GameProject
     public static GameProject Create(string folder, string name, ProjectFile? settings = null)
     {
         Directory.CreateDirectory(folder);
-        foreach (var d in new[] { "scenes", "maps", "assets/sprites", "assets/tilesets", "assets/images", "assets/audio/music", "assets/audio/sfx",
+        foreach (var d in new[] { "scenes", "maps", "assets/sprites", "assets/tilesets", "assets/images", "assets/palettes", "assets/audio/music", "assets/audio/sfx",
                      "audio/sfx", "fonts", "scripts", "data", "text", "dialogue" })
             Directory.CreateDirectory(Path.Combine(folder, d));
         settings ??= new ProjectFile();
@@ -85,6 +86,7 @@ public sealed class GameProject
     public IEnumerable<string> GraphFiles() => Files(ScriptsDir, "*.graph", true);
     public IEnumerable<string> DialogueFiles() => Files(DialogueDir, "*.dlg");
     public IEnumerable<string> SfxFiles() => Files(SfxDir, "*.sfx");
+    public IEnumerable<string> PaletteFiles() => Files(PalettesDir, "*.pal").Concat(Files(PalettesDir, "*.gpl")).OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
     public IEnumerable<string> SpriteFiles() => Images(Path.Combine(AssetsDir, "sprites"));
     public IEnumerable<string> TilesetFiles() => Images(Path.Combine(AssetsDir, "tilesets"));
     public IEnumerable<string> ImageFiles() => Images(Path.Combine(AssetsDir, "images"));

@@ -94,6 +94,7 @@ struct GameDef {
     const ui::Splash* splash;  // Project Settings · General · Boot splash (nullptr = none)
     const ui::Kit* ui;         // menus, pause overlay and options screen (nullptr = none)
     u8 textLanguage;           // Project Settings · General · Default language (index into textTables)
+    bool autosave;             // Project Settings · Save data · Autosave: save::lastSlot() after each scene loads
 };
 
 namespace game {
@@ -146,6 +147,10 @@ int tile(int layer, int tileX, int tileY);
 // A copy of an actor of this scene, by Hierarchy name, at a position (C# Scene.Spawn): bullets, enemies and items
 // are hidden template actors in the scene. The copy is visible.
 Actor* spawn(const char* name, int x, int y);
+// Mode 7 floor (C# Scene.Mode7): the scene's affine layer on BG2 seen from a camera at (x, y), heading `angle`
+// (0..255), `height` pixels above it, horizon on screen line `horizon`. Called every frame while it shows.
+void mode7(fixed x, fixed y, int angle, int height, int horizon);
+void stopMode7();
 render::MapLayerView* layerView(int index);
 int widthPx();
 int heightPx();

@@ -123,6 +123,20 @@ public static class Scene
     [Cpp("agb::scene::solidAt({0}, {1})")]
     public static bool SolidAt(int x, int y) => false;
 
+    /// <summary>The collision of the tile at this world pixel (Tileset Editor "Collision"): <c>Collision.Water</c>.</summary>
+    /// <param name="x">World x in pixels.</param>
+    /// <param name="y">World y in pixels.</param>
+    [Cpp("agb::scene::collisionAt({0}, {1})")]
+    public static Collision CollisionAt(int x, int y) => Collision.None;
+
+    /// <summary>The tag of the tile at this world pixel (Tileset Editor "Tag"); compare it with a string:
+    /// <c>Scene.TagAt(x, y) == "Grass"</c>.</summary>
+    /// <param name="x">World x in pixels.</param>
+    /// <param name="y">World y in pixels.</param>
+    [Cpp("agb::scene::tagAt({0}, {1})")]
+    [Asset(AssetKind.Tag)]
+    public static string TagAt(int x, int y) => null;
+
     /// <summary>Changes one 16 px tile of a map layer while the game runs (puzzle boards, opened gates).</summary>
     /// <param name="layer">Layer index in the Tilemap Editor (0 = first).</param>
     /// <param name="x">Tile column.</param>
@@ -145,6 +159,20 @@ public static class Scene
     /// <param name="y">World y in pixels.</param>
     [Cpp("agb::scene::spawn({0}, {1}, {2})")]
     public static Actor Spawn([Asset(AssetKind.ActorName)] string name, int x, int y) => null;
+
+    /// <summary>Shows the scene's rotate / scale layer as a floor seen from a camera (Mode 7, the Racing template).
+    /// Call it every frame; the floor stays as it is while the game is paused.</summary>
+    /// <param name="x">Camera x on the layer in pixels.</param>
+    /// <param name="y">Camera y on the layer in pixels.</param>
+    /// <param name="angle">Heading in 1/256 turns: 0 looks along +x, 64 along +y.</param>
+    /// <param name="height">Camera height above the floor in pixels.</param>
+    /// <param name="horizon">Screen line of the horizon; lines above it show the layers behind.</param>
+    [Cpp("agb::scene::mode7({0}, {1}, {2}, {3}, {4})")]
+    public static void Mode7(@fixed x, @fixed y, int angle, int height, int horizon) { }
+
+    /// <summary>Stops the Mode 7 floor (the layer shows flat again).</summary>
+    [Cpp("agb::scene::stopMode7()")]
+    public static void StopMode7() { }
 
     /// <summary>The actor with this Hierarchy name, or null.</summary>
     /// <param name="name">Actor name.</param>

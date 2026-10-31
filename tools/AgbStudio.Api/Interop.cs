@@ -52,7 +52,7 @@ public enum AssetKind
 
 /// <summary>The string argument or property value is a project name resolved to an id at build time.</summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
-[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Method, AllowMultiple = false)]
 public sealed class AssetAttribute : Attribute
 {
     /// <summary>Creates the marker.</summary>

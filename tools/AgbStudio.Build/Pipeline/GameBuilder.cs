@@ -90,6 +90,7 @@ public sealed class GameBuilder
     readonly List<string> _sources = new();
     readonly List<string> _includeDirs = new();
     BuildResult _result = new();
+    BuildConfiguration _config;
     AssetCache _cache = null!;
     ScriptOutput _scriptOut = new();
     public BuildAssetInfo Assets { get; } = new();
@@ -103,6 +104,7 @@ public sealed class GameBuilder
         Directory.CreateDirectory(GenDir);
         _cache = new AssetCache(_p.BuildDir);
         var config = options.Configuration ?? _p.Settings.Build.Configuration;
+        _config = config;
         try
         {
             if (!Step(StepAssets, () => ConvertAssets())) return Finish(sw);
@@ -128,12 +130,23 @@ public sealed class GameBuilder
         _result.Elapsed = sw.Elapsed;
         _result.AssetsCached = _cache.Hits;
         _result.AssetsConverted = _cache.Misses;
+        if (!_result.Success)
+        {
+            var errors = _result.Errors.ToList();
+            BuildReport.AddHistory(_p.BuildDir, new BuildReport.HistoryEntry(DateTime.Now, 0, sw.Elapsed.TotalSeconds,
+                _result.Diagnostics.Count(d => d.Severity == Severity.Warning), errors.Count, errors.FirstOrDefault()?.ToString() ?? ""));
+        }
         return _result;
     }
 
+    // The step running now: the compile step hands over to "Link + gbafix" when ninja starts linking.
+    string _step = "";
+    Stopwatch _stepWatch = new();
+
     bool Step(string name, Func<string> body)
     {
-        var sw = Stopwatch.StartNew();
+        _step = name;
+        _stepWatch = Stopwatch.StartNew();
         _obs.StepStarted(name, "");
         string detail;
         try
@@ -146,9 +159,9 @@ public sealed class GameBuilder
             detail = e.Message;
         }
         var ok = !_result.Errors.Any();
-        _result.StepTimes[name] = sw.Elapsed;
-        _obs.StepFinished(name, sw.Elapsed, ok, detail);
-        if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = name;
+        _result.StepTimes[_step] = _stepWatch.Elapsed;
+        _obs.StepFinished(_step, _stepWatch.Elapsed, ok, detail);
+        if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = _step;
         return ok;
     }
 
@@ -430,11 +443,21 @@ public sealed class GameBuilder
             if (langs.Count > 1)
                 foreach (var l in langs)
                     if (Fonts.ThaiText.CodePoints(l.Name).All(cp => cp < 0x20 || font.Font.Get(cp) != null)) table.Strings[LanguageKey(l.Code)] = l.Name;
-            var missing = _stringKeys.Count(k => !table.Strings.ContainsKey(k) && !k.StartsWith("_lang.", StringComparison.Ordinal));
-            if (missing > 0 && lang != loc.Source)
-                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing} strings missing in {info?.Name ?? lang}."));
+            var missing = _stringKeys.Where(k => !table.Strings.ContainsKey(k) && !k.StartsWith("_lang.", StringComparison.Ordinal)).ToList();
+            if (missing.Count > 0 && lang != loc.Source)
+                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing.Count} strings missing in {info?.Name ?? lang}."));
+            // A missing string takes the language's own Fallback (Localization · Languages), else "[key]" in Debug
+            // builds (Show missing keys), else the game's fallback language at runtime.
+            var strings = new Dictionary<string, string>(table.Strings);
+            var fallback = info?.Fallback is { Length: > 0 } fb && fb != lang ? tables.FirstOrDefault(t => t.Table.Language == fb).Table : null;
+            if (lang != loc.Source)
+                foreach (var k in missing)
+                {
+                    if (fallback != null && fallback.Strings.TryGetValue(k, out var text)) strings[k] = text;
+                    else if (loc.ShowMissingKeys && _config == BuildConfiguration.Debug) strings[k] = "[" + k + "]";
+                }
             var diags = new List<Diagnostic>();
-            var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, table.Strings, font, k =>
+            var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, strings, font, k =>
             {
                 var m = meta.Keys.GetValueOrDefault(k);
                 return (m?.BoxWidth ?? 224, m?.MaxLines ?? 3);
@@ -628,6 +651,24 @@ public sealed class GameBuilder
                     externs.Append($"extern const agb::data::Tileset agbasset_tileset_{imgId};\nextern const unsigned short agbasset_tileset_{imgId}_cells[];\n");
                     layers.Append($"    {{{l.Bg}, agb::data::LayerType::Image, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
                     layers.Append($"{size.W}, {size.H}, agbasset_tileset_{imgId}_cells, &agbasset_tileset_{imgId}}},\n");
+                    continue;
+                }
+                if (l.Type == LayerType.Affine)
+                {
+                    // 8bpp tiles with flips and banks baked in, one tile per 8x8 cell (affine maps have neither).
+                    var ts = _tilesets[map.Tileset];
+                    var af = AffineConverter.Convert(ts, l.Cells, map.Width, map.Height);
+                    if (af.Problem != null) Add(new Diagnostic(Severity.Warning, mapPath, 0, 0, "", $"Layer {l.Name}: {af.Problem}"));
+                    sb.Append("alignas(4) ");
+                    Cpp.Bytes(sb, $"const unsigned int agbasset_map_{id}_l{i}_tiles", af.Tiles);
+                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}_colors", ts.Palette.Flatten().Select(c => (int)c));
+                    sb.Append($"const agb::data::Palette agbasset_map_{id}_l{i}_pal{{agbasset_map_{id}_l{i}_colors, {ts.Palette.Banks.Count}}};\n");
+                    sb.Append($"const agb::data::Tileset agbasset_map_{id}_l{i}_ts{{{{agbasset_map_{id}_l{i}_tiles, {af.Tiles.Length}, {af.TileCount}, 8, false}}, ");
+                    sb.Append($"&agbasset_map_{id}_l{i}_pal, nullptr, nullptr, nullptr, 0, nullptr, 0}};\n");
+                    sb.Append("alignas(4) ");
+                    Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", af.PackedCells);
+                    layers.Append($"    {{{l.Bg}, agb::data::LayerType::Affine, {l.Priority}, {(l.Wrap ? "true" : "false")}, {Cpp.Parallax(l.ParallaxX)}, {Cpp.Parallax(l.ParallaxY)}, ");
+                    layers.Append($"{af.Width}, {af.Height}, agbasset_map_{id}_l{i}, &agbasset_map_{id}_l{i}_ts}},\n");
                     continue;
                 }
                 Cpp.U16(sb, $"const unsigned short agbasset_map_{id}_l{i}", l.Cells);
@@ -833,7 +874,7 @@ public sealed class GameBuilder
         sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, {(ScriptsCompiled ? "agb_scripts_init" : "nullptr")}, {(s.General.SkipSplashInDebug ? "true" : "false")}, ");
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
-        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}}};\n");
+        sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");
@@ -922,6 +963,14 @@ public sealed class GameBuilder
         var total = target.Sources.Count;
         var r = new NativeBuild(_tc, Path.Combine(_p.BuildDir, "obj")).Build([target], line =>
         {
+            if (_step == StepCompile && line.StartsWith('[') && line.Contains("] LINK ", StringComparison.Ordinal))
+            {
+                _result.StepTimes[StepCompile] = _stepWatch.Elapsed;
+                _obs.StepFinished(StepCompile, _stepWatch.Elapsed, true, $"{compiled} files");
+                _step = StepLink;
+                _stepWatch = Stopwatch.StartNew();
+                _obs.StepStarted(StepLink, "");
+            }
             _obs.Line(line);
             if (line.StartsWith('[') && line.Contains("CXX "))
                 _obs.FileProgress(StepCompile, ++compiled, total, Path.GetFileName(line[(line.IndexOf("CXX ", StringComparison.Ordinal) + 4)..]));
@@ -938,7 +987,7 @@ public sealed class GameBuilder
         File.Copy(r.RomPath, RomPath, true);
         _result.RomPath = RomPath;
         _result.ElfPath = Path.ChangeExtension(r.RomPath, ".elf");
-        return $"{compiled} files";
+        return _step == StepLink ? Path.GetFileName(RomPath) : $"{compiled} files";
     }
 
     /// <summary>Turns "file:line:col: error: message" into a diagnostic (and maps generated C++ back via #line).</summary>

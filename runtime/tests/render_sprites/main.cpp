@@ -146,6 +146,46 @@ AGB_TEST(oam_shapes_flips_and_affine) {
     CHECK_EQ(sprites::build(), 0);
 }
 
+// True when the debug log got `needle` after total log position `head`.
+bool loggedSince(u32 head, const char* needle) {
+    const debug::Channel& ch = debug::channel();
+    const u32 end = ch.logHead;
+    if (end - head > ch.logSize) head = end - ch.logSize;
+    for (u32 start = head; start < end; ++start) {
+        u32 i = 0;
+        while (needle[i] && start + i < end && ch.log[(start + i) % ch.logSize] == needle[i]) ++i;
+        if (!needle[i]) return true;
+    }
+    return false;
+}
+
+AGB_TEST(overloaded_screen_line_is_reported) {
+    palettes::reset();
+    sprites::reset();
+    setup();
+    // 80 sprites of 16 pixels on the same lines need 1280 cycles; the hardware has 1210 per line.
+    sprites::Id ids[80];
+    for (int i = 0; i < 80; ++i) {
+        ids[i] = sprites::create(&g_sheet, 0);
+        sprites::setPosition(ids[i], (i % 15) * 16, 40);
+    }
+    const u32 head = debug::channel().logHead;
+    for (int f = 0; f < 34; ++f) {
+        sprites::build();
+        system::waitVBlank();
+    }
+    CHECK(loggedSince(head, "sprite cycles"));
+    // 60 sprites (960 cycles) fit: nothing more is reported.
+    for (int i = 60; i < 80; ++i) sprites::destroy(ids[i]);
+    const u32 head2 = debug::channel().logHead;
+    for (int f = 0; f < 34; ++f) {
+        sprites::build();
+        system::waitVBlank();
+    }
+    CHECK(!loggedSince(head2, "sprite cycles"));
+    for (int i = 0; i < 60; ++i) sprites::destroy(ids[i]);
+}
+
 int main() {
     system::init();
     test::runAll();
