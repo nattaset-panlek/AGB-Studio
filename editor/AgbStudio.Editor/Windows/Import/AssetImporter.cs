@@ -98,6 +98,7 @@ public static class AssetImporter
             switch (ext)
             {
                 case ".png": InspectImage(item, project); break;
+                case ".aseprite" or ".ase": InspectAseprite(item); break;
                 case ".tmx": InspectTmx(item); break;
                 case ".wav":
                     item.Kind = ImportKind.SoundEffect;
@@ -185,6 +186,27 @@ public static class AssetImporter
             item.Ready = $"Ready · {t.Tiles.Count} unique tiles.";
         }
         else item.Ready = $"Ready · {img.Width} × {img.Height} background.";
+    }
+
+    /// <summary>An Aseprite file is a sprite: its canvas is the frame size, its visible layers are flattened, and the build
+    /// makes the animations from its tags (AsepriteFile, P7.02), so no animation is added here.</summary>
+    static void InspectAseprite(ImportItem item)
+    {
+        var ase = AsepriteFile.Read(item.Source);
+        var img = ase.ToSheet();
+        item.Image = img;
+        item.Pixels = ase.SheetPixels();
+        item.Width = img.Width;
+        item.Height = img.Height;
+        item.Colors = img.Histogram().Count;
+        item.Kind = ImportKind.SpriteSheet;
+        (item.FrameWidth, item.FrameHeight) = (ase.Width, ase.Height);
+        item.CreateAnimation = false;
+        item.AnimationName = ase.Tags.FirstOrDefault()?.Name ?? "idle";
+        if (ase.Width > 64 || ase.Height > 64) item.Error = $"Frames are {ase.Width} × {ase.Height}; the biggest GBA sprite is 64 × 64.";
+        var problem = SpriteConverter.Convert(item.Name, img, new SpriteMeta { FrameWidth = Math.Min(64, ase.Width), FrameHeight = Math.Min(64, ase.Height), ReduceColors = false }, null, item.Source).Problems.FirstOrDefault();
+        if (problem != null) { item.Warning = problem.Message; item.Fixes = problem.Fixes; }
+        item.Ready = $"Ready · {ase.Frames.Count} frames, {ase.Tags.Count} {(ase.Tags.Count == 1 ? "tag" : "tags")}.";
     }
 
     /// <summary>Frame size of a sheet: square frames of the sheet's height when they fit in a row, else the largest GBA size that divides it.</summary>
