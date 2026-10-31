@@ -17,11 +17,16 @@ runs, and stops at the first failure:
 2. `agb lint`: no emoji in text files, product name "AGB Studio", no pokeemerald identifiers in code, runtime code
    writes hardware only through the commit queues, no `float` / `double` in runtime C++
 3. `tools/check-commit-emoji.ps1`: no emoji in any commit message (G-EMOJI.01)
-4. `tools/check-commit-refs.ps1`: lists the commits since `main` that name neither a Figma window id nor `infra:`
-   (G-SCOPE.01); report only, it does not fail the run
+4. `tools/check-commit-refs.ps1 -Strict`: fails when a commit after the baseline in `ci.cmd` (or `AGB_COMMIT_BASE`)
+   names neither a Figma window id nor `infra:` (G-SCOPE.01); the earlier commits without one are in the checklist
+   Scope log
 5. the three test suites, one at a time (they build ROMs into shared folders under `build\`): `AgbStudio.Tests`
    (pipeline, runtime test ROMs in the embedded mGBA core, templates, packaging), `AgbStudio.Scripting.Tests`,
-   `AgbStudio.Editor.Tests` (headless editor E2E and SHOT)
+   `AgbStudio.Editor.Tests` (headless editor E2E and SHOT), with results as `.trx` files in `build\ci\results`
+
+Every run, passed or failed, keeps its artifacts in `build\ci\runs\<time>-<commit>\` (`tools/ci-artifacts.ps1`,
+P1.06): the `.trx` test results, the runtime test ROMs with their maps and screenshots, the SHOT report and
+`summary.txt` (commit, result, the step that failed). The newest 10 runs are kept.
 
 On a machine with little memory, set `AGB_BUILD_JOBS=1` (or 2) to limit parallel compiles of game and test ROMs.
 

@@ -24,7 +24,7 @@ Package versions are from the devkitPro package database (`D:\devkitPro\msys2\va
 
 ### Compiler version (P0.01)
 
-Output of `D:\devkitPro\devkitARMinrm-none-eabi-gcc --version`, saved on 2026-10-31:
+Output of `D:\devkitPro\devkitARM\bin\arm-none-eabi-gcc --version`, saved on 2026-10-31:
 
 ```
 arm-none-eabi-gcc.exe (devkitARM) 16.1.0
