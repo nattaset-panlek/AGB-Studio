@@ -1,0 +1,1 @@
+24d3c1d Assets panel Edit-menu test fix (P11.14, window T-P01); merged before the rule was strict, checklist Scope log row G-SCOPE.01

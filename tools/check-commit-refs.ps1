@@ -29,14 +29,30 @@ $raw = (git log --no-merges --format='%h%x1f%s%x1f%B%x1e' "$Base..HEAD") -join "
 $figmaRef = '\bT-[A-Z][0-9]{2}\b'
 $infraRef = '(?i)\binfra:\s*\S'
 
+# Commits already merged without a reference (main is never rewritten) are listed in commit-refs-known.txt as
+# "<short hash> <reason>"; each one also has a row in the checklist Scope log. They are reported, not failed.
+$known = @{}
+$knownFile = Join-Path $PSScriptRoot 'commit-refs-known.txt'
+if (Test-Path $knownFile) {
+    foreach ($line in Get-Content -Encoding utf8 $knownFile) {
+        if ($line -match '^([0-9a-f]{7,40})\s') { $known[$Matches[1].Substring(0, 7)] = $true }
+    }
+}
+
 $commits = 0
 $missing = 0
+$knownCount = 0
 foreach ($record in $raw -split [char]0x1e) {
     $parts = $record -split [char]0x1f, 3
     if ($parts.Count -lt 3) { continue }
     $commits++
     $message = $parts[2]
     if ($message -match $figmaRef -or $message -match $infraRef) { continue }
+    if ($known.ContainsKey($parts[0].Trim().Substring(0, 7))) {
+        Write-Output ('{0} {1} (known, commit-refs-known.txt)' -f $parts[0].Trim(), $parts[1].Trim())
+        $knownCount++
+        continue
+    }
     $missing++
     Write-Output ('{0} {1}' -f $parts[0].Trim(), $parts[1].Trim())
 }
@@ -48,6 +64,10 @@ if ($commits -eq 0) {
 if ($missing -gt 0) {
     Write-Output "commit-refs: $missing of $commits commits in $Base..HEAD name neither a T-id nor 'infra:' (G-SCOPE.01)"
     if ($Strict) { exit 1 }
+    exit 0
+}
+if ($knownCount -gt 0) {
+    Write-Output "commit-refs: $($commits - $knownCount) of $commits commits in $Base..HEAD name a T-id or 'infra:'; the other $knownCount are known (commit-refs-known.txt)"
     exit 0
 }
 Write-Output "commit-refs: all $commits commits in $Base..HEAD name a T-id or 'infra:'"
