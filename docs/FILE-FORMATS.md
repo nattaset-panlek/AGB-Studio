@@ -4,11 +4,11 @@ Every project file is UTF-8 JSON with camelCase property names (D-03), written b
 so it diffs well in version control. Each top-level document carries `"format": 1`; a file with a higher format was
 written by a newer AGB Studio and is refused with a message instead of being misread. The C# classes in
 `tools/AgbStudio.Core/Project` are the reference (and `tools/AgbStudio.Scripting` for `.graph` and `.dlg`); this page
-lists what lives where. There are no separate JSON schema files.
+lists what lives where.
 
 JSON schemas (draft 2020-12) for every format are in `docs/schemas/`: `agbproj`, `scene`, `map`, `sprite-meta`,
-`tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg` and
-`graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
+`tileset-meta`, `music-meta`, `sound-meta`, `sfx`, `font`, `db`, `strings`, `strings-meta`, `prefab`, `dlg`,
+`palettes` and `graph`. All but `graph` are generated from the C# classes with the settings the files are written with;
 `SchemaTests.SchemasMatchTheFileModel` fails when a class changes and its schema was not regenerated (run the tests with
 `AGB_UPDATE_SCHEMAS=1` to rewrite them).
 
@@ -114,6 +114,12 @@ copies it in any scene when the scene has no actor of that name.
 
 ## Other files
 
+- `assets/palettes/palettes.json` (`PaletteLibraryFile`, Palette Manager; read and written by the editor only, the
+  build takes the colours from the art and the sprite meta): `banks` (each `kind` `Bg` / `Obj`, `slot` 0-15, `name`,
+  `colors` as "#RRGGBB" with "none" for the locked transparent index, at most 16, `assets` that use the bank as
+  project-relative paths, `lockTransparent`, `mergeNear`, `sortByHue`) and `effects` (`fade`, `cycle`, `flash`: each
+  `kind`, `name`, `bankKind`, `bank` with -1 for every bank, colour range `first` / `last`, `frames`, cycle
+  `direction` `Left` / `Right` / `PingPong`, 15-bit `color`, `enabled`).
 - `fonts/<name>.font` (`FontFile`): source kind (`Ttf`, `Bdf`, `Image`) and file, pixel size, variable or fixed width,
   character sets, extra characters, line height, baseline, spacing, bits per pixel, drop shadow, Thai mark stacking
   and lower-vowel placement, glyph overrides (edited pixels by code point). OpenType CFF fonts are refused by the

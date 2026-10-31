@@ -1,6 +1,7 @@
 using System.Globalization;
 using AgbStudio.Build.Graphics;
 using AgbStudio.Core;
+using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Windows.Palette;

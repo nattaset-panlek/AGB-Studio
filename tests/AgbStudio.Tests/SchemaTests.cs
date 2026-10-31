@@ -46,6 +46,7 @@ public sealed class SchemaTests
         ("strings-meta.schema.json", typeof(StringMeta), "AGB Studio string notes (text/strings.meta.json)", null),
         ("prefab.schema.json", typeof(ActorData), "AGB Studio prefab (prefabs/<Name>.prefab)", null),
         ("dlg.schema.json", typeof(DialogueFile), "AGB Studio dialogue (dialogue/<name>.dlg)", DialogueJson),
+        ("palettes.schema.json", typeof(PaletteLibraryFile), "AGB Studio Palette Manager library (assets/palettes/palettes.json)", null),
     ];
 
     public static string Generate(Type type, string title, JsonSerializerOptions? options)
@@ -107,6 +108,7 @@ public sealed class SchemaTests
         if (name.EndsWith(".dlg", StringComparison.Ordinal)) return "dlg.schema.json";
         if (name.EndsWith(".graph", StringComparison.Ordinal)) return "graph.schema.json";
         if (rel == "text/strings.meta.json") return "strings-meta.schema.json";
+        if (rel == "assets/palettes/palettes.json") return "palettes.schema.json";
         if (rel.StartsWith("text/strings.", StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal)) return "strings.schema.json";
         if (!name.EndsWith(".meta.json", StringComparison.Ordinal)) return null;
         if (rel.StartsWith("assets/sprites/", StringComparison.Ordinal)) return "sprite-meta.schema.json";
@@ -156,6 +158,7 @@ public sealed class SchemaTests
             Tiles = { [3] = new TileProperties { Collision = CollisionType.SlopeUp, Animation = [3, 4], Tag = "ground" } },
             AutoTiles = { new AutoTileSet { Rules = { new AutoTileRule { Name = "Top edge", Mask = [2, 0, 2, 1, 1, 1, 2, 1, 2], Tile = 5 } } } },
         });
+        Check("palettes.schema.json", new PaletteLibraryFile { Banks = { new PaletteBankData { Kind = BankKind.Obj, Slot = 15, Colors = { "none", "#FFFFFF" } } } });
         Check("font.schema.json", new FontFile { Name = "f", SourceKind = FontSourceKind.Bdf, Glyphs = { ["U+0E01"] = new GlyphOverride { Advance = 6, Rows = { "0123" } } } });
         Check("scene.schema.json", new SceneFile
         {
@@ -198,6 +201,8 @@ public sealed class SchemaTests
         Assert.Contains(Validate("music-meta.schema.json", """{ "format": 1, "volume": "loud" }"""), e => e.Contains("volume"));
         Assert.Contains(Validate("sfx.schema.json", """{ "format": 1, "chanel": "Wave" }"""), e => e.Contains("chanel"));
         Assert.Contains(Validate("sfx.schema.json", """{ "format": 1, "channel": "Square3" }"""), e => e.Contains("channel"));
+        Assert.Contains(Validate("palettes.schema.json", """{ "format": 1, "banks": [ { "kind": "Sprite", "slot": 0 } ] }"""), e => e.Contains("kind"));
+        Assert.Contains(Validate("palettes.schema.json", """{ "format": 1, "effects": { "fade": { "frames": "slow" } } }"""), e => e.Contains("frames"));
     }
 
     // ---- a small JSON Schema validator for the keywords the schemas use -------------------------------

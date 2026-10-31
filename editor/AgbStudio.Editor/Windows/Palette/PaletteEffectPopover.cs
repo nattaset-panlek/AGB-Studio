@@ -1,4 +1,5 @@
 using System.Globalization;
+using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Shell;
 using Avalonia;

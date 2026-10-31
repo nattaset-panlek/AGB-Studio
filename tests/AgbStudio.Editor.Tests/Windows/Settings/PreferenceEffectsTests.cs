@@ -1,3 +1,4 @@
+using AgbStudio.Core.Project;
 using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Windows.SceneEditor;
