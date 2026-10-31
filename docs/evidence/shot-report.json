@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-31 17:08:41Z",
+  "generated": "2026-10-31 17:38:14Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.53,
-      "BestShiftDiffPercent": 2.53,
+      "DiffPercent": 2.52,
+      "BestShiftDiffPercent": 2.52,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
       "MeanChannelError": 2.96,
-      "ColourDiffPercent": 4.65
+      "ColourDiffPercent": 4.66
     },
     {
       "Id": "T-D14",
@@ -4373,8 +4373,8 @@
       "set": "frame Project Settings \u00B7 Save data",
       "figma": "900x620",
       "app": "900x620",
-      "DiffPercent": 1.23,
-      "BestShiftDiffPercent": 1.23,
+      "DiffPercent": 1.24,
+      "BestShiftDiffPercent": 1.24,
       "shift": [
         0,
         0
@@ -4628,15 +4628,15 @@
       "set": "frame Tilemap Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 3.43,
-      "BestShiftDiffPercent": 3.43,
+      "DiffPercent": 4.34,
+      "BestShiftDiffPercent": 4.34,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 4.17,
-      "ColourDiffPercent": 9.04
+      "MeanChannelError": 5.47,
+      "ColourDiffPercent": 11.16
     },
     {
       "Id": "T-P26",

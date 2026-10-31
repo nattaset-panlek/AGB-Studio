@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.53 | 2.53 | 0,0 | 0 | 2.96 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.52 | 2.52 | 0,0 | 0 | 2.96 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |
@@ -297,7 +297,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M22 | menu Scene Context Menu | 264x149 | 264x149 | 1.94 | 1.94 | 0,0 | 0 | 2.25 |
 | T-D08 | frame Project Settings | 900x620 | 900x620 | 1.02 | 1.02 | 0,0 | 0 | 1.23 |
 | T-S01 | frame Project Settings · General | 900x620 | 900x620 | 0.92 | 0.92 | 0,0 | 0 | 1.05 |
-| T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.23 | 1.23 | 0,0 | 0 | 1.46 |
+| T-S02 | frame Project Settings · Save data | 900x620 | 900x620 | 1.24 | 1.24 | 0,0 | 0 | 1.46 |
 | T-S03 | frame Project Settings · Build | 900x620 | 900x620 | 0.85 | 0.85 | 0,0 | 0 | 1.04 |
 | T-S04 | frame Project Settings · Scripting | 900x620 | 900x620 | 1.86 | 1.86 | 0,0 | 0 | 2.15 |
 | T-S05 | frame Project Settings · Localization | 900x620 | 900x620 | 0.80 | 0.80 | 0,0 | 0 | 0.97 |
@@ -314,7 +314,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D13 | frame New Sprite | 520x506 | 520x506 | 1.55 | 1.55 | 0,0 | 0 | 1.65 |
 | T-M19 | menu OAM Size | 264x175 | 264x175 | 3.70 | 3.70 | 0,0 | 0 | 4.30 |
 | T-O10 | frame Palette Effect | 380x372 | 380x372 | 12.05 | 12.05 | 0,0 | 0 | 12.34 |
-| T-P03 | frame Tilemap Editor | 1440x900 | 1440x900 | 3.43 | 3.43 | 0,0 | 0 | 4.17 |
+| T-P03 | frame Tilemap Editor | 1440x900 | 1440x900 | 4.34 | 4.34 | 0,0 | 0 | 5.47 |
 | T-P26 | frame Auto-tile Rules panel | 860x250 | 860x250 | 4.15 | 4.15 | 0,0 | 0 | 3.36 |
 | T-M20 | menu Add Layer | 264x123 | 264x123 | 4.02 | 4.02 | 0,0 | 0 | 4.60 |
 | T-P09 | frame Font Manager | 1440x900 | 1440x900 | 10.63 | 10.63 | 0,0 | 0 | 13.94 |
