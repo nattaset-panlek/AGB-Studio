@@ -135,7 +135,7 @@ internal sealed partial class CppTranslator
         }
         if (type.TypeParameters.Length > 0)
         {
-            Error(decl, $"Generic type '{type.Name}' is not supported; generics are only allowed on API calls such as Get<T>().");
+            Error(decl, $"Generic type '{type.Name}' is not supported; generics are only allowed on API calls such as Get<T>(). Make one non-generic type per use instead.");
             return _out;
         }
         if (role == TypeRole.Enum) TranslateEnum(type);
@@ -214,7 +214,7 @@ internal sealed partial class CppTranslator
         else if (baseType != null && _m.IsUser(baseType)) baseCpp = _m.CppTypeName(baseType);
         else if (baseType != null && baseType.SpecialType != SpecialType.System_Object && baseType.SpecialType != SpecialType.System_ValueType &&
                  !ScriptModel.Same(baseType, _m.SceneScript) && !ScriptModel.Same(baseType, _m.ScriptBase))
-            Error(type.DeclaringSyntaxReferences[0].GetSyntax(), $"'{type.Name}' derives from '{baseType.Name}', which scripts cannot extend.");
+            Error(type.DeclaringSyntaxReferences[0].GetSyntax(), $"'{type.Name}' derives from '{baseType.Name}', which scripts cannot extend. Derive from Behaviour or SceneScript, or from one of your own classes.");
         if (baseType != null && _m.IsUser(baseType)) hdr.Raw($"#include \"{baseType.Name}.hpp\"");
 
         // Value types used in declarations need their full definition; classes only a forward declaration.
@@ -264,7 +264,7 @@ internal sealed partial class CppTranslator
         var bodies = new List<(IMethodSymbol M, SyntaxNode Syntax)>();
         foreach (var p in props.Where(p => !IsAutoProperty(p)))
         {
-            if (p.IsIndexer) { Error(p.DeclaringSyntaxReferences[0].GetSyntax(), "Indexers are not supported in scripts."); continue; }
+            if (p.IsIndexer) { Error(p.DeclaringSyntaxReferences[0].GetSyntax(), "Indexers (this[...]) are not supported in GBA scripts. Use Get(i) and Set(i, value) methods instead."); continue; }
             foreach (var acc in new[] { p.GetMethod, p.SetMethod }.OfType<IMethodSymbol>())
             {
                 var syn = acc.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() ?? p.DeclaringSyntaxReferences[0].GetSyntax();
@@ -275,7 +275,7 @@ internal sealed partial class CppTranslator
         foreach (var m in methods)
         {
             var syn = m.DeclaringSyntaxReferences[0].GetSyntax();
-            if (m.TypeParameters.Length > 0) { Error(syn, $"Generic method '{m.Name}' is not supported; generics are only allowed on API calls such as Get<T>()."); continue; }
+            if (m.TypeParameters.Length > 0) { Error(syn, $"Generic method '{m.Name}' is not supported; generics are only allowed on API calls such as Get<T>(). Write one method per type instead."); continue; }
             if (m.MethodKind is MethodKind.UserDefinedOperator or MethodKind.Conversion)
             {
                 Error(syn, "Operators declared in scripts are not supported yet. Use a method instead (for example Add(a, b)).");
@@ -477,7 +477,7 @@ internal sealed partial class CppTranslator
     {
         if (arr.Rank != 1 || arr.ElementType is IArrayTypeSymbol)
         {
-            Error(at, "Only one-dimensional arrays are supported.");
+            Error(at, "Only one-dimensional arrays are supported in GBA scripts. Use one array of width × height and index it as y * width + x.");
             return;
         }
         var et = TypeOf(arr.ElementType, at);
@@ -541,7 +541,7 @@ internal sealed partial class CppTranslator
     string Param(IParameterSymbol p, bool declaration)
     {
         var at = p.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() ?? _type.DeclaringSyntaxReferences[0].GetSyntax();
-        if (p.IsParams) Error(at, "params arrays are not supported in translated code.");
+        if (p.IsParams) Error(at, "params arrays are not supported in GBA scripts. Pass a normal array, or write one overload per argument count.");
         var m = (IMethodSymbol)p.ContainingSymbol;
         string t;
         if (IsBehaviourEvent(m) && m.Name == "OnTouch") t = "agb::Actor&";
@@ -613,7 +613,7 @@ internal sealed partial class CppTranslator
             }
         foreach (var p in m.Parameters.Where(p => !_used.Contains(p))) _w.Line($"AGB_UNUSED({Names.Cpp(p.Name)});");
         if (block != null) foreach (var s in block.Operations) Stmt(s);
-        else if (op != null) Error(syntax, "This method body could not be translated.");
+        else if (op != null) Error(syntax, "This method body could not be turned into C++ for the GBA (it has C# errors, or a form scripts don't support). Fix the other errors in it, or write the body as a block { ... }.");
         _w.Indent--;
         _w.Line("}");
     }

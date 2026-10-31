@@ -42,7 +42,7 @@ public static class Gba
         var best = (W: 64, H: 64);
         foreach (var s in OamSizes)
             if (s.W >= w && s.H >= h && s.W * s.H < best.W * best.H) best = s;
-        if (w > 64 || h > 64) throw new ArgumentException($"A {w}x{h} frame is larger than the biggest GBA sprite (64x64).");
+        if (w > 64 || h > 64) throw new ArgumentException($"Frames of {w}×{h} pixels are larger than the biggest GBA sprite (64×64). Set a frame size of 64×64 or less in the Sprite Editor.");
         return best;
     }
 

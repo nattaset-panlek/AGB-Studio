@@ -86,7 +86,7 @@ public sealed class LogicGraph
         }
         catch (JsonException e)
         {
-            throw new FormatException($"The graph file is not valid JSON (line {e.LineNumber + 1}): {e.Message}", e);
+            throw new FormatException(AgbStudio.Core.Project.GameProject.BrokenJson("The graph file", e), e);
         }
         using (doc)
         {
@@ -96,7 +96,9 @@ public sealed class LogicGraph
                 Format = root.TryGetProperty("format", out var fmt) ? fmt.GetInt32() : 1,
                 Class = root.TryGetProperty("class", out var cls) ? cls.GetString() ?? "" : "",
             };
-            if (g.Format != 1) throw new FormatException($"Graph format {g.Format} is newer than this AGB Studio understands (1).");
+            if (g.Format != 1)
+                throw new FormatException($"This graph file is format {g.Format}; this AGB Studio reads format 1. " +
+                    (g.Format > 1 ? "Update AGB Studio to open it." : "Restore the file from a backup or version control."));
             if (root.TryGetProperty("nodes", out var nodes))
                 foreach (var n in nodes.EnumerateArray())
                 {

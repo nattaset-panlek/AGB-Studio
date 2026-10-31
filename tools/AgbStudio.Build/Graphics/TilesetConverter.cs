@@ -48,12 +48,12 @@ public static class TilesetConverter
                     }
                 }
         if (reduced.Count > 0)
-            problems.Add(new ImportProblem(file, $"{reduced.Count} tiles use more than 15 colours; they were reduced.", ["Reduce to 16"]));
+            problems.Add(new ImportProblem(file, $"{reduced.Count} tiles use more than 15 colours (a GBA tile has 15 plus transparent), so their colours were reduced. Check them, or redraw them with fewer colours.", ["Reduce to 16"]));
         var packed = PaletteBanks.Pack(tileSets, maxBanks);
         if (packed == null)
         {
             // Too many distinct colour sets: reduce the whole image to one bank.
-            problems.Add(new ImportProblem(file, $"The tiles need more than {maxBanks} palettes; colours were reduced to fit one palette.", ["Reduce to 16"]));
+            problems.Add(new ImportProblem(file, $"The tiles need more than the {maxBanks} free palettes, so all colours were reduced to one palette of 16. Use fewer different colour sets, or split the tileset.", ["Reduce to 16"]));
             var all = Quantizer.Reduce(img.Histogram(), 15).ToHashSet();
             packed = PaletteBanks.Pack(tileSets.Select(_ => all).ToList(), maxBanks)!;
         }

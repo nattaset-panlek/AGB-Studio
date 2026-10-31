@@ -45,7 +45,8 @@ public static class RomTestRunner
                 extra = options.ExtraFramesAfterPass;
             }
         }
-        var error = channel == null ? "The ROM never initialised the debug channel." : status == TestStatus.Running ? $"Timed out after {options.MaxFrames} frames." : null;
+        var error = channel == null ? "The ROM never started the AGB Studio debug channel, so no test result can be read. Check that it is a Debug build made by AGB Studio."
+            : status == TestStatus.Running ? $"Timed out after {options.MaxFrames} frames without a pass or fail. Give it more frames (agb romtest --frames N), or check that the test ends." : null;
         options.BeforeUnload?.Invoke(core);
         var result = new RomTestResult(status, frame, log, (uint[])core.Frame.Clone(), error);
         core.UnloadRom();

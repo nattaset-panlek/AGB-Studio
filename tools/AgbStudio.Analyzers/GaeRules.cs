@@ -21,7 +21,7 @@ public static class GaeRules
     public static readonly DiagnosticDescriptor FloatType = new(
         "GAE002",
         "float or double — the GBA has no FPU, use fixed",
-        "{0} is not supported on GBA",
+        "{0} is very slow on GBA (no floating-point hardware)",
         Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
         description: "The GBA has no FPU, so floats are emulated and very slow. Use the 24.8 fixed-point type instead — same syntax, runs at full speed.",
         helpLinkUri: HelpBase + "GAE002");
@@ -44,7 +44,7 @@ public static class GaeRules
 
     public static readonly DiagnosticDescriptor StringConcatInLoop = new(
         "GAE005",
-        "string concatenation in a loop",
+        "string concatenation in a loop (a new string every pass)",
         "String concatenation in a loop builds a new string on every pass",
         Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
         description: "Strings are constant data on GBA. Build text with string keys from Localization, or log values with Debug.Log($\"...\") outside the loop.",
@@ -52,7 +52,7 @@ public static class GaeRules
 
     public static readonly DiagnosticDescriptor CapturingLambda = new(
         "GAE006",
-        "lambda that captures variables",
+        "lambda that captures variables (hidden allocation)",
         "This lambda captures '{0}', which needs a hidden allocation",
         Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
         description: "A lambda that uses local variables or fields needs a hidden object. Make it static, or pass the values as parameters.",
@@ -64,12 +64,12 @@ public static class GaeRules
     // Short build log texts (Figma Build log: "PlayerController.cs(8,5): GAE002 float → use fixed").
     static readonly Dictionary<string, string> s_short = new()
     {
-        ["GAE001"] = "class allocated in {1} → allocate in Start",
-        ["GAE002"] = "{0} → use fixed",
-        ["GAE003"] = "new inside {1} → allocate in Start or use a pool",
-        ["GAE004"] = "{0} → exceptions are not supported",
-        ["GAE005"] = "string concatenation in a loop",
-        ["GAE006"] = "lambda captures {0} → make it static",
+        ["GAE001"] = "class allocated in {1} is never freed → allocate in Start",
+        ["GAE002"] = "{0} is slow on GBA → use fixed",
+        ["GAE003"] = "new inside {1} fills memory every frame → allocate in Start or use a pool",
+        ["GAE004"] = "{0} (no exceptions on GBA) → return a bool or an error value",
+        ["GAE005"] = "string concatenation in a loop makes a new string every pass → use string keys, or log outside the loop",
+        ["GAE006"] = "lambda captures {0} (hidden allocation) → pass it as a parameter and make the lambda static",
     };
 
     /// <summary>Short message for the build log; arguments are the diagnostic's message arguments.</summary>

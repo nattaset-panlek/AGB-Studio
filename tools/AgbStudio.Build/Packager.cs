@@ -30,7 +30,9 @@ public static class Packager
             var csproj = Path.Combine(root, "editor", "AgbStudio.Editor", "AgbStudio.Editor.csproj");
             var r = Proc.Run("dotnet", $"publish \"{csproj}\" -c Release -r win-x64 --self-contained true -nologo -v q -o \"{Path.Combine(stage, "bin")}\"",
                 root, TimeSpan.FromMinutes(15), log);
-            if (r.ExitCode != 0) throw new InvalidOperationException("dotnet publish failed:\n" + r.Output);
+            if (r.ExitCode != 0)
+                throw new InvalidOperationException("dotnet publish could not build the editor (its output is above), so no package was made. " +
+                    "Build the solution with dotnet build to see the first error, fix it, then package again.");
         }
         log("Copying the runtime, fonts, word list, emulator core and docs...");
         CopyTree(Path.Combine(root, "runtime", "include"), Path.Combine(stage, "runtime", "include"));

@@ -142,6 +142,48 @@ internal sealed class ScriptModel
 
     public static bool IsCutscene(IMethodSymbol m) => Attr(m, "GBA.CutsceneAttribute") != null;
 
+    /// <summary>The C# symbol of an operator for error texts ("~", "&lt;&lt;"), not the Roslyn enum name (G-ERR.01).</summary>
+    public static string OperatorText(Microsoft.CodeAnalysis.Operations.UnaryOperatorKind k) => k switch
+    {
+        Microsoft.CodeAnalysis.Operations.UnaryOperatorKind.BitwiseNegation => "~",
+        Microsoft.CodeAnalysis.Operations.UnaryOperatorKind.Not => "!",
+        Microsoft.CodeAnalysis.Operations.UnaryOperatorKind.Plus => "+",
+        Microsoft.CodeAnalysis.Operations.UnaryOperatorKind.Minus => "-",
+        Microsoft.CodeAnalysis.Operations.UnaryOperatorKind.Hat => "^ (index from end)",
+        _ => k.ToString(),
+    };
+
+    public static string OperatorText(Microsoft.CodeAnalysis.Operations.BinaryOperatorKind k) => k switch
+    {
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Add => "+",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Subtract => "-",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Multiply => "*",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Divide => "/",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Remainder => "%",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.LeftShift => "<<",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.RightShift => ">>",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.UnsignedRightShift => ">>>",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.And => "&",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Or => "|",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.ExclusiveOr => "^",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.ConditionalAnd => "&&",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.ConditionalOr => "||",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.Equals or Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.ObjectValueEquals => "==",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.NotEquals or Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.ObjectValueNotEquals => "!=",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.LessThan => "<",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.LessThanOrEqual => "<=",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.GreaterThan => ">",
+        Microsoft.CodeAnalysis.Operations.BinaryOperatorKind.GreaterThanOrEqual => ">=",
+        _ => k.ToString(),
+    };
+
+    /// <summary>The first line of a piece of code, cut to 40 characters, to name it in an error text.</summary>
+    public static string Excerpt(SyntaxNode? syntax)
+    {
+        var text = syntax?.ToString().Split('\n')[0].Trim() ?? "";
+        return text.Length > 40 ? text[..37] + "..." : text;
+    }
+
     public static bool? NativeWaits(IMethodSymbol m)
     {
         var a = Attr(m, "GBA.ScriptNativeAttribute");

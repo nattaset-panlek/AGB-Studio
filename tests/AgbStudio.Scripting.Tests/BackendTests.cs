@@ -79,7 +79,7 @@ public sealed class BackendTests(EmulatorFixture emu)
         var r = new GameBuilder(p, new Toolchain()) { Scripts = new ScriptBackend() }.Build();
         Assert.False(r.Success);
         var log = r.Diagnostics.Select(d => d.ToString()).ToList();
-        Assert.Contains("Broken.cs(5,5): GAE002 float → use fixed", log);
+        Assert.Contains("Broken.cs(5,5): GAE002 float is slow on GBA → use fixed", log);
         Assert.Contains(log, l => l.StartsWith("Broken.cs(6,32): Sound \"jmp\" is not in the project.", StringComparison.Ordinal));
         Assert.All(r.Diagnostics.Where(d => d.File.Length > 0), d => Assert.True(Path.IsPathRooted(d.File)));
     }

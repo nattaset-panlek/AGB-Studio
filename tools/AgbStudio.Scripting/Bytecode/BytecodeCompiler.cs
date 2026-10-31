@@ -99,10 +99,18 @@ internal sealed class BytecodeCompiler
         script.Args = _nextSlot;
         var op = _m.Compilation.GetSemanticModel(syntax.SyntaxTree).GetOperation(syntax);
         var body = (op as IMethodBodyBaseOperation)?.BlockBody ?? (op as IMethodBodyBaseOperation)?.ExpressionBody;
-        if (body == null) { Error(syntax, "This cutscene has no body."); return; }
+        if (body == null) { Error(syntax, "This cutscene has no body, so there is nothing to run. Add a body { ... }, or remove [Cutscene]."); return; }
         foreach (var s in body.Operations) Stmt(s);
         for (; _locks > 0; _locks--) Unlock();
-        script.Code = _a.Finish();
+        try
+        {
+            script.Code = _a.Finish();
+        }
+        catch (ScriptAssembler.TooLongException)
+        {
+            Error(syntax, $"Cutscene {m.Name} is too long to compile: a jump in it spans more than 32 KB of code. Split it into smaller cutscenes.");
+            script.Code = [];
+        }
         script.Locals = Math.Max(_nextSlot, script.Args);
         script.Lines = _a.Lines;
         if (script.Locals > MaxLocals)
@@ -264,7 +272,7 @@ internal sealed class BytecodeCompiler
                 if (br.BranchKind == BranchKind.Break && _loops.Count > 0) _a.Jump("Jump", _loops.Peek().Break);
                 else if (br.BranchKind == BranchKind.Continue && _loops.Count > 0) _a.Jump("Jump", _loops.Peek().Continue);
                 else if (br.BranchKind == BranchKind.GoTo) _a.Jump("Jump", Label(br.Target));
-                else Error(op, "break / continue outside a loop.");
+                else Error(op, "break / continue is outside a loop, so there is nothing to leave. Move it into a loop, or use return to end the cutscene.");
                 break;
             case ILabeledOperation lab:
                 _a.Mark(Label(lab.Label));
@@ -276,7 +284,7 @@ internal sealed class BytecodeCompiler
                 Error(op, "foreach is not available in cutscenes; use a for loop with a counter.");
                 break;
             default:
-                Error(op, $"This statement is not supported in cutscenes ({op.Kind}).");
+                Error(op, "This kind of statement can't run in a cutscene. Cutscenes run if, while, for, switch, return, assignments and calls; do the rest in a [ScriptNative] method and call that.");
                 break;
         }
     }
@@ -322,7 +330,7 @@ internal sealed class BytecodeCompiler
     {
         if (!Emit(op))
         {
-            Error(op, "This expression has no value in a cutscene.");
+            Error(op, "This expression gives no value a cutscene can use (for example a call that returns nothing). Use it as a statement of its own.");
             _a.Push(0);
         }
     }
@@ -361,7 +369,7 @@ internal sealed class BytecodeCompiler
                     case UnaryOperatorKind.Minus: _a.Op("Neg"); break;
                     case UnaryOperatorKind.Not: _a.Op("Not"); break;
                     case UnaryOperatorKind.Plus: break;
-                    default: Error(op, $"The operator {u.OperatorKind} is not available in cutscenes."); break;
+                    default: Error(op, $"The operator {ScriptModel.OperatorText(u.OperatorKind)} is not available in cutscenes. Do this step in a [ScriptNative] method and call that."); break;
                 }
                 return true;
             case IConditionalOperation c:
@@ -410,7 +418,7 @@ internal sealed class BytecodeCompiler
                 _a.Push(0);
                 return true;
             default:
-                Error(op, $"This expression is not available in cutscenes ({op.Kind}).");
+                Error(op, "This kind of expression can't run in a cutscene. Compute it in a [ScriptNative] method and call that.");
                 _a.Push(0);
                 return true;
         }
@@ -423,7 +431,7 @@ internal sealed class BytecodeCompiler
         {
             if (from?.SpecialType is SpecialType.System_Double or SpecialType.System_Single)
             {
-                if (!conv.Operand.ConstantValue.HasValue) { Error(conv, "Only decimal constants convert to fixed."); _a.Push(0); return true; }
+                if (!conv.Operand.ConstantValue.HasValue) { Error(conv, "Only decimal constants convert to fixed in cutscenes (for example 1.5). Keep the value in a fixed variable instead."); _a.Push(0); return true; }
                 _a.Push((int)Math.Round(Convert.ToDouble(conv.Operand.ConstantValue.Value, CultureInfo.InvariantCulture) * 256));
                 return true;
             }
@@ -486,7 +494,7 @@ internal sealed class BytecodeCompiler
             _a.Mark(end);
             return true;
         }
-        if (b.LeftOperand.Type?.SpecialType == SpecialType.System_String) { Error(b, "Strings cannot be compared in cutscenes."); _a.Push(0); return true; }
+        if (b.LeftOperand.Type?.SpecialType == SpecialType.System_String) { Error(b, "Strings cannot be compared in cutscenes. Compare enums, ids or flags instead."); _a.Push(0); return true; }
         Value(b.LeftOperand);
         Value(b.RightOperand);
         Arith(b.OperatorKind, b.OperatorMethod, b);
@@ -514,7 +522,7 @@ internal sealed class BytecodeCompiler
             BinaryOperatorKind.ExclusiveOr when at.Type?.SpecialType == SpecialType.System_Boolean => "Ne",
             _ => null,
         };
-        if (name == null) { Error(at, $"The operator {kind} is not available in cutscenes."); return; }
+        if (name == null) { Error(at, $"The operator {ScriptModel.OperatorText(kind)} is not available in cutscenes. Do this step in a [ScriptNative] method and call that."); return; }
         _a.Op(name, -1);
     }
 
@@ -556,7 +564,7 @@ internal sealed class BytecodeCompiler
                 _a.Push(IntConstant(ef.Field.ConstantValue, ef.Type));
                 return;
             }
-            Error(op, "Cutscenes can read their own variables, parameters, Story / Flags variables, Game fields and constants.");
+            Error(op, $"Cutscenes can't read '{ScriptModel.Excerpt(op.Syntax)}'. They can read their own variables, parameters, Story / Flags variables, Game fields and constants; read anything else in a [ScriptNative] method.");
             _a.Push(0);
             return;
         }
@@ -582,7 +590,7 @@ internal sealed class BytecodeCompiler
         var place = Place(target);
         if (place == null || place.Value.Kind is "player" or "self")
         {
-            Error(target, "Cutscenes can assign their own variables, Story / Flags variables and Game fields.");
+            Error(target, $"Cutscenes can't assign '{ScriptModel.Excerpt(target.Syntax)}'. They can assign their own variables, Story / Flags variables and Game fields; change anything else in a [ScriptNative] method.");
             value();
             return true;
         }
@@ -614,7 +622,7 @@ internal sealed class BytecodeCompiler
         if (ScriptModel.IsCutscene(m) && m.IsAsync)
         {
             var callee = _tables.Find(m);
-            if (callee == null) { Error(inv, $"Cutscene {m.Name} was not compiled."); _a.Push(0); return true; }
+            if (callee == null) { Error(inv, $"Cutscene {m.Name} could not be compiled (see its own error), so it can't be called here. Fix that error first."); _a.Push(0); return true; }
             var argc = 0;
             if (callee.HasSelf)
             {
@@ -671,7 +679,7 @@ internal sealed class BytecodeCompiler
         if (parts[0] == "native")
         {
             var id = _tables.NativeId(parts[1]);
-            if (id < 0) { Error(inv, $"The runtime has no native '{parts[1]}' (runtime/include/agb/natives.hpp)."); _a.Push(0); return true; }
+            if (id < 0) { Error(inv, $"{m.ContainingType.Name}.{m.Name} is not available in this version of the engine, so a cutscene can't call it. Update AGB Studio, or report this as a bug."); _a.Push(0); return true; }
             var argc = 0;
             for (var i = 2; i < parts.Length; i++) { _a.Push(int.Parse(parts[i], CultureInfo.InvariantCulture)); argc++; }
             foreach (var a in Ordered(m, inv.Arguments)) argc += Argument(a);
@@ -679,7 +687,7 @@ internal sealed class BytecodeCompiler
             _a.Native(id, argc);
             return true;
         }
-        Error(inv, $"'{m.Name}' cannot be called from a cutscene.");
+        Error(inv, $"'{m.ContainingType.Name}.{m.Name}' cannot be called from a cutscene. Cutscenes can call the cutscene API (Say, Choice, Move, Wait, ...), other cutscenes and [ScriptNative] methods.");
         _a.Push(0);
         return true;
     }

@@ -60,10 +60,12 @@ public sealed class DialogueFile
         }
         catch (JsonException e)
         {
-            throw new FormatException($"The dialogue file is not valid JSON (line {e.LineNumber + 1}): {e.Message}", e);
+            throw new FormatException(AgbStudio.Core.Project.GameProject.BrokenJson("The dialogue file", e), e);
         }
-        if (f == null) throw new FormatException("The dialogue file is empty.");
-        if (f.Format != 1) throw new FormatException($"Dialogue format {f.Format} is newer than this AGB Studio understands (1).");
+        if (f == null) throw new FormatException("The dialogue file is empty, so it has no conversations. Delete it, or restore it from a backup or version control.");
+        if (f.Format != 1)
+            throw new FormatException($"This dialogue file is format {f.Format}; this AGB Studio reads format 1. " +
+                (f.Format > 1 ? "Update AGB Studio to open it." : "Restore the file from a backup or version control."));
         foreach (var (path, line) in JsonLines.Map(json)) f.LineOf[path] = line;
         return f;
     }

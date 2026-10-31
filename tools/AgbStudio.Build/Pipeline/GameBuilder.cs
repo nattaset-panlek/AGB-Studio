@@ -162,11 +162,14 @@ public sealed class GameBuilder
     // The step running now: the compile step hands over to "Link + gbafix" when ninja starts linking.
     string _step = "";
     Stopwatch _stepWatch = new();
+    // The asset file being converted, so an exception thrown while reading it (a broken PNG) names the file (G-ERR.01).
+    string _reading = "";
 
     bool Step(string name, Func<string> body)
     {
         _step = name;
         _stepWatch = Stopwatch.StartNew();
+        _reading = "";
         _obs.StepStarted(name, "");
         string detail;
         try
@@ -175,7 +178,7 @@ public sealed class GameBuilder
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
-            Add(new Diagnostic(Severity.Error, "", 0, 0, "", e.Message));
+            Add(new Diagnostic(Severity.Error, _reading, 0, 0, "", StepError(name, e)));
             detail = e.Message;
         }
         var ok = !_result.Errors.Any();
@@ -184,6 +187,16 @@ public sealed class GameBuilder
         if (!ok && _result.FailedStep.Length == 0) _result.FailedStep = _step;
         return ok;
     }
+
+    /// <summary>G-ERR.01: the text of an exception that stopped a step. AGB Studio's own file errors (a broken PNG, a
+    /// project file that is not valid JSON) already say what is wrong and what to do; others get the step and a next step.</summary>
+    static string StepError(string step, Exception e) => e switch
+    {
+        InvalidDataException or FormatException or JsonException => e.Message,
+        IOException or UnauthorizedAccessException =>
+            $"{e.Message} Close other programs that use the file and check that it exists, then build again.",
+        _ => $"The step '{step}' stopped: {e.Message} If the build keeps failing here, try Build › Clean Build.",
+    };
 
     void Add(Diagnostic d)
     {
@@ -210,14 +223,21 @@ public sealed class GameBuilder
         foreach (var f in spriteFiles.OrderBy(f => metas[f].Palette.Length > 0 ? 1 : 0))
         {
             _obs.FileProgress(StepAssets, ++done, total, Path.GetFileName(f));
+            _reading = f;
             ConvertSprite(f, metas[f]);
         }
         foreach (var f in tilesetFiles)
         {
             _obs.FileProgress(StepAssets, ++done, total, Path.GetFileName(f));
+            _reading = f;
             ConvertTileset(f);
         }
-        foreach (var f in _p.ImageFiles()) ConvertImage(f);
+        foreach (var f in _p.ImageFiles())
+        {
+            _reading = f;
+            ConvertImage(f);
+        }
+        _reading = "";
         ConvertAudio();
         ConvertDmgSfx();
         ConvertText();
@@ -444,7 +464,15 @@ public sealed class GameBuilder
             var r = SoundbankBuilder.Build(_tc, inputs, outDir);
             if (!r.Success)
             {
-                Add(new Diagnostic(Severity.Error, "", 0, 0, "", "Audio conversion failed: " + r.Log.Trim()));
+                // mmutil converts every track in one run: its whole output goes to the log, the error names the file
+                // it stopped on (the last one its output mentions) and its first error line.
+                _obs.Line(r.Log.Trim());
+                var lines = r.Log.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                var reason = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase)) ?? lines.LastOrDefault() ?? "mmutil gave no reason";
+                var failed = inputs.MaxBy(f => r.Log.LastIndexOf(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase));
+                if (failed != null && !r.Log.Contains(Path.GetFileName(failed), StringComparison.OrdinalIgnoreCase)) failed = null;
+                Add(new Diagnostic(Severity.Error, failed ?? "", 0, 0, "", $"Audio conversion failed{(failed != null ? $" for {Path.GetFileName(failed)}" : "")}: {reason.TrimEnd('.')}. " +
+                    "Open the file in a tracker or audio editor, save it again as MOD, XM or WAV, and build again."));
                 return;
             }
             _cache.Store("soundbank", hash);
@@ -488,6 +516,7 @@ public sealed class GameBuilder
         var used = Fonts.ThaiText.CodePoints(allText).Where(c => c >= 0x20).Distinct().ToList();
         foreach (var f in _p.FontFiles())
         {
+            _reading = f;
             var ff = GameProject.Load<FontFile>(f);
             if (ff.Name.Length == 0) ff.Name = GameProject.AssetName(f);
             var font = Fonts.FontBuilder.Build(ff, _p.FontsDir, used);
@@ -497,6 +526,7 @@ public sealed class GameBuilder
             Assets.Fonts[ff.Name] = new AssetInfo(ff.Name, "Font", f, font.RomBytes, font.Glyphs.Count, $"{font.Glyphs.Count} glyphs, {font.Missing.Count} missing");
             Write(Path.Combine(GenDir, "text", $"font_{Cpp.Ident(ff.Name)}.cpp"), cpp);
         }
+        _reading = "";
         if (tables.Count == 0) return;
         var loc = _p.Settings.Localization;
         var metaPath = Path.Combine(_p.TextDir, "strings.meta.json");
@@ -519,8 +549,8 @@ public sealed class GameBuilder
                     return;
                 }
                 Add(new Diagnostic(Severity.Warning, file, 0, 0, "", info?.Font is { Length: > 0 } missingFont
-                    ? $"Language '{lang}' uses font '{missingFont}', which is not in fonts/; using {font.Font.Name}."
-                    : $"Language '{lang}' has no font set; using {font.Font.Name}."));
+                    ? $"Language '{lang}' uses font '{missingFont}', which is not in fonts/, so {font.Font.Name} is used. Add the font in Font Manager, or pick another one in Localization · Languages."
+                    : $"Language '{lang}' has no font set, so {font.Font.Name} is used. Pick a font for it in Localization · Languages."));
             }
             // Language names where this language's font can draw them; elsewhere the options screen shows the code.
             if (langs.Count > 1)
@@ -528,7 +558,7 @@ public sealed class GameBuilder
                     if (Fonts.ThaiText.CodePoints(l.Name).All(cp => cp < 0x20 || font.Font.Get(cp) != null)) table.Strings[LanguageKey(l.Code)] = l.Name;
             var missing = _stringKeys.Where(k => !table.Strings.ContainsKey(k) && !k.StartsWith("_lang.", StringComparison.Ordinal)).ToList();
             if (missing.Count > 0 && lang != loc.Source)
-                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing.Count} strings missing in {info?.Name ?? lang}."));
+                Add(new Diagnostic(loc.FailOnMissing ? Severity.Error : Severity.Warning, file, 0, 0, "", $"{missing.Count} strings missing in {info?.Name ?? lang}. Translate them in Localization (\"Missing only\"), or set a fallback language in Localization · Languages."));
             // A missing string takes the language's own Fallback (Localization · Languages), else "[key]" in Debug
             // builds (Show missing keys), else the game's fallback language at runtime.
             var strings = new Dictionary<string, string>(table.Strings);
@@ -585,7 +615,7 @@ public sealed class GameBuilder
         if (Scripts == null)
         {
             if (scriptFiles.Count > 0)
-                Add(new Diagnostic(Severity.Warning, "", 0, 0, "", $"{scriptFiles.Count} C# scripts were not compiled: the scripting compiler is not available in this build."));
+                Add(new Diagnostic(Severity.Warning, "", 0, 0, "", $"{scriptFiles.Count} C# scripts were not compiled: this build tool has no script compiler, so the game runs without them. Build from the AGB Studio editor or with agb build."));
             return "0 scripts";
         }
         var input = new ScriptInput
@@ -850,14 +880,14 @@ public sealed class GameBuilder
             // An empty From is a "Condition only" link (Link Settings): it has no trigger actor.
             var from = l.From.Trim().Length == 0 ? -1 : actorNames.IndexOf(l.From);
             var to = sceneNames.IndexOf(l.To);
-            if (from < 0 && l.From.Trim().Length > 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link from '{l.From}': no actor with that name in {scene.Name}.")); continue; }
-            if (to < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link to '{l.To}': no scene with that name.")); continue; }
+            if (from < 0 && l.From.Trim().Length > 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link from '{l.From}' in {scene.Name}: no actor has that name (renamed or deleted?). Draw the link again in the World Map.")); continue; }
+            if (to < 0) { Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Link to '{l.To}': no scene has that name (renamed or deleted?). Draw the link again in the World Map.")); continue; }
             if (from < 0 && l.Kind != LinkKind.Respawn && l.OnlyIf.Trim().Length == 0)
                 Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Link → {l.To} has neither a From actor nor an 'Only if' condition, so it never fires."));
             var condition = "nullptr";
             if (l.OnlyIf.Length > 0 && ScriptsCompiled) condition = $"agb_link_{id}_{li}";
             else if (l.OnlyIf.Length > 0)
-                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Link {l.From} → {l.To}: the 'Only if' condition needs the scripting compiler; the link is always allowed."));
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Link {l.From} → {l.To}: the 'Only if' condition was not compiled (this build tool has no script compiler), so the link is always allowed. Build from the AGB Studio editor or with agb build."));
             var frames = (int)Math.Round(l.Duration * 60);
             links.Append($"    {{{from}, agb::LinkKind::{l.Kind}, {to}, {l.SpawnX}, {l.SpawnY}, agb::render::effects::Transition::{l.Transition}, {frames}, {condition}}},\n");
         }
@@ -868,7 +898,7 @@ public sealed class GameBuilder
         var follow = actorNames.IndexOf(scene.Camera.Follow);
         var music = scene.Music.Track.Length > 0 ? MusicId(scene.Music.Track) : -1;
         if (scene.Music.Track.Length > 0 && music < 0)
-            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name}: music '{scene.Music.Track}' is not in assets/audio/music."));
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name}: music '{scene.Music.Track}' is not in assets/audio/music, so the scene plays no music. Import the track again, or pick another in Scene Settings."));
         var backdrop = Gba.ToBgr555(0xFF000000u | uint.Parse(scene.Backdrop.TrimStart('#'), NumberStyles.HexNumber));
         sb.Append($"extern const agb::SceneDef agbasset_scene_{id} = {{\n");
         sb.Append($"    {Cpp.Str(scene.Name)}, {(map?.Map.Width ?? scene.Width)}, {(map?.Map.Height ?? scene.Height)}, {scene.VideoMode},\n");
@@ -903,7 +933,7 @@ public sealed class GameBuilder
         var mapPath = Path.Combine(_p.MapsDir, name + ".map");
         if (!File.Exists(mapPath))
         {
-            Add(new Diagnostic(Severity.Error, sceneFile, 0, 0, "", $"Scene {sceneName} uses map '{mapName}', which does not exist."));
+            Add(new Diagnostic(Severity.Error, sceneFile, 0, 0, "", $"Scene {sceneName} uses map '{mapName}', which does not exist. Pick another map in Scene Settings, or restore maps/{name}.map."));
             return null;
         }
         var map = GameProject.Load<MapFile>(mapPath);
@@ -917,7 +947,7 @@ public sealed class GameBuilder
         var needsTileset = map.Layers.Any(l => l.Type != LayerType.Image);
         if (needsTileset && !_tilesets.ContainsKey(map.Tileset))
         {
-            Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets."));
+            Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Map {map.Name} uses tileset '{map.Tileset}', which is not in assets/tilesets. Import the tileset again, or pick another one for the map."));
             _maps[name] = null;
             return null;
         }
@@ -929,7 +959,7 @@ public sealed class GameBuilder
             var l = map.Layers[i];
             if (l.Type != LayerType.Image && l.Cells.Count != map.Width * map.Height)
             {
-                Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} has {l.Cells.Count} cells; the map is {map.Width}×{map.Height}."));
+                Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} of map {map.Name} has {l.Cells.Count} tiles, but a {map.Width}×{map.Height} map needs {map.Width * map.Height}. The .map file is damaged; restore it from a backup or version control."));
                 _maps[name] = null;
                 return null;
             }
@@ -938,7 +968,7 @@ public sealed class GameBuilder
             {
                 if (!_images.TryGetValue(l.Image, out var size))
                 {
-                    Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} uses image '{l.Image}', which is not in assets/images."));
+                    Add(new Diagnostic(Severity.Error, mapPath, 0, 0, "", $"Layer {l.Name} uses image '{l.Image}', which is not in assets/images. Import the image again, or pick another one for the layer."));
                     continue;
                 }
                 var imgId = Cpp.Ident(l.Image);
@@ -998,7 +1028,7 @@ public sealed class GameBuilder
                     var f = builtin.Fields.FirstOrDefault(x => x.Name == k);
                     if (f == null)
                     {
-                        Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: {comp.Type} has no field '{k}'."));
+                        Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: {comp.Type} has no field '{k}' (renamed or removed), so the value is ignored. Set the field again in the Inspector."));
                         continue;
                     }
                     try
@@ -1007,7 +1037,7 @@ public sealed class GameBuilder
                     }
                     catch (FormatException)
                     {
-                        Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: {comp.Type}.{k} = '{v}' is not a valid value."));
+                        Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: {comp.Type}.{k} = '{v}' is not a {(f.Kind == BuiltinBehaviours.Kind.Fixed ? "number" : "whole number")}. Enter a {(f.Kind == BuiltinBehaviours.Kind.Fixed ? "number such as 1.5" : "whole number such as 3")} in the Inspector."));
                     }
                 }
                 sb.Append("    return b;\n}\n");
@@ -1017,7 +1047,7 @@ public sealed class GameBuilder
                 var call = _scriptOut.FactoryCall(comp.Type, comp.Fields);
                 if (call == null)
                 {
-                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: behaviour '{comp.Type}' was not found (not a built-in and no C# script defines it)."));
+                    Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name}: behaviour '{comp.Type}' was not found (not a built-in and no C# script defines it). Remove it from the actor in the Inspector, or create a script with class {comp.Type}."));
                     continue;
                 }
                 sb.Append($"agb::Behaviour* {fn}(agb::Arena& arena) {{ return {call}; }}\n");
@@ -1030,7 +1060,7 @@ public sealed class GameBuilder
         {
             if (!_sprites.ContainsKey(a.Sprite))
             {
-                Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name} uses sprite '{a.Sprite}', which is not in assets/sprites."));
+                Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"{a.Name} uses sprite '{a.Sprite}', which is not in assets/sprites. Import the sprite again, or pick another one in the Inspector."));
             }
             else
             {
@@ -1044,7 +1074,7 @@ public sealed class GameBuilder
         var tag = a.Tag.Length == 0 ? 0 : _p.Settings.Tags.IndexOf(a.Tag) + 1;
         var behaviours = creators.Count > 0 ? listName : "nullptr";
         var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
-        if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables."));
+        if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables, so the label stays empty. Add the key in Localization, or change the text in the Inspector."));
         return $"{{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, " +
                (a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr") +
                $", {box}, {behaviours}, {creators.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}}";
@@ -1105,17 +1135,17 @@ public sealed class GameBuilder
         {
             var key = StringKey(it.Text);
             if (key < 0 && it.Text.Any(ch => ch > 126))
-                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Menu item '{it.Text}' is not a string key; only ASCII text can be drawn without one."));
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Menu item '{it.Text}' is not a string key, and only ASCII text can be drawn without one. Add it as a string key in Localization, or use ASCII text."));
             var arg = 0;
             if (it.Command == MenuCommand.LoadScene)
             {
                 arg = sceneNames.IndexOf(it.Scene);
-                if (arg < 0) Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Menu item '{it.Text}' loads '{it.Scene}': no scene with that name."));
+                if (arg < 0) Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Menu item '{it.Text}' loads '{it.Scene}', but no scene has that name (renamed or deleted?). Pick an existing scene for the item."));
             }
             var label = key >= 0 ? $"{{{key}, nullptr}}" : $"{{-1, {Cpp.Str(it.Text)}}}";
             items.Add($"    {{agb::ui::ItemKind::Action, {label}, agb::ui::Command::{it.Command}, {Math.Max(0, arg)}, nullptr, 0}},\n");
         }
-        if (items.Count is 0 or > 16) Add(new Diagnostic(Severity.Error, file, 0, 0, "", "A scene menu has 1 to 16 items."));
+        if (items.Count is 0 or > 16) Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"The scene menu has {items.Count} items; a scene menu holds 1 to 16. Add or remove items."));
         sb.Append($"const agb::ui::ItemDef agbasset_scene_{id}_menu_items[] = {{\n{string.Concat(items)}}};\n");
         // Rows are at least one font line apart and the panel grows to hold every row (Thai fonts are taller
         // than the 8 px design font).
@@ -1306,7 +1336,13 @@ public sealed class GameBuilder
         cancel.ThrowIfCancellationRequested();
         if (!r.Success)
         {
-            if (!_result.Errors.Any()) Add(new Diagnostic(Severity.Error, "", 0, 0, "", "devkitARM build failed:\n" + r.Log));
+            // The whole devkitARM output is already in the log line by line; the error gives its last line and a next step.
+            if (!_result.Errors.Any())
+            {
+                var last = r.Log.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? "no output";
+                Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"Compiling or linking the game failed, and devkitARM gave no error line AGB Studio can point to (last line: {last}). " +
+                    "The full devkitARM output is in the Build ROM log (agb build --verbose prints it). If you changed native C++ code, check it; otherwise try Build › Clean Build."));
+            }
             return "failed";
         }
         Directory.CreateDirectory(Path.GetDirectoryName(RomPath)!);

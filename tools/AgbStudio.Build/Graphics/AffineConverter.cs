@@ -39,7 +39,7 @@ public static class AffineConverter
                     {
                         if (tiles.Count == 256)
                         {
-                            problem ??= "An affine layer holds at most 256 different 8x8 tiles; the rest show as empty.";
+                            problem ??= "a rotate / scale layer holds at most 256 different 8×8 tiles, so the rest show as empty. Use fewer different tiles in it, or make it a normal tile layer.";
                             index = 0;
                         }
                         else
@@ -52,7 +52,7 @@ public static class AffineConverter
                     outCells[(my * 2 + q / 2) * w + mx * 2 + q % 2] = (ushort)index;
                 }
             }
-        if (Math.Max(widthMetatiles, heightMetatiles) * 2 > 128) problem ??= "An affine layer is at most 64 x 64 tiles; the rest is cut off.";
+        if (Math.Max(widthMetatiles, heightMetatiles) * 2 > 128) problem ??= "a rotate / scale layer is at most 64 × 64 map tiles (1024 × 1024 pixels), so the rest is cut off. Make the map smaller, or make it a normal tile layer.";
         return new Result(tiles.SelectMany(x => x).ToArray(), tiles.Count, outCells, w, h, problem);
     }
 }

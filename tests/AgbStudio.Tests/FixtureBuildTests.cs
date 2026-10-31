@@ -250,8 +250,8 @@ public sealed class FixtureBuildTests(EmulatorFixture emu, FixtureBuild fixture)
                 Assert.True(r.Success, string.Join('\n', r.Diagnostics));
                 if (lang == "ja")
                 {
-                    Assert.Contains(r.Diagnostics, d => d.Message == $"{en.Strings.Count} strings missing in 日本語.");
-                    Assert.Contains(r.Diagnostics, d => d.Message == "Language 'ja' uses font 'jp_kana', which is not in fonts/; using pixel8.");
+                    Assert.Contains(r.Diagnostics, d => d.Message == $"{en.Strings.Count} strings missing in 日本語. Translate them in Localization (\"Missing only\"), or set a fallback language in Localization · Languages.");
+                    Assert.Contains(r.Diagnostics, d => d.Message == "Language 'ja' uses font 'jp_kana', which is not in fonts/, so pixel8 is used. Add the font in Font Manager, or pick another one in Localization · Languages.");
                 }
                 var s = new PlaySession(emu.Core);
                 s.Start(r.RomPath);

@@ -130,7 +130,7 @@ public sealed class ScriptEditorTests : IDisposable
         var ed = page.Editor;
         var issue = Assert.Single(ed.Issues, i => i.Id == "GAE002");
         Assert.Equal((8, 5), (issue.Line, issue.Column));
-        Assert.Equal("GAE002 · float is not supported on GBA", issue.Title);
+        Assert.Equal("GAE002 · float is very slow on GBA (no floating-point hardware)", issue.Title);
         // a click on the underline opens the popup with the rule's text and quick fixes
         var p = ed.PointOf(issue.Start);
         _h.ClickAt(_h.At(ed, new Avalonia.Point(p.X + 8, p.Y + 10)));
@@ -217,7 +217,7 @@ public sealed class ScriptEditorTests : IDisposable
         var page = OpenPlayer();
         var problems = _h.Find<StackPanel>("Problems").Children.OfType<ConsoleLine>().ToList();
         var line = Assert.Single(problems);
-        Assert.Equal("GAE002  PlayerController.cs(8,5): float is not supported on GBA — use fixed", line.Text);
+        Assert.Equal("GAE002  PlayerController.cs(8,5): float is very slow on GBA (no floating-point hardware) — use fixed", line.Text);
         Assert.Equal(ConsoleLevel.Warning, line.Level);
         Assert.Equal(1, page.BottomTabs[0].Count);
         Assert.Equal("1 warning", _h.Find<StatusItem>("Status_Problems").Content);

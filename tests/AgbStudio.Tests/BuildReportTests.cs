@@ -239,7 +239,7 @@ public sealed partial class BuildReportTests(EmulatorFixture emu)
         Assert.True(r.Success, string.Join('\n', r.Diagnostics));
         var mb = r.Report!.RomBytes / 1048576.0;
         Assert.InRange(mb, 1.0, 2.0);
-        var warning = string.Create(CultureInfo.InvariantCulture, $"ROM is {mb:0.0} MB, over the 1 MB warning set in Project Settings · Build.");
+        var warning = string.Create(CultureInfo.InvariantCulture, $"ROM is {mb:0.0} MB, over the 1 MB warning set in Project Settings · Build. See Build Report · Largest assets for what to shrink, or raise the limit.");
         Assert.Contains(warning, r.Report.Warnings);
         Assert.Contains(r.Diagnostics, d => d.Severity == Severity.Warning && d.Message == warning);
         Assert.Single(r.Diagnostics, d => d.Message == warning);

@@ -254,7 +254,9 @@ public sealed class ScriptCompiler
         var saved = vars.Where(v => v.Id < 0x4000).ToList();
         if (saved.Any(v => v.Type == "bool" && v.Id >= 256) || saved.Any(v => v.Type != "bool" && v.Id >= 32))
             result.Diagnostics.Add(new ScriptDiagnostic("AGB0002", ScriptSeverity.Error,
-                "Too many saved script flags or variables: the save keeps at most 256 flags and 32 variables.", "", 1, 1));
+                $"Too many saved script flags or variables ({saved.Count(v => v.Type == "bool")} flags, {saved.Count(v => v.Type != "bool")} variables); " +
+                "the save keeps at most 256 flags and 32 variables, so the game could not be saved. Remove saved flags or variables you no longer use " +
+                "(dialogue setFlag commands make flags too).", "", 1, 1));
         var registry = new RegistryWriter(model, ctx, tables, outputs, ops, vars);
         files.Write(ScriptCompileResult.RegistryHeader, registry.Header());
         result.Sources.Add(files.Write("agb_scripts.cpp", registry.Source()));
