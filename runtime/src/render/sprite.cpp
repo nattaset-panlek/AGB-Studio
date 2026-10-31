@@ -47,6 +47,7 @@ bool g_affineUsed[kMaxAffine];
 u32 g_useClock = 0;
 u32 g_copies = 0;
 int g_drawn = 0;
+bool g_mosaicAll = false;
 constexpr int kLineCycles = 1210;  // sprite rendering cycles per screen line (HBlank not free for OAM)
 
 bool tilesFree(int first, int count) {
@@ -137,6 +138,7 @@ void reset() {
     for (auto& e : g_cache) e = {};
     for (auto& w : g_tileUsed) w = 0;
     for (auto& a : g_affineUsed) a = false;
+    g_mosaicAll = false;
     commit::ObjAttr* oam = commit::oam();
     for (int i = 0; i < 128; ++i) oam[i].attr0 = ATTR0_HIDE;
 }
@@ -230,6 +232,7 @@ void setOrder(Id id, s16 order) {
 void setMosaic(Id id, bool on) {
     if (Instance* s = get(id)) s->mosaic = on;
 }
+void setMosaicAll(bool on) { g_mosaicAll = on; }
 void setBlend(Id id, bool on) {
     if (Instance* s = get(id)) s->blend = on;
 }
@@ -369,7 +372,7 @@ int build() {
         const int top = s.y - sh.originY - (ds == 2 ? sh.height / 2 : 0);
         if (left >= 240 || top >= 160 || left + sh.width * ds <= 0 || top + sh.height * ds <= 0) continue;
         u16 a0 = static_cast<u16>((top & 0xFF) | (static_cast<u16>(sh.shape) << 14));
-        if (s.mosaic) a0 |= ATTR0_MOSAIC;
+        if (s.mosaic || g_mosaicAll) a0 |= ATTR0_MOSAIC;
         if (s.blend) a0 |= ATTR0_BLEND;
         u16 a1 = static_cast<u16>((left & 0x1FF) | (static_cast<u16>(sh.sizeCode) << 14));
         if (s.affine >= 0) {

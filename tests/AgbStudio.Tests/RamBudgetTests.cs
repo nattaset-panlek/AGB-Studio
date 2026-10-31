@@ -27,6 +27,24 @@ public sealed class RamBudgetTests(ITestOutputHelper log)
     }
 
     [Fact]
+    public void CodeOfIwramCppFilesCountsAsHotArmCodeNotData()
+    {
+        // *.iwram.cpp files keep their .text section names in IWRAM; they are code like Maxmod's .iwram sections.
+        var map = LinkerSections.Parse([
+            "Linker script and memory map",
+            "",
+            " .iwram         0x03000000      0x838 libmm.a(mm_mixer_gba.o)",
+            " .text._ZN3agb6render12MapLayerView7drawRowEiii",
+            "                0x03000838      0x37c obj/x_runtime_src_render_map_draw.iwram.o",
+            " .bss._ZN3agb5audio12_GLOBAL__N_1L14g_mixingMemoryE",
+            "                0x03001500      0x580 obj/x_runtime_src_audio_audio.o",
+        ]);
+        var ram = RamBudget.FromMap(map);
+        Assert.Equal(0x838 + 0x37c, ram.Rows.Single(r => r.Name == "Hot ARM code").Bytes);
+        Assert.Equal(0x580, ram.Rows.Single(r => r.Name == "Other data").Bytes);
+    }
+
+    [Fact]
     public void TemplateGameReportsTheBlueprintSplit()
     {
         var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "ram_platformer");

@@ -380,15 +380,12 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
         var (p, r) = s_game.Value;
         using var s = StartInForest(emu, r.RomPath);
         var visited = new List<string> { "Title", "Forest_01" };
-        // The test moves the player straight to each trigger. That moves the camera across the map in one frame and
-        // redraws every layer (like Camera.SetPosition), so the few frames after a move are not counted as gameplay.
-        var moved = new HashSet<string>();
+        // The test moves the player straight to each trigger, which moves the camera across the map in one frame (like
+        // Camera.SetPosition or a respawn): the layers redraw their whole windows, at most two a frame, without an overrun.
         void Teleport(int x, int y)
         {
             Play.Teleport(s, "Player", x, y);
-            var n = s.Log.Count;
             Play.Hold(s, 0, 4);
-            moved.UnionWith(s.Log.Skip(n));
         }
         int Go(int scene, int spawnX, string name, GbaKeys keys = 0, int minFrames = 0)
         {
@@ -435,6 +432,6 @@ public sealed class SkyHopperPlayTests(EmulatorFixture emu, ITestOutputHelper lo
 
         Assert.Equal(SkyHopper.SceneNames.Order(), visited.Select(v => v.Split(' ')[0]).Distinct().Order());
         Assert.True(cut < 30, $"the cut took {cut} frames");
-        Assert.Empty(s.Log.Where(GameplayOverrun).Except(moved));
+        Assert.DoesNotContain(s.Log, GameplayOverrun);
     }
 }

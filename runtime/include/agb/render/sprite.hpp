@@ -27,6 +27,7 @@ void setVisible(Id id, bool visible);
 void setPriority(Id id, u8 priority);    // 0 = front
 void setOrder(Id id, s16 order);         // tie break inside a priority (higher draws in front)
 void setMosaic(Id id, bool on);
+void setMosaicAll(bool on);  // every sprite takes part in the mosaic (the scene's "Mosaic effect"); reset() clears it
 void setBlend(Id id, bool on);
 // Rotation (0..255 = full turn) and scale; uses one of 32 affine matrices. doubleSize avoids clipping.
 void setAffine(Id id, u8 angle, fixed scaleX, fixed scaleY, bool doubleSize = false);

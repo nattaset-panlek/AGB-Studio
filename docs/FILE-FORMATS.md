@@ -52,7 +52,7 @@ MyGame/
 | `build` | configuration (`Debug` / `Release`), optimise flags, compress graphics (LZ77), output folder, strip debug log, ROM size warning (MB), keep asserts, run after build |
 | `scripting` | analyzer severities (`GAE001`..`GAE006`), shop currency field and other script options |
 | `localization` | source language, languages (code, name, font, fallback), Thai word wrap, show missing keys, fail on missing |
-| `audio` | Maxmod channels and mixing rate |
+| `audio` | Maxmod channels (`channels`, 1 to 16) and mixing rate (`mixKHz`: 8, 10, 13, 16, 18, 21, 27 or 31; the runtime mixes at it) |
 | `ui` | Menu / UI kit colours and layout of the title, pause and options screens |
 
 ## `scenes/<Name>.scene` (SceneFile)

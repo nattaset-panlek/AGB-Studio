@@ -19,8 +19,13 @@ Choose the GBA video mode for this scene. Each mode has a different number of la
   - **Mode 1**: 2 tile layers and 1 rotate / scale layer.
   - **Mode 2**: 2 rotate / scale layers, for Mode-7 style racing.
   - **Mode 3**: 1 bitmap of 240×160 pixels in 16-bit colour.
-- **Alpha blending (fog, shadows)**: turns see-through blending on or off for this scene.
-- **Mosaic effect**: turns the mosaic (big-pixel) effect on or off for this scene.
+- **Alpha blending (fog, shadows)**: turns see-through blending on or off for this scene. In the game, the map layers
+  in front of the collision layer (fog, clouds, haze) are drawn half see-through over everything behind them, and
+  semi-transparent sprites (shadows) blend over the layers. The collision layer and the layers behind it stay solid, and
+  text (HUD labels, dialogue, menus) is never blended. A scene without a layer in front of its collision layer looks the
+  same with the box ticked.
+- **Mosaic effect**: turns the mosaic (big-pixel) effect on or off for this scene. In the game, the scene's layers and
+  sprites (not the text) break into big pixels while the scene fades in and out, up to 9-pixel blocks at black.
 - The chip in the toolbar shows the mode of the open scene.
 
 ## Related

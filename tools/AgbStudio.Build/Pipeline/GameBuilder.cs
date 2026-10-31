@@ -432,6 +432,7 @@ public sealed class GameBuilder
         if (inputs.Count == 0) return;
         // G-HW.08: every module fits in the mixing channels Maxmod is given.
         var channelProblems = Audio.AudioChannels.Check(_p.Settings.Audio.Channels, _p.MusicFiles());
+        if (Audio.AudioChannels.MixRateProblem(_p.Settings.Audio.MixKHz) is { } rateProblem) channelProblems.Add(rateProblem);
         foreach (var problem in channelProblems) Add(new Diagnostic(Severity.Error, _p.ProjectPath, 0, 0, "", problem));
         if (channelProblems.Count > 0) return;
         var outDir = Path.Combine(GenDir, "audio");
@@ -1171,7 +1172,8 @@ public sealed class GameBuilder
         sb.Append($"    {Cpp.Str(s.General.GameTitle)}, kScenes, {sceneNames.Count}, {start},\n");
         sb.Append($"    {{agb::save::Type::{s.Save.Type}, {Math.Max(1, s.Save.Slots)}, sizeof(GameState), {version}, {(s.Save.Checksum ? "true" : "false")}}},\n");
         sb.Append($"    &agb_state, sizeof(GameState), kActionKeys, {actions.Count},\n");
-        sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, {(ScriptsCompiled ? "agb_scripts_init" : "nullptr")}, {(s.General.SkipSplashInDebug ? "true" : "false")}, ");
+        sb.Append($"    {(hasAudio ? "agb_soundbank" : "nullptr")}, {s.Audio.Channels}, {Audio.AudioChannels.NearestMixRate(s.Audio.MixKHz)}, ");
+        sb.Append($"{(ScriptsCompiled ? "agb_scripts_init" : "nullptr")}, {(s.General.SkipSplashInDebug ? "true" : "false")}, ");
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
         sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount},\n");
@@ -1274,6 +1276,9 @@ public sealed class GameBuilder
         target.IncludeDirs.AddRange(_includeDirs.Distinct());
         if (_p.Settings.Build.KeepAsserts) target.Defines.Add("AGB_KEEP_ASSERTS=1");
         if (config == BuildConfiguration.Release && !_p.Settings.Build.StripDebugLog) target.Defines.Add("AGB_KEEP_LOGS=1");
+        // Project Settings · Audio: Maxmod's buffers in runtime/src/audio/audio.cpp are sized for this rate and channel count.
+        target.Defines.Add($"AGB_AUDIO_MIX_KHZ={Audio.AudioChannels.NearestMixRate(_p.Settings.Audio.MixKHz)}");
+        target.Defines.Add($"AGB_AUDIO_CHANNELS={Math.Clamp(_p.Settings.Audio.Channels, 1, Audio.AudioChannels.MaxMixingChannels)}");
         return target;
     }
 

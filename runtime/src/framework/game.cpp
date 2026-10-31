@@ -126,9 +126,37 @@ void makeLabels(const SceneDef* d) {
         const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
         if (a && label) {
             a->label = label;
-            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label));
+            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label, ad.label ? static_cast<s16>(-1) : ad.labelKey));
         }
     }
+}
+
+// Video Mode popover (T-O02), applied when the scene's layers are loaded and before it fades in.
+// "Alpha blending (fog, shadows)": the map layers drawn in front of the collision (gameplay) layer are the first blend
+// targets, 8/16 over the layers behind, the sprites and the backdrop; semi-transparent sprites (shadows) blend over the
+// layers. The gameplay layer and the layers behind it stay solid, and the text layer (HUD, dialogue) is never blended.
+// "Mosaic effect": the scene's layers and sprites take part in the mosaic; the scene's transitions grow the blocks.
+void applyVideoEffects(const SceneDef* d) {
+    namespace fx = render::effects;
+    const data::MapLayer* ground = nullptr;
+    if (d->collisionLayer >= 0 && d->collisionLayer < d->layerCount && d->layers[d->collisionLayer].type != data::LayerType::CollisionOnly)
+        ground = &d->layers[d->collisionLayer];
+    u8 front = 0, behind = fx::kObj | fx::kBackdrop;
+    for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+        const data::MapLayer& l = d->layers[i];
+        if (l.type == data::LayerType::CollisionOnly) continue;
+        const u8 bit = static_cast<u8>(1u << (l.bg & 3));
+        if (ground && &l != ground && (l.priority < ground->priority || (l.priority == ground->priority && l.bg < ground->bg))) front |= bit;
+        else behind |= bit;
+        if (d->mosaic) {
+            render::bg::Config c = render::bg::config(l.bg);
+            c.mosaic = true;
+            render::bg::configure(l.bg, c);
+        }
+    }
+    if (d->alphaBlend) fx::setAlphaBlend(front, behind, 8, 8);
+    render::sprites::setMosaicAll(d->mosaic);
+    fx::setTransitionMosaic(d->mosaic);
 }
 
 class SceneScreen final : public Screen {
@@ -197,7 +225,7 @@ public:
                     g_scene.camY = g_scene.follow->pos.y.floor() - 80;
                 }
                 confineToZone();
-                // Each layer draws its whole window (about 70k cycles): one layer per frame keeps the frame rate.
+                // Each layer draws its whole window (about 25k cycles) and copies its map to VRAM: one layer per frame.
                 if (d->layerCount > 0) {
                     g_scene.drawnLayers = 0;
                     holdLoadStep();
@@ -219,6 +247,7 @@ public:
                 actors::startNew();
                 return false;
             default:  // 7 fade in + OnEnter
+                applyVideoEffects(d);
                 render::effects::beginIn(g_scene.transition, g_scene.transitionFrames);
                 if (d->music >= 0 && audio::ready()) {
                     audio::setMusicVolume(fixed(1));
@@ -290,9 +319,14 @@ public:
         debug::tracePhase(debug::Phase::PaletteFade);
         render::palettes::update();
         // Map rows and columns that came into view are drawn into the shadow maps and queued for VBlank. A row the
-        // DMA budget cannot take this frame stays dirty and goes next frame (commit::queueCopy).
+        // DMA budget cannot take this frame stays dirty and goes next frame (commit::queueCopy). The collision layer
+        // goes first: after a big camera move (respawn, Camera.SetPosition) the views redraw at most two whole windows
+        // a frame, so the gameplay layer moves with the sprites and a background layer may follow a frame later.
         debug::tracePhase(debug::Phase::Tilemaps);
-        for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+        const int layers = d->layerCount < kMaxLayers ? d->layerCount : kMaxLayers;
+        const int ground = d->collisionLayer >= 0 && d->collisionLayer < layers ? d->collisionLayer : 0;
+        for (int k = 0; k < layers; ++k) {
+            const int i = k == 0 ? ground : k <= ground ? k - 1 : k;
             g_scene.views[i].setCamera(cx, cy);
             g_scene.views[i].commit();
         }
@@ -458,9 +492,10 @@ void boot(const GameDef& def) {
     system::init();
     if (def.save.type != save::Type::None) save::configure(def.save);
     if (def.actionKeys) input::setActionMap(def.actionKeys, def.actionCount);
-    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8)});
+    audio::init({def.soundbank, def.audioChannels ? def.audioChannels : static_cast<u8>(8), def.audioMixKHz ? def.audioMixKHz : static_cast<u8>(21)});
     if (def.dmgSfx) audio::setDmgTable(static_cast<const audio::DmgSfx*>(def.dmgSfx), def.dmgSfxCount);
     rng::seed(0xA6B5);
+    text::clearLabels();  // a boot starts with no labels (a language switch would redraw a previous game's)
     if (def.textTables) {
         text::setTables(reinterpret_cast<const text::Table* const*>(def.textTables), def.textLanguages, def.textFallback);
         text::setLanguage(def.textLanguage);

@@ -13,7 +13,7 @@ struct Owner {
     const data::Palette* palette;
     u8 refs;
 };
-Owner g_owner[32];  // per bank: 0-15 BG, 16-31 OBJ
+AGB_EWRAM_BSS Owner g_owner[32];  // per bank: 0-15 BG, 16-31 OBJ (used when palettes are taken or given back)
 
 struct Fade {
     u32 mask;
