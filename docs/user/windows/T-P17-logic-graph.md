@@ -43,7 +43,8 @@ C# is always shown beside the graph (Graph ⇄ C#). Good for beginners and for s
   is wired from another node shows "(wired)" and cannot be typed in.
 - **Generated C#**: the C# made from the graph, updated as you edit. You can type in it too; after a short pause the
   graph is rebuilt from your C#.
-- **Status line**: Ready, the number of nodes and wires, and "Compiled to C#" (or "C# generation failed").
+- **Status line**: Ready, the number of nodes and wires, and "Compiled to C#" (or "C# generation failed · see
+  Generated C#", where the code pane then says why and what to fix).
 - **Saving**: saving writes the `.graph` file and its `.cs` script. That script opens read-only in the Script Editor.
 
 ## Related

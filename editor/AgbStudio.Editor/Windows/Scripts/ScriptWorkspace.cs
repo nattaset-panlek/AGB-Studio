@@ -256,7 +256,7 @@ public sealed class ScriptWorkspace : IDisposable
         try { r = await Task.Run(() => new ScriptCompiler().Compile(sources, ctx, outDir)); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            Log(ConsoleLevel.Error, "Script check failed: " + e.Message, check: true);
+            Log(ConsoleLevel.Error, $"Script check failed: {e.Message.TrimEnd('.')}. Close programs that use the project's build folder, then save the script again to check it.", check: true);
             return null;
         }
         sw.Stop();

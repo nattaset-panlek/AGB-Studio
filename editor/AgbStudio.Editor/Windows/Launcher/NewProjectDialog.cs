@@ -188,7 +188,7 @@ public sealed class NewProjectDialog : FigmaDialog
     {
         var folder = Location.Selected ?? "";
         var usable = NewProjectRules.IsUsableFolder(folder);
-        Location.Help = usable ? $"A folder outside {_launcher.DevkitPro} is safer for updates" : $"{folder} is not empty";
+        Location.Help = usable ? $"A folder outside {_launcher.DevkitPro} is safer for updates" : $"{folder} is not empty · change the project name or pick another location";
         var romOk = NewProjectRules.IsValidRomTitle(RomTitle.Text);
         var codeOk = NewProjectRules.IsValidGameCode(GameCode.Text);
         _locationHelp?.Token(TextBlock.ForegroundProperty, !usable ? "status/danger" : LocationWarns ? "status/warning" : "text/muted");
@@ -251,7 +251,7 @@ public sealed class NewProjectDialog : FigmaDialog
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or InvalidDataException or System.Text.Json.JsonException)
         {
-            _launcher.Services.Toasts.Show("Could not create the project: " + e.Message, ToastStatus.Error);
+            _launcher.Services.Toasts.Show($"Could not create the project: {e.Message.TrimEnd('.')}. Pick another location or project name, then press Create Project again.", ToastStatus.Error);
             return null;
         }
         finally

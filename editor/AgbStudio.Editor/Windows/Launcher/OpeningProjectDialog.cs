@@ -206,6 +206,7 @@ public sealed class OpeningProjectDialog : Border, IOverlayContent
             SetStep(1, OpenStepState.Running, $"0 / {n}", 0);
             await Gate(Titles[1], ct);
             var unreadable = 0;
+            string? firstUnreadable = null;
             for (var i = 0; i < n; i++)
             {
                 var file = scan.Assets[i];
@@ -215,7 +216,7 @@ public sealed class OpeningProjectDialog : Border, IOverlayContent
                     catch (Exception e) when (e is IOException or JsonException or InvalidDataException or UnauthorizedAccessException or FormatException or IndexOutOfRangeException) { return false; }
                 }, ct);
                 ct.ThrowIfCancellationRequested();
-                if (!ok) unreadable++;
+                if (!ok) { unreadable++; firstUnreadable ??= Path.GetFileName(file); }
                 SetStep(1, OpenStepState.Running, $"{i + 1} / {n} · {Path.GetFileName(file)}", 100.0 * (i + 1) / n);
             }
             SetStep(1, OpenStepState.Done, $"{n} / {n}");
@@ -238,7 +239,13 @@ public sealed class OpeningProjectDialog : Border, IOverlayContent
             // the only step that changes the editor: everything before it can be cancelled without a trace
             _launcher.CompleteOpen(scan.Project.ProjectPath, scan.LastScene);
             SetStep(3, OpenStepState.Done, null);
-            if (unreadable > 0) _launcher.Services.Toasts.Show($"{unreadable} {(unreadable == 1 ? "asset" : "assets")} of {scan.Project.Settings.Name} could not be read.", ToastStatus.Error);
+            if (unreadable > 0)
+            {
+                var text = unreadable == 1
+                    ? $"{firstUnreadable} of {scan.Project.Settings.Name} could not be read. Its card in Assets says why; fix the file or import it again."
+                    : $"{unreadable} assets of {scan.Project.Settings.Name} could not be read (first: {firstUnreadable}). Their cards in Assets say why; fix those files or import them again.";
+                _launcher.Services.Toasts.Show(text, ToastStatus.Error);
+            }
             Finish(scan.Project.ProjectPath);
         }
         catch (OperationCanceledException)
@@ -247,7 +254,10 @@ public sealed class OpeningProjectDialog : Border, IOverlayContent
         }
         catch (Exception e) when (e is IOException or JsonException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
         {
-            _launcher.Services.Toasts.Show($"Could not open {ProjectName}: {e.Message}", ToastStatus.Error);
+            // the project file texts (GameProject.Open / Load) say what is wrong and how to fix it; a file system error gets the fix here
+            _launcher.Services.Toasts.Show((e is UnauthorizedAccessException or (IOException and not FileNotFoundException))
+                ? $"Could not open {ProjectName}: {e.Message.TrimEnd('.')}. Check that the project folder is still there and no other program has it open, then open it again."
+                : $"Could not open {ProjectName}: {e.Message}", ToastStatus.Error);
             Finish(null);
         }
     }

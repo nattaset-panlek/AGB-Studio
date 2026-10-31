@@ -162,7 +162,8 @@ public class BuildRomTests
             var failed = Assert.IsType<BuildFailedDialog>(win.Overlays.Open.Single());
             Assert.Contains(failed.ShownSteps, s => s.State == StepState.Failed);
             Assert.Contains(failed.Failure.Errors, e => e.Text.Contains("Broken.cs", StringComparison.Ordinal));
-            Assert.Equal("Build failed", fx.Services.Status.Build);
+            // the status bar names the error count, as the Build ROM · Failed title does
+            Assert.Matches(@"^Build failed · \d+ errors?$", fx.Services.Status.Build);
             var history = BuildStream.LoadHistory(p);
             Assert.True(history[0].Errors > 0);
             Assert.Contains("Broken.cs", history[0].FirstError, StringComparison.Ordinal);

@@ -27,7 +27,8 @@ The top bar (Open…, New Project) and the sidebar (Projects, Templates, Learn, 
   you can change it freely.
 - **Documentation** (right side):
   - **Scripting API** opens the Scripting API page.
-  - **GBA hardware guide** opens the guide installed with AGB Studio, or says it is not installed.
+  - **GBA hardware guide** opens the guide installed with AGB Studio, or says it is missing and that
+    reinstalling AGB Studio brings it back.
   - **Keyboard shortcuts** opens the Keyboard Shortcuts dialog.
 - **Community**: **Release notes** opens the release notes as a text file; **Report a bug** runs Help › Report a
   Bug….

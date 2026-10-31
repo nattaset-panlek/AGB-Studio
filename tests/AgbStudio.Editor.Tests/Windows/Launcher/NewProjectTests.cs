@@ -95,7 +95,7 @@ public class NewProjectTests
         var taken = Path.Combine(h.Fx.Folder, "GBAProjects", "SkyHopper");
         Assert.True(Directory.Exists(taken));
         Assert.False(Confirm(dlg).IsEnabled);
-        Assert.Equal($"{taken} is not empty", dlg.Location.Help);
+        Assert.Equal($"{taken} is not empty · change the project name or pick another location", dlg.Location.Help);
         Assert.Equal(Token(dlg, "status/danger"), Help(dlg.Location).Foreground);
 
         // Location opens the folder picker; the project folder goes inside the picked folder

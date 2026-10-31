@@ -82,7 +82,14 @@ public sealed class ConsoleLog
         }
         else
         {
-            Add(ConsoleLevel.Error, "Build failed" + (r.FailedStep.Length > 0 ? " at " + r.FailedStep : ""));
+            var errors = r.Diagnostics.Count(d => d.Severity == Severity.Error);
+            var at = r.FailedStep.Length > 0 ? " at " + r.FailedStep : "";
+            Add(ConsoleLevel.Error, errors switch
+            {
+                0 => $"Build failed{at}. Build › Build ROM shows which step stopped and why.",
+                1 => $"Build failed{at}: 1 error above. Fix it, then build again.",
+                _ => $"Build failed{at}: {errors} errors above. Fix them, then build again.",
+            });
         }
     }
 }

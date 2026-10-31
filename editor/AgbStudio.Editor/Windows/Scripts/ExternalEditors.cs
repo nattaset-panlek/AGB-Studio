@@ -255,7 +255,7 @@ public sealed class ExternalEditorService
         try { Launch(exe, args); }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            _s.Toasts.Show($"Could not start {Path.GetFileName(exe)}: {e.Message}", Controls.ToastStatus.Error);
+            _s.Toasts.Show($"Could not start {Path.GetFileName(exe)}: {e.Message.TrimEnd('.')}. Check the Script editor path in Preferences › Paths.", Controls.ToastStatus.Error);
             return false;
         }
         return true;

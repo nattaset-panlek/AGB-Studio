@@ -15,8 +15,8 @@ filter by level and click a line to go to the code.
 
 - **Console tab badge**: the number of messages in the Console.
 - **Message lines**: each line has the time, an icon for its level and the text. The Console collects:
-  - build results: "Build OK in 0.80 s · sky_hopper.gba 412 KB", "Build failed" with the step, or "Build cancelled ·
-    the last built ROM is unchanged";
+  - build results: "Build OK in 0.80 s · sky_hopper.gba 412 KB", "Build failed" with the step, the number of errors
+    above it and what to do, or "Build cancelled · the last built ROM is unchanged";
   - build warnings and errors, each with the file and line it points at;
   - the running game's own lines, the same as in Play Mode's Console: `Debug.Log` output, engine warnings (counted
     under Warnings) and failed asserts (counted under Errors);

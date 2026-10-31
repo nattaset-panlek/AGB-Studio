@@ -278,7 +278,11 @@ public sealed class SfxDesignerPage : DockPanel
         if (_doc != null && file != FilePath && !_doc.IsDirty) _s.Documents.Close(_doc);
         FilePath = file;
         try { Sfx = file is null ? new SfxFile() : GameProject.Load<SfxFile>(file); }
-        catch (Exception e) when (e is IOException or JsonException) { Sfx = new SfxFile(); _s.Toasts.Show($"{Path.GetFileName(file)} could not be read: {e.Message}", ToastStatus.Error); }
+        catch (Exception e) when (e is IOException or JsonException)
+        {
+            Sfx = new SfxFile();
+            _s.Toasts.Show($"{Path.GetFileName(file)} could not be read: {e.Message.TrimEnd('.')}. An empty sound is shown instead; fix the file before you edit here, or the empty sound is saved over it.", ToastStatus.Error);
+        }
         if (Sfx.Name.Length == 0 && file != null) Sfx.Name = GameProject.AssetName(file);
         _preset = SfxPresets.Matching(Sfx) ?? SfxPresets.Names.FirstOrDefault(n => string.Equals(n, Sfx.Name, StringComparison.OrdinalIgnoreCase));
         _coalesce = null;

@@ -30,7 +30,8 @@ earlier builds.
   Letters are made upper case; a value that does not fit is not saved.
 - **Export**: **Open build folder** shows the build folder in Explorer. **Run in mGBA** runs the built ROM in Play Mode
   without building (it says "Build the ROM first." if there is none). **Flash to cartridge** opens Flash to Cartridge.
-- **Status bar**: Build OK / Build failed / No build yet, the build time and clock time, and the ROM file name.
+- **Status bar**: Build OK / Build failed · N errors / No build yet, the build time and clock time, and the ROM file
+  name.
 - **No build yet**: before the first build the page says "No build yet. Build the ROM to see its report."
 - The page reloads by itself when a build finishes.
 

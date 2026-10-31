@@ -366,8 +366,9 @@ public sealed class MenuActionTests : IDisposable
         var s = _fx.Services;
         _ = win;
         var r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal("No update source configured", r.Message);
-        Assert.Contains(s.Toasts.Visible, t => t.Text == "No update source configured" && t.Status == ToastStatus.Error);
+        const string noSource = "Could not check for updates: no update source is set. Add an updateFeed address to editor.json next to AGBStudio.exe.";
+        Assert.Equal(noSource, r.Message);
+        Assert.Contains(s.Toasts.Visible, t => t.Text == noSource && t.Status == ToastStatus.Error);
         Assert.Empty(asked);
 
         var links = new EditorLinks { Config = new EditorConfig { UpdateFeed = "https://feed.example/latest.json" }, Open = _opened.Add, Fetch = (url, _) => { asked.Add(url); return feed is null ? throw new HttpRequestException("offline") : Task.FromResult(feed); } };
@@ -387,7 +388,7 @@ public sealed class MenuActionTests : IDisposable
 
         feed = null;
         r = await MenuActions.CheckUpdatesAsync(s);
-        Assert.Equal("Could not check for updates: offline", r.Message);
+        Assert.Equal("Could not check for updates: offline. Check the internet connection and the updateFeed address in editor.json, then try again.", r.Message);
     }
 
     // ---- Build › Clean Build, Assets › Find Unused Assets ----------------------------------------------

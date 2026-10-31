@@ -19,7 +19,9 @@ FPS and live values in the Inspector, and the Console shows the log from your sc
 ## What is on it
 
 - **Building first**: Play, Play from Here and Build & Run first make a Debug build of the project. If the build fails,
-  a message says "Build failed · see Console" and the errors are listed in the Console.
+  a message says "Build failed · N errors. The Console shows what to fix; then press Play again." and the errors are
+  listed in the Console. If the emulator cannot run the ROM, a message says "Could not run <file>. The Console says
+  why and what to do."
 - **Game view**: the GBA screen (240 x 160) scaled up pixel for pixel, at the size set in Preferences › Emulator.
   Top left shows the frame rate and how much VBlank time is free; bottom right shows the selected actor and its state.
   Click an actor in the game to show it in the Inspector.

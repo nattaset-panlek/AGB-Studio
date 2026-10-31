@@ -44,7 +44,7 @@ public class AssetImporterTests
         Assert.True(problems[2].IsReady);
         var junk = Path.Combine(fx.Folder, "notes.xyz");
         File.WriteAllText(junk, "x");
-        Assert.Equal("AGB Studio can't import .xyz files.", AssetImporter.Inspect(junk, p).Error);
+        Assert.Equal("AGB Studio can't import .xyz files. Save it as one of the kinds it imports: .png, .aseprite, .tmx, .wav, .mod, .xm, .pal, .gpl, .ttf, .otf, .bdf or .cs.", AssetImporter.Inspect(junk, p).Error);
         Assert.Equal((32, 32), AssetImporter.GuessFrame(64, 32));
         Assert.Equal((16, 16), AssetImporter.GuessFrame(96, 16));
     }

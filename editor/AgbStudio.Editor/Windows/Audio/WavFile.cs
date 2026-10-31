@@ -13,7 +13,7 @@ public sealed record WavData(float[] Samples, int Rate, int Channels, int Bits)
     public static WavData Parse(byte[] d)
     {
         if (d.Length < 12 || Encoding.ASCII.GetString(d, 0, 4) != "RIFF" || Encoding.ASCII.GetString(d, 8, 4) != "WAVE")
-            throw new InvalidDataException("Not a WAV file.");
+            throw new InvalidDataException("It is not a WAV file inside, only named like one. Export it again as .wav from your audio editor.");
         int format = 0, channels = 1, rate = 0, bits = 8;
         var o = 12;
         byte[]? data = null;
@@ -34,8 +34,9 @@ public sealed record WavData(float[] Samples, int Rate, int Channels, int Bits)
             else if (id == "data") data = d.AsSpan(body, size).ToArray();
             o = body + size + (size & 1);
         }
-        if (data is null || rate <= 0 || channels <= 0) throw new InvalidDataException("The WAV file has no audio data.");
-        if (format is not (1 or 3)) throw new InvalidDataException("Only PCM and float WAV files can be imported.");
+        // callers put the file name in front ("{file} can't be read: ..."), so these texts say what is wrong and what to do
+        if (data is null || rate <= 0 || channels <= 0) throw new InvalidDataException("The WAV file has no sound in it. Export it again from your audio editor.");
+        if (format is not (1 or 3)) throw new InvalidDataException("The WAV file is compressed, and AGB Studio reads only uncompressed (PCM or float) WAV. Export it again as 16-bit PCM WAV.");
         var bytes = bits / 8;
         var frames = data.Length / (bytes * channels);
         var mono = new float[frames];
@@ -52,7 +53,7 @@ public sealed record WavData(float[] Samples, int Rate, int Channels, int Bits)
                     (1, 24) => ((data[p] | (data[p + 1] << 8) | ((sbyte)data[p + 2] << 16))) / 8388608f,
                     (1, 32) => BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(p)) / 2147483648f,
                     (3, 32) => BinaryPrimitives.ReadSingleLittleEndian(data.AsSpan(p)),
-                    _ => throw new InvalidDataException($"{bits}-bit WAV files are not supported."),
+                    _ => throw new InvalidDataException($"{bits}-bit WAV files are not supported; AGB Studio reads 8-, 16-, 24- and 32-bit PCM and 32-bit float. Export it again as 16-bit PCM WAV."),
                 };
             }
             mono[f] = sum / channels;

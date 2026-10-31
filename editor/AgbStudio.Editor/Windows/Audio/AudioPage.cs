@@ -209,7 +209,13 @@ public sealed class AudioPage : DockPanel
             }
             catch (Exception e) when (e is IOException or InvalidDataException or IndexOutOfRangeException or ArgumentException)
             {
-                _s.Toasts.Show($"{Path.GetFileName(file)} could not be read: {e.Message}", ToastStatus.Error);
+                // the reader's own text (TrackerModule) says how to save the song again
+                _s.Toasts.Show(e switch
+                {
+                    InvalidDataException => $"{Path.GetFileName(file)} could not be read: {e.Message}",
+                    IOException => $"{Path.GetFileName(file)} could not be read: {e.Message.TrimEnd('.')}. Close programs that use it, then select it again.",
+                    _ => $"{Path.GetFileName(file)} could not be read: it is damaged ({e.Message.TrimEnd('.')}). Save it again from your tracker and import it again.",
+                }, ToastStatus.Error);
             }
             Meta = _s.Project.Current?.LoadMeta<MusicMeta>(file) ?? new MusicMeta();
             if (_doc?.Path != file)
@@ -408,7 +414,10 @@ public sealed class AudioPage : DockPanel
         }
         catch (Exception e) when (e is IOException or InvalidDataException)
         {
-            _s.Toasts.Show($"{Path.GetFileName(wav)} could not be played: {e.Message}", ToastStatus.Error);
+            // the WAV reader's own text says how to export the file again
+            _s.Toasts.Show((e is InvalidDataException)
+                ? $"{Path.GetFileName(wav)} could not be played: {e.Message}"
+                : $"{Path.GetFileName(wav)} could not be played: {e.Message.TrimEnd('.')}. Close programs that use it, then play it again.", ToastStatus.Error);
         }
     }
 

@@ -248,7 +248,7 @@ public sealed class DatabasePage : ToolPage
         if (f.Type == "bool") value = TableGrid.IsTrue(value) ? "yes" : "no";
         if (f.Name == t.KeyField)
         {
-            if (value.Length == 0 || AgbStudio.Build.Pipeline.Cpp.Ident(value) != value) return Refuse($"“{value}” is not a valid id.");
+            if (value.Length == 0 || AgbStudio.Build.Pipeline.Cpp.Ident(value) != value) return Refuse($"“{value}” is not a valid id. An id uses only letters A-Z, digits and _, and does not start with a digit.");
             if (t.Rows.Where((x, i) => i != row).Any(x => x.GetValueOrDefault(t.KeyField) == value)) return Refuse($"{value} is already a row of {t.Name}.");
         }
         var old = r.GetValueOrDefault(f.Name);

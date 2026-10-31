@@ -229,8 +229,10 @@ public sealed class LogicGraphPage : DockPanel
         }
         catch (Exception e) when (e is FormatException or InvalidOperationException or KeyNotFoundException)
         {
-            code = "// " + e.Message;
-            _compiled.Content = "C# generation failed";
+            // the code pane says why and what to do; the status bar points to it
+            code = "// No C# could be made from this graph:\n// " + e.Message.Replace("\n", "\n// ", StringComparison.Ordinal)
+                   + "\n// Fix that node setting or wire in the graph; this code updates as you edit.";
+            _compiled.Content = "C# generation failed · see Generated C#";
             _compiled.Glyph = "warn";
         }
         _codeFromGraph = true;

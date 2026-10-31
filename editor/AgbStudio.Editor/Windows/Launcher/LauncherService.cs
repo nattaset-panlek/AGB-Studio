@@ -156,7 +156,7 @@ public sealed class LauncherService
     string DefaultStatusLine()
     {
         var arm = Services.Toolchain.Find("devkitARM");
-        var tool = arm is null ? null : arm.Found ? $"{arm.Version ?? "devkitARM"} found" : "devkitARM not found";
+        var tool = arm is null ? null : arm.Found ? $"{arm.Version ?? "devkitARM"} found" : "devkitARM not found · set it in Settings › Paths";
         return tool is null ? EditorVersion.Short : $"{EditorVersion.Short} · {tool}";
     }
 
@@ -291,7 +291,7 @@ public sealed class LauncherService
             .FirstOrDefault(d => Directory.Exists(d) && Directory.EnumerateFiles(d, "*.agbproj").Any());
         if (prepared is null && sample.Create is null)
         {
-            Services.Toasts.Show($"{sample.Name} is not installed.", ToastStatus.Error);
+            Services.Toasts.Show($"The {sample.Name} sample is missing from this install. Reinstall AGB Studio to get the samples back.", ToastStatus.Error);
             return false;
         }
         var path = await Task.Run(() =>
@@ -315,7 +315,8 @@ public sealed class LauncherService
 
     public void ShowSelectedInExplorer()
     {
-        if (_selected is { } s && !Services.System.ShowInExplorer(s.Path)) Services.Toasts.Show($"{s.Name} was not found.", ToastStatus.Error);
+        if (_selected is { } s && !Services.System.ShowInExplorer(s.Path))
+            Services.Toasts.Show($"{s.Name} was not found in {System.IO.Path.GetDirectoryName(s.Path)}; it was moved or deleted. Use Open… to pick its new folder, or remove it from the list.", ToastStatus.Error);
     }
 
     /// <summary>Copies the project folder (without build output) next to it as "Name copy" and lists it first.</summary>
@@ -350,7 +351,10 @@ public sealed class LauncherService
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or InvalidDataException)
         {
-            Services.Toasts.Show($"Could not duplicate {r.Name}: {e.Message}", ToastStatus.Error);
+            // a damaged project file: its text (GameProject.Load) says how to fix it; a file system error gets the fix here
+            Services.Toasts.Show((e is IOException or UnauthorizedAccessException)
+                ? $"Could not duplicate {r.Name}: {e.Message.TrimEnd('.')}. Check that the drive has free space and no program is using the project's files, then try again."
+                : $"Could not duplicate {r.Name}: {e.Message}", ToastStatus.Error);
             return null;
         }
     }
@@ -381,7 +385,9 @@ public sealed class LauncherService
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or InvalidDataException)
         {
-            Services.Toasts.Show($"Could not rename {r.Name}: {e.Message}", ToastStatus.Error);
+            Services.Toasts.Show((e is IOException or UnauthorizedAccessException)
+                ? $"Could not rename {r.Name}: {e.Message.TrimEnd('.')}. Close programs that use its project file (.agbproj), then try again."
+                : $"Could not rename {r.Name}: {e.Message}", ToastStatus.Error);
             return false;
         }
     }

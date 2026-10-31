@@ -85,7 +85,7 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
     public async Task<BuildResult> BuildAsync(BuildOptions? options = null, IBuildObserver? observer = null)
     {
         var p = project.Current ?? throw new InvalidOperationException("No project is open.");
-        if (IsBuilding) throw new InvalidOperationException("A build is already running.");
+        if (IsBuilding) throw new InvalidOperationException("A build is already running. Wait for it to finish, then try again.");
         IsBuilding = true;
         _cancel = CancellationTokenSource.CreateLinkedTokenSource(options?.Cancel ?? CancellationToken.None);
         options = new BuildOptions { Configuration = options?.Configuration, Clean = options?.Clean ?? false, Cancel = _cancel.Token };

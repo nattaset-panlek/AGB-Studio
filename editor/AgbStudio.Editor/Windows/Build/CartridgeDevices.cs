@@ -90,7 +90,7 @@ public sealed class SdCardFlashCart(string root) : ICartridgeDevice
         }
         catch (Exception e) when (e is IOException or ArgumentException or UnauthorizedAccessException)
         {
-            return Task.FromResult(new CartridgeStatus(false, "No SD card", e.Message));
+            return Task.FromResult(new CartridgeStatus(false, "No SD card", $"{e.Message.TrimEnd('.')}. Insert the flash cart's SD card, then choose the device again."));
         }
     }
 

@@ -27,8 +27,9 @@ public class PlayRomErrorTests
             Assert.Null(play.Session);
             Assert.False(play.IsRunning);
             Assert.Equal(PlayState.Stopped, play.State);
-            Assert.Contains(play.Console.Entries, e => e.Level == ConsoleLevel.Error && e.Text.StartsWith("broken.gba: ", StringComparison.Ordinal));
-            Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Could not run broken.gba · see Console" && t.Status == ToastStatus.Error);
+            // G-ERR.01: the core's text says what, why and what to do, and names the file once
+            Assert.Contains(play.Console.Entries, e => e.Level == ConsoleLevel.Error && e.Text.StartsWith("The emulator could not start broken.gba: ", StringComparison.Ordinal));
+            Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Could not run broken.gba. The Console says why and what to do." && t.Status == ToastStatus.Error);
             // Stop and the editor closing (Dispose) used to ask the core for save RAM with no game loaded and crash
             play.Stop();
             Assert.Null(play.Session);

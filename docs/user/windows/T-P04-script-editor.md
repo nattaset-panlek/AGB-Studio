@@ -43,7 +43,7 @@ or press Open externally to use VS Code or Rider as set in Preferences.
 - **Terminal**: type a command and press Enter to run it in the project folder.
 - **Output**: the full log of checks, builds and hot reloads.
 - **Status line**: problem count (click to show Problems), caret line and column, the script language and the devkitARM
-  version (or "devkitARM not found").
+  version (or "devkitARM not found · set it in Preferences › Paths").
 - **Saving**: File › Save (Ctrl+S) tidies the code when format on save is on in Preferences, then checks every script.
   When a script is saved in an external editor, AGB Studio reloads it, checks it and, if the game is running, updates
   the running game (hot reload). Preferences and Project Settings can turn hot reload off.

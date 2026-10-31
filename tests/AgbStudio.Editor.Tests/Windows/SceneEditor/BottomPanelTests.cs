@@ -146,7 +146,7 @@ public sealed class BottomPanelTests : IDisposable
         r.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", "devkitARM build failed"));
         log.AddBuild(r);
         Assert.Equal(before + 2, log.Entries.Count);
-        Assert.Equal("Build failed at Compile (devkitARM g++ -O2)", log.Entries[^1].Text);
+        Assert.Equal("Build failed at Compile (devkitARM g++ -O2): 1 error above. Fix it, then build again.", log.Entries[^1].Text);
         Assert.Equal(ConsoleLevel.Error, log.Entries[^1].Level);
     }
 
