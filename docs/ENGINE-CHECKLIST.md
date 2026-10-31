@@ -211,13 +211,13 @@
   - [ ] matches Figma
 - **T-P02 Play Mode** · 1440 x 900 · from: #11 Play, #15 Tab Game, Build › Play, Build › Play from Here, Build › Build & Run in Emulator, Build Report › Run in mGBA
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, test:PlayModeE2ETests.P12_08_StatusBar_FrameFpsVBlankCpu_RunningPaused_HotReload, test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, doc:docs/user/windows/T-P02-play-mode.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P02.png (hitboxes on hearts and flag gone), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P03 Tilemap Editor** · 1440 x 900 · from: #16 Tab Forest_01.map, Scene › Background Layers…, Create › Tileset / Tilemap
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:TilemapE2ETests.OpensFromTheMapTabBackgroundLayersAndCreateMenu, test:SceneDialogTests.SetAsStartScene_AndBackgroundLayers, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:TilemapE2ETests.TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView, test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, test:TilemapE2ETests.MapPanel_SizeBgSizeColoursWrap_AndBudget, test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, doc:docs/user/windows/T-P03-tilemap-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
 - **T-P04 Script Editor** · 1440 x 900 · from: #17 Tab PlayerController.cs, #31 Script component, Create › C# Script, Actor Context Menu › Edit Script, Component Menu › Edit Script
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ScriptEditorTests.OpensFromTheDocTabAndListsTheScripts, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentMenu_EveryItem, test:ScriptEditorTests.LineNumbersHighlightingAndBreadcrumb, test:ScriptEditorTests.AutocompleteListsApiMembersAndInsertsTheChoice, test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, test:ScriptEditorTests.SidePanelAttachedToCompilesToExposedFieldsOutlineAndApi, test:ScriptEditorTests.BottomPanelProblemsTerminalOutputAndStatusLine, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ScriptEditorSettingsTests.AnalyzerChip_OpensProjectSettingsOnScripting, test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, doc:docs/user/windows/T-P04-script-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P04.png (float colour fixed), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P05 Console panel** · 860 x 250 · from: #21 Console tab
   - [x] implemented — evidence: test:BottomPanelTests.Console_LinesFiltersCountsAndClickToCode, test:BottomPanelTests.Console_TakesBuildResultsFromTheBuildService, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, doc:docs/user/windows/T-P05-console-panel.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P05.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -226,10 +226,10 @@
   - [ ] matches Figma
 - **T-P07 Database** · 1440 x 900 · from: #23 Database tab, Tools › Database, Create › Data Table
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, doc:docs/user/windows/T-P07-database.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P07.png (table, price, header match; rest in rows 1455 1487 1491), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P08 Sprite Editor** · 1440 x 900 · from: #24 Asset (double-click), Create › Sprite, Asset Context Menu › Open, Animation List › Edit Animations…
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:SpriteEditorE2ETests.CreateSprite_CommandOpensEditorAndDialog, test:PopoverAndMenuTests.AssetContextMenu_EveryItem, test:PopoverAndMenuTests.ZoomAndAnimationList_EveryItem, test:SpriteEditorE2ETests.P11_22_Canvas_TileGridZoomToolsAndFrameIndex, test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, test:SpriteEditorE2ETests.P11_26_Timeline_AnimationsTicksLoopPingPongOnionSkin, doc:docs/user/windows/T-P08-sprite-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P08.png (list order and frame strip match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P09 Font Manager** · 1440 x 900 · from: #26 Font asset, Tools › Font Manager, Create › Font
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, doc:docs/user/windows/T-P09-font-manager.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -241,7 +241,7 @@
   - [x] matches Figma — evidence: test:BuildTests, review:docs/evidence/review-final-2.md (2026-10-31)
 - **T-P12 Launcher** · 1440 x 900 · from: app start, File › Open Project…, Help › Getting Started
   - [x] implemented — evidence: test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:PrototypeFlowTests.T_X01_FlowStart_FromTheLauncher_EveryLinkItReaches, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_05_ProjectContextMenu_ActionsAndDeleteAsksFirst, test:LauncherE2ETests.P11_07_WhatsNew_ComesFromTheReleaseNotes, test:OpeningProjectTests.P11_06_CancelDuringLoadAssets_LeavesTheOpenProjectAsItWas, doc:docs/user/windows/T-P12-launcher.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P12.png (Top-down card and thumbnails match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P13 World Map** · 1440 x 900 · from: Scene › World Map
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:WorldMapTests.CtrlM_ShowsScenesLinksStartSceneAndInspector, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, doc:docs/user/windows/T-P13-world-map.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -268,7 +268,7 @@
 
 - **T-D01 New Project** · 1180 x 668 · from: File › New Project…, Launcher › New Project, Launcher · Templates › Use this template
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D01.png (grass tile gone (0 px diff there); eight cards = row 1479), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-D02 New Scene** · 520 x 470 · from: Scene › New Scene…, Scene Switcher › New Scene…, World Map › New Scene
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, test:SceneDialogTests.NewScene_CreatesTheSceneFromTheOptions_AndUndo, doc:docs/user/windows/T-D02-new-scene.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D02.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -295,7 +295,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D09.png, report:docs/evidence/shot-report.md (0.67 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D10 Keyboard Shortcuts** · 760 x 390 · from: Help › Keyboard Shortcuts
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.Menu_ClickFileOpensItAndHelpKeyboardShortcutsOpensTheDialog, test:AboutTests.KeyboardShortcuts_GroupsAndSearch, doc:docs/user/windows/T-D10-keyboard-shortcuts.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D10.png (only the footer link, row 1480), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-D11 About** · 460 x 304 · from: Help › About AGB Studio
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:AboutTests.Website_IsDisabledWhenNoUrlIsConfigured, doc:docs/user/windows/T-D11-about.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D11.png, report:docs/evidence/shot-report.md (2.73 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
@@ -327,7 +327,7 @@
   - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:PreferenceEffectsTests.Editor_DefaultSnapCollisionOverlayAndBudgetInInspector, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ServiceTests.Undo_RespectsHistoryLimitFromPreferences, test:ServiceTests.Autosave_SavesDirtyDocumentsEveryNMinutes, test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:ExternalEditorDetectionTests.SettingsPersistWithFigmaDefaults, doc:docs/user/windows/T-S07-preferences-editor.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: test:Editor_FontAndThemeDropdownsShowTheirWholeNames, review:docs/evidence/review-final-2.md (2026-10-31)
 - **T-S08 Preferences · Paths** · 900 x 620
-  - [ ] implemented
+  - [x] implemented — evidence: test:PreferencesTests.Paths_ClearCacheEmptiesTheProjectsBuildCache, test:PreferenceEffectsTests.Paths_ProjectsFolderImageEditorTiled_AndBrowse (hint and per-project cache done, rows 1444 and 1472), review:docs/evidence/review-final-3.md (2026-10-31)
   - [x] matches Figma — evidence: test:PreferencesTests, review:docs/evidence/review-final-2.md (2026-10-31)
 - **T-S09 Preferences · Shortcuts** · 900 x 620
   - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, test:PreferencesTests.Shortcuts_ShowTheConflictChip, test:CommandAndShortcutTests.Shortcuts_RebindToCtrlG_ReportsGoToLine, test:CommandAndShortcutTests.Shortcuts_PersistInPreferencesAndResetToDefaults, doc:docs/user/windows/T-S09-preferences-shortcuts.md, commit:c407d74 (2026-10-31)
@@ -349,7 +349,7 @@
   - [ ] matches Figma
 - **T-O05 Component Picker** · 400 x 464 · from: #32 Add Component, Actor Context Menu › Add Behaviour…
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, doc:docs/user/windows/T-O05-component-picker.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O05.png (selected name colour now matches), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-O06 Budget Details** · 420 x 398 · from: #33 GBA Budget
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.GbaBudget_ShowsLiveMetersAndOpensBudgetDetails, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, test:BudgetAndHistoryTests.P13_07_PaletteSharingSuggestion_ForTheFixture, test:BudgetAndHistoryTests.P13_07_LiveBudget_FromTheRunningGame, doc:docs/user/windows/T-O06-budget-details.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O06.png, report:docs/evidence/shot-report.md (3.08 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -438,13 +438,13 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
 
 - **T-P20 Launcher · Templates** · 1440 x 900 · from: Launcher › Templates tab
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_02_Templates_FiltersSearchDetailsAndUseThisTemplate, doc:docs/user/windows/T-P20-launcher-templates.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P20.png (Top-down card and detail preview match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P21 Launcher · Learn** · 1440 x 900 · from: Launcher › Learn tab
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:LauncherE2ETests.P11_03_Samples_EachIsMadeAndOpened, doc:docs/user/windows/T-P21-launcher-learn.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P21.png (thumbnails seam-free), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P22 Scene Editor · Empty project** (empty state) · 1440 x 900 · from: File › New Project (Empty)
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P22.png (folder icon 18x14 fixed in db463f2), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P23 Debugger · Memory** · 1440 x 900 · from: Debugger › Views › Memory
   - [x] implemented — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_05_Memory_MapByCategory_WatchList_HexView_AddWatch, doc:docs/user/windows/T-P23-debugger-memory.md, commit:c407d74 (2026-10-31)
   - [ ] matches Figma
@@ -480,13 +480,13 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D18.png, report:docs/evidence/shot-report.md (1.14 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D19 Import CSV** · 780 x 478 · from: Database › Import CSV
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D19.png (warning text 12 px now), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-D20 Add Language** · 520 x 416 · from: Project Settings › Localization › Add language, Localization › Languages +
   - [x] implemented — evidence: test:ProjectSettingsTests.AddLanguageOpensAddLanguage_AndChangeInPreferencesOpensPaths, test:LocalizationWindowTests.P11_42_AddLanguageJapaneseCreatesAKanaFont_FrenchUsesTheCurrentFont, doc:docs/user/windows/T-D20-add-language.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D20.png, report:docs/evidence/shot-report.md (1.82 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
 - **T-D21 New Speaker** · 520 x 438 · from: Dialogue Editor › Speakers +
   - [x] implemented — evidence: test:DialogueWindowTests.P11_47_NewSpeakerWithThaiNamePortraitColourAndBlip, doc:docs/user/windows/T-D21-new-speaker.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D21.png (portraits near Figma sizes; count = row 1475), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-D22 Opening Project** (loading state) · 480 x 322 · from: Launcher › Project card, File › Open Recent
   - [x] implemented — evidence: test:TitleBarMenuTests.FileOpenRecent_OpensTheProjectThroughOpeningProject_AndClearRecentEmptiesTheList, test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, test:OpeningProjectTests.P11_06_CancelDuringLoadAssets_LeavesTheOpenProjectAsItWas, doc:docs/user/windows/T-D22-opening-project.md, commit:7487e78 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D22.png, report:docs/evidence/shot-report.md (0.86 %, offset 0 px), review:docs/evidence/review-shot-windows.md, commit:c407d74 (2026-10-31)
@@ -501,7 +501,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
 
 - **T-O08 Add Node** · 380 x 269 · from: Logic Graph › Right-click canvas, Nodes › Add node…
   - [x] implemented — evidence: test:LogicGraphTests.RightClickCanvas_AddNodeSearchEnterAndShiftEnter, test:LogicGraphTests.NodesAddNode_OpensTheAddNodePopover, doc:docs/user/windows/T-O08-add-node.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O08.png (Get Velocity third result and colours match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-O09 Link Settings** · 360 x 330 · from: World Map › Link chip (click a link)
   - [x] implemented — evidence: test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, doc:docs/user/windows/T-O09-link-settings.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O09.png, report:docs/evidence/shot-report.md (2.75 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -510,7 +510,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-O11 Find & Replace** · 540 x 124 · from: Script Editor › Ctrl+F / Ctrl+H
   - [x] implemented — evidence: test:ScriptToolsTests.CtrlF_OpensFindWithTheWordAtTheCaret_NextAndReplace, test:ScriptToolsTests.CtrlH_OpensFindAndReplaceInReplaceMode_TypeAndEnterReplaces, test:ScriptToolsTests.FindOptions_CaseWholeWordRegexAndScopes, doc:docs/user/windows/T-O11-find-and-replace.md, commit:7487e78 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O11.png (toggles aligned; count text is fixture content), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-O12 Record Shortcut** · 340 x 264 · from: Preferences › Shortcuts › pencil
   - [x] implemented — evidence: test:PreferencesTests.Shortcuts_SearchPressAKeyRecordWithConflictReplaceSaveAndReset, doc:docs/user/windows/T-O12-record-shortcut.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O12.png, report:docs/evidence/shot-report.md (1.41 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -544,7 +544,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [ ] matches Figma
 - **T-L02 New Project · Light** · 1180 x 668
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-L02.png (same as T-D01 in Light), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-L03 Preferences · Appearance · Light** · 900 x 620
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-L03.png, report:docs/evidence/shot-report.md (0.54 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -749,7 +749,7 @@ Verify ทุกข้อด้วย `E2E`
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-frame-thumb-default.png, shot:docs/evidence/diff/C-frame-thumb-active.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - **Scene Card** (Default, Selected)
   - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/C-scene-card-default.png, shot:docs/evidence/diff/C-scene-card-selected.png (seams gone, 0.44 / 0.81 %), review:docs/evidence/review-final-3.md (2026-10-31)
 - **Template Card** (Default, Selected)
   - [x] implemented — evidence: test:DesignSystemTests.Components_All47BuildableComponentsAreInTheGallery, test:ShotTests.Shot_AllComponentsAndWindows, doc:editor/AgbStudio.Editor/Gallery/GalleryCatalog.cs, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/C-template-card-default.png, shot:docs/evidence/diff/C-template-card-selected.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components-2.md, commit:7487e78 (2026-10-31)
@@ -860,7 +860,7 @@ Items:
 - [x] P1.01 All decisions D-01..D-21 answered and recorded in `docs/DECISIONS.md` (one entry each: question, options, answer, date) · Verify: `USER` — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 - [x] P1.02 Design issues 1.4 items 1-9 resolved in Figma or accepted · Verify: `USER` — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 - [x] P1.03 Repo created per D-04 with the agreed layout and a README · Verify: `REV` — evidence: doc:README.md, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
-- [ ] P1.04 File format spec per D-03 (project, scene, map, layout, tileset, sprite meta, palette, font, database, strings, dialogue, logic graph, sfx) with JSON schemas and a format version field · Verify: `UT` load / save round trip of every schema
+- [x] P1.04 File format spec per D-03 (project, scene, map, layout, tileset, sprite meta, palette, font, database, strings, dialogue, logic graph, sfx) with JSON schemas and a format version field · Verify: `UT` load / save round trip of every schema — evidence: test:ProjectModelTests.EveryFileFormatRoundTrips (round trip, "format": 1 and schema validation for every file; docs/schemas has 18 schemas), review:docs/evidence/review-final-3.md (2026-10-31)
 - [x] P1.05 "Sky Hopper" fixture project that reproduces the data shown in Figma (5 scenes incl. Forest_01 30x20, 6 links, 12 C# scripts, Items table 24 rows / 9 fields, 340 string keys in English / Thai / Japanese, sprites hero / slime / coin / block / heart / cloud, forest_tiles, fonts thai_vwf / pixel8 / title_big, music and SFX) using original placeholder content · Verify: `UT` counts match the Figma frames — evidence: test:FixtureTests.CountsMatchTheFigmaFrames, test:FixtureTests.GeneratedMusicIsReadByMaxmod, commit:d802a71 (2026-10-31)
 - [x] P1.06 CI pipeline: host unit tests, runtime test ROMs through mgba-rom-test, editor build, artifact upload (infra: every Verify step needs it) · Verify: green run on the empty skeleton — evidence: doc:ci.cmd, doc:tools/ci-artifacts.ps1, report:build/ci/runs/20261031-130823-ddf96c0/summary.txt, commit:c407d74 (2026-10-31)
 - [x] P1.07 Lint rules: no emoji (codepoint scan), no direct hardware writes outside commit queues in runtime code, no float / double in runtime C++ (infra: G-EMOJI, G-HW) · Verify: CI fails on a planted violation of each — evidence: test:LintTests.PlantedViolationsAreReported, test:LintTests.RepositoryIsClean, doc:ci.cmd, commit:d802a71 (2026-10-31)
@@ -1098,7 +1098,7 @@ Items:
 - [x] P10.02 Token system with both collections and identical names [T-K01] · Verify: `UT` — evidence: test:TokenTests.TokenFile_NamesAndValuesMatchFigma, test:TokenTests.BothThemes_HaveIdenticalKeys, test:TokenTests.TokenFile_IsGeneratedFromFigmaExport, test:DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme, commit:c407d74 (2026-10-31)
 - [x] P10.03 Text styles and bundled fonts [T-K02, T-K03] · Verify: `SHOT` specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - [x] P10.04 Icon set [T-K04] · Verify: `UT` — evidence: test:DesignSystemTests.Icons_All70ExportedFromFigma, test:DesignSystemTests.Icons_EveryNameUsedInTheUiExists, commit:c407d74 (2026-10-31)
-- [ ] P10.05 Component library [4.16] · Verify: `SHOT` per component and state
+- [x] P10.05 Component library [4.16] · Verify: `SHOT` per component and state — evidence: test:DesignSystemTests.Art_AtAFractionalScaleHasNoSeamBetweenBands, shot:docs/evidence/diff/C-scene-card-default.png, shot:docs/evidence/diff/C-scene-card-selected.png (0.44 / 0.81 %); every other C: box ticked, review:docs/evidence/review-final-3.md (2026-10-31)
 - [x] P10.06 Docking layout: Hierarchy, Inspector, bottom panel tabs (Assets, Console, Animation, Database), document tabs with dirty dot [T-P01] · Verify: `E2E` — evidence: test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, commit:c407d74 (2026-10-31)
 - [x] P10.07 Theme Dark / Light / System, accent colour, UI scale, reduce motion, pixel grid at 400% and above, code font size [T-S06, T-L01..T-L04] · Verify: `E2E`, `SHOT` — evidence: test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, test:PreferenceEffectsTests.Appearance_PixelGridAt400Percent_AndReduceMotion, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:PreferencesTests.Appearance_PreviewsTheThemesInTheirOwnTokens, test:NewProjectTests.LightTheme_UsesTheLightTokens, test:DesignSystemTests.Sources_NoColourLiteralsOutsideTheTheme, shot:docs/evidence/app/T-S06.png, shot:docs/evidence/app/T-L01.png, shot:docs/evidence/app/T-L02.png, shot:docs/evidence/app/T-L03.png, doc:docs/evidence/shot-report.md, commit:c407d74 (2026-10-31)
 - [x] P10.08 Project open / save / save all, dirty tracking, Unsaved Changes on exit, close or opening another project [T-D12] · Verify: `E2E` — evidence: test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, test:TitleBarMenuTests.FileSaveAll_SavesEveryEditedFile, test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, test:TitleBarMenuTests.FileExitAndClosingTheWindow_AskFirst_CancelStays_SaveAllSavesAndCloses, test:TitleBarMenuTests.ClosingTheWindow_DontSave_ClosesWithoutWriting, test:NewProjectTests.P10_08_NewProject_WithAnUnsavedFile_AsksFirst_CancelKeepsIt_SaveAllSavesThenCreates, test:NewProjectTests.P10_08_NewProject_WithAnUnsavedFile_DontSaveCreatesWithoutWriting, test:OpeningProjectTests.P11_06_UnsavedChangesAreAskedFirstAndBrokenProjectsFailCleanly, doc:docs/user/windows/T-D12-unsaved-changes.md, commit:7487e78 (2026-10-31)
@@ -1245,7 +1245,7 @@ Items:
 - [x] P12.02 Play = incremental build + run; Play from Here; Build & Run in Emulator; Run in mGBA from Build Report [T-M05, T-P11] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, test:PlayRomErrorTests.Run_AFileTheCoreRefuses_ReportsIt_AndStopAndCloseStillWork, test:BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds, commit:c407d74 (2026-10-31)
 - [x] P12.03 Play controls Play / Pause / Step / Stop; Stop returns to Scene Editor [T-P02, T-C11] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, test:PlayAcrossEditorTests.PauseAndStep_OnEveryPage_ActOnTheRunningGame, commit:c407d74 (2026-10-31)
 - [x] P12.04 Play Speed 1/4x to 4x and Frame step [T-M18] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_04_PlaySpeed_QuarterToFourTimes_AndFrameStep, test:PlayModeTests.SessionPacesFramesBySpeedAndSteps, shot:docs/evidence/app/T-M18.png, commit:c407d74 (2026-10-31)
-- [ ] P12.05 Overlays Hitboxes and Tile collision drawn over the game view [T-P02] · Verify: `SHOT`
+- [x] P12.05 Overlays Hitboxes and Tile collision drawn over the game view [T-P02] · Verify: `SHOT` — evidence: test:PlayModeE2ETests.P12_05_Overlays_HitboxesAndTileCollision_DrawnOverTheGame, shot:docs/evidence/diff/T-P02-game-view.png (no outlines on hearts or flag any more), review:docs/evidence/review-final-3.md (2026-10-31)
 - [x] P12.06 Live Inspector: actor state, position, velocity, on ground, script fields [T-P02] · Verify: `E2E` values change while running — evidence: test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, test:PlayModeTests.LiveInspectorProfilerOamAndPalettes, commit:c407d74 (2026-10-31)
 - [x] P12.07 Console receives Debug.Log and engine logs with timestamps [T-P02, T-P05] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_07_Console_EngineLogsAndDebugLog_WithTimestamps, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, test:PlayAcrossEditorTests.ExternalSave_WhileTheGameRuns_HotReloads_AndItsDebugLogReachesTheConsolePanel, test:PlayUnitTests.Console_ClassifiesGameLines, commit:c407d74 (2026-10-31)
 - [x] P12.08 Status bar: frame number, fps, VBlank time free, CPU %, Running / Paused, Hot reload on [T-P02] · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_08_StatusBar_FrameFpsVBlankCpu_RunningPaused_HotReload, commit:c407d74 (2026-10-31)
