@@ -12,6 +12,22 @@ scope-log entry. Tests are in `tests/AgbStudio.Editor.Tests` and are named Class
 | T-P22 Scene Editor · Empty project | the caption mentions choosing a template; there is no template button (the Figma frame has none either) | `Windows/Launcher/EmptyProjectPage.cs` has no template action |
 | T-S02 Save data | Figma gives the `int` fields `lives` and `coins` sizes of 1 B and 2 B; in AGB Studio the size always follows the type, so an `int` is 4 B and the sample project uses `byte` and `short` for these two fields | `Windows/Settings/ProjectSettingsDialog.cs:243` (`Size`); `ProjectSettingsTests.Tabs_ShowTheProjectsData` checks the sizes by type |
 | T-S08 Paths | the hint under Image editor says it opens `.png` / `.aseprite` on double-click; it opens only `.aseprite` files and the background images in `assets/images`, while sprite and tileset PNG files keep opening in the Sprite Editor and the Tilemap Editor | `Windows/Settings/ExternalTools.cs:19-33` (`ProgramFor`), hint text at `Windows/Settings/PreferencesDialog.cs:290` |
+| T-P02, T-P03, T-P04, T-P08 (prototype links #48, #73, #75, #76) | Figma's prototype links the Scene menu title of the title bar back to the Scene Editor; in AGB Studio that title opens the Scene menu (T-M04, as Editor Map board 2 draws it) and the Scene document tab goes back. Figma contradicts itself here (prototype vs menu board): a scope-log entry is needed | `PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp` (#48, #73, #75, #76) checks both: the menu opens, the tab leads back; `docs/evidence/prototype-links.md` |
+
+## Prototype links (T-X01..T-X03)
+
+All 120 click links of the Figma prototype pass as E2E cases (`PrototypeLinkTests`, read from
+`docs/evidence/figma/prototype.json` at test time; the app control of each link is listed in
+`docs/evidence/prototype-links.md`), and both flows are followed end to end (`PrototypeFlowTests`: "AGB Studio ·
+start" 15 links from the Launcher, "AGB Studio · editor" 46 links from the Scene Editor). 116 links use the node Figma
+links (the 3 asset cards with a double-click, as Editor Map #24 says; the footer Cancel of About and Keyboard
+Shortcuts, hidden in both Figma frames, is the footer's Close button); 4 reach the same window through another
+control (the row above). Writing them found and fixed:
+
+| Found by | Problem | Fix and test |
+|---|---|---|
+| #80 Build Report › Run in mGBA | a file the emulator core refuses left a half-made play session; Stop or closing the editor then crashed the process (access violation reading save RAM) | `PlayController.Run`; `PlayRomErrorTests.Run_AFileTheCoreRefuses_ReportsIt_AndStopAndCloseStillWork` |
+| T-X02 flow (Debug, then Play) | Play, Build ROM, Build & Run, Flash and Clean stayed greyed out after a build ended until some window opened (the build announced its end before it was over) | `BuildService.BuildAsync`; `BuildEndsTests.PlayAndBuildRom_AreEnabledAgainTheMomentTheBuildEnds` |
 
 ## Fixed
 

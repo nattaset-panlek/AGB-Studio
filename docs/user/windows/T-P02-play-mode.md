@@ -45,6 +45,9 @@ FPS and live values in the Inspector, and the Console shows the log from your sc
   scene.
 - **Save file**: the game's cartridge save is kept between runs, so saves survive Stop and the next Play.
 
+Differs from Figma: in the Figma prototype, clicking Scene in the title bar menus goes back to the Scene Editor; in
+AGB Studio it opens the Scene menu, and the Scene document tab goes back to the Scene Editor (Stop goes back too).
+
 ## Related
 
 - [Scene Editor](T-P01-scene-editor.md)

@@ -43,6 +43,9 @@ edges for you, and see how much video memory (VRAM) each layer uses.
 - **Status bar**: the layer and tile under the pointer, an **Auto-tile on / off** switch, and "Saved" when the map
   has no unsaved changes.
 
+Differs from Figma: in the Figma prototype, clicking Scene in the title bar menus goes back to the Scene Editor; in
+AGB Studio it opens the Scene menu, and the Scene document tab goes back to the Scene Editor.
+
 ## Related
 
 - [Auto-tile Rules panel](T-P26-auto-tile-rules-panel.md)

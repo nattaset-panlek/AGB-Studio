@@ -45,6 +45,9 @@ animations are made on the timeline at the bottom.
 - **Status bar**: the sprite's size, frame count and colour depth; VRAM used by sprites out of 32 KB; "Saved" or
   "Unsaved changes".
 
+Differs from Figma: in the Figma prototype, clicking Scene in the title bar menus goes back to the Scene Editor; in
+AGB Studio it opens the Scene menu, and the Scene document tab goes back to the Scene Editor.
+
 ## Related
 
 - [New Sprite](T-D13-new-sprite.md)

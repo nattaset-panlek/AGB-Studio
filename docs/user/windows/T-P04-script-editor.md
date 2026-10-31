@@ -49,6 +49,9 @@ or press Open externally to use VS Code or Rider as set in Preferences.
   the running game (hot reload). Preferences and Project Settings can turn hot reload off.
 - **Graph scripts**: scripts written by the Logic Graph open read-only; edit the graph instead.
 
+Differs from Figma: in the Figma prototype, clicking Scene in the title bar menus goes back to the Scene Editor; in
+AGB Studio it opens the Scene menu, and the Scene document tab goes back to the Scene Editor.
+
 ## Related
 
 - [New Script](T-D14-new-script.md)
