@@ -12,6 +12,8 @@ public sealed class BuildOptions
 {
     public BuildConfiguration? Configuration { get; init; }
     public bool Clean { get; init; }
+    /// <summary>Convert assets, compile scripts and write the generated C++, without running devkitARM (no ROM).</summary>
+    public bool GenerateOnly { get; init; }
     public CancellationToken Cancel { get; init; }
 }
 
@@ -66,7 +68,7 @@ public sealed class GameBuilder
     public const string StepAssets = "Convert assets";
     public const string StepCompile = "Compile (devkitARM g++ -O2)";
     public const string StepLink = "Link + gbafix";
-    public const int ConverterVersion = 1;
+    public const int ConverterVersion = 2;  // 2: sprites sharing a palette point at the owner's palette object
 
     readonly GameProject _p;
     readonly Toolchain _tc;
@@ -85,6 +87,7 @@ public sealed class GameBuilder
 
     // ---- state shared by the steps ----------------------------------------------------------------
     readonly Dictionary<string, ConvertedSprite> _sprites = new(StringComparer.Ordinal);
+    readonly Dictionary<string, string> _paletteOwner = new(StringComparer.Ordinal);  // sprite -> sprite whose palette it uses
     readonly Dictionary<string, int> _soundIds = new(StringComparer.OrdinalIgnoreCase);
     readonly Dictionary<string, int> _musicIds = new(StringComparer.OrdinalIgnoreCase);
     readonly List<string> _sources = new();
@@ -111,11 +114,25 @@ public sealed class GameBuilder
             if (!Step(StepScripts, () => CompileScripts(config))) return Finish(sw);
             Step("Generate game", () => GenerateGame());
             if (_result.Errors.Any()) return Finish(sw);
+            if (options.GenerateOnly)
+            {
+                _cache.Save();
+                _result.Success = true;
+                return Finish(sw);
+            }
             if (!Step(StepCompile, () => CompileAndLink(config, options.Cancel))) return Finish(sw);
             _cache.Save();
+            _result.Elapsed = sw.Elapsed;
             _result.Report = BuildReport.Create(_p, _tc, _result, Assets, config);
+            // G-HW.05: the linker already refuses a ROM region overflow; this catches anything that still ends up larger.
+            if (BuildReport.RomSizeError(_result.Report.RomBytes) is { } tooBig)
+            {
+                Add(new Diagnostic(Severity.Error, _result.RomPath, 0, 0, "", tooBig));
+                _result.FailedStep = StepLink;
+                return Finish(sw);
+            }
             _result.Report.Save(_p.BuildDir);
-            foreach (var w in _result.Report.Warnings) Add(new Diagnostic(Severity.Warning, "", 0, 0, "", w));
+            foreach (var w in _result.Report.Warnings.Where(w => !_result.Diagnostics.Any(d => d.ToString() == w))) Add(new Diagnostic(Severity.Warning, "", 0, 0, "", w));
             _result.Success = true;
         }
         catch (OperationCanceledException)
@@ -209,15 +226,30 @@ public sealed class GameBuilder
     {
         var name = GameProject.AssetName(file);
         var id = Cpp.Ident(name);
+        // A shared palette (Sprite Editor · Palette) is the owner's palette object, so the runtime gives both sprites
+        // one OBJ bank (palettes::acquire is per palette).
         ushort[]? shared = null;
-        if (meta.Palette.Length > 0 && _sprites.TryGetValue(meta.Palette, out var owner)) shared = owner.Palette;
-        var img = ColorImage.Load(file);
+        string? paletteOwner = null;
+        if (meta.Palette.Length > 0 && _sprites.TryGetValue(meta.Palette, out var owner))
+        {
+            shared = owner.Palette;
+            paletteOwner = _paletteOwner.GetValueOrDefault(meta.Palette, meta.Palette);
+        }
+        _paletteOwner[name] = paletteOwner ?? name;
+        // An Aseprite file: its canvas is the frame size and its tags are the animations (unless the Sprite Editor set some).
+        AsepriteFile? ase = AsepriteFile.IsAseprite(file) ? AsepriteFile.Read(file) : null;
+        var img = ase?.ToSheet() ?? ColorImage.Load(file);
+        if (ase != null)
+        {
+            meta.FrameWidth = ase.Width;
+            meta.FrameHeight = ase.Height;
+        }
         var s = SpriteConverter.Convert(name, img, meta, shared, file);
         foreach (var pr in s.Problems) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", pr.Message));
         _sprites[name] = s;
         var outFile = Path.Combine(GenDir, "assets", $"sprite_{id}.cpp");
-        var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, shared == null ? "" : string.Join(',', shared));
-        Assets.Sprites[name] = new AssetInfo(name, "Sprite", file, s.Tiles.Length + 32, s.FrameCount, $"{s.SourceWidth}×{s.SourceHeight}");
+        var hash = AssetCache.HashFiles([file, GameProject.MetaPath(file)], ConverterVersion, shared == null ? "" : paletteOwner + ":" + string.Join(',', shared));
+        Assets.Sprites[name] = new AssetInfo(name, "Sprite", file, s.Tiles.Length + (shared == null ? 32 : 0), s.FrameCount, $"{s.SourceWidth}×{s.SourceHeight}");
         if (_cache.IsCurrent("sprite:" + name, hash, [outFile]))
         {
             _sources.Add(outFile);
@@ -225,11 +257,13 @@ public sealed class GameBuilder
         }
         var sb = new StringBuilder();
         sb.Append("// Generated by AGB Studio from ").Append(Path.GetFileName(file)).Append(". Do not edit.\n#include \"agb/data.hpp\"\n");
+        var palId = Cpp.Ident(paletteOwner ?? name);
+        if (paletteOwner != null) sb.Append($"extern const agb::data::Palette agbasset_sprite_{palId}_pal;\n");
         sb.Append($"namespace {{\nalignas(4) ");
         Cpp.Bytes(sb, $"const unsigned int agbasset_sprite_{id}_tiles", s.Tiles);
-        Cpp.U16(sb, $"const unsigned short agbasset_sprite_{id}_colors", s.Palette.Select(c => (int)c));
-        sb.Append($"const agb::data::Palette agbasset_sprite_{id}_pal{{agbasset_sprite_{id}_colors, 1}};\n");
-        var anims = meta.Animations.Count > 0 ? meta.Animations : [new AnimationData { Name = "idle", Frames = Enumerable.Range(0, s.FrameCount).ToList() }];
+        if (paletteOwner == null) Cpp.U16(sb, $"const unsigned short agbasset_sprite_{id}_colors", s.Palette.Select(c => (int)c));
+        var anims = meta.Animations.Count > 0 ? meta.Animations : ase?.Animations(s.SourceFrames) is { Count: > 0 } tagged ? tagged
+            : [new AnimationData { Name = "idle", Frames = Enumerable.Range(0, s.FrameCount).ToList() }];
         for (var i = 0; i < anims.Count; i++)
         {
             var a = anims[i];
@@ -246,10 +280,11 @@ public sealed class GameBuilder
             sb.Append($"    {{{Cpp.Str(a.Name)}, agbasset_sprite_{id}_a{i}f, agbasset_sprite_{id}_a{i}t, {n}, {(a.Loop ? "true" : "false")}, {(a.PingPong ? "true" : "false")}}},\n");
         }
         sb.Append("};\n}  // namespace\n");
+        if (paletteOwner == null) sb.Append($"extern const agb::data::Palette agbasset_sprite_{id}_pal{{agbasset_sprite_{id}_colors, 1}};\n");
         var c = meta.Collider;
         sb.Append($"extern const agb::data::SpriteSheet agbasset_sprite_{id} = {{\n");
         sb.Append($"    {{agbasset_sprite_{id}_tiles, {s.Tiles.Length}, {s.FrameCount * s.TilesPerFrame}, 4, false}},\n");
-        sb.Append($"    &agbasset_sprite_{id}_pal, {s.FrameWidth}, {s.FrameHeight}, static_cast<agb::data::ObjShape>({s.Shape}), {s.SizeCode},\n");
+        sb.Append($"    &agbasset_sprite_{palId}_pal, {s.FrameWidth}, {s.FrameHeight}, static_cast<agb::data::ObjShape>({s.Shape}), {s.SizeCode},\n");
         sb.Append($"    {s.TilesPerFrame}, {s.FrameCount}, agbasset_sprite_{id}_anims, {anims.Count}, {meta.OriginX}, {meta.OriginY},\n");
         sb.Append($"    {c.X}, {c.Y}, {c.W}, {c.H}}};\n");
         Write(outFile, sb.ToString());
@@ -427,6 +462,9 @@ public sealed class GameBuilder
     // ---- fonts and strings ----------------------------------------------------------------------------
 
     readonly Dictionary<string, Fonts.TextCodegen.FontOut> _fonts = new(StringComparer.Ordinal);
+    // Each built language's strings (fallbacks filled in) with its font and box widths, for the text layer budget.
+    sealed record TextTable(string Language, Dictionary<string, string> Strings, Fonts.TextCodegen.FontOut Font, Func<string, int> BoxWidth);
+    readonly List<TextTable> _texts = new();
     readonly List<string> _stringKeys = new();
     readonly List<string> _languages = new();
     public IReadOnlyList<string> StringKeys => _stringKeys;
@@ -472,7 +510,9 @@ public sealed class GameBuilder
                     Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Strings for '{lang}' need a font: add one in Font Manager."));
                     return;
                 }
-                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Language '{lang}' has no font set; using {font.Font.Name}."));
+                Add(new Diagnostic(Severity.Warning, file, 0, 0, "", info?.Font is { Length: > 0 } missingFont
+                    ? $"Language '{lang}' uses font '{missingFont}', which is not in fonts/; using {font.Font.Name}."
+                    : $"Language '{lang}' has no font set; using {font.Font.Name}."));
             }
             // Language names where this language's font can draw them; elsewhere the options screen shows the code.
             if (langs.Count > 1)
@@ -500,6 +540,7 @@ public sealed class GameBuilder
             foreach (var d in diags) Add(d);
             Write(Path.Combine(GenDir, "text", $"strings_{Cpp.Ident(lang)}.cpp"), cpp);
             _languages.Add(lang);
+            _texts.Add(new TextTable(lang, strings, font, k => meta.Keys.GetValueOrDefault(k)?.BoxWidth ?? 224));
         }
     }
 
@@ -521,7 +562,7 @@ public sealed class GameBuilder
         foreach (var (file, text) in o.Sources) Write(Path.Combine(GenDir, "data", file), text);
         foreach (var t in tables)
             Assets.Data[t.Name] = new AssetInfo(t.Name, "Data", Path.Combine(_p.DataDir, t.Name + ".db"),
-                t.Rows.Count * t.Fields.Where(f => f.Name != t.KeyField).Sum(Data.DatabaseCodegen.FieldBytes), t.Rows.Count, $"{t.Rows.Count} rows, {t.Fields.Count} fields");
+                Data.DatabaseCodegen.TableBytes(t), t.Rows.Count, $"{t.Rows.Count} rows, {t.Fields.Count} fields");
     }
 
     public int SoundId(string name) => _soundIds.TryGetValue(SoundKey(name), out var id) ? id : -1;
@@ -569,6 +610,7 @@ public sealed class GameBuilder
         var names = scenes.Select(s => s.Scene.Name.Length > 0 ? s.Scene.Name : GameProject.AssetName(s.File)).ToList();
         foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
         foreach (var (file, scene) in scenes) CheckHardwareLimits(file, scene);
+        CheckSaveFits();
         var splash = GenerateSplash();
         var ui = GenerateUiKit(names, scenes.Any(s => s.Scene.Menu != null));
         GenerateGameDef(names, splash, ui);
@@ -577,52 +619,122 @@ public sealed class GameBuilder
 
     public const int BgVramBytes = 64 * 1024;
     public const int SceneBgBanks = 14;  // banks 14 and 15 hold the menus and the text
+    public const int ObjVramBytes = 32 * 1024;        // OBJ tiles in the tile modes 0-2
+    public const int ObjVramBitmapBytes = 16 * 1024;  // modes 3-5: the bitmap takes the lower half of OBJ VRAM
+    public const int ObjBanks = 16;
+    public const int DialogueBoxBytes = 28 * 5 * 32;  // text::BoxStyle default: 28 x 5 tiles
+    public const int MaxTextLabels = 6;               // text::addLabel slots
 
-    /// <summary>G-HW.01 / G-HW.03: what a scene's map puts in background VRAM and palette RAM at once, against the
-    /// hardware. Over the limit the build fails, naming the scene, the numbers and what to change.</summary>
+    /// <summary>G-HW.01 / G-HW.03: what a scene puts in VRAM and palette RAM at once, against the hardware: background
+    /// tiles, maps and the text layer (labels, dialogue box, menu) in the 64 KB of BG VRAM; the sprite frames its actors
+    /// can show at once in OBJ VRAM; BG and OBJ palette banks. Over a limit the build fails, naming the scene, the
+    /// numbers and what to change. The numbers go to report.json (Scene budgets).</summary>
     void CheckHardwareLimits(string file, SceneFile scene)
     {
-        if (scene.Map.Length == 0) return;
-        var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
-        if (!File.Exists(mapPath)) return;
-        var map = GameProject.Load<MapFile>(mapPath);
         var tiles = 0L;
         var banks = 0;
-        var tilesets = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var l in map.Layers)
+        var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
+        if (scene.Map.Length > 0 && File.Exists(mapPath))
         {
-            switch (l.Type)
+            var map = GameProject.Load<MapFile>(mapPath);
+            var tilesets = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var l in map.Layers)
             {
-                case LayerType.CollisionOnly:
-                    continue;
-                case LayerType.Image when _images.TryGetValue(l.Image, out var img):
-                    tiles += img.Tiles * 32L;
-                    banks += img.Banks;
-                    tiles += 4096;  // screen blocks
-                    continue;
-                case LayerType.Affine when _tilesets.TryGetValue(map.Tileset, out var ats):
-                    var side = 16;
-                    while (side < Math.Max(map.Width, map.Height) * 2 && side < 128) side *= 2;
-                    tiles += 16 * 1024 + side * side;  // a whole character block for 8bpp tiles, then the map
-                    banks += ats.Palette.Banks.Count;
-                    continue;
-                default:
-                    if (_tilesets.TryGetValue(map.Tileset, out var ts) && tilesets.Add(map.Tileset))
-                    {
-                        tiles += ts.Tiles.Count * 32L;
-                        banks += ts.Palette.Banks.Count;
-                    }
-                    tiles += 4096;
-                    continue;
+                switch (l.Type)
+                {
+                    case LayerType.CollisionOnly:
+                        continue;
+                    case LayerType.Image when _images.TryGetValue(l.Image, out var img):
+                        tiles += img.Tiles * 32L;
+                        banks += img.Banks;
+                        tiles += 4096;  // screen blocks
+                        continue;
+                    case LayerType.Affine when _tilesets.TryGetValue(map.Tileset, out var ats):
+                        var side = 16;
+                        while (side < Math.Max(map.Width, map.Height) * 2 && side < 128) side *= 2;
+                        tiles += 16 * 1024 + side * side;  // a whole character block for 8bpp tiles, then the map
+                        banks += ats.Palette.Banks.Count;
+                        continue;
+                    default:
+                        if (_tilesets.TryGetValue(map.Tileset, out var ts) && tilesets.Add(map.Tileset))
+                        {
+                            tiles += ts.Tiles.Count * 32L;
+                            banks += ts.Palette.Banks.Count;
+                        }
+                        tiles += 4096;
+                        continue;
+                }
             }
         }
-        tiles += 2048 + 32;  // the text layer's map and blank tile
+        var text = TextLayerBytes(file, scene);
+        tiles += 2048 + text;  // the text layer's map, its blank tile and the tiles of its boxes
         if (tiles > BgVramBytes)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {tiles / 1024} KB of background VRAM; the GBA has 64 KB. " +
                 "Use fewer layers, a smaller tileset, or image layers with more repeated tiles."));
         if (banks > SceneBgBanks)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {banks} background palettes; {SceneBgBanks} are free " +
                 "(of 16, two hold the menus and text). Reduce the colours of its tileset or images (Import Asset \"Reduce to 16\")."));
+
+        // Sprites: each actor shows one frame at a time; actors of the same sprite share a frame when they show the
+        // same one (runtime frame cache), so a sprite needs at most min(actors, frames) frames at once.
+        var obj = 0L;
+        var palettes = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var g in scene.Actors.Where(a => a.Sprite.Length > 0 && _sprites.ContainsKey(a.Sprite)).GroupBy(a => a.Sprite))
+        {
+            var s = _sprites[g.Key];
+            obj += Math.Min(g.Count(), Math.Max(1, s.FrameCount)) * s.TilesPerFrame * 32L;
+            palettes.Add(_paletteOwner.GetValueOrDefault(g.Key, g.Key));
+        }
+        var bitmap = scene.VideoMode >= 3;
+        var objCap = bitmap ? ObjVramBitmapBytes : ObjVramBytes;
+        if (obj > objCap)
+            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs up to {(obj + 1023) / 1024} KB of OBJ VRAM for the sprite frames " +
+                $"its actors show at once; the GBA has {objCap / 1024} KB{(bitmap ? " in bitmap modes" : "")}. Use fewer or smaller sprites, " +
+                "or fewer different animation frames for actors that share a sprite."));
+        if (palettes.Count > ObjBanks)
+            Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {palettes.Count} sprite palettes; the GBA has {ObjBanks}. " +
+                "Let sprites share a palette (Sprite Editor · Palette) or use fewer different sprites in the scene."));
+        Assets.Scenes[scene.Name] = new SceneLimits(tiles, text, banks, obj, palettes.Count);
+    }
+
+    // Text layer tiles a scene reserves (runtime textdb.cpp / ui.cpp): the blank tile, one box per Text Label actor
+    // (240 - x pixels wide, its lines high), the dialogue box when the game has text, the scene's menu panel.
+    long TextLayerBytes(string file, SceneFile scene)
+    {
+        var bytes = 32L;
+        var labels = 0;
+        foreach (var a in scene.Actors.Where(a => a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && StringKey(a.Text) >= 0))
+        {
+            var height = 0;
+            foreach (var t in _texts)
+                if (t.Strings.TryGetValue(a.Text, out var s))
+                {
+                    var lines = Math.Max(1, Fonts.TextLayout.Layout(s, t.Font.Font, t.BoxWidth(a.Text), _p.Settings.Localization.ThaiWrap).Lines);
+                    height = Math.Max(height, (t.Font.Font.LineHeight * lines + 7) / 8);
+                }
+            bytes += Math.Max(1, (240 - a.X + 7) / 8) * Math.Max(1, height) * 32L;
+            labels++;
+        }
+        if (labels > MaxTextLabels)
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} has {labels} Text Labels; {MaxTextLabels} can show at once, so the rest stay empty."));
+        if (_texts.Count > 0) bytes += DialogueBoxBytes;
+        if (scene.Menu is { } m)
+        {
+            var lh = UiFont()?.Font.LineHeight ?? 8;
+            var height = Math.Max(m.Height, (Math.Max(1, m.Items.Count) - 1) * Math.Max(m.Spacing, lh) + lh);
+            int tx = Math.Clamp(m.X / 8, 0, 29), ty = Math.Clamp(m.Y / 8, 0, 19);
+            bytes += Math.Clamp((m.Width + 7) / 8, 1, 30 - tx) * Math.Clamp((height + 7) / 8, 1, 20 - ty) * 32L;
+        }
+        return bytes;
+    }
+
+    /// <summary>G-HW.06: the save data of one slot must fit the save type with its slot count; else the build fails.</summary>
+    void CheckSaveFits()
+    {
+        var save = _p.Settings.Save;
+        Assets.SaveBytes = save.Type == SaveType.None ? 0 : SaveLayout.SlotBytes(save.Fields, ScriptsCompiled);
+        Assets.SaveCapacity = SaveLayout.SlotCapacity(save.Type, save.Slots);
+        if (SaveLayout.Problem(save, ScriptsCompiled) is { } problem) Add(new Diagnostic(Severity.Error, _p.ProjectPath, 0, 0, "", problem));
     }
 
     // Project Settings · General · Boot splash: the AGB Studio splash image (Content/SplashArt).
@@ -1026,7 +1138,10 @@ public sealed class GameBuilder
 
     // ---- compile -------------------------------------------------------------------------------------
 
-    string CompileAndLink(BuildConfiguration config, CancellationToken cancel)
+    /// <summary>The ROM the compile step builds (P7.11): the runtime and generated sources, the compiler settings of the
+    /// configuration (Debug / Release, Project Settings · Build optimise level, keep asserts, strip Debug.Log) and the
+    /// cartridge header from Project Settings · General (title, game code, maker code, version).</summary>
+    public RomTarget Target(BuildConfiguration config)
     {
         var g = _p.Settings.General;
         var version = 0;
@@ -1046,6 +1161,12 @@ public sealed class GameBuilder
         target.IncludeDirs.AddRange(_includeDirs.Distinct());
         if (_p.Settings.Build.KeepAsserts) target.Defines.Add("AGB_KEEP_ASSERTS=1");
         if (config == BuildConfiguration.Release && !_p.Settings.Build.StripDebugLog) target.Defines.Add("AGB_KEEP_LOGS=1");
+        return target;
+    }
+
+    string CompileAndLink(BuildConfiguration config, CancellationToken cancel)
+    {
+        var target = Target(config);
         var compiled = 0;
         var total = target.Sources.Count;
         var r = new NativeBuild(_tc, Path.Combine(_p.BuildDir, "obj")).Build([target], line =>
@@ -1061,7 +1182,7 @@ public sealed class GameBuilder
             _obs.Line(line);
             if (line.StartsWith('[') && line.Contains("CXX "))
                 _obs.FileProgress(StepCompile, ++compiled, total, Path.GetFileName(line[(line.IndexOf("CXX ", StringComparison.Ordinal) + 4)..]));
-            var d = ParseGccLine(line);
+            var d = ParseGccLine(line) ?? ParseLinkerLine(line);
             if (d != null) Add(d);
         }, cancel);
         cancel.ThrowIfCancellationRequested();
@@ -1071,7 +1192,9 @@ public sealed class GameBuilder
             return "failed";
         }
         Directory.CreateDirectory(Path.GetDirectoryName(RomPath)!);
-        File.Copy(r.RomPath, RomPath, true);
+        // A build with nothing to do leaves the ROM as it is (the copy keeps the linked ROM's time).
+        if (!File.Exists(RomPath) || new FileInfo(RomPath).Length != new FileInfo(r.RomPath).Length || File.GetLastWriteTimeUtc(RomPath) != File.GetLastWriteTimeUtc(r.RomPath))
+            File.Copy(r.RomPath, RomPath, true);
         WriteNotices(Path.Combine(Path.GetDirectoryName(RomPath)!, "THIRD_PARTY.txt"));
         _result.RomPath = RomPath;
         _result.ElfPath = Path.ChangeExtension(r.RomPath, ".elf");
@@ -1099,7 +1222,7 @@ public sealed class GameBuilder
         var maxmod = Path.Combine(_tc.DevkitPro, "libgba", "maxmod_license.txt");
         sb.Append("maxmod\n------\n");
         sb.Append(File.Exists(maxmod) ? File.ReadAllText(maxmod).Replace("\r\n", "\n").Trim() + "\n" : "Copyright (c) 2008, Mukunda Johnson. ISC licence (see maxmod_license.txt in devkitPro).\n");
-        File.WriteAllText(path, sb.ToString().Replace("\n", Environment.NewLine));
+        SoundbankBuilder.WriteIfChanged(path, sb.ToString().Replace("\n", Environment.NewLine));
     }
 
     /// <summary>Turns "file:line:col: error: message" into a diagnostic (and maps generated C++ back via #line).</summary>
@@ -1111,9 +1234,30 @@ public sealed class GameBuilder
         return new Diagnostic(sev, m.Groups[1].Value, int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture),
             int.Parse(m.Groups[3].Value, CultureInfo.InvariantCulture), "", m.Groups[5].Value);
     }
+
+    /// <summary>G-HW.04 / G-HW.05: ld's "region `rom' overflowed by N bytes" (and iwram / ewram) in plain language.</summary>
+    public static Diagnostic? ParseLinkerLine(string line)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(line, @"region `(rom|iwram|ewram)' overflowed by (\d+) bytes");
+        if (!m.Success) return null;
+        var over = long.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+        var amount = over >= 1024 ? $"{(over + 1023) / 1024} KB" : $"{over} bytes";
+        return new Diagnostic(Severity.Error, "", 0, 0, "", m.Groups[1].Value switch
+        {
+            "rom" => $"The game is {amount} larger than the 32 MB a GBA cartridge holds. Compress graphics (Project Settings · Build), " +
+                     "use shorter music or fewer samples, or remove unused assets (Find Unused Assets).",
+            "iwram" => $"IWRAM (32 KB) is {amount} too small for the game's fast code and variables. Use smaller arrays in scripts " +
+                       "or move large data to EWRAM.",
+            _ => $"EWRAM (256 KB) is {amount} too small for the game's variables. Use smaller arrays in scripts and fewer actors per scene.",
+        });
+    }
 }
 
 public sealed record AssetInfo(string Name, string Type, string File, int RomBytes, int Count, string Detail);
+
+/// <summary>What one scene puts in VRAM and palette RAM at once (GameBuilder.CheckHardwareLimits): BG bytes include the
+/// text layer bytes.</summary>
+public sealed record SceneLimits(long BgBytes, long TextBytes, int BgBanks, long ObjBytes, int ObjBanks);
 
 public sealed class BuildAssetInfo
 {
@@ -1122,4 +1266,7 @@ public sealed class BuildAssetInfo
     public Dictionary<string, AssetInfo> Audio { get; } = new();
     public Dictionary<string, AssetInfo> Fonts { get; } = new();
     public Dictionary<string, AssetInfo> Data { get; } = new();
+    public Dictionary<string, SceneLimits> Scenes { get; } = new();
+    public long SaveBytes { get; set; }
+    public long SaveCapacity { get; set; }
 }

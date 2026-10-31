@@ -45,6 +45,22 @@ public static class DatabaseCodegen
         _ => 4,
     };
 
+    /// <summary>The order of the fields in the row struct: 4-byte fields, then 2-byte, then 1-byte ones, so the struct
+    /// has no padding between fields (only at the end, up to its alignment).</summary>
+    public static List<FieldDef> RowFields(TableFile t) => t.Fields.Where(f => f.Name != t.KeyField).OrderByDescending(FieldBytes).ToList();
+
+    /// <summary>sizeof the row struct in the ROM: the field bytes rounded up to the largest field.</summary>
+    public static int RowBytes(TableFile t)
+    {
+        var fields = RowFields(t);
+        if (fields.Count == 0) return 1;
+        var align = fields.Max(FieldBytes);
+        return (fields.Sum(FieldBytes) + align - 1) / align * align;
+    }
+
+    /// <summary>Bytes of the whole table in the ROM (an empty table still has one row).</summary>
+    public static int TableBytes(TableFile t) => Math.Max(1, t.Rows.Count) * RowBytes(t);
+
     static string Capital(string s) => s.Length == 0 ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
     public sealed class Output
@@ -72,7 +88,7 @@ public static class DatabaseCodegen
             foreach (var f in t.Fields.Where(f => f.Type == "enum" && f.Name != t.KeyField))
                 h.Append($"enum class {st}{Cpp.Ident(Capital(f.Name))} : unsigned char {{ {string.Join(", ", f.EnumValues.Select(Cpp.Ident))} }};\n");
             h.Append($"struct {st} {{\n");
-            foreach (var f in t.Fields.Where(f => f.Name != t.KeyField))
+            foreach (var f in RowFields(t))
                 h.Append(f.Type == "script" ? $"    void (*{Cpp.Ident(f.Name)})();\n" : $"    {CppType(f, st)} {Cpp.Ident(f.Name)};\n");
             if (t.Fields.All(f => f.Name == t.KeyField)) h.Append("    unsigned char unused;\n");
             h.Append("};\n");
@@ -92,7 +108,7 @@ public static class DatabaseCodegen
             {
                 var row = t.Rows[ri];
                 var values = new List<string>();
-                foreach (var f in t.Fields.Where(f => f.Name != t.KeyField))
+                foreach (var f in RowFields(t))
                 {
                     var raw = row.GetValueOrDefault(f.Name);
                     if (string.IsNullOrWhiteSpace(raw)) raw = f.Default;
@@ -105,7 +121,7 @@ public static class DatabaseCodegen
             if (t.Rows.Count == 0) sb.Append($"    {{}},\n");
             sb.Append("};\n}  // namespace agb_db\n");
             o.Sources.Add(($"db_{Cpp.Ident(t.Name)}.cpp", sb.ToString()));
-            o.RomBytes += t.Rows.Count * t.Fields.Where(f => f.Name != t.KeyField).Sum(FieldBytes);
+            o.RomBytes += TableBytes(t);
         }
         h.Append("}  // namespace agb_db\n");
         o.Header = h.ToString();
