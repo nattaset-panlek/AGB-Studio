@@ -65,7 +65,12 @@
       <Style Selector="^:pointerover"><Setter Property="Background" Value="{DynamicResource status/danger-hover}" /></Style>
       <Style Selector="^:pressed"><Setter Property="Background" Value="{DynamicResource status/danger-pressed}" /></Style>
     </Style>
-    <Style Selector="^:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
+    <!-- Figma dims the whole button once (40 %): the label covers the fill, then the group is faded. Avalonia's Opacity
+         fades every brush on its own, so the faded fill showed through the label; an opacity mask at 40 % renders the
+         button into one layer and fades that. -->
+    <Style Selector="^:disabled">
+      <Setter Property="OpacityMask"><SolidColorBrush Color="White" Opacity="0.4" /></Setter>
+    </Style>
   </ControlTheme>
 
   <!-- Icon Button -->
