@@ -190,10 +190,26 @@ public class ArtLibraryTests : IDisposable
     }
 
     [Fact]
+    public void SkyHopperFixture_ShipsAPaletteLibrary()
+    {
+        var root = Path.Combine(_fx.Folder, "Saved");
+        var p = SkyHopper.Create(root);
+        Assert.True(File.Exists(Path.Combine(p.PalettesDir, "palettes.json")));
+        var lib = ArtLibrary.Load(GameProject.Open(root), new UndoService(10));
+        Assert.Equal(p.SpriteFiles().Count(f => f.EndsWith(".png")), lib.Of(BankKind.Obj).Count());
+        Assert.Equal(p.ImageFiles().Count() + p.TilesetFiles().Count(), lib.Of(BankKind.Bg).Count());
+        Assert.Equal("Hero", lib.Find(BankKind.Obj, 0)!.Name);
+        Assert.Equal("hero.png", ArtLibrary.UsedBy(lib.Find(BankKind.Obj, 0)!));
+        Assert.All(lib.Banks, b => Assert.Equal(Colour15.Transparent, b.Colors[0]));
+        Assert.All(lib.Banks, b => Assert.InRange(b.Colors.Count, 2, 16));
+    }
+
+    [Fact]
     public void Banks_DerivedFromTheProjectWithoutAPaletteFile()
     {
         var root = Path.Combine(_fx.Folder, "Fresh");
         var p = SkyHopper.Create(root);
+        File.Delete(Path.Combine(p.PalettesDir, "palettes.json"));   // the fixture ships a library (below); derive without it
         var slimeMeta = GameProject.MetaPath(Path.Combine(p.AssetsDir, "sprites", "slime.png"));
         var m = GameProject.Load<SpriteMeta>(slimeMeta);
         m.Palette = "hero";

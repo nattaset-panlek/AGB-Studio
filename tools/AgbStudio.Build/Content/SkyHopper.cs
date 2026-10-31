@@ -64,6 +64,9 @@ public static class SkyHopper
     {
         DateTime _next = DateTime.UtcNow.AddHours(-1);
 
+        /// <summary>The art written so far, for palettes.json: project-relative path, kind and pixels.</summary>
+        public List<(string Rel, BankKind Kind, Canvas Art)> Art { get; } = [];
+
         public void Stamp(string path)
         {
             File.SetCreationTimeUtc(path, _next);
@@ -76,6 +79,7 @@ public static class SkyHopper
         var path = Path.Combine(p.AssetsDir, "sprites", name + ".png");
         img.Save(path);
         order.Stamp(path);
+        order.Art.Add(("assets/sprites/" + name + ".png", BankKind.Obj, img));
         GameProject.Save(GameProject.MetaPath(path), meta);
     }
 
@@ -125,9 +129,13 @@ public static class SkyHopper
         Sprite(p, order, "star", Gem(PixelArt.Gold, 4), Meta(8, 8, new AnimationData { Name = "spin", Frames = { 0, 1, 2, 3 }, Ticks = 4 }));
         Sprite(p, order, "gem", Gem(PixelArt.Water, 4), Meta(8, 8, new AnimationData { Name = "shine", Frames = { 0, 1, 2, 3 }, Ticks = 8 }));
         var tiles = Path.Combine(p.AssetsDir, "tilesets");
-        SkyHopperArt.ForestTiles().Save(Path.Combine(tiles, "forest_tiles.png"));
+        var forest = SkyHopperArt.ForestTiles();
+        order.Art.Add(("assets/tilesets/forest_tiles.png", BankKind.Bg, forest));
+        forest.Save(Path.Combine(tiles, "forest_tiles.png"));
         GameProject.Save(GameProject.MetaPath(Path.Combine(tiles, "forest_tiles.png")), ForestTilesetMeta());
-        CaveTiles().Save(Path.Combine(tiles, "cave_tiles.png"));
+        var cave = CaveTiles();
+        order.Art.Add(("assets/tilesets/cave_tiles.png", BankKind.Bg, cave));
+        cave.Save(Path.Combine(tiles, "cave_tiles.png"));
         GameProject.Save(GameProject.MetaPath(Path.Combine(tiles, "cave_tiles.png")), new TilesetMeta
         {
             Tiles = { [1] = new TileProperties { Name = "rock", Collision = CollisionType.Solid }, [2] = new TileProperties { Name = "ledge", Collision = CollisionType.OneWay },
@@ -135,8 +143,46 @@ public static class SkyHopper
         });
         var images = Path.Combine(p.AssetsDir, "images");
         // placed so the start camera of Forest_01 shows art-scene-day (the Figma Scene Editor and Play Mode)
-        SkyHopperArt.Sky(StartCamera.X, StartCamera.Y, SkyParallax).Save(Path.Combine(images, "sky_bg.png"));
-        SkyHopperArt.Hills(StartCamera.X, StartCamera.Y, HillsParallax).Save(Path.Combine(images, "hills_bg.png"));
+        var sky = SkyHopperArt.Sky(StartCamera.X, StartCamera.Y, SkyParallax);
+        var hills = SkyHopperArt.Hills(StartCamera.X, StartCamera.Y, HillsParallax);
+        sky.Save(Path.Combine(images, "sky_bg.png"));
+        hills.Save(Path.Combine(images, "hills_bg.png"));
+        order.Art.Add(("assets/images/sky_bg.png", BankKind.Bg, sky));
+        order.Art.Add(("assets/images/hills_bg.png", BankKind.Bg, hills));
+        WritePaletteLibrary(p, order.Art);
+    }
+
+    /// <summary>assets/palettes/palettes.json (T-P10): one bank per sprite (OBJ) and per tileset / image (BG), numbered in
+    /// creation order, with the colours of the art (index 0 transparent, up to 15 by use) so the Palette Manager opens on
+    /// a saved library instead of banks derived from the art.</summary>
+    static void WritePaletteLibrary(GameProject p, List<(string Rel, BankKind Kind, Canvas Art)> art)
+    {
+        var lib = new PaletteLibraryFile();
+        var next = new Dictionary<BankKind, int>();
+        foreach (var (rel, kind, img) in art)
+        {
+            var slot = next.GetValueOrDefault(kind);
+            if (slot >= 16) break;
+            next[kind] = slot + 1;
+            var use = new Dictionary<uint, int>();
+            var order = new List<uint>();
+            foreach (var px in img.Pixels)
+            {
+                if ((px >> 24) < 0x80) continue;
+                var c = px | 0xFF000000u;
+                if (!use.TryGetValue(c, out var n)) order.Add(c);
+                use[c] = n + 1;
+            }
+            var keep = order.OrderByDescending(c => use[c]).Take(15).ToHashSet();
+            var name = Path.GetFileNameWithoutExtension(rel).Replace('_', ' ');
+            lib.Banks.Add(new PaletteBankData
+            {
+                Kind = kind, Slot = slot, Name = char.ToUpperInvariant(name[0]) + name[1..],
+                Colors = new[] { "none" }.Concat(order.Where(keep.Contains).Select(c => "#" + (c & 0xFFFFFFu).ToString("X6"))).ToList(),
+                Assets = [rel],
+            });
+        }
+        GameProject.Save(Path.Combine(p.PalettesDir, "palettes.json"), lib);
     }
 
     const double SkyParallax = 0.2, HillsParallax = 0.5;
