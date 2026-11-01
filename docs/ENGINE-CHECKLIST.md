@@ -208,7 +208,7 @@
 
 - **T-P01 Scene Editor** · 1440 x 900 · from: default workspace
   - [x] implemented — evidence: test:RobustnessTests.Startup_OpensTheLastProjectOrTheLauncher, test:OpeningProjectTests.P11_06_FullOpen_ReadsLoadsCompilesAndOpensTheLastScene, test:ShellE2ETests.Docking_PanelsTabsAndDirtyDot, test:ViewportRomTests.Viewport_DrawsTheSceneLikeTheRom, test:ViewportTests.Cursor_ZoomAndPan, test:ViewportTests.LayerTogglesHideBackgroundsAndSprites, test:ViewportTests.ChipsOpenTheirWindows, test:ViewportTests.PaintFillAndErase_EditTheMapWithUndo, test:HierarchyTests.Selection_IsSharedWithViewportAndInspector, test:InspectorTests.Header_TransformAndSpriteOfThePlayer, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:PlayAcrossEditorTests.PauseAndStep_OnEveryPage_ActOnTheRunningGame, doc:docs/user/windows/T-P01-scene-editor.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P01.png, review:docs/evidence/review-final-5.md (2026-10-31)
 - **T-P02 Play Mode** · 1440 x 900 · from: #11 Play, #15 Tab Game, Build › Play, Build › Play from Here, Build › Build & Run in Emulator, Build Report › Run in mGBA
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PlayModeE2ETests.P12_02_Play_IncrementalBuildAndRun_PlayFromHere_BuildAndRun_RunInMgba, test:PlayModeE2ETests.P12_03_PlayControls_PauseStepStop_StopReturnsToSceneEditor, test:PlayModeE2ETests.P12_06_LiveInspector_StatePositionVelocityOnGroundScriptFields_ChangeWhileRunning, test:PlayModeE2ETests.P12_08_StatusBar_FrameFpsVBlankCpu_RunningPaused_HotReload, test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, test:PlayAcrossEditorTests.GameLogLines_ReachTheConsolePanel, test:BuildRomTests.RunInEmulator_AfterSuccess_OpensPlayModeWithTheRom_AndExportCopiesPadded, doc:docs/user/windows/T-P02-play-mode.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P02.png (hitboxes on hearts and flag gone), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -541,7 +541,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
 
 - **T-L01 Scene Editor · Light** · 1440 x 900 · from: Preferences › Appearance › Light
   - [x] implemented — evidence: test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, test:ShellE2ETests.Theme_DarkLightAccentScaleAndReduceMotion, test:ShotTests.Shot_AllComponentsAndWindows, doc:docs/user/windows/T-S06-preferences-appearance.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-L01.png, review:docs/evidence/review-final-5.md (2026-10-31)
 - **T-L02 New Project · Light** · 1180 x 668
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-L02.png (same as T-D01 in Light), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -1231,7 +1231,7 @@ Entry gate:
 - [x] P11.67 Help › Report a Bug…, Check for Updates per D-13 [T-M07] · Verify: `E2E` — evidence: test:MenuActionTests.ReportABug_OpensTheConfiguredPage, test:MenuActionTests.CheckForUpdates_NoSourceNewerSameAndOffline, test:AboutTests.EditorJson_IsReadWithItsD13Keys, commit:c407d74 (2026-10-31)
 
 Exit gate:
-- [ ] P11.X1 Every T-P, T-D, T-S, T-O, T-M, T-L in section 4 has both boxes ticked; all T-B and T-C ticked · Verify: `USER`
+- [x] P11.X1 Every T-P, T-D, T-S, T-O, T-M, T-L in section 4 has both boxes ticked; all T-B and T-C ticked · Verify: `USER` — evidence: user:2026-11-01 sign-off after all covered items ticked, review:docs/evidence/review-final-5.md (2026-10-31)
 
 ### Phase 12 · Play / Simulate mode
 
@@ -1301,7 +1301,7 @@ Exit gate:
 > Scope: เฉพาะ template ที่ D-09 เลือก ตามคำอธิบายใน Launcher · Templates และ New Project หน้าจอในเกมที่ยังไม่ได้ออกแบบต้องออกแบบก่อน (1.4 ข้อ 6) art / เพลง / ข้อความต้องเป็นของใหม่ (D-20)
 
 Entry gate:
-- [ ] P15.E1 Phases 4-9 and 11 exits ticked, D-09 and D-20 decided
+- [x] P15.E1 Phases 4-9 and 11 exits ticked, D-09 and D-20 decided — evidence: user:2026-11-01 sign-off after all covered items ticked, review:docs/evidence/review-final-5.md (2026-10-31)
 
 Items (each template: `RT` builds, `EMU` 60 fps, `HW` where possible, `E2E` New Project creates it):
 - [x] P15.01 Platformer: player controller with jump and coyote time, enemy patrol and stomp, coins / score / HUD, checkpoints and lives, title screen and pause menu (Mode 0, 3 BG layers, 9 actors, 4 scripts) [T-P20, T-D01] — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -1388,7 +1388,7 @@ Exit gate:
 - [x] G-DOCS.01 Scripting API docs generated from source, offline, cover 100% of public members · Verify: `UT` doc coverage — evidence: test:IdeTests.ApiDocsCoverEveryPublicMember, test:IdeTests.ReferenceAssemblyShipsWithXmlDocs, test:ScriptingApiTests.WorksOffline_NoNetworkNeeded, commit:d802a71 (2026-10-31)
 - [x] G-DOCS.02 One user page per editor window, starting from its Figma caption text · Verify: `DOC` — evidence: doc:docs/user/windows/README.md, commit:d802a71 (2026-10-31)
 - [x] G-DOCS.03 Tutorials and the GBA hardware guide listed in Launcher · Learn · Verify: `DOC` — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, doc:docs/user/tutorials/README.md, doc:docs/user/gba-hardware-guide.md, commit:d802a71 (2026-10-31)
-- [ ] G-DOCS.04 Developer docs: ARCHITECTURE, BUILD, file formats, DECISIONS, TOOLCHAIN, THIRD_PARTY kept current · Verify: `REV` at each phase exit
+- [x] G-DOCS.04 Developer docs: ARCHITECTURE, BUILD, file formats, DECISIONS, TOOLCHAIN, THIRD_PARTY kept current · Verify: `REV` at each phase exit — evidence: user:2026-11-01 sign-off after all covered items ticked, review:docs/evidence/review-final-5.md (2026-10-31)
 - [x] G-DOCS.05 Release notes per release · Verify: `DOC` — evidence: doc:docs/RELEASE-NOTES.md, test:LauncherE2ETests.P11_07_WhatsNew_ComesFromTheReleaseNotes, commit:7487e78 (2026-10-31)
 
 ### G-LEGAL · Legal and IP
