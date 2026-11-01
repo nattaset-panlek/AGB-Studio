@@ -43,6 +43,15 @@ public sealed class RobustnessTests : IDisposable
             Assert.Contains("Saved before the crash: Scene", text);
             Assert.Contains(_fx.Services.Project.Current!.ProjectPath, text);
             Assert.Contains(_fx.Services.Toasts.Visible, t => t.Status == ToastStatus.Error && t.Text.Contains("saved your changes"));
+            // the notice names the whole log path, and the log says where the editor was (owner report 2026-11-01)
+            Assert.Contains(_fx.Services.Toasts.Visible, t => t.Text.Contains(log, StringComparison.Ordinal));
+            Assert.Contains("Page: T-P01", text);
+            Assert.Contains("Last windows opened: T-P01 (startup)", text);
+            Assert.Contains("Active document: " + _fx.Services.Documents.Active!.Path, text);
+            Assert.Contains("Open documents: Scene, Game, Forest_01.map, PlayerController.cs", text);
+            Assert.Contains("Play: not started", text);
+            Assert.Contains("Install folder: " + AppContext.BaseDirectory, text);
+            Assert.Contains("Thread: UI", text);
             // the editor is still usable
             Assert.True(win.IsVisible);
             _fx.Services.Commands.Execute("edit.commandPalette");
@@ -57,6 +66,44 @@ public sealed class RobustnessTests : IDisposable
             guard.Dispose();
             win.Close();
         }
+    }
+
+    // owner report 2026-11-01: Explorer's "Run" on AGBStudio.exe inside a zip starts it from %TEMP%\Temp1_<zip>\
+    [Theory]
+    [InlineData(@"C:\Users\Ann\AppData\Local\Temp\Temp1_AGBStudio-0.1.zip\AGBStudio\", "AGBStudio-0.1.zip")]
+    [InlineData(@"C:\Users\Ann\AppData\Local\Temp\Temp3_agb studio.zip\", "agb studio.zip")]
+    [InlineData(@"C:\Users\Ann\AppData\Local\Temp\7zO8C2A1B3E\AGBStudio\", "the archive")]
+    [InlineData(@"C:\Users\Ann\AppData\Local\Temp\Rar$EXa1234.5678\", "the archive")]
+    [InlineData(@"C:\Users\Ann\AppData\Local\Temp\agb-build\", null)]
+    [InlineData(@"D:\Games\AGBStudio\", null)]
+    [InlineData(@"D:\Downloads\Temp1_AGBStudio.zip\", null)]
+    public void ZipLaunch_IsDetectedFromTheTemporaryFolder(string baseDir, string? zip) =>
+        Assert.Equal(zip, ZipLaunch.Detect(baseDir, @"C:\Users\Ann\AppData\Local\Temp\"));
+
+    [AvaloniaFact]
+    public void ZipLaunch_WarnsToExtractFirst_CloseQuits_ContinueStays()
+    {
+        _fx.OpenSkyHopper();
+        var win = new MainWindow(_fx.Services) { Width = 1440, Height = 900 };
+        win.Show();
+        try
+        {
+            var asked = win.WarnZipLaunchAsync("AGBStudio-0.1.zip");
+            Capture.Pump();
+            var d = Assert.IsType<ZipLaunchDialog>(win.Overlays.Open.Single());
+            Assert.Contains("Extract All", d.Message);
+            Assert.Contains("AGBStudio-0.1.zip", d.Message);
+            win.Overlays.CloseTop("continue");
+            Capture.Pump();
+            Assert.True(asked.IsCompleted);
+            Assert.True(win.IsVisible);
+            _ = win.WarnZipLaunchAsync("AGBStudio-0.1.zip");
+            Capture.Pump();
+            win.Overlays.CloseTop("quit");
+            Capture.Pump();
+            Assert.False(win.IsVisible);
+        }
+        finally { win.Close(); }
     }
 
     // G-ERR.03: an import that fails reaches the Console with the file and the reason

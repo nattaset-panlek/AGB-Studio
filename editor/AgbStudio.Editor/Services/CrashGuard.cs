@@ -50,7 +50,10 @@ public sealed class CrashGuard : IDisposable
     {
         var log = Handle(e.Exception);
         e.Handled = true;
-        _s.Toasts.Show($"AGB Studio hit an unexpected error and saved your changes. Details are in {Path.GetFileName(log)} (crash folder).", Controls.ToastStatus.Error, TimeSpan.FromSeconds(8));
+        // the full path: "crash folder" alone left users looking for the log
+        _s.Toasts.Show(log.Length > 0
+            ? $"AGB Studio hit an unexpected error and saved your changes. Details are in {log}."
+            : $"AGB Studio hit an unexpected error and saved your changes. The crash log could not be written to {Folder}.", Controls.ToastStatus.Error, TimeSpan.FromSeconds(12));
     }
 
     void OnDomainException(object? sender, UnhandledExceptionEventArgs e)
@@ -62,6 +65,36 @@ public sealed class CrashGuard : IDisposable
     {
         Handle(e.Exception);
         e.SetObserved();
+    }
+
+    /// <summary>
+    /// Where the editor was when it failed, so a log alone tells what the user did: system, install folder (a zip's
+    /// temporary folder shows here), page, previous page, the last windows opened and by what, overlays, active and open
+    /// documents, Play state. Each line is read on its own: one that throws is written as unreadable, never hides the error.
+    /// </summary>
+    public string Context()
+    {
+        var sb = new StringBuilder();
+        void Line(string name, Func<string?> read)
+        {
+            string value;
+            try { value = read() ?? "none"; }
+            catch (Exception e) when (e is not OutOfMemoryException) { value = "unreadable (" + e.GetType().Name + ")"; }
+            sb.Append(name).Append(": ").AppendLine(value);
+        }
+        Line("OS", () => Environment.OSVersion.VersionString + (Environment.Is64BitProcess ? " x64" : " x86"));
+        Line(".NET", () => Environment.Version.ToString());
+        Line("Install folder", () => AppContext.BaseDirectory + (ZipLaunch.Current() is { } zip ? $" (running from inside {zip})" : ""));
+        Line("Thread", () => Dispatcher.UIThread.CheckAccess() ? "UI" : "background " + Environment.CurrentManagedThreadId);
+        Line("Page", () => _s.Windows.CurrentPage);
+        Line("Previous page", () => _s.Windows.PreviousPage);
+        Line("Last windows opened", () => string.Join(" > ", _s.Windows.Requests.TakeLast(12).Select(r => r.Source is null ? r.Window : $"{r.Window} ({r.Source})")));
+        Line("Overlays", () => _s.Top is MainWindow w && w.Overlays.IsOpen ? string.Join(", ", w.Overlays.Open.Select(o => o.Name ?? o.GetType().Name)) : null);
+        Line("Active document", () => _s.Documents.Active is { } d ? d.Path ?? d.Name : null);
+        Line("Open documents", () => string.Join(", ", _s.Documents.Open.Select(d => d.Name + (d.IsDirty ? " *" : ""))));
+        Line("Play", () => _s.GetService(typeof(Windows.Play.PlayController)) is Windows.Play.PlayController p
+            ? $"{p.State}{(p.IsPaused ? ", paused" : "")}, frame {p.Frame}, started as {p.StartedAs}, ROM {p.RomPath ?? "none"}" : "not started");
+        return sb.ToString();
     }
 
     /// <summary>Saves the changed documents and writes the crash log; returns the log path.</summary>
@@ -87,6 +120,7 @@ public sealed class CrashGuard : IDisposable
             .AppendLine("Project: " + (_s.Project.Current?.ProjectPath ?? "none"))
             .AppendLine("Saved before the crash: " + (saved.Count == 0 ? "nothing to save" : string.Join(", ", saved)))
             .AppendLine(failed.Count == 0 ? "Not saved: none" : "Not saved: " + string.Join(", ", failed))
+            .Append(Context())
             .AppendLine()
             .AppendLine(error.ToString())
             .ToString();

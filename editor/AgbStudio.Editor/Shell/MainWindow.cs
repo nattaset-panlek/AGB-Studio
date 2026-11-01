@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace AgbStudio.Editor.Shell;
 
@@ -134,6 +135,30 @@ public sealed class MainWindow : Window, IShellHost
     {
         CurrentPageId = id;
         _page.Content = page;
+        // a page that changes the documents while it is being detached (it closes its own Doc Tab) could leave the new
+        // page out of the window, an empty workspace: put it in again
+        if (page.GetVisualRoot() is null && IsVisible) { _page.Content = null; _page.Content = page; }
+        SettleActiveDocument(id);
+        UpdateTitle();
+        PageShown?.Invoke(id);
+    }
+
+    /// <summary>After a page was shown (navigation tests, crash logs).</summary>
+    public event Action<string>? PageShown;
+
+    /// <summary>
+    /// Keeps the active document in step with the shown page, so every Doc Tab row, the breadcrumb, Save and the shortcut
+    /// context agree: only Play Mode keeps the Game document active (other pages showed "Game" selected and the Scene Editor
+    /// looked stuck in Play), the Scene Editor always edits its scene, and a document that is not open is never active.
+    /// </summary>
+    void SettleActiveDocument(string id)
+    {
+        var docs = _s.Documents;
+        if (docs.Active is { } a && !docs.Open.Contains(a)) docs.Active = null;
+        if (id == "T-P02") return;
+        var scene = docs.Open.FirstOrDefault(EditorDocument.IsSceneDocument);
+        if (docs.Active?.IsGame == true) docs.Active = scene ?? docs.Open.FirstOrDefault(d => !d.IsGame);
+        else if (id == "T-P01" && scene != null && !EditorDocument.IsSceneDocument(docs.Active)) docs.Active = scene;
     }
 
     public bool OpenTitleMenu(string id)
@@ -150,7 +175,8 @@ public sealed class MainWindow : Window, IShellHost
     void UpdateTitle()
     {
         TitleBar.Project = _s.Project.Name;
-        TitleBar.Document = _s.Documents.Active is { } d ? (d.Path is { } p ? Path.GetFileName(p) : d.Name) : null;
+        TitleBar.Document = CurrentPage is IPageBreadcrumb page ? page.Breadcrumb
+            : _s.Documents.Active is { } d ? (d.Path is { } p ? Path.GetFileName(p) : d.Name) : null;
     }
 
     void ApplyScale()
@@ -201,5 +227,12 @@ public sealed class MainWindow : Window, IShellHost
     {
         base.OnOpened(e);
         _ = _s.Toolchain.CheckAsync();
+        if (ZipLaunch.Current() is { } zip) _ = WarnZipLaunchAsync(zip);
+    }
+
+    /// <summary>Started from inside a zip (Explorer "Run" without extracting): say to extract first; Close quits.</summary>
+    public async Task WarnZipLaunchAsync(string zip)
+    {
+        if (await Overlays.Show(new ZipLaunchDialog(zip)) as string == "quit") Close();
     }
 }
