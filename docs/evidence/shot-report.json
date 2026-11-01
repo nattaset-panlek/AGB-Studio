@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-01 16:58:27Z",
+  "generated": "2026-11-01 03:48:24Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3233,30 +3233,30 @@
       "set": "frame Scene Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 4.04,
-      "BestShiftDiffPercent": 4.04,
+      "DiffPercent": 3.06,
+      "BestShiftDiffPercent": 3.06,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 6.29,
-      "ColourDiffPercent": 14.98
+      "MeanChannelError": 4.57,
+      "ColourDiffPercent": 10.88
     },
     {
       "Id": "T-L01",
       "set": "frame Scene Editor \u00B7 Light",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 4.07,
-      "BestShiftDiffPercent": 4.07,
+      "DiffPercent": 3.16,
+      "BestShiftDiffPercent": 3.16,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 6.32,
-      "ColourDiffPercent": 14.99
+      "MeanChannelError": 4.84,
+      "ColourDiffPercent": 10.95
     },
     {
       "Id": "T-O07",
@@ -3848,15 +3848,15 @@
       "set": "frame Play Mode",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.85,
-      "BestShiftDiffPercent": 2.85,
+      "DiffPercent": 2.8,
+      "BestShiftDiffPercent": 2.8,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.89,
-      "ColourDiffPercent": 5.47
+      "MeanChannelError": 3.84,
+      "ColourDiffPercent": 5.39
     },
     {
       "Id": "T-M18",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.53,
-      "BestShiftDiffPercent": 2.53,
+      "DiffPercent": 2.49,
+      "BestShiftDiffPercent": 2.49,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 2.96,
-      "ColourDiffPercent": 4.65
+      "MeanChannelError": 2.89,
+      "ColourDiffPercent": 4.62
     },
     {
       "Id": "T-D14",
