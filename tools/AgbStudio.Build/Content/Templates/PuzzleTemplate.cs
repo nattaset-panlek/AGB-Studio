@@ -11,7 +11,7 @@ namespace AgbStudio.Build.Content.Templates;
 public static class PuzzleTemplate
 {
     public const int TEmpty = 0, TRed = 1, TYellow = 2, TGreen = 3, TBlue = 4, TPurple = 5, TWall = 6, TPanel = 7;
-    public const int WellX = 4, WellW = 6, WellH = 9;
+    public const int WellX = 1, WellW = 6, WellH = 9;   // the well on the left, the score panel on the right
 
     public static GameProject Create(string dir, string name)
     {
@@ -37,6 +37,8 @@ public static class PuzzleTemplate
         WriteMaps(p);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -110,28 +112,52 @@ public static class PuzzleTemplate
             Actors =
             {
                 new ActorData { Name = "Board", Kind = ActorKind.Empty, Tag = "Board", Components = { new ComponentData { Type = "Board" } } },
-                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 168, Y = 16, Text = "hud.score", Group = "HUD" },
-                new ActorData { Name = "HUD Next", Kind = ActorKind.TextLabel, X = 168, Y = 48, Text = "hud.next", Group = "HUD" },
-                new ActorData { Name = "HUD Best", Kind = ActorKind.TextLabel, X = 8, Y = 16, Text = "hud.best", Group = "HUD" },
+                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 136, Y = 16, Text = "hud.score", Group = "HUD",
+                    Components = { new ComponentData { Type = "Scoreboard" } } },
+                new ActorData { Name = "HUD Next", Kind = ActorKind.TextLabel, X = 136, Y = 72, Text = "hud.next", Group = "HUD" },
+                new ActorData { Name = "HUD Best", Kind = ActorKind.TextLabel, X = 136, Y = 40, Text = "hud.best", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Board.scene"), board);
     }
 
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Puzzle",
+        "Pairs of gems fall into the well. Line up three or more of one colour in a row or a column to clear them; gems above fall down and can clear again (a chain), which scores more. The game ends when the well is full.",
+        ["D-pad left / right: move the pair", "A: turn the pair", "D-pad down: drop faster", "A after game over: back to the title", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Board"] = "Invisible game logic: the Board script keeps the 6 x 9 grid of gems in an array and draws it by changing tiles of the BG1 Board layer (Scene.SetTile), so the gems are tiles, not sprites.",
+            ["HUD Score"] = "Text label with the score. Its Scoreboard script also writes the best score into HUD Best whenever a number changes.",
+            ["HUD Next"] = "Text label over the preview of the next pair (the two gem tiles under it are drawn by Board).",
+            ["HUD Best"] = "Text label with the best score, kept in the save data.",
+        },
+        [
+            "Select Board and lower `fallFrames` to make the pairs fall faster.",
+            "Change the scoring in Board.ClearLines (for example a bonus for four in a row).",
+            "Use five colours instead of four: change `Random.Range(1, 5)` to `Random.Range(1, 6)` (tile 5 is the purple gem).",
+            "Repaint the gem tiles in the Tilemap Editor or the tileset image (assets/tilesets/gems.png).",
+        ]);
+
+    // ---- scripts ----------------------------------------------------------------------------------------
+
     static void WriteScripts(GameProject p)
     {
         TemplateKit.Script(p, "Board", """
-// The well is 6 x 9 cells of map layer 0, starting at tile (4, 0). A pair falls from the top: Left and Right move
+// The well is 6 x 9 cells of map layer 0, starting at tile (1, 0). A pair falls from the top: Left and Right move
 // it, A turns it, Down drops it faster. When it lands, gems fall into gaps, and lines of three or more of one
 // colour clear; each further clear in the same turn (a chain) scores more.
+// The gems are tiles: Scene.SetTile(layer, x, y, tile) changes one 16 px cell of the map while the game runs.
 public class Board : Behaviour
 {
-    const int Left = 4;
+    const int Left = 1;
     const int Width = 6;
     const int Height = 9;
-    public int fallFrames = 30;
+    public int fallFrames = 30;   // frames between steps down (Inspector field)
 
-    int[] cells = new int[54];
+    int[] cells = new int[54];   // the grid: 0 empty, 1-4 a gem colour (= its tile number)
     int[] marks = new int[54];
     int[] shown = new int[54];   // what the map shows now, so a redraw only touches changed cells
     int pairX;
@@ -144,15 +170,16 @@ public class Board : Behaviour
     int timer;
     bool over;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
-        Game.score = 0;
-        nextA = Random.Range(1, 5);
+        Game.score = 0;                 // a save field (Project Settings > Save)
+        nextA = Random.Range(1, 5);     // a whole number from 1 to 4
         nextB = Random.Range(1, 5);
         Spawn();
-        UpdateHud();
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
         if (over)
@@ -160,6 +187,7 @@ public class Board : Behaviour
             if (Input.Pressed(Key.A)) Scene.Load("Title");
             return;
         }
+        // Input.Pressed is true only on the frame the button goes down.
         int dx = 0;
         if (Input.Pressed(Key.Left)) dx = -1;
         if (Input.Pressed(Key.Right)) dx = 1;
@@ -181,6 +209,7 @@ public class Board : Behaviour
                 Sound.Play("move");
             }
         }
+        // Input.Held stays true while the button is down: holding Down makes the timer run 6 times faster.
         timer += Input.Held(Key.Down) ? 6 : 1;
         if (timer < fallFrames) return;
         timer = 0;
@@ -211,7 +240,7 @@ public class Board : Behaviour
     {
         if (y < 0) return;
         shown[y * Width + x] = color;
-        Scene.SetTile(0, Left + x, y, color);
+        Scene.SetTile(0, Left + x, y, color);   // tile 0 is the empty well
     }
 
     // Draws (show = 1) or erases (show = 0) the falling pair.
@@ -221,6 +250,7 @@ public class Board : Behaviour
         Put(pairX + OtherX(turn), pairY + OtherY(turn), show == 1 ? colorB : 0);
     }
 
+    // The next pair becomes the falling pair; a new next pair shows in the preview at tiles (9, 6) and (9, 7).
     void Spawn()
     {
         colorA = nextA;
@@ -230,10 +260,11 @@ public class Board : Behaviour
         pairX = 2;
         pairY = 0;
         turn = 0;
-        Scene.SetTile(0, 12, 4, nextB);
-        Scene.SetTile(0, 12, 5, nextA);
+        Scene.SetTile(0, 9, 6, nextB);
+        Scene.SetTile(0, 9, 7, nextA);
         if (!Fits(pairX, pairY, turn))
         {
+            // The well is full: game over. The best score is kept in save slot 0.
             over = true;
             if (Game.score > Game.best) Game.best = Game.score;
             Save.Write(0);
@@ -257,7 +288,6 @@ public class Board : Behaviour
             Settle();
         }
         Redraw();
-        UpdateHud();
         Spawn();
     }
 
@@ -288,11 +318,13 @@ public class Board : Behaviour
             {
                 int c = cells[y * Width + x];
                 if (c == 0) continue;
+                // three of one colour to the right
                 if (x + 2 < Width && cells[y * Width + x + 1] == c && cells[y * Width + x + 2] == c)
                 {
                     int k = x;
                     while (k < Width && cells[y * Width + k] == c) { marks[y * Width + k] = 1; k++; }
                 }
+                // three of one colour downwards
                 if (y + 2 < Height && cells[(y + 1) * Width + x] == c && cells[(y + 2) * Width + x] == c)
                 {
                     int k = y;
@@ -308,11 +340,12 @@ public class Board : Behaviour
             cleared += 1;
         }
         if (cleared == 0) return false;
-        Game.score += cleared * 10 * chain;
+        Game.score += cleared * 10 * chain;   // the Scoreboard on HUD Score shows the new score
         Sound.Play("clear");
         return true;
     }
 
+    // Copies the grid to the map, changing only the cells that differ (few SetTile calls per frame).
     void Redraw()
     {
         for (int i = 0; i < 54; i++)
@@ -322,13 +355,32 @@ public class Board : Behaviour
             Scene.SetTile(0, Left + i % Width, i / Width, cells[i]);
         }
     }
+}
+""");
+        TemplateKit.Script(p, "Scoreboard", """
+// On the HUD Score text label: shows the score, and the best score in HUD Best, whenever they change. Other
+// scripts only change Game.score; they do not need to know about the HUD.
+public class Scoreboard : Behaviour
+{
+    public int digits = 5;
+    int shownScore = -1;
+    int shownBest = -1;
 
-    void UpdateHud()
+    void Update()
     {
-        Actor score = Scene.Find("HUD Score");
-        if (score != null) score.SetLabelNumber(Game.score, 5);
-        Actor best = Scene.Find("HUD Best");
-        if (best != null) best.SetLabelNumber(Game.best, 5);
+        if (Game.score != shownScore)
+        {
+            shownScore = Game.score;
+            // SetLabelNumber writes a number with leading zeros into this text label.
+            actor.SetLabelNumber(shownScore, digits);
+        }
+        if (Game.best != shownBest)
+        {
+            shownBest = Game.best;
+            // Scene.Find looks an actor up by its Hierarchy name.
+            Actor best = Scene.Find("HUD Best");
+            if (best != null) best.SetLabelNumber(shownBest, digits);
+        }
     }
 }
 """);

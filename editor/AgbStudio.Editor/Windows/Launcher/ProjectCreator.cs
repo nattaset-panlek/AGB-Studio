@@ -193,7 +193,8 @@ public static class ProjectCreator
         if (!p.SceneFiles().Any()) AddStartScene(p);
         var start = sample ? SampleScene : p.SceneFiles().Select(GameProject.AssetName).Contains(s.General.StartScene) ? s.General.StartScene : GameProject.AssetName(p.SceneFiles().First());
         s.General.StartScene = start;
-        s.LastScene = start;
+        // a genre template opens on its main scene (the level, not the title screen) so its objects are in view
+        s.LastScene = complete && AgbStudio.Build.Content.Templates.TemplateKit.MainScene(p) is { } main ? main : start;
         // a template that has the Thai font already keeps its own font settings
         if (o.ThaiFont && !File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font"))) AddThaiFont(p, warnings);
         if (o.LogicGraphExamples) AddLogicGraph(p);

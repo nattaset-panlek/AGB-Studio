@@ -41,6 +41,34 @@ public sealed class HierarchyTests : IDisposable
         Assert.Equal(TreeToggle.Open, Row("group:Coins").Toggle);
     }
 
+    /// <summary>Actor rows show what the actor is made of: behaviour, sprite, zone, link and camera badges, and every
+    /// component in the tooltip (Templates, docs/evidence/ui-changes-since-figma.md).</summary>
+    [AvaloniaFact]
+    public void ActorRows_ShowTheirComponentsAsBadges()
+    {
+        // Player: Platformer Body (physics), PlayerController (script), the sprite, and the camera follows it
+        Assert.Equal(["rocket", "code", "image", "camera"], Row("actor:0").Badges);
+        var tip = Assert.IsType<TipContent>(ToolTip.GetTip(Row("actor:0")));
+        Assert.Equal("Components: Sprite, Animation idle, Platformer Body, PlayerController (script), Collider, Camera follows", tip.Text);
+        // Slime: Platformer Body, Patrol (AI), Damage on Touch (combat), sprite
+        Assert.Equal(["rocket", "bug", "sword", "image"], Row("actor:1").Badges);
+        // the exit is a trigger zone with a link to Cave_01
+        var exit = Panel.AllRows().Single(r => r.Label.StartsWith("Exit", StringComparison.Ordinal));
+        Assert.Equal(["flag", "link"], Row(exit.Key).Badges);
+        Assert.Contains(exit.Parts!, b => b is { Kind: "link", Title: "Link to Cave_01" });
+        // the badges are drawn in the row
+        var icons = Row("actor:0").GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "PART_Badges");
+        Assert.True(icons.IsVisible);
+        Assert.Equal(4, icons.Children.Count);
+        // rows that are not actors have none
+        Assert.Null(Row("camera").Badges);
+        Assert.False(Row("camera").GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "PART_Badges").IsVisible);
+        // adding a component updates the badges
+        _w.M.Edit("Add Component", () => _w.M.Scene!.Actors[0].Components.Add(new ComponentData { Type = "SoundOnEvent" }));
+        Capture.Pump();
+        Assert.Contains("sound", Row("actor:0").Badges!);
+    }
+
     [AvaloniaFact]
     public void Search_FiltersRowsAndKeepsTheirFolders()
     {

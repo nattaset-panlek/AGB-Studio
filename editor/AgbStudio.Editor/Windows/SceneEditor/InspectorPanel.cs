@@ -10,12 +10,14 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 
 namespace AgbStudio.Editor.Windows.SceneEditor;
 
 /// <summary>
-/// Inspector (T-P01, P11.13): the selected actor's header (name, layer and OBJ priority), Transform, Sprite (sheet via
+/// Inspector (T-P01, P11.13): the selected actor's header (name, layer and OBJ priority), the Components list (every
+/// part of the actor at a glance), Transform, Sprite (sheet via
 /// Asset Picker T-O04, animation via Animation List T-M16, frames, palette to Palette Manager T-P10), its behaviours
 /// with their fields and the Collider, script fields (double click the header to open the Script Editor), Add
 /// Component (T-O05) and the GBA Budget meters (click for Budget Details T-O06). Every change is an undoable edit of
@@ -101,6 +103,7 @@ public sealed class InspectorPanel : Panel
     void BuildActor(ActorData a, int index)
     {
         _content.Children.Add(ActorHeader(a, index));
+        _content.Children.Add(Section(ComponentList(a)).Named("ComponentList"));
         _content.Children.Add(Section(TransformSection(index)));
         var assets = _m.Assets;
         var sheet = a.Sprite.Length > 0 ? assets?.Sprite(a.Sprite) : null;
@@ -222,7 +225,54 @@ public sealed class InspectorPanel : Panel
             paletteButton.Click += (_, _) => _ = _s.Windows.Open("T-P10", _m.Assets.SpritePath(a.Sprite), source: "InspectorPalette");
             rows.Add(Labelled("Palette", paletteButton, 15));
         }
-        return SectionBody(new SectionHeader { Title = "Sprite", Glyph = "image" }, rows);
+        return SectionBody(new SectionHeader { Title = "Sprite", Glyph = "image", Name = "Section_Sprite" }, rows);
+    }
+
+    /// <summary>
+    /// Components (not in Figma, docs/evidence/ui-changes-since-figma.md "Templates"): one row per part of the actor
+    /// (sprite, animation, behaviours, collider, text, trigger zone, camera, links) with what kind it is, so the parts a
+    /// template uses are named in one place. A click on a row scrolls to the section that edits it.
+    /// </summary>
+    Control ComponentList(ActorData a)
+    {
+        var parts = ActorComponents.Of(a, _m.Scene);
+        // compact pills that wrap: icon and name; scripts in the accent colour, the kind in the tooltip
+        var wrap = new WrapPanel { Orientation = Orientation.Horizontal, ItemSpacing = 4, LineSpacing = 4, Name = "ComponentPills" };
+        foreach (var part in parts)
+        {
+            var script = part.Kind == "script";
+            var icon = new Icon { Glyph = part.Glyph, Size = 11, VerticalAlignment = VerticalAlignment.Center }.Token(Icon.ForegroundProperty, script ? "accent/default" : "text/secondary");
+            var title = UI.Text(part.Title, "Label/11", "text/primary");
+            title.VerticalAlignment = VerticalAlignment.Center;
+            var pill = UI.Frame(UI.Row(4, icon, title), "bg/base", script ? "accent/default" : "border/default", new Thickness(1), new Thickness(6, 2, 7, 2), 9);
+            var row = new Button
+            {
+                Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareButton"), Content = pill, Name = "Component_" + part.Title.Replace(' ', '_'),
+                Tag = part.Kind,
+            };
+            ToolTip.SetTip(row, new TipContent(part.Kind switch
+            {
+                "script" => $"Script behaviour: scripts/{part.Title}.cs (double click its section header to open it)",
+                "built-in" => "Built-in behaviour of the runtime",
+                "sprite" => $"Sprite sheet {a.Sprite}.png",
+                "animation" => "Animation that plays when the scene starts",
+                "collider" => "Hit box used by OnTouch and blocking",
+                "text" => "Text label: a string key from Localization",
+                "zone" => "Invisible area that reacts when the player enters it",
+                "camera" => "The scene camera (Main Camera) follows this actor",
+                "link" => "Touching this actor loads another scene (Link Settings)",
+                _ => part.Title,
+            }));
+            row.Click += (_, _) =>
+            {
+                if (part.Section is { } name && _content.GetLogicalDescendants().OfType<Control>().FirstOrDefault(c => c.Name == name) is { } target)
+                    target.BringIntoView();
+            };
+            wrap.Children.Add(row);
+        }
+        Control body = parts.Count == 0 ? UI.Text("No components yet: use Add Component below.", "Body/12", "text/muted") : wrap;
+        var header = new SectionHeader { Title = "Components", Glyph = "layers", Meta = parts.Count.ToString(CultureInfo.InvariantCulture), Name = "Section_Components" };
+        return SectionBody(header, [body]);
     }
 
     static Control Labelled(string label, Control value, double height)

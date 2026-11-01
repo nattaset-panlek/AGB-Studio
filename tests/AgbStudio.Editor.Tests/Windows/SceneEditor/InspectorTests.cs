@@ -56,6 +56,32 @@ public sealed class InspectorTests : IDisposable
         Assert.True(_w.Find<Button>("PriorityButton").IsEffectivelyEnabled);
     }
 
+    /// <summary>The Components list under the header names every part of the actor and what kind it is; a click on a
+    /// behaviour scrolls to its section (Templates, docs/evidence/ui-changes-since-figma.md).</summary>
+    [AvaloniaFact]
+    public void ComponentList_NamesEveryPartOfTheActor()
+    {
+        _w.Click(_w.Find<TreeItem>("Row_actor:0"));
+        var list = _w.Find<Border>("ComponentList");
+        var rows = list.GetVisualDescendants().OfType<Button>().Where(b => b.Name?.StartsWith("Component_", StringComparison.Ordinal) == true).Select(b => b.Name).ToList();
+        Assert.Equal(["Component_Sprite", "Component_Animation_idle", "Component_Platformer_Body", "Component_PlayerController", "Component_Collider", "Component_Camera_follows"], rows);
+        Assert.Equal("6", _w.Find<SectionHeader>("Section_Components").Meta);
+        // the kind of each part: the runtime's Platformer Body, the project's PlayerController script
+        var kinds = list.GetVisualDescendants().OfType<Button>().Where(b => b.Name?.StartsWith("Component_", StringComparison.Ordinal) == true).Select(b => b.Tag as string).ToList();
+        Assert.Equal(["sprite", "animation", "built-in", "script", "collider", "camera"], kinds);
+        Assert.Equal("Sprite sheet hero.png", Assert.IsType<TipContent>(ToolTip.GetTip(_w.Find<Button>("Component_Sprite"))).Text);
+        // every behaviour row has its own section further down
+        Assert.NotNull(_w.Find<SectionHeader>("Section_PlatformerBody"));
+        Assert.NotNull(_w.Find<SectionHeader>("Section_PlayerController"));
+        _w.Click(_w.Find<Button>("Component_PlayerController"));
+        // a text label lists its text, a trigger zone its zone and link
+        var exit = _w.M.Scene!.Actors.FindIndex(a => a.Name.StartsWith("Exit", StringComparison.Ordinal));
+        _w.M.SelectActor(exit);
+        Capture.Pump();
+        var names = _w.Find<Border>("ComponentList").GetVisualDescendants().OfType<Button>().Select(b => b.Name).Where(n => n?.StartsWith("Component_", StringComparison.Ordinal) == true).ToList();
+        Assert.Equal(["Component_Trigger_zone", "Component_Link_to_Cave_01"], names);
+    }
+
     [AvaloniaFact]
     public void Header_TransformAndSpriteOfThePlayer()
     {
