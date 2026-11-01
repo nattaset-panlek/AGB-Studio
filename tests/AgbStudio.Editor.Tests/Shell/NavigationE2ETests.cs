@@ -219,6 +219,16 @@ public sealed class NavigationE2ETests : EditorDriver
     }
 
     [AvaloniaFact]
+    public void OpeningAnotherProject_FromTheLauncher_StopsTheOldProjectsGame()
+    {
+        PlayTestSupport.RunForest(Play);
+        Fx.Services.Commands.Execute("help.gettingStarted");
+        Check("T-P12", true, "Getting Started while playing");
+        AgbStudio.Editor.Windows.Launcher.LauncherService.Of(Fx.Services).CompleteOpen(Path.Combine(Fx.Folder, "SkyHopper"), "Forest_01");
+        Check("T-P01", false, "another project opened");
+    }
+
+    [AvaloniaFact]
     public void ProjectWithoutAScene_DoesNotMakeTheGameTabActive()
     {
         // a project opened without a last scene (a new empty project) only had the Game document: it became the active
