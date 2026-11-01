@@ -131,7 +131,8 @@ public sealed class LogicGraphTests : IDisposable
     public void RightClickCanvas_AddNodeSearchEnterAndShiftEnter()
     {
         var page = Open();
-        _h.ClickAt(Screen(page, 700, 640), MouseButton.Right);
+        // the Doc Tabs row over the canvas (docs/evidence/ui-changes-since-figma.md) leaves 34 px less canvas below
+        _h.ClickAt(Screen(page, 700, 600), MouseButton.Right);
         Assert.Equal("T-O08", _h.S.Windows.Requests[^1].Window);
         var add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
         add.Query.Focus();
@@ -144,11 +145,11 @@ public sealed class LogicGraphTests : IDisposable
         Assert.False(_h.Win.Overlays.IsOpen);
         var added = page.Document.Graph.Nodes.Last();
         Assert.Equal(chosen.Type, added.Type);
-        Assert.Equal((700, 640), ((int)added.X, (int)added.Y));
+        Assert.Equal((700, 600), ((int)added.X, (int)added.Y));
         Assert.Equal("11 nodes · 9 wires", _h.Find<StatusItem>("Status_Counts").Content);
         // Shift+Enter adds and connects from the selected node (Play Sound's exec out)
         page.Canvas.Select(["n7"]);
-        _h.ClickAt(Screen(page, 500, 700), MouseButton.Right);
+        _h.ClickAt(Screen(page, 500, 660), MouseButton.Right);
         add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
         add.Query.Focus();
         _h.Type("checkpoint");
