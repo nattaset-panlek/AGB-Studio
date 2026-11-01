@@ -234,8 +234,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M06 | menu Tools menu | 264x253 | 264x253 | 2.63 | 2.63 | 0,0 | 0 | 3.07 |
 | T-M07 | menu Help menu | 264x184 | 264x184 | 3.22 | 3.22 | 0,0 | 0 | 3.77 |
 | T-M08 | menu Open Recent | 264x123 | 264x123 | 2.16 | 2.16 | 0,0 | 0 | 2.47 |
-| T-P15 | frame Audio | 1440x900 | 1440x900 | 4.22 | 4.22 | 0,0 | 0 | 4.46 |
-| T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 2.72 | 2.72 | 0,0 | 0 | 2.66 |
+| T-P15 | frame Audio | 1440x900 | 1440x900 | 3.23 | 3.23 | 0,0 | 0 | 3.87 |
+| T-P25 | frame SFX Designer | 1440x900 | 1440x900 | 1.74 | 1.74 | 0,0 | 0 | 2.13 |
 | T-P11 | frame Build Report | 1440x900 | 1440x900 | 1.54 | 1.54 | 0,0 | 0 | 1.85 |
 | T-D06 | frame Build ROM | 600x440 | 600x440 | 2.29 | 2.29 | 0,0 | 0 | 2.71 |
 | T-D23 | frame Build ROM · Failed | 600x382 | 600x382 | 1.32 | 1.32 | 0,0 | 0 | 1.43 |
@@ -289,10 +289,10 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |
-| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 4.04 | 4.04 | 0,0 | 0 | 7.10 |
+| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 4.49 | 4.49 | 0,0 | 0 | 7.32 |
 | T-O08 | frame Add Node | 380x269 | 380x269 | 3.24 | 3.24 | 0,0 | 0 | 3.47 |
 | T-M21 | menu Node Context Menu | 264x175 | 264x175 | 2.05 | 2.05 | 0,0 | 0 | 2.22 |
-| T-P13 | frame World Map | 1440x900 | 1440x900 | 1.30 | 1.30 | 0,0 | 0 | 1.72 |
+| T-P13 | frame World Map | 1440x900 | 1440x900 | 1.20 | 1.20 | 0,0 | 0 | 1.47 |
 | T-O09 | frame Link Settings | 360x330 | 360x330 | 2.75 | 2.75 | 0,0 | 0 | 4.59 |
 | T-M22 | menu Scene Context Menu | 264x149 | 264x149 | 1.94 | 1.94 | 0,0 | 0 | 2.25 |
 | T-D08 | frame Project Settings | 900x620 | 900x620 | 1.02 | 1.02 | 0,0 | 0 | 1.23 |
