@@ -368,7 +368,7 @@ public sealed class AssetPicker : ScenePopover
             return;
         }
         var cat = Tabs.First(t => t.Tab == _tab).Category;
-        var items = AssetActions.Of(_m).List(cat).Where(a => cat != AssetCategory.Tilesets || _m.Project?.TilesetFiles().Contains(a.Path) == true)
+        var items = AssetActions.Of(_m).ListByCreation(cat).Where(a => cat != AssetCategory.Tilesets || _m.Project?.TilesetFiles().Contains(a.Path) == true)
             .Where(a => a.Name.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
         Items = items.Select(a => a.Path).ToList();
         var current = _m.SelectedActor?.Sprite;

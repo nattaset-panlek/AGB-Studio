@@ -250,7 +250,7 @@ public static class GbaScreenRenderer
                 for (var b = 0; b < 4; b++)
                 {
                     var bg = bgs[b];
-                    if (bg?.Sample == null || (show & (ScreenLayers)(1 << b)) == 0 || bg.Priority >= bestPrio) continue;
+                    if (bg?.Sample == null || ((show & (ScreenLayers)(1 << b)) == 0 && b != frame.TextLayer) || bg.Priority >= bestPrio) continue;
                     var (idx, bank) = bg.Sample(bg.ScrollX + x, bg.ScrollY + y);
                     if (idx == 0) continue;
                     bestPrio = bg.Priority;

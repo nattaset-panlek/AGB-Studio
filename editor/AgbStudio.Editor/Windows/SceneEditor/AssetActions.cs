@@ -92,6 +92,10 @@ public sealed class AssetActions
 
     public IReadOnlyList<AssetItem> List(AssetCategory c) => Files(c).Select(f => Item(f, c)).ToList();
 
+    /// <summary>The Asset Picker lists sprites in the order they were added (Figma T-O04: hero, slime, coin, block, heart, cloud).</summary>
+    public IReadOnlyList<AssetItem> ListByCreation(AssetCategory c) =>
+        (c == AssetCategory.Sprites && P is { } p ? AgbStudio.Editor.Services.CreationOrder.Of(p.SpriteFiles()).ToList() : Files(c)).Select(f => Item(f, c)).ToList();
+
     public AssetItem? Find(string path)
     {
         foreach (var (c, _, _) in Categories)

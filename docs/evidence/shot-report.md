@@ -221,8 +221,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | C-brand-app-icon-light | brand/app-icon | 128x128 | 128x128 | 0.24 | 0.24 | 0,0 | 0 | 0.60 |
 | C-brand-app-icon-dark | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.20 |
 | C-brand-app-icon-indigo | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.21 |
-| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 2.77 | 2.77 | 0,0 | 0 | 4.31 |
-| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 2.88 | 2.88 | 0,0 | 0 | 4.57 |
+| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 2.93 | 2.93 | 0,0 | 0 | 4.46 |
+| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 3.03 | 3.03 | 0,0 | 0 | 4.72 |
 | T-O07 | frame Command Palette | 640x325 | 640x325 | 0.87 | 0.87 | 0,0 | 0 | 1.08 |
 | T-D10 | frame Keyboard Shortcuts | 760x390 | 760x390 | 1.16 | 1.16 | 0,0 | 0 | 1.28 |
 | T-D12 | frame Unsaved Changes | 460x262 | 460x262 | 2.22 | 2.22 | 0,0 | 0 | 2.42 |
@@ -274,7 +274,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-O01 | frame Scene Switcher | 320x356 | 320x356 | 6.81 | 6.44 | 0,-1 | 1 | 6.28 |
 | T-O02 | frame Video Mode | 380x400 | 380x400 | 1.88 | 1.88 | 0,0 | 0 | 2.12 |
 | T-O03 | frame Grid & Snap | 300x328 | 300x328 | 0.99 | 0.99 | 0,0 | 0 | 1.31 |
-| T-O04 | frame Asset Picker | 440x368 | 440x368 | 4.08 | 4.08 | 0,0 | 0 | 5.16 |
+| T-O04 | frame Asset Picker | 440x368 | 440x368 | 2.56 | 2.56 | 0,0 | 0 | 3.34 |
 | T-O05 | frame Component Picker | 400x464 | 400x464 | 3.49 | 3.49 | 0,0 | 0 | 4.20 |
 | T-O06 | frame Budget Details | 420x398 | 420x398 | 3.08 | 3.08 | 0,0 | 0 | 3.39 |
 | T-M09 | menu Create | 264x270 | 264x270 | 2.07 | 2.07 | 0,0 | 0 | 2.38 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.49 | 2.49 | 0,0 | 0 | 2.89 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.53 | 2.53 | 0,0 | 0 | 2.96 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |
