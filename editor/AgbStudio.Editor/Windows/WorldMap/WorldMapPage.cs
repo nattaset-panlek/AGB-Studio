@@ -24,7 +24,7 @@ public sealed record LinkSettingsArgs(WorldMapModel Model, LinkRef Link);
 /// parallax, music, events). Right-click a card for the Scene Context Menu.
 /// </summary>
 [EditorWindow("T-P13")]
-public sealed class WorldMapPage : DockPanel
+public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
 {
     readonly EditorServices _s;
     readonly StackPanel _sceneList = new() { Spacing = 1, Margin = new Thickness(6, 4, 6, 3), Name = "SceneList" };
@@ -40,6 +40,9 @@ public sealed class WorldMapPage : DockPanel
     public WorldMapModel Model { get; }
     public WorldMapCanvas Canvas { get; }
     public string? Selected { get; private set; }
+
+    /// <summary>The title bar shows "World Map" (the page is not a document).</summary>
+    public string Breadcrumb => "World Map";
 
     public WorldMapPage(WindowContext ctx) : this(ctx.Services, ctx.Args as string) { }
 
@@ -77,8 +80,12 @@ public sealed class WorldMapPage : DockPanel
 
         var body = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("260,*,320"), Name = "Body" };
         body.Children.Add(PageChrome.SidePanel(left, true, "LeftPanel"));
-        Grid.SetColumn(Canvas, 1);
-        body.Children.Add(Canvas);
+        // Doc Tabs over the canvas, as on the other editor pages: back to the scene (or any open document) in one click
+        var center = new DockPanel { Name = "CenterPanel" };
+        PageChrome.DockTo(center, Tilemap.PageChrome.DocTabs(s, "World Map", "map"), Dock.Top);
+        center.Children.Add(Canvas);
+        Grid.SetColumn(center, 1);
+        body.Children.Add(center);
         var rightPanel = PageChrome.SidePanel(right, false, "RightPanel");
         Grid.SetColumn(rightPanel, 2);
         body.Children.Add(rightPanel);
@@ -89,8 +96,6 @@ public sealed class WorldMapPage : DockPanel
         AttachedToVisualTree += (_, _) =>
         {
             if (_s.Top is MainWindow w) w.Edit.DefaultTarget = Canvas;
-            // the title bar shows "World Map"
-            _s.Documents.Active = new EditorDocument { Name = "World Map", Glyph = "map" };
         };
         DetachedFromVisualTree += (_, _) => { if (_s.Top is MainWindow w && w.Edit.DefaultTarget == Canvas) w.Edit.DefaultTarget = null; };
         Selected = select ?? Model.Scenes.FirstOrDefault(x => x.Name == s.Project.Current?.Settings.LastScene)?.Name ?? Model.Scenes.FirstOrDefault()?.Name;

@@ -117,8 +117,12 @@ public sealed class LogicGraphPage : DockPanel
 
         var body = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("248,*,320"), Name = "Body" };
         body.Children.Add(PageChrome.SidePanel(left, true, "LeftPanel"));
-        Grid.SetColumn(Canvas, 1);
-        body.Children.Add(Canvas);
+        // Doc Tabs over the canvas (the graph is the active document): back to the scene in one click
+        var center = new DockPanel { Name = "CenterPanel" };
+        PageChrome.DockTo(center, Tilemap.PageChrome.DocTabs(s), Dock.Top);
+        center.Children.Add(Canvas);
+        Grid.SetColumn(center, 1);
+        body.Children.Add(center);
         var rightPanel = PageChrome.SidePanel(right, false, "RightPanel");
         Grid.SetColumn(rightPanel, 2);
         body.Children.Add(rightPanel);

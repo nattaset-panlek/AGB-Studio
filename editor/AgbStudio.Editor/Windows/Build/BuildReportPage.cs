@@ -8,6 +8,7 @@ using AgbStudio.Editor.Shell;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.VisualTree;
 using Avalonia.Media;
 
 namespace AgbStudio.Editor.Windows.Build;
@@ -54,7 +55,12 @@ public sealed class BuildReportPage : DockPanel
         right.Children.AddRange([ph, UI.Column(0, PageFrame.Section(new SectionHeader { Title = "Header", Glyph = "chip" }, _header), export)]);
 
         var body = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,320"), Name = "Body" };
-        var center = UI.Frame(new ScrollViewer { Content = _content }, "bg/base").Named("CenterPanel");
+        // Doc Tabs over the report (its own tab is the active document): back to the scene in one click
+        var centerDock = new DockPanel();
+        var tabs = Tilemap.PageChrome.DocTabs(s);
+        DockPanel.SetDock(tabs, Dock.Top);
+        centerDock.Children.AddRange([tabs, new ScrollViewer { Content = _content }]);
+        var center = UI.Frame(centerDock, "bg/base").Named("CenterPanel");
         var r = UI.Frame(right, "bg/panel", "border/default", new Thickness(1, 0, 0, 0)).Named("RightPanel");
         Grid.SetColumn(r, 1);
         body.Children.AddRange([center, r]);
@@ -68,7 +74,12 @@ public sealed class BuildReportPage : DockPanel
             _s.Documents.Active = _doc;
             Reload();
         };
-        DetachedFromVisualTree += (_, _) => _s.Documents.Close(_doc);
+        // closed after the page swap: changing the documents while the page host is still detaching this page left the
+        // next page out of the window (Build Report > Scene tab showed an empty workspace)
+        DetachedFromVisualTree += (_, _) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (this.GetVisualRoot() is null && _s.Documents.Open.Contains(_doc)) _s.Documents.Close(_doc);
+        });
         Reload();
     }
 

@@ -115,7 +115,7 @@ public static class PageParts
                 tab.Activated += (_, _) =>
                 {
                     s.Documents.Active = doc;
-                    if (WindowOf(doc) is { } w) _ = s.Windows.Open(w, w is "T-P08" or "T-P03" or "T-P04" ? doc : null, source: "Doc_" + doc.Name);
+                    if (WindowOf(doc) is { } w) _ = s.Windows.Open(w, w is "T-P08" or "T-P03" or "T-P04" or "T-P02" ? doc : null, source: "Doc_" + doc.Name);
                 };
                 row.Children.Add(tab);
             }
