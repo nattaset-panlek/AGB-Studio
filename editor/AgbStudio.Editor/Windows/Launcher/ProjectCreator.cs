@@ -118,13 +118,6 @@ public static class ProjectCreator
     public static string? TemplateFolder(TemplateInfo t) =>
         TemplateRoots().Select(r => Path.Combine(r, t.Id)).FirstOrDefault(d => Directory.Exists(d) && Directory.EnumerateFiles(d, "*.agbproj").Any());
 
-    /// <summary>The bundled Thai font (third_party/fonts, D-17), next to the executable or in the repository.</summary>
-    public static string? ThaiFontSource()
-    {
-        var names = new List<string> { Path.Combine(AppContext.BaseDirectory, "third_party", "fonts", "NotoSansThai-Regular.ttf") };
-        try { names.Add(Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", "NotoSansThai-Regular.ttf")); } catch (InvalidOperationException) { }
-        return names.FirstOrDefault(File.Exists);
-    }
 
     public static CreatedProject Create(NewProjectOptions o, Func<string, string, ProcResult>? git = null)
     {
@@ -195,7 +188,7 @@ public static class ProjectCreator
         s.General.StartScene = start;
         s.LastScene = start;
         // a template that has the Thai font already keeps its own font settings
-        if (o.ThaiFont && !File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font"))) AddThaiFont(p, warnings);
+        if (o.ThaiFont && !File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font"))) AddThaiFont(p);
         if (o.LogicGraphExamples) AddLogicGraph(p);
 
         // the project file is named after the project (Sky Hopper -> SkyHopper.agbproj)
@@ -241,21 +234,12 @@ public static class ProjectCreator
         });
     }
 
-    /// <summary>Noto Sans Thai (D-17) as the variable-width font thai_vwf, made the default font.</summary>
-    public static void AddThaiFont(GameProject p, List<string> warnings)
+    /// <summary>AGB Pixel (AGB Studio's own 1bpp Thai and Latin pixel font, written from AgbPixelFont) as the
+    /// variable-width font thai_vwf, made the default font.</summary>
+    public static void AddThaiFont(GameProject p)
     {
-        if (ThaiFontSource() is not { } ttf)
-        {
-            warnings.Add("The project was made without the Thai font: Noto Sans Thai is missing from this install. Add a Thai font later in the Font Manager, or reinstall AGB Studio.");
-            return;
-        }
-        Directory.CreateDirectory(p.FontsDir);
-        File.Copy(ttf, Path.Combine(p.FontsDir, Path.GetFileName(ttf)), true);
-        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), new FontFile
-        {
-            Name = "thai_vwf", Source = Path.GetFileName(ttf), Size = 12, CharacterSets = { "Basic Latin", "Thai" },
-            LineHeight = 14, Baseline = 10, Bpp = 2, DropShadow = true,
-        });
+        AgbStudio.Build.Fonts.AgbPixelFont.WriteTo(p.FontsDir);
+        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), AgbStudio.Build.Fonts.AgbPixelFont.Settings("thai_vwf"));
         p.Settings.General.DefaultFont = "thai_vwf";
     }
 

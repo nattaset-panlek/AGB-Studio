@@ -111,16 +111,20 @@ public sealed class NewFontDialog : FigmaDialog
     {
         var list = _project is null ? [] : FontManagerPage.SourceFiles(_project).Where(f => FontManagerPage.SourceKindOf(f) == Kind).ToList();
         if (Kind == FontSourceKind.Ttf && !list.Contains(DefaultThaiFont, StringComparer.OrdinalIgnoreCase) && System.IO.File.Exists(BundledThai)) list.Insert(0, DefaultThaiFont);
+        if (Kind == FontSourceKind.Bdf && !list.Contains(AgbPixelFont.FileName, StringComparer.OrdinalIgnoreCase) && System.IO.File.Exists(BundledPixel)) list.Insert(0, AgbPixelFont.FileName);
         return list;
     }
 
     static string BundledThai => Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", DefaultThaiFont);
+    // AGB Pixel, AGB Studio's own 1bpp Thai and Latin pixel font (Fonts/AgbPixelFont.cs).
+    static string BundledPixel => Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", AgbPixelFont.FileName);
 
     string? SourcePath(string? file)
     {
         if (file is null) return null;
         var inProject = _project is null ? null : Path.Combine(_project.FontsDir, file);
         if (inProject != null && System.IO.File.Exists(inProject)) return inProject;
+        if (file == AgbPixelFont.FileName && System.IO.File.Exists(BundledPixel)) return BundledPixel;
         return file == DefaultThaiFont && System.IO.File.Exists(BundledThai) ? BundledThai : inProject;
     }
 
@@ -135,7 +139,9 @@ public sealed class NewFontDialog : FigmaDialog
         var f = new FontFile
         {
             Name = NameFor(File.Selected ?? "font", size), SourceKind = Kind, Source = File.Selected ?? "", Size = size, Variable = variable,
-            FixedWidth = 8, CellHeight = variable ? size : 8, LineHeight = size + 2, Baseline = (int)Math.Round(size * 0.82), Spacing = 1, Bpp = 2,
+            FixedWidth = 8, CellHeight = variable ? size : 8, LineHeight = size + 2, Baseline = (int)Math.Round(size * 0.82), Spacing = 1,
+            // a BDF is drawn as it is, one bit per pixel; outline fonts get four shades
+            Bpp = Kind == FontSourceKind.Bdf ? 1 : 2,
             CharacterSets = SetChoices.Where((_, i) => _sets[i].IsChecked == true).Select(s => s.Set).ToList(),
         };
         return f;
