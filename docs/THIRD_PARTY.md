@@ -24,10 +24,15 @@
 | IBM Plex Sans Thai (+ Looped) | SIL OFL 1.1 | editor Thai UI text | editor |
 | Press Start 2P | SIL OFL 1.1 | pixel labels in the editor | editor |
 | Nunito | SIL OFL 1.1 | wordmark | editor |
-| Noto Sans Thai | SIL OFL 1.1 | default Thai game font source | templates |
+| Noto Sans Thai | SIL OFL 1.1 | Thai TrueType font offered by New Font; source of the Sky Hopper sample's `thai_vwf` | editor; Sky Hopper sample |
 | Noto Sans (`third_party/fonts/fallback-latin.ttf`) | SIL OFL 1.1 (`OFL-NotoSans.txt`) | Latin glyphs for fonts that lack them; source font of the boot splash text built into every game with Boot splash on (`Content/SplashArt.cs`); copied into Sky Hopper as `NotoSans.ttf` for its `pixel8` and `title_big` fonts | toolchain; its rasterised glyphs in games |
 | Ninja | Apache-2.0 | runs the native build when it is on PATH; otherwise AGB Studio runs the same build itself | not shipped |
 | ICU Thai dictionary (thaidict.txt) | Unicode licence (ICU) | Thai word-break list at build time | toolchain |
+
+Not third-party: **AGB Pixel** (`third_party/fonts/agb_pixel.bdf`), the default game font of new projects and templates
+(`thai_vwf`), is the project's own font. It is an original 1bpp Thai and Latin pixel font drawn for AGB Studio, not
+traced or copied from any other font, and is covered by AGB Studio's licence (`LICENSE`). Its source is the text art in
+`tools/AgbStudio.Build/Fonts/AgbPixelFont.Glyphs.cs`; `agb pixel-font` writes the BDF from it.
 
 Reference only, no code copied: pokeemerald (pret), Butano (zlib), Poryscript.
 

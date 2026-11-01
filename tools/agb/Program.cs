@@ -29,6 +29,7 @@ public static class Program
                 "template" => Template(args[1..]),
                 "package" => Package(args.Length > 1 ? args[1] : Path.Combine(NativeBuild.RepoRoot, "build", "package")),
                 "text-preview" => TextPreview(args[1..]),
+                "pixel-font" => PixelFont(args.Length > 1 ? args[1] : Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts")),
                 "lint" => RunLint(args.Length > 1 ? args[1] : NativeBuild.RepoRoot),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
@@ -50,7 +51,8 @@ public static class Program
         ["template"] = "<template id> <folder> [name]",
         ["package"] = "[output folder]",
         ["lint"] = "[repository folder]",
-        ["text-preview"] = "<font.ttf> <size px> <box width> <out.png> <text...>",
+        ["text-preview"] = "<font.ttf|font.bdf> <size px> <box width> <out.png> <text...>",
+        ["pixel-font"] = "[output folder]",
         ["make-test-audio"] = "<folder>",
     };
 
@@ -180,21 +182,33 @@ public static class Program
         return issues.Count == 0 ? 0 : 1;
     }
 
-    // agb text-preview <font.ttf> <sizePx> <boxWidth> <out.png> <text...>
+    // agb pixel-font [folder]: writes AGB Pixel (Fonts/AgbPixelFont.Glyphs.cs) as agb_pixel.bdf.
+    static int PixelFont(string dir)
+    {
+        var path = AgbStudio.Build.Fonts.AgbPixelFont.WriteTo(dir);
+        Console.WriteLine($"wrote {path}: {AgbStudio.Build.Fonts.AgbPixelFont.Glyphs.Count} glyphs");
+        return 0;
+    }
+
+    // agb text-preview <font.ttf|font.bdf> <sizePx> <boxWidth> <out.png> <text...>
     static int TextPreview(string[] args)
     {
         var ttf = Path.GetFullPath(args[0]);
+        // A .bdf is a pixel font: drawn as is at one bit per pixel (its own size; <size px> only seeds the line metrics).
+        var bdf = ttf.EndsWith(".bdf", StringComparison.OrdinalIgnoreCase);
         var f = new AgbStudio.Core.Project.FontFile
         {
             Name = "preview", Source = Path.GetFileName(ttf), Size = int.Parse(args[1]), CharacterSets = ["Basic Latin", "Thai", "Symbols"],
-            LineHeight = int.Parse(args[1]) + 2, Baseline = int.Parse(args[1]) - 2, DropShadow = true,
+            LineHeight = int.Parse(args[1]) + 2, Baseline = int.Parse(args[1]) - 2, DropShadow = !bdf,
+            SourceKind = bdf ? AgbStudio.Core.Project.FontSourceKind.Bdf : AgbStudio.Core.Project.FontSourceKind.Ttf, Bpp = bdf ? 1 : 2,
         };
         var fallback = Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts", "fallback-latin.ttf");
         var font = AgbStudio.Build.Fonts.FontBuilder.Build(f, Path.GetDirectoryName(ttf)!, null, fallback);
         var width = int.Parse(args[2]);
         var text = string.Join(' ', args[4..]).Replace("|", "\n");  // '|' marks a forced line break
         var layout = AgbStudio.Build.Fonts.TextLayout.Layout(text, font, width);
-        var h = Math.Max(1, layout.Lines) * f.LineHeight + 4;
+        // The built font's line height: FontBuilder grows it to fit stacked Thai marks.
+        var h = Math.Max(1, layout.Lines) * font.LineHeight + 4;
         var px = AgbStudio.Build.Fonts.TextRenderer.Render(layout, font, width, h, new AgbStudio.Build.Fonts.TextRenderer.Style(1, 4, 0));
         var argb = AgbStudio.Build.Fonts.TextRenderer.ToArgb(px);
         Png.WriteArgb(args[3], AgbStudio.Build.Fonts.TextRenderer.Scale(argb, width, h, 4), width * 4, h * 4);

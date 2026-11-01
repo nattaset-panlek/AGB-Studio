@@ -23,6 +23,21 @@ Localization shows missing and too long strings.
 
 - [ ] Open Localization (Tools › Localization)
 
+## The default font: AGB Pixel
+
+New projects and templates start with `thai_vwf`, made from AGB Pixel (`fonts/agb_pixel.bdf`): AGB Studio's own 1bpp
+pixel font with printable ASCII, the Thai block (consonants, vowels, tone marks, signs, digits) and a few symbols.
+
+- Proportional widths: Thai letters are 4 to 7 px wide and Latin 1 to 5 px, so a line holds more text than a fixed
+  8 px cell and narrow letters such as ร, i and l do not leave gaps.
+- Latin capitals are 7 px tall (lower case 5, descenders 2), Thai letters 6 px. The line is 16 px: room for a tone mark
+  over an upper vowel above the letter and a lower vowel under it, with one empty row between marks so they stay
+  apart at one bit per pixel.
+- Tone marks over an upper vowel are lifted above it; marks over ป ฝ ฟ ฬ move left of the tall stem with one empty
+  column; ญ and ฐ lose their tails over a lower vowel; ฎ and ฏ keep short tails that leave the vowel in place.
+- It is AGB Studio's own original font (see `docs/THIRD_PARTY.md`), free to ship in your games like the rest of the
+  engine. It can also be picked under BDF in New Font.
+
 ## See also
 
 - [Font Manager](../windows/T-P09-font-manager.md), [Add Characters](../windows/T-D16-add-characters.md),

@@ -281,7 +281,9 @@ public class FontE2ETests : IDisposable
         Assert.Equal(560, dlg.Bounds.Width);
         _h.Click(_h.Find<Segment>("Kind_1"));
         Assert.Equal(FontSourceKind.Bdf, dlg.Kind);
-        Assert.Null(dlg.File.Selected);
+        // BDF offers AGB Pixel, the bundled Thai and Latin pixel font, drawn at one bit per pixel
+        Assert.Equal(AgbPixelFont.FileName, dlg.File.Selected);
+        Assert.Equal(1, dlg.Settings().Bpp);
         _h.Click(_h.Find<Segment>("Kind_0"));
         _h.Choose(dlg.File, "NotoSans.ttf");
         _h.Choose(dlg.WidthField, "Fixed 8×8");

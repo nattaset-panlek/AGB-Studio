@@ -41,6 +41,7 @@ public static class TextLayout
             lineHasContent = false;
         }
         var placedCount = 0;
+        Placed? lastBase = null;  // the base glyph placed just before, for a sara am after it
         foreach (var w in words)
         {
             if (w[0].Forced && (lineHasContent || result.LineWidths.Count < line + 1)) NewLine();
@@ -55,7 +56,9 @@ public static class TextLayout
                 if (!c.Space && x + c.Width > maxWidth && lineHasContent && bodyWidth > maxWidth) NewLine();  // word longer than a line
                 var idx = clusters.IndexOf(c);
                 var nextIsSaraAm = idx >= 0 && idx + 1 < clusters.Count && clusters[idx + 1].Cps[0] == ThaiText.SaraAm;
-                Place(c, font, x, line, step, result, nextIsSaraAm);
+                var baseAt = result.Glyphs.Count;
+                Place(c, font, x, line, step, result, nextIsSaraAm, lastBase is { } lb && lb.Line == line && lb.X + clusters[idx - 1].Width == x ? lb : null);
+                lastBase = result.Glyphs.Count > baseAt ? result.Glyphs[baseAt] : null;
                 placedCount++;
                 x += c.Width;
                 if (!c.Space) lineHasContent = true;
@@ -122,10 +125,25 @@ public static class TextLayout
     }
 
     // Places one cluster: the base at the pen, marks over it with stacking rules.
-    static void Place(Cluster c, GameFont font, int x, int line, int step, Result r, bool nextIsSaraAm)
+    static void Place(Cluster c, GameFont font, int x, int line, int step, Result r, bool nextIsSaraAm, Placed? before)
     {
         var baseCp = c.Cps[0];
+        // Sara am after ป ฝ ฟ ฬ: its nikhahit would run into the tall stem, so it is drawn as a nikhahit moved left of
+        // the stem (like any upper mark) followed by sara aa.
+        if (baseCp == ThaiText.SaraAm && c.Cps.Count == 1 && font.Settings.StackUpperMarks && before != null && ThaiText.IsAscender(before.CodePoint)
+            && font.Get(before.CodePoint) is { } stem && font.Get(ThaiText.Nikhahit) is { } ring && font.Get(ThaiText.SaraAa) != null
+            && font.Get(ThaiText.SaraAm) is { } am && Clashes(stem, before.X, am, x, 0))
+        {
+            r.Glyphs.Add(new Placed(ThaiText.SaraAa, x, 0, line, step));
+            var rdx = 0;
+            while (rdx > -8 && Clashes(stem, before.X, ring, x + rdx, 0)) rdx--;
+            r.Glyphs.Add(new Placed(ThaiText.Nikhahit, x + rdx, 0, line, step));
+            return;
+        }
         if (font.Get(baseCp) == null && !ThaiText.IsSpace(baseCp)) r.Missing.Add(baseCp);
+        // ญ and ฐ lose their tails over a lower vowel when the font has the tailless forms.
+        if (font.Settings.PlaceLowerVowels && c.Cps.Skip(1).Any(ThaiText.IsLowerVowel) && ThaiText.Tailless(baseCp) is var tailless and not 0 && font.Get(tailless) != null)
+            baseCp = tailless;
         r.Glyphs.Add(new Placed(baseCp, x, 0, line, step));
         var pen = x + c.Width;
         // Sara am carries a nikhahit over this consonant, so a tone mark here stacks as over an upper vowel.
@@ -149,17 +167,32 @@ public static class TextLayout
                 else if (!hasUpper && g.Top + g.Height < upperBottom - 1) dy = upperBottom - (g.Top + g.Height);
             }
             else if (ThaiText.IsLowerVowel(m) && font.Settings.PlaceLowerVowels && baseGlyph != null && ThaiText.IsDescender(baseCp))
-            {
-                // Below the descender of ฎ ฏ ฐ ญ.
-                var baseBottom = baseGlyph.Top + baseGlyph.Height;
-                if (baseBottom > font.Baseline) dy = baseBottom - g.Top + 1 - (font.Baseline - g.Top);
-            }
+                dy = LowerVowelDy(baseGlyph, c.Width, g, font.Baseline);
             // Upper marks move left until they clear the tall stem of ป ฝ ฟ ฬ.
             if (font.Settings.StackUpperMarks && baseGlyph != null && ThaiText.IsAscender(baseCp) && !ThaiText.IsLowerVowel(m))
-                while (dx > -8 && Touches(baseGlyph, x, 0, g, pen + dx, dy)) dx--;
+                while (dx > -8 && Clashes(baseGlyph, x, g, pen + dx, dy)) dx--;
             r.Glyphs.Add(new Placed(m, pen + dx, dy, line, step));
         }
     }
+
+    /// <summary>How far a lower vowel drops under ฎ ฏ ฐ ญ (base drawn at pen 0, the vowel at the base's advance): below
+    /// the tail when it would touch or meet it, else 0 (a tail that stays clear of the vowel, as in a pixel font
+    /// with a short left-hand tail, keeps the vowel at its normal height).</summary>
+    public static int LowerVowelDy(GameFont.Glyph baseGlyph, int baseAdvance, GameFont.Glyph vowel, int baseline)
+    {
+        var baseBottom = baseGlyph.Top + baseGlyph.Height;
+        if (baseBottom <= baseline) return 0;
+        var near = false;
+        for (var ox = -1; ox <= 1 && !near; ox++)
+            for (var oy = -1; oy <= 1 && !near; oy++)
+                near = Touches(baseGlyph, 0, 0, vowel, baseAdvance + ox, oy);
+        return near ? baseBottom + 1 - baseline : 0;
+    }
+
+    // An upper mark clashes with a tall stem when it overlaps it or sits right against it: the mark keeps one empty
+    // column between itself and the stem, so in a 1bpp font the two never read as one shape.
+    static bool Clashes(GameFont.Glyph stem, int sx, GameFont.Glyph mark, int mx, int my) =>
+        Touches(stem, sx, 0, mark, mx, my) || Touches(stem, sx, 0, mark, mx + 1, my);
 
     // True when two glyphs drawn at these pens and vertical offsets share a pixel.
     static bool Touches(GameFont.Glyph a, int ax, int ay, GameFont.Glyph b, int bx, int by)

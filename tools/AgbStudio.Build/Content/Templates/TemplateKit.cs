@@ -1,4 +1,5 @@
 using AgbStudio.Build.Audio;
+using AgbStudio.Build.Fonts;
 using AgbStudio.Core.Project;
 
 namespace AgbStudio.Build.Content.Templates;
@@ -23,17 +24,12 @@ public static class TemplateKit
         return GameProject.Create(dir, name, s);
     }
 
-    /// <summary>Noto Sans Thai (12 px, 2bpp, drop shadow) as the default font, so every string works in Thai and English.</summary>
+    /// <summary>AGB Pixel (AgbPixelFont: AGB Studio's own 1bpp pixel font for Thai and Latin, drop shadow) as the default
+    /// font, so every string works in Thai and English.</summary>
     public static void AddThaiFont(GameProject p)
     {
-        var fonts = Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts");
-        File.Copy(Path.Combine(fonts, "NotoSansThai-Regular.ttf"), Path.Combine(p.FontsDir, "NotoSansThai.ttf"), true);
-        File.Copy(Path.Combine(fonts, "OFL-NotoSansThai.txt"), Path.Combine(p.FontsDir, "OFL-NotoSansThai.txt"), true);
-        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), new FontFile
-        {
-            Name = "thai_vwf", Source = "NotoSansThai.ttf", Size = 12, Variable = true, CharacterSets = { "Basic Latin", "Thai" },
-            LineHeight = 14, Baseline = 10, Spacing = 1, Bpp = 2, DropShadow = true,
-        });
+        AgbPixelFont.WriteTo(p.FontsDir);
+        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), AgbPixelFont.Settings("thai_vwf"));
         p.Settings.General.DefaultFont = "thai_vwf";
         p.SaveSettings();
     }
