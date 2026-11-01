@@ -23,13 +23,38 @@ public class TreeItem : SelectableRow
     public TreeToggle Toggle { get => GetValue(ToggleProperty); set => SetValue(ToggleProperty, value); }
     public int Depth { get => GetValue(DepthProperty); set => SetValue(DepthProperty, value); }
 
+    /// <summary>Small component icons after the label (Hierarchy: what an actor uses; not in Figma, see
+    /// docs/evidence/ui-changes-since-figma.md "Templates").</summary>
+    public static readonly StyledProperty<IReadOnlyList<string>?> BadgesProperty = AvaloniaProperty.Register<TreeItem, IReadOnlyList<string>?>(nameof(Badges));
+
+    public IReadOnlyList<string>? Badges { get => GetValue(BadgesProperty); set => SetValue(BadgesProperty, value); }
+
+    StackPanel? _badges;
+
     /// <summary>Left padding per depth, from the Scene Editor hierarchy in Figma.</summary>
     public static double IndentOf(int depth) => depth switch { <= 0 => 6, 1 => 18, 2 => 36, _ => 54 };
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        _badges = e.NameScope.Find<StackPanel>("PART_Badges");
+        FillBadges();
+    }
+
+    void FillBadges()
+    {
+        if (_badges == null) return;
+        _badges.Children.Clear();
+        foreach (var g in Badges ?? [])
+            _badges.Children.Add(new AgbStudio.Editor.Graphics.Icon { Glyph = g, Size = 11, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Opacity = 0.85 });
+        _badges.IsVisible = _badges.Children.Count > 0;
+    }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == DepthProperty) Padding = new Thickness(IndentOf(Depth), 0, 8, 0);
+        else if (change.Property == BadgesProperty) FillBadges();
     }
 }
 

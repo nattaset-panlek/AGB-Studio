@@ -12,8 +12,8 @@ using Avalonia.VisualTree;
 
 namespace AgbStudio.Editor.Windows.SceneEditor;
 
-/// <summary>One row of the Hierarchy.</summary>
-public sealed record HierarchyRow(SceneItem Item, string Label, string Glyph, string? Meta, int Depth, TreeToggle Toggle, string Key);
+/// <summary>One row of the Hierarchy; actor rows carry the actor's components (<see cref="ActorComponents"/>).</summary>
+public sealed record HierarchyRow(SceneItem Item, string Label, string Glyph, string? Meta, int Depth, TreeToggle Toggle, string Key, IReadOnlyList<ComponentBadge>? Parts = null);
 
 /// <summary>
 /// Hierarchy (T-P01, P11.12): the scene, its camera, background layers and actors (actors of a group with two or more
@@ -21,7 +21,8 @@ public sealed record HierarchyRow(SceneItem Item, string Label, string Glyph, st
 /// viewport and Inspector), Ctrl + click adds an actor to the selection or takes it out, Shift + click selects the
 /// actors from the first selected one to the clicked one, the chevron or a double click opens and closes folders, a
 /// double click on an actor focuses it in the viewport, right click opens the Actor Context Menu (T-M12), F2 renames in
-/// place.
+/// place. Actor rows show small badges for the actor's components (behaviours, sprite, text, links, camera) and list
+/// them all in the row tooltip.
 /// </summary>
 [EditorWindow("T-P01:Hierarchy", Kind = WindowKind.Panel)]
 public sealed class HierarchyPanel : Panel, IEditTarget
@@ -115,7 +116,7 @@ public sealed class HierarchyPanel : Panel, IEditTarget
             var a = scene.Actors[i];
             if (!groups.ContainsKey(a.Group))
             {
-                list.Add(new(SceneItem.ForActor(i), a.Name, ActorGlyph(a), ActorMeta(a), 1, TreeToggle.None, "actor:" + i));
+                list.Add(new(SceneItem.ForActor(i), a.Name, ActorGlyph(a), ActorMeta(a), 1, TreeToggle.None, "actor:" + i, ActorComponents.Of(a, scene)));
                 continue;
             }
             if (foldersDone) continue;
@@ -127,7 +128,7 @@ public sealed class HierarchyPanel : Panel, IEditTarget
                 list.Add(new(new SceneItem(SceneItemKind.Group, -1, g), g, glyphs.Count == 1 && glyphs[0] != "cube" ? glyphs[0] : "folder",
                     groups[g].ToString(CultureInfo.InvariantCulture), 1, TreeToggle.Open, "group:" + g));
                 foreach (var (x, k) in members)
-                    list.Add(new(SceneItem.ForActor(k), x.Name, ActorGlyph(x), ActorMeta(x), 2, TreeToggle.None, "actor:" + k));
+                    list.Add(new(SceneItem.ForActor(k), x.Name, ActorGlyph(x), ActorMeta(x), 2, TreeToggle.None, "actor:" + k, ActorComponents.Of(x, scene)));
             }
         }
         // groups with more than three members start closed (Coins), smaller ones open (Enemies)
@@ -189,7 +190,10 @@ public sealed class HierarchyPanel : Panel, IEditTarget
                 Label = r.Label, Glyph = r.Glyph, Depth = r.Depth, Toggle = r.Toggle, IsSelected = selected,
                 Meta = selected && r.Item.Kind == SceneItemKind.Actor ? "Actor" : r.Meta,
                 Tag = r, Name = "Row_" + r.Key,
+                // what the actor is made of: small icons after the name, the full list as the tooltip
+                Badges = r.Parts is { } parts ? ActorComponents.Glyphs(parts) : null,
             };
+            if (r.Parts is { } all) ToolTip.SetTip(item, new TipContent(ActorComponents.Tooltip(all)));
             item.Activated += (_, e) => OnActivated(item, r, e.ClickCount, e.Modifiers);
             item.PointerPressed += (_, e) =>
             {

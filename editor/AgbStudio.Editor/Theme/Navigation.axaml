@@ -19,6 +19,7 @@
             <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="14" VerticalAlignment="Center" />
             <TextBlock Name="PART_Meta" DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Mono/10" VerticalAlignment="Center"
                        IsVisible="{TemplateBinding Meta, Converter={x:Static t:Conv.NotEmpty}}" />
+            <StackPanel Name="PART_Badges" DockPanel.Dock="Right" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center" IsVisible="False" />
             <TextBlock Text="{TemplateBinding Label}" t:Fig.Style="Body/12" Foreground="{DynamicResource text/primary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
           </DockPanel>
         </Border>
