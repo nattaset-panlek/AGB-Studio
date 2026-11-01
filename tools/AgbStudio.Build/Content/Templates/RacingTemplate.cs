@@ -65,6 +65,8 @@ public static class RacingTemplate
         WriteMaps(p);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -223,20 +225,45 @@ public static class RacingTemplate
             Camera = new CameraSettings { Follow = "", ClampToMap = false },
             Actors =
             {
-                new ActorData { Name = "Kart", Kind = ActorKind.Player, Sprite = "kart", Animation = "straight", X = 120, Y = 136, Tag = "Player", Priority = 1,
+                new ActorData { Name = "Player", Kind = ActorKind.Player, Sprite = "kart", Animation = "straight", X = 120, Y = 136, Tag = "Player", Priority = 1,
                     Components = { new ComponentData { Type = "Kart" } } },
-                new ActorData { Name = "Rival 1", Kind = ActorKind.Enemy, Sprite = "rival", Animation = "far", X = 0, Y = -32, Priority = 1,
+                new ActorData { Name = "Rival 1", Kind = ActorKind.Enemy, Sprite = "rival", Animation = "far", X = 0, Y = -32, Priority = 1, Group = "Rivals",
                     Components = { new ComponentData { Type = "Rival", Fields = { ["speed"] = "2.6", ["lane"] = "-20", ["start"] = "170" } } } },
-                new ActorData { Name = "Rival 2", Kind = ActorKind.Enemy, Sprite = "rival", Animation = "far", X = 0, Y = -32, Priority = 1,
+                new ActorData { Name = "Rival 2", Kind = ActorKind.Enemy, Sprite = "rival", Animation = "far", X = 0, Y = -32, Priority = 1, Group = "Rivals",
                     Components = { new ComponentData { Type = "Rival", Fields = { ["speed"] = "2.3", ["lane"] = "20", ["start"] = "200" } } } },
                 new ActorData { Name = "HUD Lap", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.lap", Group = "HUD" },
                 new ActorData { Name = "HUD Time", Kind = ActorKind.TextLabel, X = 160, Y = 4, Text = "hud.time", Group = "HUD" },
                 new ActorData { Name = "HUD Best", Kind = ActorKind.TextLabel, X = 160, Y = 20, Text = "hud.best", Group = "HUD" },
-                new ActorData { Name = "Status", Kind = ActorKind.TextLabel, X = 96, Y = 60, Text = "race.ready", Group = "HUD" },
+                new ActorData { Name = "HUD Status", Kind = ActorKind.TextLabel, X = 96, Y = 60, Text = "race.ready", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Circuit.scene"), race);
     }
+
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Racing (Mode 7)",
+        "Three laps of a rounded circuit against two computer karts. The track is one big rotating background (Mode 1, BG2 affine) that Scene.Mode7 tilts into a floor, redrawn every frame from the kart's position and heading; the sky scrolls sideways as the kart turns.",
+        ["Up or A: accelerate", "B: brake", "D-pad left / right: steer", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "Your kart. The Kart script keeps its own floor position and heading, drives, counts laps with the Check and Finish tile tags, and moves the Mode 7 camera behind it; the sprite stays at the bottom middle of the screen.",
+            ["Rival 1"] = "Computer kart: the Rival script drives it round the centre line at its own speed and lane, and draws it where it shows on the floor (smaller when far away).",
+            ["Rival 2"] = "A slower computer kart on the other lane.",
+            ["HUD Lap"] = "Text label with the lap number.",
+            ["HUD Time"] = "Text label with the race time in seconds.",
+            ["HUD Best"] = "Text label with the best time, kept in the save data.",
+            ["HUD Status"] = "Text label in the middle of the screen: Ready, GO! and Finish!",
+        },
+        [
+            "Select Player and change `topSpeed`, `accel` or `grassSpeed` of Kart, or `laps` for a longer race.",
+            "Give a rival more `speed` in the Inspector, or copy Rival 2 (Ctrl+D) with another `lane` and `start`.",
+            "Change `cameraBack` of Kart, or the height (32) and horizon (40) in the Scene.Mode7 call, to change the view.",
+            "Paint the circuit tiles in the Tilemap Editor: tiles tagged Grass slow the kart, the barrier is solid.",
+        ]);
+
+    // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
     {
@@ -246,6 +273,7 @@ public static class RacingTemplate
 // the time is compared with the saved best.
 public class Kart : Behaviour
 {
+    // Public fields show in the Inspector under "Kart".
     public fixed accel = 0.05;
     public fixed topSpeed = 3;
     public fixed grassSpeed = 1;
@@ -253,24 +281,27 @@ public class Kart : Behaviour
     public int cameraBack = 53;   // the floor point under the kart sprite (screen line 136) is this far ahead
     public fixed camX;            // the Mode 7 camera, read by the rivals to place themselves on screen
     public fixed camY;
-    public int heading = 192;     // 0 looks along +x, 64 along +y: 192 drives up the left straight
-    fixed x = 168;
+    public int heading = 192;     // angles are 256ths of a turn: 0 looks along +x, 64 along +y, 192 up the left straight
+    fixed x = 168;                // the kart's position on the floor map, in pixels
     fixed y = 568;
     fixed speed;
     int lap = 1;
     bool checkpoint;
     int timer;
-    int countdown = 120;
+    int countdown = 120;          // two seconds of "Ready..."
     int finished;
     Actor status;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
-        status = Scene.Find("Status");
+        // Scene.Find looks an actor up by its Hierarchy name.
+        status = Scene.Find("HUD Status");
         UpdateHud();
         Show();
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
         if (countdown > 0)
@@ -279,6 +310,7 @@ public class Kart : Behaviour
             if (countdown == 0)
             {
                 Sound.Play("go");
+                // SetLabelText puts another string key into a text label.
                 if (status != null) status.SetLabelText("race.go");
             }
             Show();
@@ -286,6 +318,7 @@ public class Kart : Behaviour
         }
         if (finished > 0)
         {
+            // After the finish the kart rolls out and the game goes back to the title after four seconds.
             finished += 1;
             speed = speed * 0.95;
             Move();
@@ -304,12 +337,15 @@ public class Kart : Behaviour
 
     void Drive()
     {
+        // Input.Held stays true while a button is down.
         int turn = 0;
         if (Input.Held(Key.Left)) turn = -1;
         if (Input.Held(Key.Right)) turn = 1;
         if (speed > 0.25 || speed < -0.25) heading = (heading + turn * 2) & 255;
+        // The kart sprite has straight, left and right animations (Sprite Editor > Animations).
         actor.PlayAnimation(turn < 0 ? "left" : turn > 0 ? "right" : "straight");
 
+        // Scene.TagAt reads the Tag of the tile under a point (Tileset properties: Grass, Check, Finish).
         fixed limit = Scene.TagAt(x.Floor(), y.Floor()) == "Grass" ? grassSpeed : topSpeed;
         if (Input.Held(Key.Up) || Input.Held(Key.A)) speed += accel;
         else if (speed > 0) speed -= accel / 2;
@@ -320,8 +356,10 @@ public class Kart : Behaviour
 
     void Move()
     {
+        // fixed.Cos and fixed.Sin take a 256ths-of-a-turn angle: one step along the heading.
         fixed nx = x + fixed.Cos(heading) * speed;
         fixed ny = y + fixed.Sin(heading) * speed;
+        // Scene.SolidAt asks the collision layer (Ground) whether that point is solid: the barrier.
         if (Scene.SolidAt(nx.Floor(), ny.Floor()))
         {
             speed = -speed / 2;
@@ -332,6 +370,7 @@ public class Kart : Behaviour
         y = ny;
     }
 
+    // A lap counts when the kart crosses the Finish tiles after the Check tiles (no short cuts backwards).
     void CountLaps()
     {
         if (Scene.TagAt(x.Floor(), y.Floor()) == "Check") checkpoint = true;
@@ -342,6 +381,7 @@ public class Kart : Behaviour
         {
             finished = 1;
             if (status != null) status.SetLabelText("race.finish");
+            // Game.best is a save field (Project Settings > Save): the best time in frames.
             if (Game.best == 0 || timer < Game.best) Game.best = timer;
             UpdateHud();
             return;
@@ -356,6 +396,8 @@ public class Kart : Behaviour
         Camera.SetPosition(heading * 4, 0);
         camX = x - fixed.Cos(heading) * cameraBack;
         camY = y - fixed.Sin(heading) * cameraBack;
+        // Scene.Mode7(x, y, angle, height, horizon): draws the affine BG2 as a floor seen from (x, y) at that
+        // angle, from `height` above it, with the horizon on screen line `horizon`.
         Scene.Mode7(camX, camY, heading, 32, 40);
         actor.pos.x = Camera.X + 120;
         actor.pos.y = 136;
@@ -363,6 +405,7 @@ public class Kart : Behaviour
 
     void UpdateHud()
     {
+        // SetLabelNumber writes a number with leading zeros into a text label.
         Actor lapLabel = Scene.Find("HUD Lap");
         if (lapLabel != null) lapLabel.SetLabelNumber(lap, 1);
         Actor time = Scene.Find("HUD Time");
@@ -375,12 +418,12 @@ public class Kart : Behaviour
         TemplateKit.Script(p, "Rival", """
 // A computer kart: drives round the centre line of the circuit (a rounded rectangle: four straights of 384 pixels
 // joined by quarter circles of radius 160) at its own speed, `lane` pixels to the side. It is drawn where its floor
-// position shows on the Kart's Mode 7 view: nearer karts lower on the screen and bigger.
+// position shows on the Player's Mode 7 view: nearer karts lower on the screen and bigger.
 public class Rival : Behaviour
 {
     public fixed speed = 2.5;
-    public int lane;
-    public fixed start;
+    public int lane;              // pixels right (+) or left (-) of the centre line
+    public fixed start;           // how far along the circuit it starts
     fixed along;
     fixed px;
     fixed py;
@@ -390,14 +433,14 @@ public class Rival : Behaviour
     void Start()
     {
         along = start;
-        kart = Scene.Find("Kart");
+        kart = Scene.Find("Player");
     }
 
     void Update()
     {
         if (wait > 0) wait -= 1;
         else along += speed;
-        if (along >= 2540) along -= 2540;
+        if (along >= 2540) along -= 2540;   // one lap is about 2540 pixels
         Place();
         Draw();
     }
@@ -416,12 +459,14 @@ public class Rival : Behaviour
         int dir;
         if ((piece & 1) == 0)
         {
+            // a straight
             dir = k * 64 + 192;
             px = StraightX(k) + fixed.Cos(dir) * rest;
             py = StraightY(k) + fixed.Sin(dir) * rest;
         }
         else
         {
+            // a quarter circle (251 px long) round a corner centre
             int a = k * 64 + 128 + (rest * 64 / 251).Floor();
             dir = a + 64;
             px = CornerX(k) + fixed.Cos(a) * 160;
@@ -442,6 +487,7 @@ public class Rival : Behaviour
     void Draw()
     {
         if (kart == null) return;
+        // Get<T>() reaches the Kart script of the Player actor to read its camera.
         Kart k = kart.Get<Kart>();
         fixed rx = px - k.camX;
         fixed ry = py - k.camY;
@@ -451,7 +497,7 @@ public class Rival : Behaviour
         fixed side = ry * c - rx * s;
         if (z < 30 || z > 700)
         {
-            actor.visible = false;
+            actor.visible = false;   // behind the camera or too far away
             return;
         }
         int sx = 120 + (side * 160 / z).Floor();
@@ -459,6 +505,7 @@ public class Rival : Behaviour
         actor.visible = sx > -16 && sx < 256;
         actor.pos.x = Camera.X + sx;
         actor.pos.y = sy;
+        // three sizes of the rival sprite, as animations
         actor.PlayAnimation(z < 110 ? "near" : z < 240 ? "mid" : "far");
     }
 }

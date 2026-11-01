@@ -40,6 +40,8 @@ public static class BrawlerTemplate
         TemplateKit.Sfx(p, "hurt", 520, 80, 0.3);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -247,19 +249,45 @@ public static class BrawlerTemplate
             Camera = new CameraSettings { Follow = "", ClampToMap = true },
             Actors =
             {
-                new ActorData { Name = "Fighter", Kind = ActorKind.Player, Sprite = "fighter", Animation = "idle", X = 48, Y = 128, Tag = "Player", Priority = 1,
+                new ActorData { Name = "Player", Kind = ActorKind.Player, Sprite = "fighter", Animation = "idle", X = 48, Y = 128, Tag = "Player", Priority = 1,
                     Components = { new ComponentData { Type = "Fighter" } } },
-                new ActorData { Name = "Stage", Kind = ActorKind.Empty, Components = { new ComponentData { Type = "Waves" } } },
-                new ActorData { Name = "Thug", Kind = ActorKind.Enemy, Sprite = "thug", Animation = "walk", X = 0, Y = -64, Tag = "Enemy", Hidden = true, Group = "Templates", Priority = 1,
+                new ActorData { Name = "Waves", Kind = ActorKind.Empty, Components = { new ComponentData { Type = "Waves" } } },
+                new ActorData { Name = "Thug", Kind = ActorKind.Enemy, Sprite = "thug", Animation = "walk", X = 0, Y = -64, Tag = "Enemy", Hidden = true, Group = "Spawn Templates", Priority = 1,
                     Components = { new ComponentData { Type = "Thug" } } },
                 new ActorData { Name = "HUD HP", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.hp", Group = "HUD" },
                 new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 80, Y = 4, Text = "hud.score", Group = "HUD" },
                 new ActorData { Name = "HUD Lives", Kind = ActorKind.TextLabel, X = 184, Y = 4, Text = "hud.lives", Group = "HUD" },
-                new ActorData { Name = "Go", Kind = ActorKind.TextLabel, X = 176, Y = 40, Text = "brawl.empty", Group = "HUD" },
+                new ActorData { Name = "HUD Banner", Kind = ActorKind.TextLabel, X = 176, Y = 40, Text = "brawl.empty", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Pier.scene"), pier);
     }
+
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Beat 'em up",
+        "Walk right along the pier at dusk. Three times the screen stops and a wave of thugs comes from both sides (two, three, then four); beat them all and GO! sends you on. Press A three times in a row for the jab, jab, kick combo.",
+        ["D-pad: walk (up and down move along the depth of the pier)", "A: punch; three presses in a row: combo with a kick", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "The fighter. The Fighter script walks it inside the floor band, runs the combo, opens a short hit window per attack and loses hit points and lives when a thug's strike lands.",
+            ["Waves"] = "Invisible director: the Waves script scrolls the camera with the player, stops it at three points, spawns each wave of thugs and shows GO! or Stage clear!",
+            ["Thug"] = "Spawn template of the enemy (hidden; Waves copies it with Scene.Spawn). The Thug script walks up beside the player, winds up and strikes, and takes hits from the player's attacks.",
+            ["HUD HP"] = "Text label with the player's hit points.",
+            ["HUD Score"] = "Text label with the score.",
+            ["HUD Lives"] = "Text label with the lives left.",
+            ["HUD Banner"] = "Text label on the right that shows GO! between waves and Stage clear! at the end.",
+        },
+        [
+            "Select Player and change `speed` or `maxHp` of Fighter.",
+            "Select the Thug template and give it more `hp` or `speed`.",
+            "Select Waves and change `lockX` or `spacing` to stop the screen in other places; change `wave + 2` in SpawnWave for bigger waves.",
+            "Make the combo longer: allow `attack < 4` in Fighter and add a fourth move.",
+            "Repaint the harbour skyline (assets/images/harbour.png) or the pier tiles.",
+        ]);
+
+    // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
     {
@@ -269,21 +297,24 @@ public static class BrawlerTemplate
 // each hit once. Thugs call Hurt when their strike lands.
 public class Fighter : Behaviour
 {
+    // Public fields show in the Inspector under "Fighter"; other scripts can read them too.
     public fixed speed = 1.5;
     public int maxHp = 10;
     public int hp;
     public int attack;            // 1 and 2 jabs, 3 the kick
     public int attackId;          // a new id for every attack
     public bool hitActive;        // true on the frames an attack can hit
-    public int minX;              // the screen edges while a wave holds the camera
+    public int minX;              // the screen edges while a wave holds the camera (set by Waves)
     public int maxX = 1024;
     int attackTimer;
     int comboWindow;
     int hurtTimer;
     int invincible;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
+        // Game.<field> is the save data (Project Settings > Save).
         if (Game.lives == 0)
         {
             Game.lives = 3;
@@ -293,13 +324,14 @@ public class Fighter : Behaviour
         UpdateHud();
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
         hitActive = false;
         if (invincible > 0)
         {
             invincible -= 1;
-            actor.visible = invincible == 0 || (invincible & 4) == 0;
+            actor.visible = invincible == 0 || (invincible & 4) == 0;   // blink after a hit
         }
         if (hurtTimer > 0)
         {
@@ -310,16 +342,18 @@ public class Fighter : Behaviour
         if (attackTimer > 0)
         {
             attackTimer -= 1;
-            hitActive = attackTimer >= 6 && attackTimer <= 10;
-            if (attackTimer == 0) comboWindow = 18;
+            hitActive = attackTimer >= 6 && attackTimer <= 10;   // the middle frames of the swing
+            if (attackTimer == 0) comboWindow = 18;              // press A again within 18 frames to chain
             return;
         }
+        // Input.Pressed is true only on the frame the button goes down.
         if (Input.Pressed(Key.A))
         {
             attack = comboWindow > 0 && attack < 3 ? attack + 1 : 1;
             attackId += 1;
             attackTimer = attack == 3 ? 18 : 12;
             comboWindow = 0;
+            // PlayAnimation switches to an animation of the sprite (Sprite Editor > Animations).
             if (attack == 3)
             {
                 actor.PlayAnimation("kick");
@@ -338,20 +372,24 @@ public class Fighter : Behaviour
 
     void Walk()
     {
+        // Input.AxisX / AxisY are -1, 0 or 1 from the D-pad; depth moves a bit slower than sideways.
         fixed dx = Input.AxisX * speed;
         fixed dy = Input.AxisY * speed * 0.75;
         actor.pos.x += dx;
         actor.pos.y += dy;
+        // stay on the planks (y 108-152) and inside the screen while a wave holds the camera
         if (actor.pos.y < 108) actor.pos.y = 108;
         if (actor.pos.y > 152) actor.pos.y = 152;
         if (actor.pos.x < minX + 8) actor.pos.x = minX + 8;
         if (actor.pos.x > maxX - 8) actor.pos.x = maxX - 8;
+        // facingLeft mirrors the sprite
         if (dx > 0) actor.facingLeft = false;
         if (dx < 0) actor.facingLeft = true;
         if (dx != 0 || dy != 0) actor.PlayAnimation("walk");
         else actor.PlayAnimation("idle");
     }
 
+    // Called by a Thug whose strike lands; fromX is where it stands, to knock the player away from it.
     public void Hurt(int fromX)
     {
         if (invincible > 0 || hurtTimer > 0) return;
@@ -368,7 +406,7 @@ public class Fighter : Behaviour
             Game.lives -= 1;
             if (Game.lives == 0)
             {
-                Scene.Load("Title");
+                Scene.Load("Title");   // game over
                 return;
             }
             hp = maxHp;
@@ -378,6 +416,7 @@ public class Fighter : Behaviour
 
     public void UpdateHud()
     {
+        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes into a text label.
         Actor hpLabel = Scene.Find("HUD HP");
         if (hpLabel != null) hpLabel.SetLabelNumber(hp, 2);
         Actor score = Scene.Find("HUD Score");
@@ -388,7 +427,7 @@ public class Fighter : Behaviour
 }
 """);
         TemplateKit.Script(p, "Thug", """
-// Walks up beside the fighter on the same floor line and strikes after a short wind-up. The fighter's hits stun it
+// Walks up beside the player on the same floor line and strikes after a short wind-up. The player's hits stun it
 // and push it back (the combo kick further); after three hits it blinks out.
 public class Thug : Behaviour
 {
@@ -402,11 +441,13 @@ public class Thug : Behaviour
 
     void Start()
     {
-        fighter = Scene.Find("Fighter");
+        // Scene.Find looks an actor up by its Hierarchy name.
+        fighter = Scene.Find("Player");
     }
 
     int Abs(int v) => v < 0 ? -v : v;
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
         if (dying > 0)
@@ -415,18 +456,21 @@ public class Thug : Behaviour
             actor.visible = (dying & 4) == 0;
             if (dying == 40)
             {
-                Actor stage = Scene.Find("Stage");
-                if (stage != null) stage.Get<Waves>().alive -= 1;
+                // Tell the Waves director one thug fewer is left, then remove this copy.
+                Actor waves = Scene.Find("Waves");
+                if (waves != null) waves.Get<Waves>().alive -= 1;
                 actor.Destroy();
             }
             return;
         }
         if (fighter == null) return;
+        // Get<T>() reaches the Fighter script of the player to read its attack.
         Fighter f = fighter.Get<Fighter>();
         int x = actor.pos.x.Floor();
         int y = actor.pos.y.Floor();
         int fx = fighter.pos.x.Floor();
         int fy = fighter.pos.y.Floor();
+        // Hit by the player: an attack is active, it is a new one, on the same floor line and in front of the player.
         if (f.hitActive && f.attackId != lastHit && Abs(fy - y) <= 8)
         {
             int reach = f.attack == 3 ? 30 : 26;
@@ -438,12 +482,13 @@ public class Thug : Behaviour
                 return;
             }
         }
+        // While stunned it does nothing else.
         if (stun > 0)
         {
             stun -= 1;
             return;
         }
-        actor.facingLeft = fx < x;
+        actor.facingLeft = fx < x;   // face the player (mirrors the sprite)
         int dx = fx - x;
         int dy = fy - y;
         if (windup > 0)
@@ -459,10 +504,11 @@ public class Thug : Behaviour
         }
         if (Abs(dx) <= 22 && Abs(dy) <= 6)
         {
-            windup = 24;
+            windup = 24;   // frames of warning before the strike
             actor.PlayAnimation("windup");
             return;
         }
+        // Walk to a spot 20 px beside the player, on its floor line.
         int tx = dx > 0 ? fx - 20 : fx + 20;
         if (tx > x + 1) actor.pos.x += speed;
         if (tx < x - 1) actor.pos.x -= speed;
@@ -471,6 +517,7 @@ public class Thug : Behaviour
         actor.PlayAnimation("walk");
     }
 
+    // Hit by the player: lose one hit point, stagger back (further for the kick) and score.
     void TakeHit(bool kick, bool toLeft)
     {
         hp -= 1;
@@ -484,20 +531,20 @@ public class Thug : Behaviour
         Game.score += kick ? 50 : 20;
         if (hp <= 0)
         {
-            dying = 1;
-            Game.score += 100;
+            dying = 1;           // blink for 40 frames, then leave
+            Game.score += 100;   // Game.score is a save field (Project Settings > Save)
         }
         fighter.Get<Fighter>().UpdateHud();
     }
 }
 """);
         TemplateKit.Script(p, "Waves", """
-// Moves the camera with the fighter and holds it at three points along the pier until the wave of thugs there is
+// Moves the camera with the player and holds it at three points along the pier until the wave of thugs there is
 // beaten (two, three, then four thugs from both sides); "GO!" shows and the camera moves on. After the last wave
 // the stage is clear.
 public class Waves : Behaviour
 {
-    public int alive;
+    public int alive;             // thugs of the current wave still standing (each Thug counts itself out)
     public int lockX = 160;       // camera x of the first wave; the next ones follow every `spacing` pixels
     public int spacing = 280;
     int wave;
@@ -506,12 +553,12 @@ public class Waves : Behaviour
     int goTimer;
     int clearTimer;
     Actor fighter;
-    Actor go;
+    Actor banner;
 
     void Start()
     {
-        fighter = Scene.Find("Fighter");
-        go = Scene.Find("Go");
+        fighter = Scene.Find("Player");
+        banner = Scene.Find("HUD Banner");
     }
 
     void Update()
@@ -520,6 +567,7 @@ public class Waves : Behaviour
         Fighter f = fighter.Get<Fighter>();
         if (!locked)
         {
+            // The camera only moves right, keeping the player 100 px from the left edge.
             int want = fighter.pos.x.Floor() - 100;
             if (want > camX) camX = want;
             if (camX > 784) camX = 784;
@@ -538,21 +586,23 @@ public class Waves : Behaviour
             if (wave == 3)
             {
                 clearTimer = 1;
-                if (go != null) go.SetLabelText("brawl.clear");
+                // SetLabelText puts another string key into a text label.
+                if (banner != null) banner.SetLabelText("brawl.clear");
             }
             else
             {
                 goTimer = 90;
-                if (go != null) go.SetLabelText("brawl.go");
+                if (banner != null) banner.SetLabelText("brawl.go");
             }
         }
+        // The scene camera follows nobody (Main Camera: fixed); this script moves it.
         Camera.SetPosition(camX, 0);
         f.minX = camX;
         f.maxX = locked ? camX + 240 : 1024;
         if (goTimer > 0)
         {
             goTimer -= 1;
-            if (goTimer == 0 && go != null) go.SetLabelText("brawl.empty");
+            if (goTimer == 0 && banner != null) banner.SetLabelText("brawl.empty");
         }
         if (clearTimer > 0)
         {
@@ -566,7 +616,9 @@ public class Waves : Behaviour
         int n = wave + 2;
         for (int i = 0; i < n; i++)
         {
+            // even thugs come from the right edge, odd ones from the left
             int x = (i & 1) == 0 ? camX + 256 + i * 12 : camX - 16 - i * 12;
+            // Scene.Spawn copies the hidden Thug template; it returns null when no actor slot is free.
             Actor t = Scene.Spawn("Thug", x, 112 + (i * 17) % 40);
             if (t != null) alive += 1;
         }

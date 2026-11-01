@@ -41,6 +41,8 @@ public static class VisualNovelTemplate
         TemplateKit.Sfx(p, "blip", 900, 900, 0.03, 0.35);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -159,43 +161,69 @@ public static class VisualNovelTemplate
             Camera = new CameraSettings { Follow = "" },
             Actors =
             {
-                new ActorData { Name = "Hopper", Kind = ActorKind.Empty, Sprite = "hopper_portrait", Animation = "neutral", X = 56, Y = 112, Tag = "Portrait", Priority = 1 },
-                new ActorData { Name = "Owl", Kind = ActorKind.Empty, Sprite = "owl_portrait", X = 184, Y = 112, Tag = "Portrait", Priority = 1, Hidden = true },
-                new ActorData { Name = "Speaker Tag", Kind = ActorKind.TextLabel, X = 16, Y = 96, Text = "speaker.none" },
+                new ActorData { Name = "Story", Kind = ActorKind.Empty, X = 120, Y = 8, Components = { new ComponentData { Type = "Story" } } },
+                new ActorData { Name = "Hopper", Kind = ActorKind.Empty, Sprite = "hopper_portrait", Animation = "neutral", X = 56, Y = 96, Tag = "Portrait", Priority = 1 },
+                new ActorData { Name = "Owl", Kind = ActorKind.Empty, Sprite = "owl_portrait", X = 184, Y = 96, Tag = "Portrait", Priority = 1, Hidden = true },
+                new ActorData { Name = "Speaker Tag", Kind = ActorKind.TextLabel, X = 16, Y = 97, Text = "speaker.none", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Story.scene"), story);
     }
+
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Visual Novel",
+        "A short story at sunset: Hopper and the Owl talk, you pick what Hopper does, the choice is saved as a flag and leads to one of two endings. The text is in Thai and English (Options > Language).",
+        ["A: next line", "D-pad up / down: pick a choice, A: confirm", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Story"] = "Invisible director: the Story script runs the whole scene as one cutscene (lines, the choice, the ending) when the scene starts.",
+            ["Hopper"] = "Portrait sprite with the animations neutral, happy and worried; Stage.Mood picks one between lines.",
+            ["Owl"] = "Second portrait, hidden until the owl speaks for the first time (Stage.Speaker shows it).",
+            ["Speaker Tag"] = "Text label above the dialogue box with the name of who is speaking; Stage.Speaker changes its string key.",
+        },
+        [
+            "Add lines: write new keys in Localization, then add `await Say(\"your.key\");` lines in Story.cs.",
+            "Add a third choice: `await Choice(\"a\", \"b\", \"c\")` returns 0, 1 or 2.",
+            "Draw a new expression in the Sprite Editor (hopper_portrait), add it as an animation and use it in Stage.Mood.",
+            "Read the saved flag `Game.braveHopper` in a second chapter scene to change what the owl says.",
+        ]);
+
+    // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
     {
         TemplateKit.Script(p, "Story", """
 using System.Threading.Tasks;
 
-// The story of the Story scene: it starts when the scene has entered. Stage.Speaker and Stage.Mood change the
-// name tag and the portraits between lines.
-public class Story : SceneScript
+// The story of the Story scene, on the invisible Story actor: it starts when the scene starts. Stage.Speaker and
+// Stage.Mood (Stage.cs) change the name tag and the portraits between lines.
+public class Story : Behaviour
 {
-    void OnEnter()
+    // Start runs once, when the scene has loaded the actor.
+    void Start()
     {
         Play();
     }
 
+    // A [Cutscene] runs over many frames: each await waits for the player.
     [Cutscene]
     static async Task Play()
     {
-        Game.chapter = 1;
+        Game.chapter = 1;          // a save field (Project Settings > Save)
         Stage.Speaker(1);
         Stage.Mood(2);
-        await Say("vn.1");
+        await Say("vn.1");         // shows a line from Localization in the dialogue box and waits for A
         Stage.Speaker(2);
         await Say("vn.2");
         Stage.Speaker(1);
         await Say("vn.3");
+        // Choice shows the options and returns the number of the one picked (0 = first).
         var answer = await Choice("vn.choice.cave", "vn.choice.wait");
         if (answer == 0)
         {
-            Game.braveHopper = true;
+            Game.braveHopper = true;   // the flag a later chapter can read
             Stage.Mood(1);
             await Say("vn.cave.1");
             Stage.Speaker(2);
@@ -211,32 +239,35 @@ public class Story : SceneScript
         }
         Stage.Speaker(0);
         await Say("vn.end");
-        Save.Write(0);
+        Save.Write(0);             // writes the save data to slot 0 (Continue on the title screen reads it)
         Scene.Load("Title");
     }
 }
 """);
         TemplateKit.Script(p, "Stage", """
-// Natives the story calls between lines: who speaks (name tag and portraits) and Hopper's expression.
+// Helpers the story calls between lines: who speaks (name tag and portraits) and Hopper's expression.
+// [ScriptNative] makes a static method callable from a cutscene.
 public static class Stage
 {
     // 0 nobody, 1 Hopper, 2 Owl. The owl appears the first time it speaks.
     [ScriptNative]
     public static void Speaker(int who)
     {
+        // Scene.Find looks an actor up by its Hierarchy name.
         Actor tag = Scene.Find("Speaker Tag");
         if (tag != null)
         {
+            // SetLabelText puts another string key into a text label.
             if (who == 1) tag.SetLabelText("speaker.hopper");
             else if (who == 2) tag.SetLabelText("speaker.owl");
             else tag.SetLabelText("speaker.none");
         }
         Actor owl = Scene.Find("Owl");
-        if (owl != null && who == 2) owl.visible = true;
+        if (owl != null && who == 2) owl.visible = true;   // the Owl starts hidden (Inspector: Hidden)
         Sound.Play("blip");
     }
 
-    // 0 neutral, 1 happy, 2 worried.
+    // 0 neutral, 1 happy, 2 worried: animations of the hopper_portrait sprite.
     [ScriptNative]
     public static void Mood(int mood)
     {

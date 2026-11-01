@@ -45,6 +45,68 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.All(TemplateCatalog.All, t => Assert.Contains(t.Genre, new[] { "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing" }));
     }
 
+    public static IEnumerable<object[]> TemplateIds => TemplateCatalog.All.Select(t => new object[] { t.Id });
+
+    /// <summary>
+    /// T-D12: every template is a readable example. Its objects carry the components they use (built-in behaviours of
+    /// the runtime or the project's own scripts, nothing unknown), the player is called Player, the HUD labels sit in
+    /// a HUD folder, every script is commented and used, README.md explains every object and what to try, and the
+    /// editor opens on the main scene instead of the title screen.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(TemplateIds))]
+    public void TemplateIsAReadableExample(string id)
+    {
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "template_readable_" + id);
+        if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        var t = TemplateCatalog.Find(id)!;
+        var p = t.Create(dir, t.Name);
+        var scenes = p.SceneFiles().Select(GameProject.Load<SceneFile>).ToList();
+        var scripts = p.ScriptFiles().ToDictionary(f => Path.GetFileNameWithoutExtension(f), File.ReadAllText);
+        var main = TemplateKit.MainScene(p);
+        Assert.NotNull(main);
+        Assert.NotEqual(p.Settings.General.StartScene, main);
+        Assert.Equal(main, p.Settings.LastScene);
+
+        var used = new HashSet<string>();
+        foreach (var scene in scenes)
+            foreach (var a in scene.Actors)
+            {
+                foreach (var c in a.Components)
+                {
+                    Assert.True(BuiltinBehaviours.Find(c.Type) != null || scripts.ContainsKey(c.Type), $"{id}: {scene.Name}/{a.Name} uses {c.Type}, which is neither built in nor a script");
+                    used.Add(c.Type);
+                }
+                if (a.Kind == ActorKind.Player) Assert.Equal("Player", a.Name);
+                if (a.Kind == ActorKind.TextLabel && scene.Name != p.Settings.General.StartScene) Assert.True(a.Group == "HUD" || a.Components.Count > 0, $"{id}: label {a.Name} is not in the HUD folder");
+                if (a.Kind is not (ActorKind.TextLabel or ActorKind.TriggerZone or ActorKind.CameraZone))
+                    Assert.True(a.Sprite.Length > 0 || a.Components.Count > 0, $"{id}: {scene.Name}/{a.Name} has neither a sprite nor a component");
+            }
+        var mainScene = scenes.Single(s => s.Name == main);
+        Assert.True(mainScene.Actors.Any(a => a.Components.Count > 0), $"{id}: no object of the main scene has a behaviour");
+
+        foreach (var (name, text) in scripts)
+        {
+            var lines = text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith("using ", StringComparison.Ordinal)).ToList();
+            Assert.StartsWith("//", lines[0]);
+            var comments = lines.Count(l => l.StartsWith("//", StringComparison.Ordinal) || l.Contains(" // ", StringComparison.Ordinal));
+            Assert.True(comments * 10 >= lines.Count, $"{id}: {name}.cs has {comments} comment lines for {lines.Count} lines");
+            // a behaviour is on some actor; other classes (natives, scene scripts) are called by them
+            if (System.Text.RegularExpressions.Regex.IsMatch(text, @"class\s+" + name + @"\s*:\s*Behaviour")) Assert.Contains(name, used);
+        }
+
+        var readme = File.ReadAllText(Path.Combine(p.Root, "README.md"));
+        foreach (var scene in scenes)
+        {
+            Assert.Contains("### " + scene.Name, readme);
+            foreach (var a in scene.Actors) Assert.Contains("| " + a.Name, readme);
+        }
+        foreach (var name in scripts.Keys) Assert.Contains($"scripts/{name}.cs", readme);
+        var tries = readme[readme.IndexOf("## Try changing", StringComparison.Ordinal)..].Split('\n').Count(l => l.StartsWith("- ", StringComparison.Ordinal));
+        Assert.True(tries >= 3, $"{id}: {tries} things to try");
+        Assert.DoesNotContain('�', readme);
+    }
+
     [Fact]
     public void PlatformerPlaysThroughToTheGoal()
     {
@@ -221,7 +283,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void VisualNovelTellsTheStoryAndRemembersTheChoice()
     {
         var (p, r) = Build("visualnovel");
-        Assert.Equal("Mode 0 · 1 BG layers · 3 actors · 2 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -261,7 +323,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void PuzzleDropsPairsClearsLinesAndEnds()
     {
         var (p, r) = Build("puzzle");
-        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 1 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -299,7 +361,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void ShootEmUpScrollsFiresAndClearsTheStage()
     {
         var (p, r) = Build("shmup");
-        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 3 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 4 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -465,7 +527,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
         Press(s, GbaKeys.A);  // Start
-        for (var i = 0; i < 200 && !s.Actors().Any(a => a.Name == "Fighter"); i++) s.Step();
+        for (var i = 0; i < 200 && !s.Actors().Any(a => a.Name == "Player"); i++) s.Step();
         int SceneIndex() => s.Core.ReadU16(s.Channel!.Game);
         uint Score() => s.Core.ReadU32(s.Core.ReadU32(s.Channel!.Game + 8) + 8);
         var pier = SceneIndex();
@@ -476,7 +538,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         for (var f = 0; f < 9000 && SceneIndex() == pier; f++)
         {
             var actors = s.Actors();
-            var me = actors.SingleOrDefault(a => a.Name == "Fighter");
+            var me = actors.SingleOrDefault(a => a.Name == "Player");
             if (me == null)
             {
                 s.Step();  // the scene is changing

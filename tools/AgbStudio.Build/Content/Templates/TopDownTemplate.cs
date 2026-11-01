@@ -40,6 +40,8 @@ public static class TopDownTemplate
         WriteMaps(p);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -275,6 +277,31 @@ public static class TopDownTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "House.scene"), house);
     }
 
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Top-down Adventure",
+        "Walk around the Village, talk to the Elder, push the Crate out of the gap in the fence, pick up the House Key and open the Door to go into the House.",
+        ["D-pad: walk in 8 directions", "A: talk (stand next to someone)", "Walk into the crate or the door to push or open it", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "The hero. The built-in Top-down Mover reads the D-pad, moves in 8 directions and stops at solid tiles and blocking actors; the camera follows it.",
+            ["Elder"] = "Villager. The Npc script makes it block the way and starts a dialogue cutscene when the player presses A next to it.",
+            ["Crate"] = "The PushBlock script moves it one tile when the player keeps walking into it; it never moves into walls or water.",
+            ["House Key"] = "Pickup: the KeyItem script adds a key to the save data, removes itself and shows a message.",
+            ["Door"] = "The Door script blocks the house until the player walks into it with a key, then plays its open animation for good.",
+            ["House Entrance"] = "Invisible trigger zone behind the door with a scene link: walking into it fades to the House.",
+            ["House/Player"] = "The same hero in the second scene (each scene has its own copy; the save data carries keys and the door state).",
+            ["Way Out"] = "Trigger zone at the bottom wall with a link back to the Village, in front of the door.",
+        },
+        [
+            "Change the elder's lines in Localization (keys npc.elder.1 to npc.elder.3), or in Thai.",
+            "Select Player and change **Speed** of Top-down Mover.",
+            "Set `pushFrames` of the Crate's PushBlock lower to push it faster.",
+            "Move the House Key somewhere else in the fenced corner, or copy the Crate to make a sliding-block puzzle.",
+            "Add a second villager: copy the Elder (Ctrl+D) and write a new cutscene in Npc.cs.",
+        ]);
+
     // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
@@ -282,30 +309,36 @@ public static class TopDownTemplate
         TemplateKit.Script(p, "Npc", """
 using System.Threading.Tasks;
 
-// Talks when the player stands next to it and presses A.
+// A villager who talks when the player stands next to it and presses A.
 public class Npc : Behaviour
 {
+    // actor.blocking: other actors (the player's Top-down Mover) cannot walk through this one.
     void Start() => actor.blocking = true;
 
     void Update()
     {
+        // Input.Pressed is true only on the frame the button goes down.
         if (!Input.Pressed(Key.A)) return;
+        // Scene.Find looks an actor up by its Hierarchy name.
         Actor player = Scene.Find("Player");
         if (player == null) return;
+        // pos is in pixels as fixed point; Floor() makes a whole number.
         int dx = (player.pos.x - actor.pos.x).Floor();
         int dy = (player.pos.y - actor.pos.y).Floor();
         if (dx > -24 && dx < 24 && dy > -24 && dy < 24)
         {
             Sound.Play("talk");
+            // Game.doorOpen is a save field (Project Settings > Save): the elder thanks you once the door is open.
             if (Game.doorOpen) Thanks();
             else Talk();
         }
     }
 
+    // A [Cutscene] runs over several frames: each Say shows a line in the dialogue box and waits for A.
     [Cutscene]
     static async Task Talk()
     {
-        await Say("npc.elder.1");
+        await Say("npc.elder.1");   // a string key from Localization (English and Thai)
         await Say("npc.elder.2");
     }
 
@@ -321,16 +354,17 @@ public class Npc : Behaviour
 // water or other blocking actors.
 public class PushBlock : Behaviour
 {
-    public int pushFrames = 12;
+    public int pushFrames = 12;   // how long the player must push before the crate moves
     int pushing;
     int moveLeft;
     int dirX;
     int dirY;
 
-    void Start() => actor.blocking = true;
+    void Start() => actor.blocking = true;   // the player bumps into it instead of walking through
 
     void Update()
     {
+        // While sliding, move 2 px a frame for 8 frames: one 16 px tile.
         if (moveLeft > 0)
         {
             actor.pos.x += dirX * 2;
@@ -342,6 +376,7 @@ public class PushBlock : Behaviour
         if (player == null) return;
         int dx = (player.pos.x - actor.pos.x).Floor();
         int dy = (player.pos.y - actor.pos.y).Floor();
+        // The player pushes from the side it stands on, holding the D-pad towards the crate (Input.Held).
         int wantX = 0;
         int wantY = 0;
         if (dy > -10 && dy < 10 && dx >= -18 && dx <= -12 && Input.Held(Key.Right)) wantX = 1;
@@ -352,6 +387,7 @@ public class PushBlock : Behaviour
         pushing += 1;
         if (pushing < pushFrames) return;
         pushing = 0;
+        // Scene.SolidAt asks the collision layer whether a pixel is solid (walls, trees, water, fences).
         int tx = actor.pos.x.Floor() + wantX * 16;
         int ty = actor.pos.y.Floor() - 8 + wantY * 16;
         if (Scene.SolidAt(tx, ty)) return;
@@ -368,10 +404,11 @@ using System.Threading.Tasks;
 // Picked up on touch: one more key for doors.
 public class KeyItem : Behaviour
 {
+    // OnTouch runs when this actor's collider overlaps another actor's collider.
     void OnTouch(Actor other)
     {
-        if (other.tag != "Player") return;
-        Game.keys += 1;
+        if (other.tag != "Player") return;   // tag: the Tag field of the Inspector header
+        Game.keys += 1;                      // save field: survives scene changes and Continue
         Sound.Play("key");
         actor.Destroy();
         Found();
@@ -387,13 +424,15 @@ public class KeyItem : Behaviour
         TemplateKit.Script(p, "Door", """
 using System.Threading.Tasks;
 
-// Blocks the way until the player brings a key; then it opens for good.
+// Blocks the way until the player brings a key; then it opens for good. The House Entrance trigger zone behind
+// it has the scene link to the House.
 public class Door : Behaviour
 {
     int bumps;
 
     void Start()
     {
+        // The door state is saved, so it stays open when the player comes back from the House.
         actor.blocking = !Game.doorOpen;
         if (Game.doorOpen) actor.PlayAnimation("open");
     }
@@ -405,6 +444,7 @@ public class Door : Behaviour
         if (player == null) return;
         int dx = (player.pos.x - actor.pos.x).Floor();
         int dy = (player.pos.y - actor.pos.y).Floor();
+        // The player stands just below the door and walks up into it.
         if (dx < -10 || dx > 10 || dy < 8 || dy > 20 || !Input.Held(Key.Up)) { bumps = 0; return; }
         bumps += 1;
         if (bumps != 10) return;
@@ -412,8 +452,8 @@ public class Door : Behaviour
         {
             Game.keys -= 1;
             Game.doorOpen = true;
-            actor.blocking = false;
-            actor.PlayAnimation("open");
+            actor.blocking = false;          // the player can walk through to the entrance zone
+            actor.PlayAnimation("open");     // an animation of the door sprite (Sprite Editor > Animations)
             Sound.Play("door");
         }
         else

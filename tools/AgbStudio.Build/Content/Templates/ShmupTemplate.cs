@@ -36,6 +36,8 @@ public static class ShmupTemplate
         TemplateKit.Sfx(p, "hurt", 520, 80, 0.3);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -142,7 +144,7 @@ public static class ShmupTemplate
         GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), Space("Title", 15));
         GameProject.Save(Path.Combine(p.MapsDir, "Stage_01.map"), Space("Stage_01", StageWidth));
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#0C0C20", "Stage_01", "title_theme"));
-        // Template actors (Shot, Enemy Shot, Slime, Power-up) wait hidden above the screen; Scene.Spawn copies them.
+        // Spawn templates (Shot, Enemy Shot, Slime, Power-up) wait hidden above the screen; Scene.Spawn copies them.
         static ComponentData Projectile(string vx = "0") => new() { Type = "Projectile", Fields = { ["vx"] = vx } };
         var stage = new SceneFile
         {
@@ -151,15 +153,15 @@ public static class ShmupTemplate
             Camera = new CameraSettings { Follow = "", ClampToMap = true },
             Actors =
             {
-                new ActorData { Name = "Ship", Kind = ActorKind.Player, Sprite = "ship", X = 40, Y = 80, Tag = "Player", Priority = 1, Components = { new ComponentData { Type = "ShipController" } } },
+                new ActorData { Name = "Player", Kind = ActorKind.Player, Sprite = "ship", X = 40, Y = 80, Tag = "Player", Priority = 1, Components = { new ComponentData { Type = "ShipController" } } },
                 new ActorData { Name = "Stage", Kind = ActorKind.Empty, Components = { new ComponentData { Type = "Stage" } } },
-                new ActorData { Name = "Shot", Kind = ActorKind.Empty, Sprite = "shot", X = 0, Y = -64, Tag = "Shot", Hidden = true, Group = "Templates", Priority = 2,
+                new ActorData { Name = "Shot", Kind = ActorKind.Empty, Sprite = "shot", X = 0, Y = -64, Tag = "Shot", Hidden = true, Group = "Spawn Templates", Priority = 2,
                     Components = { Projectile() } },
-                new ActorData { Name = "Enemy Shot", Kind = ActorKind.Empty, Sprite = "enemy_shot", X = 0, Y = -64, Tag = "EnemyShot", Hidden = true, Group = "Templates", Priority = 2,
+                new ActorData { Name = "Enemy Shot", Kind = ActorKind.Empty, Sprite = "enemy_shot", X = 0, Y = -64, Tag = "EnemyShot", Hidden = true, Group = "Spawn Templates", Priority = 2,
                     Components = { new ComponentData { Type = "Projectile", Fields = { ["hitsPlayer"] = "true", ["lifetime"] = "240" } } } },
-                new ActorData { Name = "Slime", Kind = ActorKind.Enemy, Sprite = "space_slime", Animation = "fly", X = 0, Y = -64, Tag = "Enemy", Hidden = true, Group = "Templates", Priority = 2,
+                new ActorData { Name = "Slime", Kind = ActorKind.Enemy, Sprite = "space_slime", Animation = "fly", X = 0, Y = -64, Tag = "Enemy", Hidden = true, Group = "Spawn Templates", Priority = 2,
                     Components = { new ComponentData { Type = "SpaceSlime" } } },
-                new ActorData { Name = "Power-up", Kind = ActorKind.Pickup, Sprite = "powerup", X = 0, Y = -64, Tag = "PowerUp", Hidden = true, Group = "Templates", Priority = 2,
+                new ActorData { Name = "Power-up", Kind = ActorKind.Pickup, Sprite = "powerup", X = 0, Y = -64, Tag = "PowerUp", Hidden = true, Group = "Spawn Templates", Priority = 2,
                     Components = { new ComponentData { Type = "PowerUpMarker" } } },
                 new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.score", Group = "HUD" },
                 new ActorData { Name = "HUD Lives", Kind = ActorKind.TextLabel, X = 176, Y = 4, Text = "hud.lives", Group = "HUD" },
@@ -168,19 +170,49 @@ public static class ShmupTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Stage_01.scene"), stage);
     }
 
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Shoot 'em up",
+        "The stage scrolls to the right by itself. Fly the ship, hold A to fire, shoot the waves of space slimes and dodge their bullet patterns. The power-up gives three shots at once for ten seconds. After ten waves the stage is clear.",
+        ["D-pad: fly", "A (hold): fire", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "The ship. ShipController keeps it inside the screen while the camera scrolls, spawns Shot copies when A is held and loses a life when hit.",
+            ["Stage"] = "Invisible director: the Stage script moves the camera one pixel a frame and spawns a wave of three slimes every 160 pixels, plus two power-ups.",
+            ["Shot"] = "Spawn template of the ship's bullet: the built-in Projectile moves it and removes it after its lifetime. Scene.Spawn(\"Shot\", x, y) makes a copy.",
+            ["Enemy Shot"] = "Spawn template of the slimes' bullets: Projectile with Hits player on, so it hurts the ship.",
+            ["Slime"] = "Spawn template of the enemy: SpaceSlime flies left on a wave and fires a fan or a ring of Enemy Shots; two hits destroy it.",
+            ["Power-up"] = "Spawn template of the pickup: PowerUpMarker drifts it left; ShipController turns on triple shot when it touches it.",
+            ["HUD Score"] = "Text label with the score.",
+            ["HUD Lives"] = "Text label with the lives left.",
+        },
+        [
+            "Select Player and change `speed` or `fireDelay` of ShipController.",
+            "Select Stage and set `speed` to 2 for a faster scroll.",
+            "Give the Slime template more `hp`, or add a third bullet pattern in SpaceSlime.FirePattern.",
+            "Change the waves in Stage.Update: their spacing (160 px), size (3 slimes) or where power-ups come.",
+            "Change `vx` or `lifetime` of the Shot template's Projectile in the Inspector.",
+        ]);
+
+    // ---- scripts ----------------------------------------------------------------------------------------
+
     static void WriteScripts(GameProject p)
     {
         TemplateKit.Script(p, "Stage", """
 // Scrolls the stage one pixel a frame and sends waves of slimes by distance; at the end the stage is clear.
+// The hidden actors of the Spawn Templates folder are the originals that Scene.Spawn copies.
 public class Stage : Behaviour
 {
-    public int speed = 1;
+    public int speed = 1;   // pixels per frame
     int camX;
     int wave;
     int clearTimer;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
+        // Game.<field> is the save data (Project Settings > Save).
         if (Game.lives == 0)
         {
             Game.lives = 3;
@@ -188,9 +220,11 @@ public class Stage : Behaviour
         }
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
         if (camX < 1680) camX += speed;
+        // The scene camera follows nobody here (Main Camera: fixed); this script moves it.
         Camera.SetPosition(camX, 0);
         // A wave every 160 pixels: rows of three, alternating fan shooters and ring shooters.
         if (camX >= 120 + wave * 160 && wave < 10)
@@ -198,7 +232,9 @@ public class Stage : Behaviour
             int kind = wave & 1;
             for (int i = 0; i < 3; i++)
             {
+                // Scene.Spawn copies a hidden template actor to a position and returns the copy (null when full).
                 Actor slime = Scene.Spawn("Slime", camX + 256 + i * 24, 40 + i * 32);
+                // Get<T>() reaches a component of that actor to set its fields.
                 if (slime != null) slime.Get<SpaceSlime>().pattern = kind;
             }
             if (wave == 3 || wave == 7) Scene.Spawn("Power-up", camX + 248, 80);
@@ -206,6 +242,7 @@ public class Stage : Behaviour
         }
         if (camX >= 1680)
         {
+            // Two seconds after the end of the stage, back to the title screen.
             clearTimer += 1;
             if (clearTimer == 120) Scene.Load("Title");
         }
@@ -218,7 +255,7 @@ public class Stage : Behaviour
 public class ShipController : Behaviour
 {
     public fixed speed = 2;
-    public int fireDelay = 8;
+    public int fireDelay = 8;   // frames between shots while A is held
     int screenX = 40;
     int screenY = 80;
     int cooldown;
@@ -229,6 +266,8 @@ public class ShipController : Behaviour
 
     void Update()
     {
+        // Input.AxisX / AxisY are -1, 0 or 1 from the D-pad. The ship keeps a position on the screen and adds the
+        // camera position, so it scrolls along with the stage.
         screenX += (Input.AxisX * speed).Floor();
         screenY += (Input.AxisY * speed).Floor();
         if (screenX < 8) screenX = 8;
@@ -239,6 +278,7 @@ public class ShipController : Behaviour
         actor.pos.y = screenY;
 
         if (cooldown > 0) cooldown -= 1;
+        // Input.Held stays true while the button is down: rapid fire.
         if (Input.Held(Key.A) && cooldown == 0)
         {
             cooldown = fireDelay;
@@ -254,7 +294,7 @@ public class ShipController : Behaviour
         if (invincible > 0)
         {
             invincible -= 1;
-            actor.visible = invincible == 0 || (invincible & 4) == 0;
+            actor.visible = invincible == 0 || (invincible & 4) == 0;   // blink while invincible
         }
     }
 
@@ -262,16 +302,19 @@ public class ShipController : Behaviour
     {
         Actor shot = Scene.Spawn("Shot", actor.pos.x.Floor() + 8, actor.pos.y.Floor());
         if (shot == null) return;
+        // The copy has the built-in Projectile of the Shot template: set its speed in pixels per frame.
         Projectile p = shot.Get<Projectile>();
         p.vx = 5;
         p.vy = spread;
     }
 
+    // OnTouch runs when this actor's collider overlaps another actor's collider.
     void OnTouch(Actor other)
     {
+        // other.tag is the Tag field of the Inspector header.
         if (other.tag == "PowerUp")
         {
-            triple = 600;
+            triple = 600;   // ten seconds of triple shot
             Sound.Play("powerup");
             other.Destroy();
             return;
@@ -288,19 +331,22 @@ public class ShipController : Behaviour
 
     public void UpdateHud()
     {
+        // SetLabelNumber writes a number with leading zeros into a text label.
         Actor score = Scene.Find("HUD Score");
         if (score != null) score.SetLabelNumber(Game.score, 6);
         Actor lives = Scene.Find("HUD Lives");
         if (lives != null) lives.SetLabelNumber(Game.lives, 1);
     }
 }
-
+""");
+        TemplateKit.Script(p, "PowerUpMarker", """
 // A power-up drifts slowly to the left; the ship picks it up by touching it.
 public class PowerUpMarker : Behaviour
 {
     void Update()
     {
         actor.pos.x -= 0.5;
+        // actor.Destroy removes it once it has left the screen on the left.
         if (actor.pos.x.Floor() < Camera.X - 16) actor.Destroy();
     }
 }
@@ -310,7 +356,7 @@ public class PowerUpMarker : Behaviour
 // destroy it.
 public class SpaceSlime : Behaviour
 {
-    public int pattern;
+    public int pattern;   // set by Stage when it spawns the slime
     public int hp = 2;
     int t;
     int baseY;
@@ -325,6 +371,7 @@ public class SpaceSlime : Behaviour
     {
         t += 1;
         actor.pos.x -= 1;
+        // fixed.Sin takes an angle in 256ths of a turn and returns -1..1: a wavy flight.
         actor.pos.y = baseY + (fixed.Sin(t * 4) * 16).Floor();
         if (t % 90 == 45) FirePattern();
         if (actor.pos.x.Floor() < Camera.X - 32) actor.Destroy();
@@ -340,6 +387,7 @@ public class SpaceSlime : Behaviour
         }
         else
         {
+            // six shots spread round a circle (43 is about a sixth of 256)
             for (int i = 0; i < 6; i++) Shoot((fixed.Cos(i * 43) * 2).Floor(), (fixed.Sin(i * 43) * 2).Floor());
         }
     }
@@ -361,8 +409,9 @@ public class SpaceSlime : Behaviour
         if (hp > 0) return;
         Sound.Play("hit");
         Game.score += 100;
-        Actor ship = Scene.Find("Ship");
-        if (ship != null) ship.Get<ShipController>().UpdateHud();
+        // Scene.Find looks an actor up by its Hierarchy name; Get<T>() reaches its script.
+        Actor player = Scene.Find("Player");
+        if (player != null) player.Get<ShipController>().UpdateHud();
         actor.Destroy();
     }
 }

@@ -60,6 +60,8 @@ public static class RpgTemplate
         WriteMaps(p);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -249,6 +251,7 @@ public static class RpgTemplate
             Camera = new CameraSettings { Follow = "" },
             Actors =
             {
+                new ActorData { Name = "Battle", Kind = ActorKind.Empty, X = 120, Y = 8, Components = { new ComponentData { Type = "Battle" } } },
                 new ActorData { Name = "Enemy", Kind = ActorKind.Enemy, Sprite = "battle_slime", Animation = "idle", X = 120, Y = 92, Tag = "Encounter" },
                 new ActorData { Name = "HUD Hero", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.hero", Group = "HUD" },
                 new ActorData { Name = "HUD Mage", Kind = ActorKind.TextLabel, X = 8, Y = 20, Text = "hud.mage", Group = "HUD" },
@@ -258,41 +261,73 @@ public static class RpgTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Battle.scene"), battle);
     }
 
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Turn-based RPG",
+        "Walk around the Meadow, buy a potion from the Shopkeeper, then walk through the tall grass until a slime attacks. Battles are turn-based: pick FIGHT, MAGIC, ITEM or RUN each turn. The stats of the heroes, enemies and items are rows of the Database (Heroes, Enemies, Items tables).",
+        ["D-pad: walk", "A: talk, pick a command, next line", "D-pad up / down: choose", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "The hero on the map. The built-in Top-down Mover walks it; Explorer sets up the party on the first walk and starts a battle after enough steps in tall grass.",
+            ["Shopkeeper"] = "Blocks the way and, when the player presses A next to it, runs a shop cutscene that sells potions (price from the Items table).",
+            ["HUD Gold"] = "Text label with the party's gold.",
+            ["Battle"] = "Invisible director of the Battle scene: its Battle script runs the whole fight as one cutscene with menus, using BattleRules for the numbers.",
+            ["Enemy"] = "The slime's battle sprite; it disappears when it is beaten.",
+            ["HUD Hero"] = "Text label with the hero's hit points.",
+            ["HUD Mage"] = "Text label with the mage's hit points.",
+            ["HUD Enemy"] = "Text label with the enemy's hit points.",
+        },
+        [
+            "Open the Database and change the Slime's hp, atk, gold or exp, or a hero's stats; build and fight again.",
+            "Select Player and lower `stepsPerBattle` of Explorer for more battles.",
+            "Change the potion price in the Items table, or add the Ether (it is already in the table) to the shop.",
+            "Paint more tall grass (tile 6) in the Meadow map with the Tilemap Editor.",
+            "Add a fifth battle command: add a string key and a branch in Battle.Fight.",
+        ]);
+
     // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
     {
         TemplateKit.Script(p, "Explorer", """
 // Walking in tall grass: after some steps a battle starts. The party is healed and set up on the first walk.
+// The built-in Top-down Mover on the same actor does the walking; this script only counts steps.
 public class Explorer : Behaviour
 {
-    public int stepsPerBattle = 90;
+    public int stepsPerBattle = 90;   // frames of walking in tall grass before a battle
     int steps;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
+        // Game.<field> is the save data (Project Settings > Save); level 0 means a new game.
         if (Game.level == 0)
         {
             Game.level = 1;
+            // Heroes.Get(id) reads a row of the Heroes table of the Database.
             Game.heroHp = Heroes.Get(HeroId.Hero).hp;
             Game.mageHp = Heroes.Get(HeroId.Mage).hp;
             Game.mageMp = Heroes.Get(HeroId.Mage).mp;
             Game.gold = 40;
             Game.potions = 1;
         }
+        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes into a text label.
         Actor hud = Scene.Find("HUD Gold");
         if (hud != null) hud.SetLabelNumber(Game.gold, 1);
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
+        // actor.vel is set by the Top-down Mover: zero while standing still.
         if (actor.vel.x == 0 && actor.vel.y == 0) return;
-        // Tile 6 of the meadow tileset is tall grass.
+        // Scene.GetTile reads a map cell (layer 0, in 16 px tiles). Tile 6 of the meadow tileset is tall grass.
         if (Scene.GetTile(0, actor.pos.x.Floor() / 16, (actor.pos.y.Floor() - 4) / 16) != 6) return;
         steps += 1;
         if (steps < stepsPerBattle) return;
         steps = 0;
-        Save.Checkpoint();
+        Save.Checkpoint();      // remembers where the player was, so the meadow comes back after the battle
         Scene.Load("Battle");
     }
 }
@@ -303,11 +338,12 @@ using System.Threading.Tasks;
 // Sells potions (Items.Potion, 30 gold) when the player talks to it with A.
 public class Shopkeeper : Behaviour
 {
+    // actor.blocking: the player's Top-down Mover cannot walk through it.
     void Start() => actor.blocking = true;
 
     void Update()
     {
-        if (!Input.Pressed(Key.A)) return;
+        if (!Input.Pressed(Key.A)) return;   // only on the frame A goes down
         Actor player = Scene.Find("Player");
         if (player == null) return;
         int dx = (player.pos.x - actor.pos.x).Floor();
@@ -315,6 +351,7 @@ public class Shopkeeper : Behaviour
         if (dx > -24 && dx < 24 && dy > -24 && dy < 24) Talk();
     }
 
+    // A [Cutscene] runs over many frames: Say waits for A, Choice returns the number of the option picked.
     [Cutscene]
     static async Task Talk()
     {
@@ -326,12 +363,13 @@ public class Shopkeeper : Behaviour
     }
 }
 
-// The shop counter: buying uses the Items table (price) and Game.gold.
+// The shop counter: buying uses the Items table (price) and Game.gold. [ScriptNative] lets the cutscene call it.
 public static class ShopDesk
 {
     [ScriptNative]
     public static int Buy()
     {
+        // Shop.Buy takes the item's price from Game.gold and returns false when the gold is not enough.
         if (!Shop.Buy(ItemId.Potion)) return 0;
         Game.potions += 1;
         Sound.Play("coin");
@@ -344,11 +382,13 @@ public static class ShopDesk
         TemplateKit.Script(p, "Battle", """
 using System.Threading.Tasks;
 
-// One battle: the party (Hero and Mage) against a slime from the Enemies table. Each turn the player picks
-// FIGHT, MAGIC, ITEM or RUN; then the slime attacks. Winning gives the slime's gold and experience.
-public class Battle : SceneScript
+// One battle, on the invisible Battle actor: the party (Hero and Mage) against a slime from the Enemies table.
+// Each turn the player picks FIGHT, MAGIC, ITEM or RUN; then the slime attacks. Winning gives the slime's gold
+// and experience.
+public class Battle : Behaviour
 {
-    void OnEnter()
+    // Start runs once, when the scene has loaded the actor: the fight begins.
+    void Start()
     {
         Fight();
     }
@@ -357,9 +397,10 @@ public class Battle : SceneScript
     static async Task Fight()
     {
         BattleRules.Begin();
-        await Say("battle.appears");
+        await Say("battle.appears");   // a line from Localization in the dialogue box; waits for A
         while (BattleRules.Over() == 0)
         {
+            // Choice shows the commands and returns the number of the one picked (0 = FIGHT).
             var command = await Choice("cmd.fight", "cmd.magic", "cmd.item", "cmd.run");
             if (command == 0)
             {
@@ -396,11 +437,12 @@ public class Battle : SceneScript
             BattleRules.Defeat();
             await Say("battle.lose");
         }
-        Scene.Load("Meadow");
+        Scene.Load("Meadow");   // back to the map, where the checkpoint put the player
     }
 }
 
 // The numbers of a battle, used by the cutscene between lines (stats from the Heroes and Enemies tables).
+// [ScriptNative] makes a static method callable from a cutscene.
 public static class BattleRules
 {
     static int enemyHp;
@@ -410,8 +452,9 @@ public static class BattleRules
     public static void Begin()
     {
         Game.battles += 1;
+        // every third battle is against the Big Slime
         enemy = Game.battles % 3 == 0 ? EnemyId.BigSlime : EnemyId.Slime;
-        enemyHp = Enemies.Get(enemy).hp;
+        enemyHp = Enemies.Get(enemy).hp;   // a row of the Enemies table
         Show();
     }
 
@@ -429,7 +472,7 @@ public static class BattleRules
     {
         enemyHp -= Heroes.Get(HeroId.Hero).atk + Random.Range(0, 3) + Heroes.Get(HeroId.Mage).atk;
         Sound.Play("hit");
-        Camera.Shake(2, 8);
+        Camera.Shake(2, 8);   // shakes the screen 2 px for 8 frames
         Show();
     }
 
@@ -449,7 +492,7 @@ public static class BattleRules
     {
         if (Game.potions == 0) return 0;
         Game.potions -= 1;
-        int power = Items.Get(ItemId.Potion).power;
+        int power = Items.Get(ItemId.Potion).power;   // a row of the Items table
         Game.heroHp = Heal(Game.heroHp, power, Heroes.Get(HeroId.Hero).hp);
         Game.mageHp = Heal(Game.mageHp, power, Heroes.Get(HeroId.Mage).hp);
         Sound.Play("heal");
@@ -478,7 +521,7 @@ public static class BattleRules
         Game.exp += Enemies.Get(enemy).exp;
         if (Game.exp >= Game.level * 20) Game.level += 1;
         Actor e = Scene.Find("Enemy");
-        if (e != null) e.visible = false;
+        if (e != null) e.visible = false;   // the beaten slime disappears
     }
 
     [ScriptNative]
@@ -489,6 +532,7 @@ public static class BattleRules
         Game.gold = Game.gold / 2;
     }
 
+    // Writes the hit points into the three HUD text labels.
     static void Show()
     {
         Actor hero = Scene.Find("HUD Hero");

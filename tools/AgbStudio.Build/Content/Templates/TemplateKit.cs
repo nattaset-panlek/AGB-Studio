@@ -98,6 +98,129 @@ public static class TemplateKit
         },
     };
 
+    /// <summary>
+    /// README.md in the project folder: what the template is, the controls, every scene with its camera, background
+    /// layers and objects (each object's components are read from the scene files, so the table always matches
+    /// what the Hierarchy shows), the scripts with the comment at their top, and things to try changing.
+    /// <paramref name="objects"/> describes every actor by name ("Scene/Name" for one scene only); an actor without
+    /// a description is an error, so a template cannot add an object and forget to explain it.
+    /// </summary>
+    public static void Readme(GameProject p, string template, string intro, IEnumerable<string> controls,
+        IReadOnlyDictionary<string, string> objects, IEnumerable<string> tryThis)
+    {
+        var md = new System.Text.StringBuilder();
+        md.AppendLine($"# {p.Settings.General.GameTitle}");
+        md.AppendLine();
+        md.AppendLine($"Made from the AGB Studio **{template}** template. {intro}");
+        md.AppendLine();
+        md.AppendLine("Open a scene in the Scene Editor: the Hierarchy shows every object with small badges for its components, and the");
+        md.AppendLine("Inspector lists them under **Components**. Double click a script section header to open its C# file.");
+        md.AppendLine();
+        md.AppendLine("## Controls");
+        md.AppendLine();
+        foreach (var c in controls) md.AppendLine("- " + c);
+        md.AppendLine();
+        md.AppendLine("## Scenes and objects");
+        var scripts = p.ScriptFiles().Select(Path.GetFileNameWithoutExtension).ToHashSet(StringComparer.Ordinal);
+        var start = p.Settings.General.StartScene;
+        foreach (var file in p.SceneFiles().OrderBy(f => GameProject.AssetName(f) == start ? 0 : 1).ThenBy(f => GameProject.Load<SceneFile>(f).MapX))
+        {
+            var scene = GameProject.Load<SceneFile>(file);
+            md.AppendLine();
+            md.AppendLine($"### {scene.Name}{(scene.Name == start ? " (start scene)" : "")}");
+            md.AppendLine();
+            md.AppendLine($"- Camera: {(scene.Camera.Follow.Length > 0 ? $"follows {scene.Camera.Follow} (dead zone {scene.Camera.DeadZoneW} x {scene.Camera.DeadZoneH} px{(scene.Camera.ClampToMap ? ", stays inside the map" : "")})" : "fixed")}.");
+            if (scene.Map.Length > 0 && File.Exists(Path.Combine(p.MapsDir, scene.Map + ".map")))
+            {
+                var map = GameProject.Load<MapFile>(Path.Combine(p.MapsDir, scene.Map + ".map"));
+                foreach (var l in map.Layers)
+                    md.AppendLine((l.Type == LayerType.CollisionOnly ? $"- {l.Name}: " : $"- BG{l.Bg} {l.Name}: ")
+                        + (l.Type switch { LayerType.Image => $"image {l.Image}.png", LayerType.Affine => $"rotating tile layer ({map.Tileset})", LayerType.CollisionOnly => "collision tiles only (not drawn)", _ => $"tiles from {map.Tileset}" })
+                        + (Math.Abs(l.ParallaxX - 1) > 0.001 ? $", scrolls at {l.ParallaxX.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)} of the camera speed" : "")
+                        + (map.Layers.IndexOf(l) == map.CollisionLayer ? ", the collision layer (solid tiles stop actors)" : "") + ".");
+            }
+            if (scene.Music.Track.Length > 0) md.AppendLine($"- Music: {scene.Music.Track}.");
+            if (scene.Menu != null) md.AppendLine($"- Menu: {string.Join(", ", scene.Menu.Items.Select(i => i.Command == MenuCommand.LoadScene ? $"{i.Text} loads {i.Scene}" : $"{i.Text} ({i.Command})"))} (Scene Settings > Menu).");
+            if (scene.Events.OnEnter.Length > 0) md.AppendLine($"- On enter: `{scene.Events.OnEnter}` (Scene Settings > Events).");
+            if (scene.Actors.Count == 0) continue;
+            md.AppendLine();
+            md.AppendLine("| Object | Components | What it does |");
+            md.AppendLine("|---|---|---|");
+            foreach (var a in scene.Actors)
+            {
+                var what = objects.TryGetValue(scene.Name + "/" + a.Name, out var w1) ? w1 : objects.TryGetValue(a.Name, out var w2) ? w2
+                    : throw new InvalidOperationException($"README of {template}: the object {a.Name} of {scene.Name} has no description.");
+                var parts = new List<string>();
+                if (a.Sprite.Length > 0) parts.Add($"Sprite {a.Sprite}" + (a.Animation.Length > 0 ? $" ({a.Animation})" : ""));
+                if (a.Kind == ActorKind.TextLabel) parts.Add($"Text label `{a.Text}`");
+                if (a.Kind == ActorKind.TriggerZone) parts.Add($"Trigger zone {a.ZoneW} x {a.ZoneH}");
+                foreach (var c in a.Components)
+                    parts.Add(scripts.Contains(c.Type) ? $"{c.Type} (script)" : Pipeline.BuiltinBehaviours.Find(c.Type) != null ? $"{c.Type} (built-in)" : c.Type);
+                if (scene.Camera.Follow == a.Name) parts.Add("Camera follows");
+                foreach (var l in scene.Links.Where(l => l.From == a.Name)) parts.Add($"Link to {l.To}");
+                var name = a.Name + (a.Hidden ? " (hidden, spawned by script)" : "");
+                md.AppendLine($"| {name} | {string.Join(", ", parts)} | {what} |");
+            }
+        }
+        md.AppendLine();
+        md.AppendLine("## Scripts");
+        md.AppendLine();
+        foreach (var file in p.ScriptFiles().OrderBy(f => f, StringComparer.Ordinal))
+        {
+            // the comment block at the top of the file, as one line
+            var head = File.ReadLines(file).Select(l => l.Trim()).SkipWhile(l => !l.StartsWith("//", StringComparison.Ordinal))
+                .TakeWhile(l => l.StartsWith("//", StringComparison.Ordinal)).Select(l => l.TrimStart('/').Trim());
+            md.AppendLine($"- `scripts/{Path.GetFileName(file)}`: {string.Join(" ", head)}");
+        }
+        md.AppendLine();
+        md.AppendLine("## Try changing");
+        md.AppendLine();
+        foreach (var t in tryThis) md.AppendLine("- " + t);
+        md.AppendLine();
+        md.AppendLine("All art, music, sounds and text of this template were generated for AGB Studio.");
+        File.WriteAllText(Path.Combine(p.Root, "README.md"), md.ToString().ReplaceLineEndings("\r\n"));
+    }
+
+    /// <summary>The scene a template is about: the first scene the title menu starts (the scene the editor opens).</summary>
+    public static string? MainScene(GameProject p)
+    {
+        var start = p.Settings.General.StartScene;
+        var scenes = p.SceneFiles().Select(GameProject.Load<SceneFile>).ToList();
+        return scenes.FirstOrDefault(s => s.Name == start)?.Menu?.Items.FirstOrDefault(i => i.Command == MenuCommand.LoadScene)?.Scene;
+    }
+
+    /// <summary>The editor opens the template's main scene (not the title screen, which has no objects to learn from);
+    /// the game still starts on the title screen.</summary>
+    public static void OpenOnMainScene(GameProject p)
+    {
+        if (MainScene(p) is { } main)
+        {
+            p.Settings.LastScene = main;
+            p.SaveSettings();
+        }
+        CenterTitle(p);
+    }
+
+    /// <summary>Centres the title label (measured with the project's default font, English text) and the menu of the
+    /// title screen on the 240 px screen.</summary>
+    static void CenterTitle(GameProject p)
+    {
+        var path = Path.Combine(p.ScenesDir, p.Settings.General.StartScene + ".scene");
+        if (!File.Exists(path)) return;
+        var scene = GameProject.Load<SceneFile>(path);
+        var fontPath = Path.Combine(p.FontsDir, p.Settings.General.DefaultFont + ".font");
+        var en = Path.Combine(p.TextDir, "strings.en.json");
+        if (scene.Menu is { } menu) menu.X = (240 - menu.Width) / 2 / 8 * 8;
+        if (scene.Actors.FirstOrDefault(a => a.Kind == ActorKind.TextLabel) is { } title && File.Exists(fontPath) && File.Exists(en)
+            && GameProject.Load<StringTable>(en).Strings.TryGetValue(title.Text, out var text))
+        {
+            var font = Fonts.FontBuilder.Build(GameProject.Load<FontFile>(fontPath), p.FontsDir);
+            var width = Fonts.TextLayout.Layout(text, font, 240).MaxWidth;
+            title.X = Math.Max(0, (240 - width) / 2);
+        }
+        GameProject.Save(path, scene);
+    }
+
     public static void Sprite(GameProject p, string name, Canvas art, SpriteMeta meta)
     {
         var path = Path.Combine(p.AssetsDir, "sprites", name + ".png");

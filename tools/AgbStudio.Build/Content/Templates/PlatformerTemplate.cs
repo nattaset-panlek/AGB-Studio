@@ -36,6 +36,8 @@ public static class PlatformerTemplate
         WriteMaps(p);
         WriteScenes(p);
         WriteScripts(p);
+        WriteReadme(p);
+        TemplateKit.OpenOnMainScene(p);
         return p;
     }
 
@@ -295,15 +297,43 @@ public static class PlatformerTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Level_01.scene"), level);
     }
 
+    // ---- README -----------------------------------------------------------------------------------------
+
+    static void WriteReadme(GameProject p) => TemplateKit.Readme(p, "Platformer",
+        "Run right through Level_01, jump over the pit, stomp the slimes, pick up the coins, raise the checkpoint and touch the goal flag.",
+        ["D-pad left / right: run", "A: jump (hold for a higher jump)", "Start: pause menu"],
+        new Dictionary<string, string>
+        {
+            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
+            ["Player"] = "The hero. Platformer Body does gravity, slopes and one-way platforms; PlayerController reads the D-pad, jumps, stomps slimes and handles lives.",
+            ["Slime"] = "Enemy. Patrol walks it and turns at ledges, Platformer Body keeps it on the ground, Slime holds its points. Land on it to stomp it; touch it from the side to lose a life.",
+            ["Slime (1)"] = "A second slime on the far hill: copy an enemy with Ctrl+D to make more.",
+            ["Coin"] = "Pickup: the Coin script adds its value to the score and removes itself.",
+            ["Coin (1)"] = "A second coin on the high platform near the end.",
+            ["Checkpoint"] = "Raises its flag on touch; after losing a life the player comes back here, and Continue starts here.",
+            ["Goal Flag"] = "Trigger zone with a scene link: touching it fades back to the title screen. Change the link in Link Settings to add a Level_02.",
+            ["HUD Score"] = "Text label pinned to the screen; PlayerController and Coin write the score into it.",
+            ["HUD Lives"] = "Text label with the lives left.",
+        },
+        [
+            "Select Player and drag the **speed** slider of PlayerController, or **Jump force** / **Gravity** of Platformer Body, then press Play.",
+            "Change `points` of a Slime or `value` of a Coin in the Inspector.",
+            "Add a slime: select Slime, press Ctrl+D and move the copy. Set Patrol **Turn at ledges** off to let it walk off edges.",
+            "Paint more ground or one-way platforms in the Tilemap Editor (double click BG1 Ground in the Hierarchy).",
+            "Set the camera dead zone in the Inspector (select Main Camera) to change how early the screen scrolls.",
+        ]);
+
     // ---- scripts ----------------------------------------------------------------------------------------
 
     static void WriteScripts(GameProject p)
     {
         TemplateKit.Script(p, "PlayerController", """
-// Runs and jumps. Coyote time: a jump still works a few frames after walking off a ledge. Jump buffer: a jump
-// pressed a few frames before landing happens on landing. Releasing A early makes a short hop.
+// Runs and jumps with the Platformer Body on the same actor, stomps slimes, loses a life in pits.
+// Coyote time: a jump still works a few frames after walking off a ledge. Jump buffer: a jump pressed a few
+// frames before landing happens on landing. Releasing A early makes a short hop.
 public class PlayerController : Behaviour
 {
+    // Public fields show in the Inspector under "PlayerController"; [Range] makes a slider.
     [Range(0.5, 3)] public fixed speed = 1.5;
     public fixed jumpPower = 3.75;
     public int coyoteFrames = 6;
@@ -314,22 +344,29 @@ public class PlayerController : Behaviour
     int invincible;
     bool jumping;
 
+    // Start runs once, when the scene has loaded the actor.
     void Start()
     {
+        // Get<T>() finds another component on this actor: the built-in Platformer Body does gravity, slopes,
+        // one-way platforms and collision with the Ground layer; this script only sets its velocity.
         body = Get<PlatformerBody>();
+        // Game.<field> is the save data of Project Settings > Save (score, lives, checkpointX, checkpointY).
         if (Game.lives == 0)
         {
             Game.lives = 3;
             Game.score = 0;
         }
-        Game.checkpointX = actor.pos.x.Floor();
+        Game.checkpointX = actor.pos.x.Floor();   // actor.pos is the position in pixels (fixed point)
         Game.checkpointY = actor.pos.y.Floor();
         UpdateHud();
     }
 
+    // Update runs every frame (60 times a second).
     void Update()
     {
+        // Input.AxisX is -1, 0 or 1 from the D-pad; multiplying by speed gives pixels per frame.
         body.vx = Input.AxisX * speed;
+        // Input.Pressed is true only on the frame the button goes down; Input.Held while it stays down.
         if (Input.Pressed(Key.A)) bufferedJump = jumpBufferFrames;
         else if (bufferedJump > 0) bufferedJump -= 1;
 
@@ -337,30 +374,32 @@ public class PlayerController : Behaviour
         bool canJump = body.OnGround || body.FramesSinceGround <= coyoteFrames;
         if (bufferedJump > 0 && canJump && !jumping)
         {
-            body.vy = -jumpPower;
+            body.vy = -jumpPower;   // negative y is up
             bufferedJump = 0;
             jumping = true;
-            Sound.Play("jump");
+            Sound.Play("jump");     // a sound effect from assets/audio/sfx
         }
         if (jumping && body.vy < -1 && !Input.Held(Key.A)) body.vy = -1;
 
         if (invincible > 0)
         {
             invincible -= 1;
-            actor.visible = invincible == 0 || (invincible & 4) == 0;
+            actor.visible = invincible == 0 || (invincible & 4) == 0;   // blink while invincible
         }
-        if (actor.pos.y > 180) LoseLife();
+        if (actor.pos.y > 180) LoseLife();   // fell into a pit (the level is 160 px high)
     }
 
+    // OnTouch runs when this actor's collider overlaps another actor's collider.
     void OnTouch(Actor other)
     {
+        // other.Is<T>() asks whether the other actor has that component.
         if (!other.Is<Slime>()) return;
         if (body.vy > 0 && actor.pos.y < other.pos.y - 4)
         {
             Slime slime = other.Get<Slime>();
             Game.score += slime.points;
             slime.Squash();
-            body.vy = -jumpPower / 2;
+            body.vy = -jumpPower / 2;   // bounce off
             UpdateHud();
         }
         else if (invincible == 0)
@@ -375,7 +414,7 @@ public class PlayerController : Behaviour
         Game.lives -= 1;
         if (Game.lives == 0)
         {
-            Scene.Load("Title");
+            Scene.Load("Title");   // game over: back to the title screen
             return;
         }
         actor.pos.x = Game.checkpointX;
@@ -388,6 +427,7 @@ public class PlayerController : Behaviour
 
     public void UpdateHud()
     {
+        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes a number into a text label.
         Actor score = Scene.Find("HUD Score");
         if (score != null) score.SetLabelNumber(Game.score, 4);
         Actor lives = Scene.Find("HUD Lives");
@@ -396,26 +436,29 @@ public class PlayerController : Behaviour
 }
 """);
         TemplateKit.Script(p, "Slime", """
-// Walks back and forth (Patrol turns at walls and ledges). The player stomps it by landing on top.
+// An enemy the player stomps by landing on top. The built-in Patrol component walks it back and forth (it turns
+// at walls and ledges) and the Platformer Body gives it gravity; this script only holds its points.
 public class Slime : Behaviour
 {
     public int points = 50;
 
+    // Called by PlayerController when the player lands on it.
     public void Squash()
     {
         Sound.Play("stomp");
-        actor.Destroy();
+        actor.Destroy();   // removes the actor from the scene (its OBJ slot is freed)
     }
 }
 """);
         TemplateKit.Script(p, "Coin", """
-// Adds to the score when the player touches it.
+// Adds to the score when the player touches it, then disappears.
 public class Coin : Behaviour
 {
     public int value = 10;
 
     void OnTouch(Actor other)
     {
+        // other.tag is the Tag field of the Inspector header (Project Settings > Tags lists them).
         if (other.tag != "Player") return;
         Game.score += value;
         Sound.Play("coin");
@@ -437,9 +480,9 @@ public class Checkpoint : Behaviour
         reached = true;
         Game.checkpointX = actor.pos.x.Floor();
         Game.checkpointY = actor.pos.y.Floor();
-        actor.PlayAnimation("raised");
+        actor.PlayAnimation("raised");   // an animation of the sprite (Sprite Editor > Animations)
         Sound.Play("checkpoint");
-        Save.Checkpoint();
+        Save.Checkpoint();               // writes the save data, so Continue resumes here
     }
 }
 """);
