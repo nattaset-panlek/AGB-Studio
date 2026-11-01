@@ -195,8 +195,10 @@ public class NewProjectTests
         Assert.Equal(reference.MusicFiles().Count(), p.MusicFiles().Count());
         Assert.Contains("PlayerController", Names(p.ScriptFiles()));
         Assert.Contains(p.SceneFiles().Select(GameProject.Load<SceneFile>).SelectMany(sc => sc.Actors), a => a.Kind == ActorKind.Player);
-        // its title screen is the start scene
-        Assert.Equal((reference.Settings.General.StartScene, reference.Settings.General.StartScene), (s.General.StartScene, s.LastScene));
+        // its title screen is the start scene; the editor opens on the level (T-D12: the objects to learn from)
+        Assert.Equal(("Title", "Level_01"), (s.General.StartScene, s.LastScene));
+        Assert.Equal((reference.Settings.General.StartScene, reference.Settings.LastScene), (s.General.StartScene, s.LastScene));
+        Assert.True(File.Exists(Path.Combine(p.Root, "README.md")));
         // Thai variable-width font (the template's own)
         var font = GameProject.Load<FontFile>(Path.Combine(p.FontsDir, "thai_vwf.font"));
         Assert.True(File.Exists(Path.Combine(p.FontsDir, font.Source)));
@@ -317,10 +319,10 @@ public class NewProjectTests
         var p = await CreateFromCard(h, "Shoot 'em up", "Star Patrol");
         IsTheTemplate(h, p, "shmup");
         Assert.Equal(["Stage_01", "Title"], Names(p.SceneFiles()));
-        Assert.Equal(["ShipController", "SpaceSlime", "Stage"], Names(p.ScriptFiles()));
+        Assert.Equal(["PowerUpMarker", "ShipController", "SpaceSlime", "Stage"], Names(p.ScriptFiles()));
         Assert.Equal(["Player", "Enemy", "Shot", "EnemyShot", "PowerUp"], p.Settings.Tags);
         Assert.Equal("Fire", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 3 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 4 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "STARPATROL", "STAR");
     }
 
@@ -332,12 +334,12 @@ public class NewProjectTests
         var p = await CreateFromCard(h, "Puzzle", "Gem Drop");
         IsTheTemplate(h, p, "puzzle");
         Assert.Equal(["Board", "Title"], Names(p.SceneFiles()));
-        Assert.Equal(["Board"], Names(p.ScriptFiles()));
+        Assert.Equal(["Board", "Scoreboard"], Names(p.ScriptFiles()));
         Assert.Equal(["gems"], Names(p.TilesetFiles()));
         Assert.Equal(["Board"], p.Settings.Tags);
         Assert.Equal(["score", "best"], p.Settings.Save.Fields.Select(f => f.Name));
         Assert.Equal("Turn", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 1 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "GEMDROP", "GEMD");
     }
 
@@ -420,8 +422,11 @@ public class NewProjectTests
         Assert.Equal(reference.Settings.Tags, p.Settings.Tags);
         Assert.Equal(reference.Settings.Save.Fields.Select(f => f.Name), p.Settings.Save.Fields.Select(f => f.Name));
         Assert.Equal(AgbStudio.Build.Content.Templates.TemplateInfo.Stats(reference), AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
-        // its title screen is the start scene and the template's own Thai font is the default font
-        Assert.Equal(("Title", "Title"), (p.Settings.General.StartScene, p.Settings.LastScene));
+        // its title screen is the start scene, the editor opens on its main scene (T-D12), the template's own Thai font
+        // is the default font and README.md explains every object
+        Assert.Equal(("Title", AgbStudio.Build.Content.Templates.TemplateKit.MainScene(reference)), (p.Settings.General.StartScene, p.Settings.LastScene));
+        Assert.Equal(File.ReadAllText(Path.Combine(reference.Root, "README.md")).Replace("Reference", "", StringComparison.Ordinal),
+            File.ReadAllText(Path.Combine(p.Root, "README.md")).Replace(p.Settings.General.GameTitle, "", StringComparison.Ordinal));
         Assert.Equal("thai_vwf", p.Settings.General.DefaultFont);
         Assert.Empty(p.GraphFiles());
         Assert.All(p.ScriptFiles(), f => Assert.Contains("class ", File.ReadAllText(f)));
