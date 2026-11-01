@@ -221,8 +221,8 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | C-brand-app-icon-light | brand/app-icon | 128x128 | 128x128 | 0.24 | 0.24 | 0,0 | 0 | 0.60 |
 | C-brand-app-icon-dark | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.20 |
 | C-brand-app-icon-indigo | brand/app-icon | 128x128 | 128x128 | 0.00 | 0.00 | 0,0 | 0 | 0.21 |
-| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 2.93 | 2.93 | 0,0 | 0 | 4.46 |
-| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 3.03 | 3.03 | 0,0 | 0 | 4.72 |
+| T-P01 | frame Scene Editor | 1440x900 | 1440x900 | 3.06 | 3.06 | 0,0 | 0 | 4.57 |
+| T-L01 | frame Scene Editor · Light | 1440x900 | 1440x900 | 3.16 | 3.16 | 0,0 | 0 | 4.84 |
 | T-O07 | frame Command Palette | 640x325 | 640x325 | 0.87 | 0.87 | 0,0 | 0 | 1.08 |
 | T-D10 | frame Keyboard Shortcuts | 760x390 | 760x390 | 1.16 | 1.16 | 0,0 | 0 | 1.28 |
 | T-D12 | frame Unsaved Changes | 460x262 | 460x262 | 2.22 | 2.22 | 0,0 | 0 | 2.42 |
@@ -271,7 +271,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 2.89 | 2.89 | 0,0 | 0 | 3.13 |
 | T-D02 | frame New Scene | 520x470 | 520x470 | 1.77 | 1.77 | 0,0 | 0 | 1.73 |
 | T-D03 | frame Scene Settings | 600x646 | 600x646 | 2.02 | 1.29 | 0,1 | 1 | 3.47 |
-| T-O01 | frame Scene Switcher | 320x356 | 320x356 | 6.81 | 6.44 | 0,-1 | 1 | 6.28 |
+| T-O01 | frame Scene Switcher | 320x356 | 320x356 | 6.81 | 6.45 | 0,-1 | 1 | 6.29 |
 | T-O02 | frame Video Mode | 380x400 | 380x400 | 1.88 | 1.88 | 0,0 | 0 | 2.12 |
 | T-O03 | frame Grid & Snap | 300x328 | 300x328 | 0.99 | 0.99 | 0,0 | 0 | 1.31 |
 | T-O04 | frame Asset Picker | 440x368 | 440x368 | 2.56 | 2.56 | 0,0 | 0 | 3.34 |
@@ -285,11 +285,11 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.54 | 2.54 | 0,0 | 0 | 2.98 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.49 | 2.49 | 0,0 | 0 | 2.89 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |
-| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 4.49 | 4.49 | 0,0 | 0 | 7.32 |
+| T-P17 | frame Logic Graph | 1440x900 | 1440x900 | 4.51 | 4.51 | 0,0 | 0 | 7.34 |
 | T-O08 | frame Add Node | 380x269 | 380x269 | 3.24 | 3.24 | 0,0 | 0 | 3.47 |
 | T-M21 | menu Node Context Menu | 264x175 | 264x175 | 2.05 | 2.05 | 0,0 | 0 | 2.22 |
 | T-P13 | frame World Map | 1440x900 | 1440x900 | 1.20 | 1.20 | 0,0 | 0 | 1.47 |

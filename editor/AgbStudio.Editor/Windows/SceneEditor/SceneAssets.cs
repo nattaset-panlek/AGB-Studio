@@ -171,7 +171,7 @@ public sealed class TextTables
     }
 
     /// <summary>The laid-out run the game shows for a key (start language, else the fallback = source language).</summary>
-    public TextRun? Run(string key)
+    public TextRun? Run(string key, string suffix = "")
     {
         if (_order.Count == 0) return null;
         foreach (var index in new[] { _language, 0 })
@@ -180,6 +180,7 @@ public sealed class TextTables
             if (!table.Strings.TryGetValue(key, out var text)) continue;
             var font = FontFor(lang);
             if (font == null) return null;
+            text += suffix;   // a label the game writes a number to: the editor shows the preview number after it
             var m = _meta.Keys.GetValueOrDefault(key);
             var layout = TextLayout.Layout(text, font, m?.BoxWidth ?? 224, _p.Settings.Localization.ThaiWrap);
             return new TextRun(text, font, layout);

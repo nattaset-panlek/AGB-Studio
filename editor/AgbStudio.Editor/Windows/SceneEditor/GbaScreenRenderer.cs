@@ -49,6 +49,10 @@ public sealed class ScreenFrame
 public static class GbaScreenRenderer
 {
     // text::BoxStyle defaults: bg 0, palette bank 15, colours {0, ink, ink2, ink3, shadow, paper, frame}
+    /// <summary>The number the editor shows after a Text Label a script writes to (HUD component field "previewNumber", e.g. the score).</summary>
+    static string LabelPreview(ActorData a) =>
+        a.Components.Select(c => c.Fields.GetValueOrDefault("previewNumber")).FirstOrDefault(v => !string.IsNullOrEmpty(v)) is { } n ? " " + n : "";
+
     static readonly ushort[] TextColors = [0, 0x0C63, 0x294A, 0x4E73, 0x6318, 0x7BDE, 0x0C63, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     const int TextBg = 0, TextBank = 15, MaxLabels = 6, MaxActors = 64, MaxSprites = 128;
 
@@ -199,7 +203,7 @@ public static class GbaScreenRenderer
                 var f = a.Animation.Length > 0 ? FrameAt(sheet, meta, a.Animation, tick) : 0;
                 if (!a.Hidden) sprites.Add((i, sheet, meta, bank < 0 ? 0 : bank, f));
             }
-            if (a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && labels.Count < MaxLabels && assets.Text.HasKey(a.Text) && assets.Text.Run(a.Text) is { } run)
+            if (a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && labels.Count < MaxLabels && assets.Text.HasKey(a.Text) && assets.Text.Run(a.Text, LabelPreview(a)) is { } run)
             {
                 if (frame.TextLayer < 0)
                 {

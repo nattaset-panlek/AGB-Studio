@@ -91,7 +91,11 @@ plays at four volumes multiplied (`audio::moduleVolume()`): the player's (Option
 scene's music Volume, `SceneDef::musicVolume`, set when the scene starts its own track, or `Music.SetVolume`), the fade
 (`Music.Fade`, fade on scene change; back to full when a module starts) and the track's MusicMeta volume.
 `game::loadScene` fades only when the scene and the track both ask for it (`audio_music` ROM test). The Options values
-live in RAM: no save data holds them, so a power cycle starts at full volume.
+are saved in an 8 B options block on the save chip, outside the slots (`save::Options`, `kOptionsBytes`: music and
+effects volume, language, button remap; Flash reserves its last 4 KB sector, SRAM and EEPROM their last 8 bytes, so
+slots never overlap it). `game::boot` applies it (`loadOptions`) and the Options screen writes it when it closes after a
+change; a game with no save type keeps the values in RAM only. `SaveLayout.OptionsBytes` and the Project Settings Save
+data meter count the block.
 
 ## Frame order (blueprint 04)
 

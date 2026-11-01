@@ -22,7 +22,9 @@ edges for you, and see how much video memory (VRAM) each layer uses.
 - **Layer toggles BG0-BG3 and OBJ**: show or hide each background layer and the actors. A BG with no layer stays off.
 - **Collision view**: shows the collision of every tile on top of the map.
 - **Play, video mode chip, undo / redo**: Play runs the game; the chip ("GBA · Mode 0 · 240×160") opens Video Mode.
-- **Tileset panel (left)**: the **Set** dropdown picks the tileset through the Asset Picker. Click a tile to make it
+- **Tileset panel (left)**: the **Set** dropdown picks the tileset through the Asset Picker. The **Primary** field
+  below it names the shared **Primary tileset** that this tileset extends ("none" or another tileset); the choice is
+  kept in the tileset's meta file and can be undone. Click a tile to make it
   the brush; drag over tiles to pick a block as a stamp. The "..." button opens the asset menu for the tileset.
 - **Tile section**: for the selected tile, pick its collision (Solid, One-way, Ladder, Hazard, Water, None), give it a
   **Tag**, an **Animation** (none, 2, 3 or 4 frames) and the **Auto-tile** set it belongs to.

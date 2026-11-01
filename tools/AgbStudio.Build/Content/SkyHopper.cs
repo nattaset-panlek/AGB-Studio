@@ -377,7 +377,7 @@ public static class SkyHopper
                 new ActorData { Name = "Goal Flag", Kind = ActorKind.TriggerZone, Sprite = "flag", X = 224, Y = 288, Tag = "Goal", ZoneW = 16, ZoneH = 48 },
                 new ActorData { Name = "Exit → Cave_01", Kind = ActorKind.TriggerZone, X = 440, Y = 288, ZoneW = 16, ZoneH = 32 },
                 // the HUD of art-scene-day: SCORE with the score (HUD.cs), and three hearts below that stay on the screen
-                new ActorData { Name = "HUD · Score", Kind = ActorKind.TextLabel, X = 36, Y = 4, Text = "hud.score", Group = "HUD", Components = { new ComponentData { Type = "HUD" } } },
+                new ActorData { Name = "HUD · Score", Kind = ActorKind.TextLabel, X = 36, Y = 4, Text = "hud.score", Group = "HUD", Components = { new ComponentData { Type = "HUD", Fields = { ["previewNumber"] = "0120" } } } },
             },
             Links =
             {
@@ -732,6 +732,7 @@ public class HUD : Behaviour
     public bool pinToScreen = false;   // hearts: stay at (screenX, screenY) on the screen while the camera moves
     public int screenX = 0;
     public int screenY = 0;
+    public string previewNumber = "";   // the editor shows it after the label text (the game writes the real score)
     int lastScore = -1;
 
     void Update()
