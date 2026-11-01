@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.53 | 2.53 | 0,0 | 0 | 2.96 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.54 | 2.54 | 0,0 | 0 | 2.98 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.22 | 1.22 | 0,0 | 0 | 1.41 |
