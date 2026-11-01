@@ -217,10 +217,13 @@ public sealed class AppSession : IDisposable
 
     /// <summary>
     /// One left click at the control, through the window (or the menu popup) it is shown in. Successive clicks land
-    /// 12 px apart, so two single clicks never count as a double-click.
+    /// 12 px apart, so two single clicks never count as a double-click. A control below the fold of a scrolling panel
+    /// (the Inspector's GBA Budget under a long Components list) is scrolled into view first, as a user would.
     /// </summary>
     public void Click(Control c)
     {
+        c.BringIntoView();
+        Pump();
         _alt = !_alt;
         var top = TopLevel.GetTopLevel(c) ?? throw new Xunit.Sdk.XunitException($"{c.Name ?? c.GetType().Name} is not shown");
         var p = c.TranslatePoint(new Point(c.Bounds.Width / 2 + Math.Min(6, c.Bounds.Width / 2 - 1) * (_alt ? 1 : -1), c.Bounds.Height / 2), top)!.Value;
