@@ -73,6 +73,8 @@ public sealed class PlayModePage : DockPanel
         ToolTip.SetTip(PauseButton, new TipContent("Pause"));
         ToolTip.SetTip(StepButton, new TipContent("Frame step", "F10"));
         SpeedChip.Click += (_, _) => _ = s.Windows.Open("T-M18", anchor: SpeedChip, source: "SpeedChip");
+        // the frame number changes every frame: a fixed width with tabular digits keeps the toolbar still
+        FrameCounter.Fix(FrameChip, 128);
         var left = UI.Row(8, ToolGroup(tools), HitboxesChip, CollisionChip);
         var center = UI.Row(4, StopButton, PauseButton, StepButton, SimulatingChip);
         var right = UI.Row(8, FrameChip, SpeedChip);

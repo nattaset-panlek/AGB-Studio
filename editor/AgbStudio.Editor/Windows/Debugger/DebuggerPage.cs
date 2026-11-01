@@ -22,7 +22,7 @@ public enum DebuggerView { VramTiles, OamSprites, Palettes, Memory, Profiler, Br
 [EditorWindow("T-P19")]
 [EditorWindow("T-P23")]
 [EditorWindow("T-P24")]
-public sealed class DebuggerPage : DockPanel
+public sealed class DebuggerPage : DockPanel, IPageBreadcrumb
 {
     readonly EditorServices _s;
     readonly DebuggerModel _m;
@@ -46,6 +46,8 @@ public sealed class DebuggerPage : DockPanel
     public IconButton StepLineButton { get; } = new() { Glyph = "step", Name = "StepLine" };
     public IconButton RestartButton { get; } = new() { Glyph = "refresh", Name = "Restart" };
     public Chip PausedChip { get; } = new() { Glyph = "pause", Style = ChipStyle.Warning, Name = "PausedChip" };
+    public PlayControl PauseButton { get; } = new() { Kind = PlayKind.Pause, Name = "PauseButton" };
+    public string Breadcrumb => "Debugger";
     public Chip ModeChip { get; } = new() { Glyph = "chip", Name = "VideoModeChip" };
     public StatusItem RunState { get; } = new() { IsDot = true, Name = "Status_RunState" };
     public StatusItem Location { get; } = new() { Glyph = "code", Name = "Status_Location" };
@@ -83,7 +85,7 @@ public sealed class DebuggerPage : DockPanel
         ToolTip.SetTip(RestartButton, new TipContent("Restart"));
         PausedChip.Click += (_, _) => _m.Resume();
         var stop = new PlayControl { Kind = PlayKind.Stop, Command = s.Commands.Get("play.stop"), Name = "StopButton" };
-        var pause = new PlayControl { Kind = PlayKind.Pause, Name = "PauseButton" };
+        var pause = PauseButton;
         pause.Click += (_, _) => { if (_m.IsPaused) _m.Resume(); else _m.Play.SetPaused(true); };
         var step = new PlayControl { Kind = PlayKind.Step, Command = s.Commands.Get("play.frameStep"), Name = "StepButton" };
         var simulating = new Chip { Content = "Simulating · mGBA", Glyph = "rec", Style = ChipStyle.Danger, Name = "SimulatingChip" };
@@ -92,7 +94,11 @@ public sealed class DebuggerPage : DockPanel
         var redo = new IconButton { Glyph = "redo", Command = s.Commands.Get("edit.redo"), Name = "RedoButton" };
         var bar = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,*,Auto"), VerticalAlignment = VerticalAlignment.Center };
         void At(Control c, int col) { Grid.SetColumn(c, col); c.VerticalAlignment = VerticalAlignment.Center; bar.Children.Add(c); }
-        At(UI.Row(8, ToolGroup(ArmButton, StepLineButton, RestartButton), PausedChip), 0);
+        // "Paused at frame N" keeps one width (tabular digits, a slot that stays when the chip hides), so the Stop / Pause /
+        // Step group in the middle of the toolbar no longer jitters while the frame number changes
+        FrameCounter.Fix(PausedChip, 184);
+        var pausedSlot = new Panel { Width = 184, Children = { PausedChip }, Name = "PausedSlot" };
+        At(UI.Row(8, ToolGroup(ArmButton, StepLineButton, RestartButton), pausedSlot), 0);
         At(UI.Row(4, stop, pause, step, simulating), 2);
         At(UI.Row(8, ModeChip, ToolGroup(undo, redo)), 4);
         var toolbar = UI.Frame(bar, "bg/panel", "border/default", new Thickness(0, 0, 0, 1), new Thickness(10, 0)).Named("Toolbar");
@@ -130,7 +136,13 @@ public sealed class DebuggerPage : DockPanel
         body.Children.Add(leftPanel);
 
         var center = new DockPanel();
+        // a Scene tab before Game and Debugger: without a running game the only tab (Game) started a build to get back
         var tabs = UI.Row(0,
+            DocTabOf("Scene", "map", false, () =>
+            {
+                if (s.Documents.Open.FirstOrDefault(Services.EditorDocument.IsSceneDocument) is { } scene) s.Documents.Active = scene;
+                _ = s.Windows.Open("T-P01", source: "DebuggerSceneTab");
+            }),
             DocTabOf("Game", "pad", false, () => _ = s.Windows.Open("T-P02", source: "DebuggerGameTab")),
             DocTabOf("Debugger", "bug", true, null));
         var tabRow = UI.Frame(tabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
@@ -222,6 +234,8 @@ public sealed class DebuggerPage : DockPanel
         var play = _m.Play;
         ArmButton.IsActive = _m.Armed;
         PausedChip.IsVisible = _m.IsPaused;
+        // Pause acts on a running game only, as on every other page
+        PauseButton.IsEnabled = play.Session != null;
         PausedChip.Content = "Paused at frame " + (_m.AtBreakpoint ? _m.PausedFrame : play.Frame).ToString(CultureInfo.InvariantCulture);
         if (play.Core is { } core)
         {
@@ -252,8 +266,6 @@ public sealed class DebuggerPage : DockPanel
     {
         base.OnAttachedToVisualTree(e);
         _m.Updated += Refresh;
-        _s.Documents.Changed += ShowTitle;
-        ShowTitle();
         Refresh();
     }
 
@@ -261,18 +273,7 @@ public sealed class DebuggerPage : DockPanel
     {
         base.OnDetachedFromVisualTree(e);
         _m.Updated -= Refresh;
-        _s.Documents.Changed -= ShowTitle;
-        // the breadcrumb goes back to the active document, as the shell shows it
-        if (e.Root is MainWindow w) w.TitleBar.Document = _s.Documents.Active is { } d ? (d.Path is { } p ? System.IO.Path.GetFileName(p) : d.Name) : null;
     }
-
-    /// <summary>Breadcrumb "Sky Hopper / Debugger" while the Debugger is shown.</summary>
-    void ShowTitle()
-    {
-        if (TopLevel.GetTopLevel(this) is MainWindow w) Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (IsAttachedToVisualTree()) w.TitleBar.Document = "Debugger"; });
-    }
-
-    bool IsAttachedToVisualTree() => TopLevel.GetTopLevel(this) != null;
 
     // ---- commands -----------------------------------------------------------------------------------
 

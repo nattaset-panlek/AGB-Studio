@@ -301,13 +301,18 @@ public sealed class PlayController : IDisposable
         _quietHandover = true;
     }
 
-    /// <summary>Stop: saves the save file, unloads the ROM and returns to the Scene Editor (T-C11).</summary>
+    /// <summary>The pages that show the running game: Play Mode and the Debugger views.</summary>
+    public static bool IsPlayPage(string? id) => id is "T-P02" or "T-P19" or "T-P23" or "T-P24";
+
+    /// <summary>Stop: saves the save file, unloads the ROM and returns to the Scene Editor (T-C11) from Play Mode or the
+    /// Debugger. Stopped from another page (the Command Palette), the page stays: Stop never pulls the user off their work.</summary>
     public void Stop()
     {
         _starts++;
         StopSession(save: true);
         Changed?.Invoke();
-        _ = _s.Windows.Open("T-P01", source: "PlayStop");
+        var page = _s.Windows.CurrentPage;
+        if (page is null || IsPlayPage(page)) _ = _s.Windows.Open("T-P01", source: "PlayStop");
     }
 
     void StopSession(bool save)
@@ -394,7 +399,15 @@ public sealed class PlayController : IDisposable
             var now = _clock.Elapsed;
             var dt = now - _lastTick;
             _lastTick = now;
-            Tick(dt);
+            try { Tick(dt); }
+            catch
+            {
+                // one failing frame must not raise the crash notice 120 times a second: the game stops, the crash
+                // guard logs the error once
+                StopTimer();
+                Console.Add(ConsoleLevel.Error, "The game stopped after an editor error (see the crash log). Press Play to start it again.");
+                throw;
+            }
         });
         _timer.Start();
     }
