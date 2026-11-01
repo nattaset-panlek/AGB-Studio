@@ -248,6 +248,8 @@ public sealed class LauncherService
     public void CompleteOpen(string projectPath, string? scene)
     {
         var docs = Services.Documents;
+        // the game of the project being closed stops (it kept running, and Pause / Step acted on it, in the new project)
+        if (Services.GetService(typeof(Play.PlayController)) is Play.PlayController play && play.Session != null) play.Stop();
         foreach (var d in docs.Open.ToList()) docs.Close(d);
         Services.Undo.Clear();
         var p = Services.Project.Open(projectPath);

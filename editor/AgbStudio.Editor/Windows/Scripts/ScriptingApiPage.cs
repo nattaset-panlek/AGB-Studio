@@ -15,7 +15,7 @@ namespace AgbStudio.Editor.Windows.Scripts;
 /// Args: a page title, type or member ("Input", "Input.Pressed").
 /// </summary>
 [EditorWindow("T-P18")]
-public sealed class ScriptingApiPage : DockPanel
+public sealed class ScriptingApiPage : DockPanel, IPageBreadcrumb
 {
     readonly EditorServices _s;
     readonly string? _projectApi;
@@ -24,6 +24,9 @@ public sealed class ScriptingApiPage : DockPanel
     readonly StackPanel _onThisPage = new() { Spacing = 1, Margin = new Thickness(7, 4, 7, 6), Name = "OnThisPage" };
     readonly ScrollViewer _scroll;
     readonly Dictionary<string, Control> _anchors = [];
+
+    /// <summary>The breadcrumb shows "Scripting API" (the page is not a document).</summary>
+    public string Breadcrumb => "Scripting API";
 
     public SearchField Search { get; } = new() { Watermark = "Search API…", Name = "ApiSearch" };
     public ApiPage Page { get; private set; } = ScriptingApi.Pages.First(p => p.Title == "Input");
@@ -62,7 +65,13 @@ public sealed class ScriptingApiPage : DockPanel
         left.Children.Add(new ScrollViewer { Content = _tree });
 
         _scroll = new ScrollViewer { Content = _content, Name = "ApiScroll" };
-        var center = UI.Frame(_scroll, "bg/base");
+        // Doc Tabs over the page, as on every editor page: the open documents (back to the scene or the script that opened
+        // the reference) and "Scripting API" itself. Without them the page had no way back but the title bar menus.
+        var tabRow = Tilemap.PageChrome.DocTabs(s, "Scripting API", "book");
+        var centerDock = new DockPanel();
+        PageChrome.DockTo(centerDock, tabRow, Dock.Top);
+        centerDock.Children.Add(_scroll);
+        var center = UI.Frame(centerDock, "bg/base");
 
         var right = new DockPanel();
         PageChrome.DockTo(right, new PanelHeader { Title = "On this page", Glyph = "nodes", Name = "OnThisPageHeader" }, Dock.Top);
@@ -78,8 +87,6 @@ public sealed class ScriptingApiPage : DockPanel
         Children.Add(body);
 
         Search.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) RebuildTree(); };
-        // the title bar shows "Scripting API"
-        AttachedToVisualTree += (_, _) => _s.Documents.Active = new AgbStudio.Editor.Services.EditorDocument { Name = "Scripting API", Glyph = "book" };
         Show(target is null ? Page : ScriptingApi.PageFor(target), target is { } t && t.Contains('.') ? t[(t.IndexOf('.') + 1)..] : null);
     }
 

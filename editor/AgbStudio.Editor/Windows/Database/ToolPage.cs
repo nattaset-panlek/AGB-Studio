@@ -82,6 +82,9 @@ public abstract class ToolPage : DockPanel
         Children.Add(body);
 
         AttachedToVisualTree += (_, _) => OnShown();
+        // the Scene tab is there before the page has a document of its own (Dialogue Editor without a .dlg): the tab row
+        // was empty, so the page had no way back
+        RebuildTabs();
     }
 
     /// <summary>The page's document (its Doc Tab, Save target and title bar name).</summary>

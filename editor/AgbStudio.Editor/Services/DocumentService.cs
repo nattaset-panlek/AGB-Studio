@@ -9,7 +9,15 @@ public sealed class EditorDocument : INotifyPropertyChanged
 {
     bool _dirty;
 
+    /// <summary>The name of the Play Mode document ("Game" Doc Tab).</summary>
+    public const string GameName = "Game";
+
     public required string Name { get; init; }
+    /// <summary>The Game tab: Play Mode, not a file.</summary>
+    public bool IsGame => Name == GameName;
+    /// <summary>The Scene Editor's document (the "Scene" tab, or any .scene file).</summary>
+    public static bool IsSceneDocument(EditorDocument? d) =>
+        d != null && (d.Name == "Scene" || d.Path?.EndsWith(".scene", StringComparison.OrdinalIgnoreCase) == true);
     public string Glyph { get; init; } = "map";
     public string? Path { get; init; }
     /// <summary>Writes the document; set by the editor that owns it (Phase 11 windows).</summary>
@@ -42,7 +50,9 @@ public sealed class DocumentService
     {
         Open.Add(doc);
         doc.PropertyChanged += (_, _) => Changed?.Invoke();
-        if (activate || Active is null) Active = doc;
+        // the Game tab only becomes active by showing Play Mode: a project opened without a scene used to make it the
+        // active document, so every page showed "Game" selected
+        if (activate || (Active is null && !doc.IsGame)) Active = doc;
         Changed?.Invoke();
         return doc;
     }

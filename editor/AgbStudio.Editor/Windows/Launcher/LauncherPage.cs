@@ -106,8 +106,20 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         Dispatcher.UIThread.Post(() => { _refreshQueued = false; Fill(); });
     }
 
+    readonly AgbButton _back = new() { Glyph = "undo", Kind = ButtonKind.Ghost, Name = "LauncherBack", IsVisible = false };
+
+    /// <summary>"Back to Sky Hopper": the page shown before the Launcher (the Scene Editor when there was none).</summary>
+    public void GoBackToProject()
+    {
+        if (_s.Project.Current is null) return;
+        var previous = _s.Windows.PreviousPage;
+        _ = _s.Windows.Open(previous is null or "T-P12" or "T-P20" or "T-P21" ? "T-P01" : previous, source: "LauncherBack");
+    }
+
     void Fill()
     {
+        _back.IsVisible = _s.Project.Current != null;
+        _back.Content = _s.Project.Current != null ? "Back to " + _s.Project.Name : null;
         _status.Text = _launcher.StatusLine();
         switch (Tab)
         {
@@ -125,7 +137,10 @@ public sealed class LauncherPage : DockPanel, IShortcutScope
         open.Click += async (_, _) => await OpenFolderAsync();
         var create = new AgbButton { Content = "New Project", Glyph = "plus", Kind = ButtonKind.Primary, Name = "LauncherNewProject" };
         create.Click += (_, _) => _ = _s.Windows.Open("T-D01", source: "LauncherNewProject");
-        var buttons = UI.Row(12, open, create);
+        // with a project open the Launcher (File › Open Project…, Help › Getting Started) hides the title bar: without this
+        // button the only way back was opening the same project again
+        _back.Click += (_, _) => GoBackToProject();
+        var buttons = UI.Row(12, _back, open, create);
         buttons.VerticalAlignment = VerticalAlignment.Center;
         var dock = new DockPanel();
         SetDock(buttons, Dock.Right);

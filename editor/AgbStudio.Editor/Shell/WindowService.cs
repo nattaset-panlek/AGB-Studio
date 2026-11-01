@@ -7,6 +7,15 @@ using Avalonia.Media;
 
 namespace AgbStudio.Editor.Shell;
 
+/// <summary>
+/// A page that is not a document (Debugger, World Map, Scripting API): the title bar breadcrumb shows its name while it is
+/// shown, instead of the active document, so pages no longer invent documents that are not open.
+/// </summary>
+public interface IPageBreadcrumb
+{
+    string Breadcrumb { get; }
+}
+
 /// <summary>What the main window offers to <see cref="WindowService"/>.</summary>
 public interface IShellHost
 {
@@ -35,6 +44,17 @@ public sealed class WindowService : IWindowRouter
     /// <summary>Every request, in order: window id and the command or caller that asked (tests, E2E).</summary>
     public List<(string Window, string? Source)> Requests { get; } = [];
     public event Action<string>? Opened;
+
+    /// <summary>The page shown before the current one (the Launcher's "Back to project", Back from Scripting API).</summary>
+    public string? PreviousPage { get; private set; }
+    /// <summary>The page shown now (set when a page or panel replaces the workspace).</summary>
+    public string? CurrentPage { get; private set; }
+
+    void Track(string id)
+    {
+        if (CurrentPage != null && CurrentPage != id) PreviousPage = CurrentPage;
+        CurrentPage = id;
+    }
 
     public IEnumerable<string> RegisteredIds => _windows.Keys.Concat(_menus.Keys);
     public bool IsRegistered(string id) => _windows.ContainsKey(id) || _menus.ContainsKey(id);
@@ -127,9 +147,11 @@ public sealed class WindowService : IWindowRouter
         {
             case WindowKind.Page:
                 if (!_pages.TryGetValue(id, out var page) || args != null) _pages[id] = page = reg.Factory(ctx);
+                Track(id);
                 Host.ShowPage(id, page);
                 return null;
             case WindowKind.Panel:
+                Track(id);
                 Host.ShowPage(id, reg.Factory(ctx));
                 return null;
             default:

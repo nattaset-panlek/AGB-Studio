@@ -70,7 +70,9 @@ public static class PageChrome
         UI.Frame(UI.Row(2, items.ToArray()), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);
 
     /// <summary>Document tabs (34 px) of the open documents; clicking one opens its editor.</summary>
-    public static Border DocTabs(EditorServices s)
+    /// <param name="page">For a page that is not a document (Scripting API, World Map): its own tab, selected, after the
+    /// documents, none of which is then shown selected. These pages had no tabs, so no way back but the title bar.</param>
+    public static Border DocTabs(EditorServices s, string? page = null, string pageGlyph = "book")
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Stretch };
         void Rebuild()
@@ -78,11 +80,12 @@ public static class PageChrome
             row.Children.Clear();
             foreach (var d in s.Documents.Open)
             {
-                var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = d == s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
+                var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = page is null && d == s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
                 var doc = d;
                 tab.Activated += (_, _) => Activate(s, doc);
                 row.Children.Add(tab);
             }
+            if (page != null) row.Children.Add(new DocTab { Label = page, Glyph = pageGlyph, IsSelected = true, Height = 33, Name = "Doc_" + page.Replace(" ", "") });
         }
         Rebuild();
         var frame = UI.Frame(row, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
@@ -101,14 +104,35 @@ public static class PageChrome
         if (n.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) return "T-P04";
         if (n.EndsWith(".font", StringComparison.OrdinalIgnoreCase)) return "T-P09";
         if (n.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return "T-P08";
+        // the other editors' documents: a tab of theirs used to make the document active without showing its page
+        if (n.EndsWith(".db", StringComparison.OrdinalIgnoreCase)) return "T-P07";
+        if (n.EndsWith(".dlg", StringComparison.OrdinalIgnoreCase)) return "T-P16";
+        if (n.EndsWith(".sfx", StringComparison.OrdinalIgnoreCase)) return "T-P25";
+        if (n.EndsWith(".xm", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".mod", StringComparison.OrdinalIgnoreCase)
+            || n.EndsWith(".s3m", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".it", StringComparison.OrdinalIgnoreCase)) return "T-P15";
+        if (d.Name == Palette.PaletteManagerPage.DocumentName) return "T-P10";
+        if (d.Path is null && d.Glyph == "nodes") return "T-P17";
         return null;
     }
 
-    static void Activate(EditorServices s, EditorDocument d)
+    /// <summary>What a document's window is opened with: nothing for the pages that keep one instance (the Scene Editor,
+    /// Database, Palette Manager), the file path for the audio and dialogue pages, else the document.</summary>
+    static object? ArgsFor(string window, EditorDocument d) => window switch
     {
-        if (s.Documents.Active == d) return;
+        "T-P01" or "T-P07" or "T-P10" => null,
+        "T-P15" or "T-P16" or "T-P25" => d.Path,
+        _ => d,
+    };
+
+    /// <summary>Shows a document's window. The Scene Editor is reopened without an argument: an argument rebuilt the page
+    /// and lost its tool, bottom panel tab and selection. A tab that is already active but whose page is not shown (the
+    /// Scene tab on a page without its own document) still goes there instead of doing nothing.</summary>
+    public static void Activate(EditorServices s, EditorDocument d)
+    {
+        var w = WindowFor(d);
+        if (s.Documents.Active == d && (w is null || s.Windows.CurrentPage == w)) return;
         s.Documents.Active = d;
-        if (WindowFor(d) is { } w) _ = s.Windows.Open(w, d, source: "Doc_" + d.Name);
+        if (w != null) _ = s.Windows.Open(w, ArgsFor(w, d), source: "Doc_" + d.Name);
     }
 
     /// <summary>A side panel (Hierarchy / Inspector width) with a Panel Header.</summary>

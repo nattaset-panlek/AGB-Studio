@@ -191,6 +191,26 @@ public class BuildRomTests
         Assert.Equal("libtonc, maxmod", File.ReadAllText(Path.Combine(fx.Folder, "out", "THIRD_PARTY.txt")));
         Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Exported export.gba");
     }
+
+    [AvaloniaFact]
+    public void Export_IntoTheBuildFolder_KeepsTheNotices_InsteadOfCopyingThemOntoThemselves()
+    {
+        // owner report: Export ROM's default folder is build/, and copying build/THIRD_PARTY.txt onto itself failed with
+        // "The process cannot access the file ... because it is being used by another process"
+        using var fx = new Fixture();
+        var p = GroupFixture.SkyHopper(fx);
+        GroupFixture.WriteReport(p, 300);
+        var rom = Path.Combine(p.BuildDir, "sky_hopper.gba");
+        var notices = Path.Combine(p.BuildDir, "THIRD_PARTY.txt");
+        File.WriteAllText(notices, "libtonc, maxmod");
+        var dest = Path.Combine(p.BuildDir, "test.gba");
+        var d = new BuildRomDialog(fx.Services, new BuildRequest(BuildConfiguration.Release, dest, false), start: false);
+        d.Finish(new BuildResult { Success = true, RomPath = rom });
+        Assert.DoesNotContain(fx.Services.Toasts.Visible, t => t.Status == ToastStatus.Error);
+        Assert.Contains(fx.Services.Toasts.Visible, t => t.Text == "Exported test.gba");
+        Assert.Equal(new FileInfo(rom).Length, new FileInfo(dest).Length);
+        Assert.Equal("libtonc, maxmod", File.ReadAllText(notices));
+    }
 }
 
 /// <summary>Build Report (P11.58): the real report.json and history, header fields, Export actions, Build again.</summary>
