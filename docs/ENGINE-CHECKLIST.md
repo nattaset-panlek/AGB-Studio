@@ -214,7 +214,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P02.png (hitboxes on hearts and flag gone), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P03 Tilemap Editor** · 1440 x 900 · from: #16 Tab Forest_01.map, Scene › Background Layers…, Create › Tileset / Tilemap
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:TilemapE2ETests.OpensFromTheMapTabBackgroundLayersAndCreateMenu, test:SceneDialogTests.SetAsStartScene_AndBackgroundLayers, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:TilemapE2ETests.TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView, test:TilemapE2ETests.LayersTable_RowsVisibilityLockSelection_AddLayerMenu, test:TilemapE2ETests.MapPanel_SizeBgSizeColoursWrap_AndBudget, test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, doc:docs/user/windows/T-P03-tilemap-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P03.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P04 Script Editor** · 1440 x 900 · from: #17 Tab PlayerController.cs, #31 Script component, Create › C# Script, Actor Context Menu › Edit Script, Component Menu › Edit Script
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ScriptEditorTests.OpensFromTheDocTabAndListsTheScripts, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentMenu_EveryItem, test:ScriptEditorTests.LineNumbersHighlightingAndBreadcrumb, test:ScriptEditorTests.AutocompleteListsApiMembersAndInsertsTheChoice, test:ScriptEditorTests.AnalyzerUnderlineAndDiagnosticPopupQuickFix, test:ScriptEditorTests.SidePanelAttachedToCompilesToExposedFieldsOutlineAndApi, test:ScriptEditorTests.BottomPanelProblemsTerminalOutputAndStatusLine, test:ScriptEditorSettingsTests.CodeFontSizeFontAndTheme_ApplyToTheCodeEditor, test:ScriptEditorSettingsTests.AnalyzerChip_OpensProjectSettingsOnScripting, test:ScriptToolsTests.NewScript_CreatesFromTemplateAttachesAndOpens, doc:docs/user/windows/T-P04-script-editor.md, doc:docs/evidence/prototype-links.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P04.png (float colour fixed), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -223,7 +223,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P05.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 - **T-P06 Animation panel** · 860 x 250 · from: #22 Animation tab
   - [x] implemented — evidence: test:BottomPanelTests.Animation_ListFramesPlayStepAndOnionSkin, test:BottomPanelTests.Animation_SpeedAndFrameOrder_SavedToTheSpriteMetaWithUndo, doc:docs/user/windows/T-P06-animation-panel.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P06.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P07 Database** · 1440 x 900 · from: #23 Database tab, Tools › Database, Create › Data Table
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:DatabaseWindowTests.P11_39_OpensFromDatabaseTabToolsMenuAndCreateDataTable, test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, doc:docs/user/windows/T-P07-database.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P07.png (table, price, header match; rest in rows 1455 1487 1491), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -232,10 +232,10 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P08.png (list order and frame strip match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P09 Font Manager** · 1440 x 900 · from: #26 Font asset, Tools › Font Manager, Create › Font
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BottomPanelTests.Assets_DoubleClickOpensTheRightEditor, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:MenuActionTests.Create_TilesetTilemapMakesANewMap_FontOpensNewFont, test:FontE2ETests.FontManager_ListSetsGlyphsDetailPreviewStats, test:FontE2ETests.FontManager_EditSettingsSetsAndPixels_SaveUndo, doc:docs/user/windows/T-P09-font-manager.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P09.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P10 Palette Manager** · 1440 x 900 · from: #30 Palette, Assets › Optimize Palettes…, Tools › Palette Manager, Create › Palette, Sprite Editor › Palette slots
   - [x] implemented — evidence: test:InspectorTests.Header_TransformAndSpriteOfThePlayer, test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:PaletteManagerE2ETests.CreatePalette_AndBanksPlus, test:SpriteEditorE2ETests.P11_23_PalettePanel_RgbHex15BitSlotsAndSharing, test:PaletteManagerE2ETests.P11_33_BanksUsedByListsAndColourEditor, test:PaletteManagerE2ETests.P11_34_ToolsMergeSortLockAndOptimize, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, doc:docs/user/windows/T-P10-palette-manager.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P10.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P11 Build Report** · 1440 x 900 · from: #34 Build status, Build › Build Report, Budget Details › Open Build Report
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:BuildReportTests.MenuCommands_OpenTheBuildWindows, test:PopoverAndMenuTests.BudgetDetails_LiveNumbersHintAndBuildReport, test:BuildReportTests.Report_ShowsSizeTimesWarningsVramBreakdownAssetsAndHistory, test:BuildReportTests.HeaderFields_EditProjectSettings_AndExportActionsOpenTheirWindows, test:BudgetAndHistoryTests.P13_08_BuildReportHistory_AcrossBuilds_IncludingFailures, doc:docs/user/windows/T-P11-build-report.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: test:BuildTests, review:docs/evidence/review-final-2.md (2026-10-31)
@@ -244,19 +244,19 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P12.png (Top-down card and thumbnails match), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P13 World Map** · 1440 x 900 · from: Scene › World Map
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:WorldMapTests.CtrlM_ShowsScenesLinksStartSceneAndInspector, test:WorldMapTests.DragCardEditInspectorStartSceneZoomAndUndo, test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, test:WorldMapTests.SceneContextMenu_OpenRenameDuplicateSetStartDelete, doc:docs/user/windows/T-P13-world-map.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P13.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P14 Localization** · 1440 x 900 · from: Tools › Localization
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:LocalizationWindowTests.P11_41_LanguagesWithProgressGroupsAndStatus, test:LocalizationWindowTests.P11_41_SearchGroupsAndMissingOnly, test:LocalizationWindowTests.P11_41_StringPanelAndGbaPreviewDrawLikeTheRom, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:LocalizationWindowTests.P11_41_FitCheckSaysHowManyLinesTheBoxNeeds, test:LocalizationWindowTests.P11_42_ExportCsvWritesEveryKeyAndLanguage, doc:docs/user/windows/T-P14-localization.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P14.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P15 Audio** · 1440 x 900 · from: Tools › Audio, Create › Sound Effect, Create › Music
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:AudioPageTests.ToolsAudio_ListsTheProjectsMusicAndSoundsWithLengths, test:AudioPageTests.TrackInfo_ComesFromTheModuleAndMeta, test:AudioPageTests.Tracker_ShowsThePatternAndFollowsSeek, test:AudioPageTests.Play_RendersTheModuleToPcmAndFollowsThePlayhead, test:AudioPageTests.Inspector_EditsTheMetaUndoAndSave, test:AudioPageTests.TrackerTools_SelectPencilEraser_WriteTheModule, test:AudioPageTests.ChannelsMixerBudget_AndPreviewSfx, doc:docs/user/windows/T-P15-audio.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P15.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P16 Dialogue Editor** · 1440 x 900 · from: Tools › Dialogue Editor, Create › Dialogue
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:DialogueWindowTests.P11_46_NewConversationFromCreateMenuAndUndo, test:DialogueWindowTests.P11_46_ConversationsLinesChoicesSpeakersAndLanguageToggle, test:DialogueWindowTests.P11_46_LineInspectorAndGbaPreview, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, doc:docs/user/windows/T-P16-dialogue-editor.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P16.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P17 Logic Graph** · 1440 x 900 · from: Tools › Logic Graph, Create › Logic Graph
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P17.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P18 Scripting API** · 1440 x 900 · from: Help › Scripting API, Script Editor › Open Scripting API
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P18.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -277,7 +277,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D03.png, report:docs/evidence/shot-report.md (2.02 %, offset 1 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-D04 Import Asset** · 900 x 460 · from: File › Import Asset…, Assets › Import…, Sprite Editor › Drop zone, Palette Manager › Import .pal / .gpl, Audio › Music +
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, test:SpriteEditorE2ETests.P11_24_Import_DropZoneAutoReducesAndSplitsSheet, test:PaletteManagerE2ETests.P11_35_ImportPalGplAndExport, test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, test:ImportDialogTests.FileImportAsset_ListsFilesShowsOptionsAndImports, test:AssetImporterTests.Detects_EachTypeWithItsOptionsAndProblems, test:AssetImporterTests.Import_ConvertsIntoTheProjectFolders, test:AsepriteImportTests.Aseprite_IsASpriteWithItsFrames_AndImportsForTheBuild, doc:docs/user/windows/T-D04-import-asset.md, doc:docs/evidence/editor-gaps.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D04.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-D05 Export ROM** · 560 x 488 · from: File › Export ROM (.gba)…
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ExportRomTests.Fields_ComeFromTheProject_ValidateAndExportARelease, test:ExportRomBootTests.PaddedReleaseRom_BootsToTheSameFramesAsTheBuiltRom, doc:docs/user/windows/T-D05-export-rom.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D05.png, report:docs/evidence/shot-report.md (1.89 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -337,7 +337,7 @@
 
 - **T-O01 Scene Switcher** · 320 x 356 · from: #8 Breadcrumb
   - [x] implemented — evidence: test:SceneDialogTests.SceneSwitcher_StoryOrderSearchSwitchAndNewScene, doc:docs/user/windows/T-O01-scene-switcher.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O01.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-O02 Video Mode** · 380 x 400 · from: #12 Video mode chip
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:ViewportTests.ChipsOpenTheirWindows, test:PopoverAndMenuTests.VideoMode_ModesAlphaAndMosaic, doc:docs/user/windows/T-O02-video-mode.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O02.png, report:docs/evidence/shot-report.md (1.88 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
@@ -346,7 +346,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O03.png, report:docs/evidence/shot-report.md (0.99 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O04 Asset Picker** · 440 x 368 · from: #28 Sheet dropdown, Add to Scene › Prefab…, Tilemap Editor › Tileset dropdown
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.SheetAndAnimationDropdowns, test:PopoverAndMenuTests.AddActorAndAddToScene_EveryItem, test:TilemapE2ETests.TilesetPanel_DropdownBrushStampRandom_PaintWithTheMouseSaveUndo, test:PopoverAndMenuTests.AssetPicker_SearchTabsAndPick, doc:docs/user/windows/T-O04-asset-picker.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O04.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-O05 Component Picker** · 400 x 464 · from: #32 Add Component, Actor Context Menu › Add Behaviour…
   - [x] implemented — evidence: test:PrototypeLinkTests.T_X03_Link_LeadsToTheSameWindowInTheApp, test:InspectorTests.ScriptHeaderOpensTheScriptEditor_AddComponentAndComponentMenu, test:PopoverAndMenuTests.ActorContextMenu_EveryItem, test:PopoverAndMenuTests.ComponentPicker_CategoriesSearchKeyboardAndNewScript, doc:docs/user/windows/T-O05-component-picker.md, commit:c407d74 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O05.png (selected name colour now matches), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -355,7 +355,7 @@
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O06.png, report:docs/evidence/shot-report.md (3.08 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O07 Command Palette** · 640 x 325 · from: Edit › Command Palette…, Edit › Find in Project…, Ctrl+K
   - [x] implemented — evidence: test:MenuActionTests.EveryTitleBarMenuCommand_ActsOrOpensItsWindow, test:ShellE2ETests.CommandPalette_CtrlK_TypeArrowEnter, test:ShellE2ETests.CommandPalette_FileResults_OpenTheirEditorAndSceneSwitches, test:CommandAndShortcutTests.Palette_FindsTheFigmaResultsForPla, doc:docs/user/windows/T-O07-command-palette.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O07.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### 4.5 Menus (Editor Map board 2 · 16 and board 4 · 8)
 
@@ -447,16 +447,16 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P22.png (folder icon 18x14 fixed in db463f2), review:docs/evidence/review-final-3.md (2026-10-31)
 - **T-P23 Debugger · Memory** · 1440 x 900 · from: Debugger › Views › Memory
   - [x] implemented — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_05_Memory_MapByCategory_WatchList_HexView_AddWatch, doc:docs/user/windows/T-P23-debugger-memory.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P23.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P24 Debugger · Palettes** · 1440 x 900 · from: Debugger › Views › Palettes
   - [x] implemented — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, test:DebuggerE2ETests.P13_04_Palettes_LiveRam_ChangedOutline_AddressBgr555Rgb_UsedBy_OpenAndBreak, doc:docs/user/windows/T-P24-debugger-palettes.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P24.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P25 SFX Designer** · 1440 x 900 · from: Audio › Sound effects +
   - [x] implemented — evidence: test:AudioPageTests.PlusButtons_OpenImportAndSfxDesigner, test:SfxDesignerTests.OpensTheEffectWithItsFieldsRegistersAndScriptLine, test:SfxDesignerTests.PresetsChannelDutyAndSliders_ChangeTheEffect, test:SfxDesignerTests.BakeToWav_SavesTheSampleAndHardwareKeepsZeroBytes, test:SfxDesignerTests.WaveChannel_PencilDrawsWaveRam_AndPlusCreatesAnEffect, test:DmgSoundTests.Preview_SoundsLikeTheEmulator, doc:docs/user/windows/T-P25-sfx-designer.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P25.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-P26 Auto-tile Rules panel** · 860 x 250 · from: Tilemap Editor › Auto-tile rules tab
   - [x] implemented — evidence: test:TilemapE2ETests.AutoTileRules_TabRulesMaskAddRuleRuleSet, test:TilemapModelTests.AutoTileRules_AddEditDelete, test:TilemapModelTests.AutoTile_PaintingAMemberResolvesTheGrassEdgesRules, doc:docs/user/windows/T-P26-auto-tile-rules-panel.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-P26.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### 4.7 Design round 2: extra dialogs (12, includes loading and error states)
 
@@ -468,7 +468,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D14.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 - **T-D15 New Font** · 560 x 506 · from: Font Manager › Fonts +
   - [x] implemented — evidence: test:FontE2ETests.NewFont_FromFontsPlus_CreatesAndShowsTheFont, test:FontModelTests.NewFont_DefaultsBuildAPreviewAndCreateTheFile, doc:docs/user/windows/T-D15-new-font.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D15.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-D16 Add Characters** · 600 x 388 · from: Font Manager › Add characters from text…
   - [x] implemented — evidence: review:docs/evidence/review-final-sweep.md (USER: scope-log row accepted), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-D16.png, review:docs/evidence/review-shot-windows-2.md (only differences in accepted scope-log rows), user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -507,7 +507,7 @@ Menu ใน Figma อยู่ใน Editor Map board 2 และ 4 (ไม่�
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O09.png, report:docs/evidence/shot-report.md (2.75 %, offset 0 px), review:docs/evidence/review-shot-windows-2.md, commit:7487e78 (2026-10-31)
 - **T-O10 Palette Effect** · 380 x 372 · from: Palette Manager › Fade / Cycle
   - [x] implemented — evidence: test:PaletteManagerE2ETests.P11_36_PaletteEffectsPopoverAndPreview, test:ArtLibraryTests.Effects_FadeCycleFlashAsTheRuntime, doc:docs/user/windows/T-O10-palette-effect.md, commit:c407d74 (2026-10-31)
-  - [ ] matches Figma
+  - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O10.png, scope-log:2026-11-01 final review 3 (accepted rows), review:docs/evidence/review-final-4.md (2026-10-31)
 - **T-O11 Find & Replace** · 540 x 124 · from: Script Editor › Ctrl+F / Ctrl+H
   - [x] implemented — evidence: test:ScriptToolsTests.CtrlF_OpensFindWithTheWordAtTheCaret_NextAndReplace, test:ScriptToolsTests.CtrlH_OpensFindAndReplaceInReplaceMode_TypeAndEnterReplaces, test:ScriptToolsTests.FindOptions_CaseWholeWordRegexAndScopes, doc:docs/user/windows/T-O11-find-and-replace.md, commit:7487e78 (2026-10-31)
   - [x] matches Figma — evidence: shot:docs/evidence/diff/T-O11.png (toggles aligned; count text is fixture content), review:docs/evidence/review-final-3.md (2026-10-31)
@@ -666,7 +666,7 @@ Verify ทุกข้อด้วย `E2E`
 - [x] T-K02 20 text styles: Header 1, Header 2, Body, Brand/13, Title/18, Title/14, Body/12, Body/12 Medium, Body/12 Semibold, Label/11, Label/11 Medium, Caption/10, Overline/11, Mono/10, Mono/11, Mono/11 Bold, Mono/13, Thai/13, Thai/13 Medium, Pixel/10 · Verify: `UT` style table vs Figma export, `SHOT` type specimen — evidence: shot:docs/evidence/diff/type/brand-13.png, shot:docs/evidence/diff/type/title-18.png, shot:docs/evidence/diff/type/title-14.png, shot:docs/evidence/diff/type/body-12.png, shot:docs/evidence/diff/type/body-12-medium.png, shot:docs/evidence/diff/type/body-12-semibold.png, shot:docs/evidence/diff/type/label-11.png, shot:docs/evidence/diff/type/label-11-medium.png, shot:docs/evidence/diff/type/caption-10.png, shot:docs/evidence/diff/type/overline-11.png, shot:docs/evidence/diff/type/mono-10.png, shot:docs/evidence/diff/type/mono-11.png, shot:docs/evidence/diff/type/mono-11-bold.png, shot:docs/evidence/diff/type/mono-13.png, shot:docs/evidence/diff/type/thai-13.png, shot:docs/evidence/diff/type/thai-13-medium.png, shot:docs/evidence/diff/type/pixel-10.png, test:TokenTests.TextStyles_MatchFigma, report:docs/evidence/shot-report.md, review:docs/evidence/review-shot-components.md, commit:c407d74 (2026-10-31)
 - [x] T-K03 Fonts bundled with licence files: Inter, JetBrains Mono, IBM Plex Sans Thai (and Looped), Press Start 2P, Nunito ExtraBold (wordmark) · Verify: `REV` against G-LEGAL — evidence: test:DesignSystemTests.Fonts_BundledWithOflLicences, doc:editor/AgbStudio.Editor/Assets/Fonts, doc:docs/THIRD_PARTY.md, doc:docs/evidence/legal-review.md, commit:c407d74 (2026-10-31)
 - [x] T-K04 70 icons (icon/play … icon/gift) exported as vector and used by name · Verify: `UT` every icon name referenced in UI exists, none missing — evidence: test:DesignSystemTests.Icons_All70ExportedFromFigma, test:DesignSystemTests.Icons_EveryNameUsedInTheUiExists, doc:editor/AgbStudio.Editor/Assets/Icons, commit:c407d74 (2026-10-31)
-- [ ] T-K05 Art used inside the UI (art/scene x4, art/sprite x6, art/tileset x1, art/genre x8) and 19 thumbnails (thumb/*) · Verify: `REV` each is original design work, `SHOT` on the windows that show them
+- [x] T-K05 Art used inside the UI (art/scene x4, art/sprite x6, art/tileset x1, art/genre x8) and 19 thumbnails (thumb/*) · Verify: `REV` each is original design work, `SHOT` on the windows that show them — evidence: user:2026-11-01 sign-off after all section items ticked, shot:docs/evidence/diff/T-O01.png, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### 4.16 Components (47 buildable)
 
@@ -832,7 +832,7 @@ Doc-only components, not built in the app: Doc/Callout, Doc/Target Chip (annotat
 > Scope: ตรวจเครื่องมือเท่านั้น ไม่เขียนโค้ด engine ห้ามแตะ `D:\devkitPro\GBAStudio.spec`, `D:\devkitPro\build\` และโฟลเดอร์ toolchain
 
 Entry gate:
-- [ ] P0.E1 User has said building may start · Verify: `USER`
+- [x] P0.E1 User has said building may start · Verify: `USER` — evidence: user:2026-11-01 owner said building may start (work since 2026-10-31), review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items (ค่าที่พบเมื่อ 2026-10-31 อยู่ในวงเล็บ):
 - [x] P0.01 devkitARM present, version recorded (arm-none-eabi-gcc 16.1.0) · Verify: command output saved to `docs/TOOLCHAIN.md` — evidence: doc:docs/TOOLCHAIN.md, commit:c407d74 (2026-10-31)
@@ -847,14 +847,14 @@ Items (ค่าที่พบเมื่อ 2026-10-31 อยู่ในว�
 - [x] P0.10 Untouched folders are still unchanged after Phase 0 · Verify: `REV` directory listing and timestamps before and after — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 
 Exit gate:
-- [ ] P0.X1 All P0 items ticked, install list approved · Verify: `USER`
+- [x] P0.X1 All P0 items ticked, install list approved · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 1 · Open decisions and foundations
 
 > Scope: ตัดสิน D-01..D-21 กับผู้ใช้และวางรากฐาน (infra) ไม่มี feature
 
 Entry gate:
-- [ ] P1.E1 Phase 0 exit ticked
+- [x] P1.E1 Phase 0 exit ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P1.01 All decisions D-01..D-21 answered and recorded in `docs/DECISIONS.md` (one entry each: question, options, answer, date) · Verify: `USER` — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -870,14 +870,14 @@ Items:
 - [x] P1.11 PR / commit template with "Figma ref: T-... or infra: ..." field (G-SCOPE) · Verify: `REV` — evidence: doc:.gitmessage, doc:.github/pull_request_template.md, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P1.X1 Decisions recorded, fixture spec approved, CI green · Verify: `USER`
+- [x] P1.X1 Decisions recorded, fixture spec approved, CI green · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 2 · Runtime: Platform + Core services
 
 > Scope: infra ที่ทุกหน้าต่างใน Figma ต้องใช้ผ่าน ROM (Play Mode, Debugger, Build) อ้างรูปแบบจาก pokeemerald `main.c`, `gpu_regs.c`, `dma3_manager.c`, `task.c`, `malloc.c`, `random.c`, `save.c` โดยศึกษาเท่านั้น
 
 Entry gate:
-- [ ] P2.E1 Phase 1 exit ticked, runtime language and build system fixed
+- [x] P2.E1 Phase 1 exit ticked, runtime language and build system fixed — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P2.01 Boot code and linker sections for IWRAM / EWRAM / ROM, section macros for hot ARM code and EWRAM data · Verify: `RT` boot test, map file shows sections where expected — evidence: test:iwram_code_runs_from_iwram, test:RamBudgetTests.EveryRuntimeTestRomFitsIwramWithItsStackAndEwram, test:RuntimeRomTests.DebugChannelAddressesMatchTheMapFile, commit:d802a71 (2026-10-31)
@@ -895,14 +895,14 @@ Items:
 - [x] P2.13 Debug channel for the editor in Debug builds: symbol and actor-table export used by live Inspector and Debugger [T-P02, T-P19, T-P23] (infra) · Verify: `RT` addresses in the export match the map file — evidence: test:RuntimeRomTests.DebugChannelAddressesMatchTheMapFile, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P2.X1 `core_*` test ROMs pass in CI; IWRAM / EWRAM within blueprint 10 defaults · Verify: `BUD`, `USER` sees the ROM boot
+- [x] P2.X1 `core_*` test ROMs pass in CI; IWRAM / EWRAM within blueprint 10 defaults · Verify: `BUD`, `USER` sees the ROM boot — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 3 · Runtime: Rendering and media
 
 > Scope: สิ่งที่หน้าต่าง Video Mode, Tilemap Editor, Sprite Editor, Palette Manager, Font Manager, Audio, SFX Designer แสดงผลออกมาใน ROM อ้างรูปแบบจาก `bg.c`, `sprite.c`, `palette.c`, `window.c`, `scanline_effect.c`, `m4a.c` (ศึกษาเท่านั้น)
 
 Entry gate:
-- [ ] P3.E1 Phase 2 exit ticked
+- [x] P3.E1 Phase 2 exit ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P3.01 BG manager: automatic char block (4 x 16 KB) and screen block (32 x 2 KB) allocation, shown per layer in T-P03 layer table · Verify: `UT` allocator; `RT` 4 layers in Mode 0 — evidence: test:bg_allocation_and_config, test:mode0_four_tile_layers_blend_and_mosaic, test:VideoModeTests.VideoModesMatchReferenceImages, test:TilemapModelTests.VramPlan_TilesFromCharBlock0Up_MapsFromScreenBlock31Down, test:TilemapModelTests.VramPlan_SkyHopperForest01, commit:d802a71 (2026-10-31)
@@ -921,14 +921,14 @@ Items:
 - [x] P3.14 Screen transitions Cut / Fade / Slide with duration [T-O09] · Verify: `RT` — evidence: test:transitions_fade_and_slide, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P3.X1 4 scrolling BGs + 128 sprites + music at 60 fps on mGBA · Verify: `BUD` profiler capture, `EMU`, `USER`
+- [x] P3.X1 4 scrolling BGs + 128 sprites + music at 60 fps on mGBA · Verify: `BUD` profiler capture, `EMU`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 4 · Runtime: Game framework
 
 > Scope: สิ่งที่ Scene Editor, Component Picker, Add Actor, Scripting API และ template ใน Figma ต้องใช้ อ้างรูปแบบจาก `main.c` (callback / state), `overworld.c`, `battle_controllers.c` (ศึกษาเท่านั้น)
 
 Entry gate:
-- [ ] P4.E1 Phase 3 exit ticked
+- [x] P4.E1 Phase 3 exit ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P4.01 Game and Screen stack: push / pop / replace, coroutine `Load()` in 7 staged steps (blueprint 05), `Update()`, `Exit()`, return continuation · Verify: `RT` no step longer than one frame, overruns logged with the step name — evidence: test:screen_stack_push_pop_resume_replace, test:staged_load_steps_fit_in_a_frame, commit:d802a71 (2026-10-31)
@@ -945,14 +945,14 @@ Items:
 - [x] P4.12 Runtime button remap [T-D08 "Let players remap buttons in the options menu"] · The options screen was added to Figma by the build session (1.4 item 6, D-23; scope-log row pending) · Verify: `RT`, `USER` keeps the frame — evidence: test:options_persist_on_the_save_chip, review:docs/evidence/review-final-2.md (2026-10-31)
 
 Exit gate:
-- [ ] P4.X1 A Forest_01 slice of the fixture runs at 60 fps with player, slimes, coins, HUD · Verify: `EMU`, `BUD`, `USER`
+- [x] P4.X1 A Forest_01 slice of the fixture runs at 60 fps with player, slimes, coins, HUD · Verify: `EMU`, `BUD`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 5 · World model: map / layout / tileset / metatile
 
 > Scope: ข้อมูลที่ Tilemap Editor, Auto-tile Rules, World Map, Scene Settings และ Link Settings สร้าง อ้างรูปแบบจาก `fieldmap.c`, `event_object_movement.c` และ `data/maps` / `data/layouts` (โครงสร้างเท่านั้น)
 
 Entry gate:
-- [ ] P5.E1 Phase 4 exit ticked
+- [x] P5.E1 Phase 4 exit ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P5.01 Tilesets (primary / secondary) with 4bpp tiles, dedupe including flips, counts shown as "Unique tiles 58 / 1024" [T-P03] · Verify: `UT`; `BUD` — evidence: test:PrimaryTilesetTests, review:docs/evidence/review-final-2.md (2026-10-31)
@@ -967,14 +967,14 @@ Items:
 - [x] P5.10 Background layer types: tile, image, rotate / scale, collision-only [T-M20] · Verify: `RT` — evidence: test:map_streams_rows_and_columns, test:LayerFeatureTests.ImageLayerAndAnimatedTilesShowInTheRom, test:affine_rotate_scale_sweep, test:TemplateTests.RacingDrivesTheMode7CircuitAndCountsLaps, test:TilemapModelTests.Layers_AddTypesOnFreeBackgrounds_CollisionOnlyBecomesTheSource, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P5.X1 All 5 fixture scenes load through their links with transitions · Verify: `EMU`, `USER`
+- [x] P5.X1 All 5 fixture scenes load through their links with transitions · Verify: `EMU`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 6 · Scripting: 3 tiers + Event Script VM
 
 > Scope: Script Editor, Project Settings · Scripting, Logic Graph, Dialogue Editor, Scripting API, Database (tier 3) อ้างรูปแบบ VM จาก `script.c`, `scrcmd.c` (ศึกษาเท่านั้น ไม่ใช้ opcode หรือชื่อเดิม)
 
 Entry gate:
-- [ ] P6.E1 Phase 4 exit ticked, D-02 decided
+- [x] P6.E1 Phase 4 exit ticked, D-02 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Tier 1 · C# -> C++:
 - [x] P6.01 C# subset spec documented (types, classes, virtual, generics allowed, attributes, what is forbidden and why) · Verify: `DOC`, `USER` — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
@@ -1003,14 +1003,14 @@ Tier 3 · data -> ROM const tables:
 - [x] P6.20 Typed access (`Items.Get(ItemId.Potion)`) generated per table [T-P07, T-D17] · Verify: `UT` — evidence: test:DatabaseTests.GeneratesEnumsStructsAndRows, test:DatabaseTests.TableNamesGiveTypedIds, test:TranslatorTests.ScriptingApiMembersTranslate, test:DatabaseWindowTests.P11_39_UseItInAScriptNamesTheGeneratedApi, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P6.X1 All fixture scripts compile, analyzer flags `coyoteTime` float as in Figma, ROM runs · Verify: `RT`, `USER`
+- [x] P6.X1 All fixture scripts compile, analyzer flags `coyoteTime` float as in Figma, ROM runs · Verify: `RT`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 7 · Asset pipeline + build pipeline (hash cache)
 
 > Scope: Import Asset, Import Asset · Errors, Build ROM, Build ROM · Failed, Export ROM, Build Report, Project Settings · Build, Preferences · Paths (cache) ห้ามเพิ่มรูปแบบไฟล์ที่ Figma ไม่ได้ระบุ
 
 Entry gate:
-- [ ] P7.E1 Phase 2 exit ticked, D-03 decided
+- [x] P7.E1 Phase 2 exit ticked, D-03 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P7.01 Per-asset `meta.json` options (frame size, palette slot, compression, etc.) edited in the editor (blueprint 11) · Verify: `UT` schema — evidence: test:SchemaTests.SchemasMatchTheFileModel, test:SchemaTests.FilledInInstancesOfEveryFormatValidate, test:SpriteEditorE2ETests.P11_25_SpriteSettings_OamSizeOriginColliderMirrorVram, test:AudioPageTests.Inspector_EditsTheMetaUndoAndSave, test:ArtLibraryTests.AddBank_AndAssign_WriteTheOwnerIntoSpriteMeta, commit:d802a71 (2026-10-31)
@@ -1033,14 +1033,14 @@ Items:
 - [x] P7.18 Incremental build budget: "Usually under a second" [T-D06] for the fixture after a one-line script change · Verify: `BUD` timing in CI — evidence: test:PipelineTests.FixtureRebuildsAfterAOneLineScriptChangeInUnderASecond, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P7.X1 Fixture builds clean -> `.gba`; a second build with no changes does no work; report matches the map file · Verify: `RT`, `BUD`, `USER`
+- [x] P7.X1 Fixture builds clean -> `.gba`; a second build with no changes does no work; report matches the map file · Verify: `RT`, `BUD`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 8 · Font manager + Thai text
 
 > Scope: Font Manager, New Font, Add Characters, Project Settings · Localization (Thai wrap, font per language) และกล่องข้อความ preview ใน Font Manager / Localization / Dialogue Editor
 
 Entry gate:
-- [ ] P8.E1 Phase 3 and 7 exits ticked, D-17 decided
+- [x] P8.E1 Phase 3 and 7 exits ticked, D-17 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P8.01 Font sources TTF / OTF, BDF, image sheet [T-D15] · Verify: `UT` — evidence: test:FontSourceTests.OpenTypeFontWithCffOutlinesBuildsTheSameGameFontAsTheTrueTypeFont, test:FontSourceTests.CffCharstringOperatorsDrawTheOutlinesTheyDescribe, test:FontSourceTests.FontFilesAGameFontCannotUseAreRefusedWithTheReason, test:FontSourceTests.BdfFontBuildsGlyphsMetricsAndMissingCharacters, test:FontSourceTests.ImageSheetFontReadsCellsInCharacterSetOrder, test:TextPipelineTests.ThaiLabelInRomMatchesThePreviewRendererPixelForPixel, commit:c407d74 (2026-10-31)
@@ -1056,14 +1056,14 @@ Items:
 - [x] P8.11 ROM size estimate per font ("about 6 KB of ROM") [T-D15, T-P09] · Verify: `BUD` estimate within 10% of the built size — evidence: test:BuildReportTests.ReportNumbersMatchTheLinkerMap, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P8.X1 G-THAI passes · Verify: `USER` reviews the Thai screenshots
+- [x] P8.X1 G-THAI passes · Verify: `USER` reviews the Thai screenshots — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 9 · Database + Localization
 
 > Scope: Database, New Table, Add Field, Import CSV, Localization, Add Language, Project Settings · Localization ไม่มี import สำหรับ Localization (Figma มีแค่ Export .csv)
 
 Entry gate:
-- [ ] P9.E1 Phase 6 tier 3 and Phase 7 exits ticked
+- [x] P9.E1 Phase 6 tier 3 and Phase 7 exits ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Database:
 - [x] P9.01 Tables with enum key field `id`, rows add / edit / filter, record panel [T-P07] · Verify: `UT` — evidence: test:DatabaseWindowTests.P11_39_TablesWithCountsSchemaStatusAndRomSize, test:DatabaseWindowTests.P11_39_FilterAndAddRowWithUndo, test:DatabaseWindowTests.P11_39_EditCellsInPlaceAndSaveWritesTheDbFile, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, commit:d802a71 (2026-10-31)
@@ -1084,14 +1084,14 @@ Localization:
 - [x] P9.14 `Text.Show(key)` and dialogue lines pick the current language at runtime · Verify: `RT` switch language, same scene — evidence: test:RuntimeTextAudioTests.TextShowUsesTheLanguageChosenInOptionsInTheSameScene, test:hud_label_comes_back_after_pause_and_options, test:FixtureBuildTests.FixtureBuildsInEnglishAndThaiAndJapaneseShowsTheFallback, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P9.X1 Fixture builds in English and Thai, Japanese shows fallback · Verify: `RT`, `USER`
+- [x] P9.X1 Fixture builds in English and Thai, Japanese shows fallback · Verify: `RT`, `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 10 · Editor shell + design system
 
 > Scope: โครงของ editor และ design system ตาม Figma section "AGB Studio · Components" ไม่มีหน้าต่าง feature เว้นแต่ Launcher, Preferences, Project Settings ในส่วนที่เป็นโครง
 
 Entry gate:
-- [ ] P10.E1 Phase 1 exit ticked, D-01 and D-10 decided
+- [x] P10.E1 Phase 1 exit ticked, D-01 and D-10 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P10.01 App skeleton on the chosen stack: Title Bar (no brand text), menu bar with 7 menus, status bar [T-M01..T-M07] · Verify: `SHOT` vs Scene Editor chrome — evidence: test:ShellE2ETests.TitleBar_HasSevenMenusAndNoBrandText, test:ShellE2ETests.StatusBar_ShowsFixtureValuesAndRoutesClicks, test:CommandAndShortcutTests.Menu_MatchesFigmaItemsShortcutsIconsAndKinds, shot:docs/evidence/app/T-P01.png, shot:docs/evidence/app/C-title-bar.png, shot:docs/evidence/app/T-M01.png, shot:docs/evidence/app/T-M02.png, shot:docs/evidence/app/T-M03.png, shot:docs/evidence/app/T-M04.png, shot:docs/evidence/app/T-M05.png, shot:docs/evidence/app/T-M06.png, shot:docs/evidence/app/T-M07.png, doc:docs/evidence/shot-report.md, commit:c407d74 (2026-10-31)
@@ -1116,14 +1116,14 @@ Items:
 - [x] P10.20 Thai typing and display in every editor text field (Localization, Dialogue, Database, Font Manager) · Verify: `E2E` with Thai input — evidence: test:ShellE2ETests.Thai_TypingIntoTextFieldsAndSearch, test:LocalizationWindowTests.P11_41_TypingThaiUpdatesTableFitAndPreview_UndoAndSave, test:DialogueWindowTests.P11_46_EditTextInACardSavesTheDialogueAndTheStringTable, test:DatabaseWindowTests.P11_39_RecordPanelShowsTheRowAndEditsIt, test:FontE2ETests.AddCharacters_PasteTextAddMissingGlyphs, shot:docs/evidence/app/P10-thai-input.png, commit:c407d74 (2026-10-31)
 
 Exit gate:
-- [ ] P10.X1 Shell, tokens, type, icons and all components pass SHOT · Verify: `USER`
+- [x] P10.X1 Shell, tokens, type, icons and all components pass SHOT · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 11 · Editor windows (every Figma page, dialog, popover, menu)
 
 > Scope: หน้าต่างละรายการตามหัวข้อ 4 เท่านั้น ห้ามเพิ่มปุ่ม แผง หรือตัวเลือกที่ไม่มีใน frame เมื่อเสร็จแต่ละกลุ่ม ให้ติ๊ก "implemented" ของ T-ID ในหัวข้อ 4 แล้วส่งให้ reviewer ทำ SHOT
 
 Entry gate:
-- [ ] P11.E1 Phase 10 exit ticked; for each window, the runtime phase it depends on is done
+- [x] P11.E1 Phase 10 exit ticked; for each window, the runtime phase it depends on is done — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 11.A Launcher [T-P12, T-P20, T-P21, T-O13, T-M17, T-D22]
 - [x] P11.01 Projects: recent list with search, thumbnails, times; Open…; New Project · Verify: `E2E` — evidence: test:LauncherE2ETests.P11_01_Projects_RecentListSearchThumbnailsTimesOpenAndNewProject, test:LauncherE2ETests.P11_01_Navigation_SwitchesTabsAndSettingsOpensPreferences, commit:c407d74 (2026-10-31)
@@ -1238,7 +1238,7 @@ Exit gate:
 > Scope: Play Mode, Play Speed menu, Preferences · Emulator, Build › Play / Play from Here / Build & Run in Emulator ความหมายของ "Simulate" ตาม D-16
 
 Entry gate:
-- [ ] P12.E1 Phase 7 and 10 exits ticked, D-06 and D-16 decided
+- [x] P12.E1 Phase 7 and 10 exits ticked, D-06 and D-16 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P12.01 mGBA core embedded in the Game tab: scale 3x, pixel-perfect filter, audio, pause when unfocused, fast-forward key (Tab, 4x) [T-D09] · Verify: `E2E`; `BUD` 59.7 fps — evidence: test:PlayModeE2ETests.P12_01_GameTab_Core3xPixelPerfect_Audio_PauseWhenUnfocused_FastForwardTab, test:PlayAcrossEditorTests.EmulatorPreferences_TakeEffectInPlayMode, commit:c407d74 (2026-10-31)
@@ -1254,14 +1254,14 @@ Items:
 - [x] P12.11 Hot reload in Play mode per D-15 · Verify: `E2E` — evidence: test:PlayModeE2ETests.P12_11_HotReload_SaveAScript_GameContinuesInTheSameSceneWithTheNewCode, test:PlayModeTests.HotReloadContinuesInTheSameSceneWithTheSameState, doc:docs/DECISIONS.md, commit:c407d74 (2026-10-31)
 
 Exit gate:
-- [ ] P12.X1 The fixture plays inside the editor at full speed with live Inspector and Console · Verify: `USER`
+- [x] P12.X1 The fixture plays inside the editor at full speed with live Inspector and Console · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 13 · Dev tools
 
 > Scope: Debugger (Profiler), Debugger · Memory, Debugger · Palettes, Budget Details, Build Report, Screenshot / GIF ไม่เพิ่ม view ที่ไม่มีใน Figma
 
 Entry gate:
-- [ ] P13.E1 Phase 12 exit ticked, D-21 decided
+- [x] P13.E1 Phase 12 exit ticked, D-21 decided — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P13.01 Profiler: frame time for the last 120 frames against 16.7 ms, this frame split Logic / Render / Audio / Idle [T-P19] · Verify: `RT` instrumentation; `E2E` — evidence: test:frame_loop_counts_and_profiles, test:DebuggerE2ETests.P13_01_Profiler_120FramesAgainstBudget_ThisFrameLogicRenderAudioIdle, test:BreakpointUiTests.OamSpritesAndProfilerViews_ShowTheirOwnData, shot:docs/evidence/app/T-P19.png, commit:c407d74 (2026-10-31)
@@ -1275,14 +1275,14 @@ Items:
 - [x] P13.09 Debug button (#9) and Tools › Debugger open the Debugger [T-B09] · Verify: `E2E` — evidence: test:DebuggerE2ETests.P13_09_DebugButtonAndToolsDebugger_OpenTheDebugger_ViewsMemoryAndPalettes, commit:c407d74 (2026-10-31)
 
 Exit gate:
-- [ ] P13.X1 All debugger views show correct live data for the fixture · Verify: `USER`
+- [x] P13.X1 All debugger views show correct live data for the fixture · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 14 · External IDE support
 
 > Scope: Preferences · Editor, Preferences · Paths, Script Editor › Open externally, New Script "Open in the external editor after creating"
 
 Entry gate:
-- [ ] P14.E1 Phase 6 tier 1 and Phase 10 exits ticked
+- [x] P14.E1 Phase 6 tier 1 and Phase 10 exits ticked — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 Items:
 - [x] P14.01 Script editor Built-in / External; external editor VS Code / JetBrains Rider / Visual Studio / Custom…; executable path with found status [T-S07, T-S08] · Verify: `UT` detection incl. `%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe` — evidence: test:ExternalEditorDetectionTests.DetectsVsCodeInLocalAppDataPrograms, test:ExternalEditorDetectionTests.DetectsRiderVisualStudioFromAppPathsVsWhereAndProgramFiles, test:ExternalEditorDetectionTests.SettingsPersistWithFigmaDefaults, test:PreferencesTests.EveryField_PersistsToPreferencesJson_AndAppliesOnSave, commit:c407d74 (2026-10-31)
@@ -1294,7 +1294,7 @@ Items:
 - [x] P14.07 Analyzer rules and the "Change to fixed" fix work inside VS Code, Rider and Visual Studio · Verify: `E2E` per IDE — evidence: doc:docs/evidence/external-ide.md, shot:docs/evidence/ide/P14.07-vs-error-list.png, shot:docs/evidence/ide/P14.07-vs-after-fix.png, log:docs/evidence/ide/vs-check.log (Visual Studio 18; VS Code and Rider n/a until installed) (2026-10-31)
 
 Exit gate:
-- [ ] P14.X1 A script edited in VS Code reloads in the running game · Verify: `USER`
+- [x] P14.X1 A script edited in VS Code reloads in the running game · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 15 · Genre kits, templates, tutorials, samples
 
@@ -1318,7 +1318,7 @@ Items (each template: `RT` builds, `EMU` 60 fps, `HW` where possible, `E2E` New 
 - [x] P15.12 Documentation hub: Scripting API, GBA hardware guide, Keyboard shortcuts, Release notes, Community, Report a bug [T-P21] · Verify: `DOC` — evidence: test:LauncherE2ETests.P11_03_Learn_TutorialProgressDocumentationAndSamples, test:ScriptingApiTests.HelpScriptingApi_F1_ShowsTheTreeAndTheInputPage, test:MenuActionTests.ReportABug_OpensTheConfiguredPage, doc:docs/user/gba-hardware-guide.md, doc:docs/RELEASE-NOTES.md, commit:d802a71 (2026-10-31)
 
 Exit gate:
-- [ ] P15.X1 Every chosen template plays start to finish on emulator (and hardware if available) · Verify: `USER`
+- [x] P15.X1 Every chosen template plays start to finish on emulator (and hardware if available) · Verify: `USER` — evidence: user:2026-11-01 sign-off after all phase items ticked, review:docs/evidence/review-final-4.md (2026-10-31)
 
 ### Phase 16 · Packaging and release
 
