@@ -16,6 +16,12 @@ public static class ThaiText
     public static bool IsToneMark(int c) => c is >= 0x0E48 and <= 0x0E4C or 0x0E4E;
     public static bool IsMark(int c) => IsUpperVowel(c) || IsLowerVowel(c) || IsToneMark(c);
     public const int SaraAm = 0x0E33, Nikhahit = 0x0E4D, SaraAa = 0x0E32;
+    // ญ and ฐ drawn without their tails, for a lower vowel under them (the private-use code points Thai fonts
+    // traditionally give these forms). A font may have them; TextLayout uses them when it does.
+    public const int YoYingNoTail = 0xF70F, ThoThanNoTail = 0xF700;
+
+    /// <summary>The tailless form of ญ or ฐ, or 0 for other characters.</summary>
+    public static int Tailless(int c) => c switch { 0x0E0D => YoYingNoTail, 0x0E10 => ThoThanNoTail, _ => 0 };
 
     public static List<int> CodePoints(string s)
     {

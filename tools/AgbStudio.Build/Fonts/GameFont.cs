@@ -66,11 +66,12 @@ public static class FontBuilder
                     stacked = Math.Min(stacked, u.Top - 1 - t.Height);
         var baseline = f.Baseline + Math.Max(0, Math.Max(-above, -stacked));
         var below = raw.Glyphs.Values.Where(g => g.Height > 0).Select(g => g.Top + g.Height).DefaultIfEmpty(f.LineHeight).Max() - f.Baseline;
-        // A lower vowel moved under the tail of ฎ ฏ ฐ ญ (TextLayout) reaches further down.
+        // A lower vowel moved under the tail of ฎ ฏ ฐ ญ (TextLayout) reaches further down; ญ and ฐ with tailless
+        // forms in the font use those instead.
         if (f.PlaceLowerVowels)
-            foreach (var d in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsDescender(g.CodePoint) && g.Top + g.Height > f.Baseline))
+            foreach (var d in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsDescender(g.CodePoint) && g.Top + g.Height > f.Baseline && raw.Get(ThaiText.Tailless(g.CodePoint)) == null))
                 foreach (var l in raw.Glyphs.Values.Where(g => g.Height > 0 && ThaiText.IsLowerVowel(g.CodePoint)))
-                    below = Math.Max(below, d.Top + d.Height + 1 - f.Baseline + l.Top + l.Height - f.Baseline);
+                    below = Math.Max(below, l.Top + l.Height + TextLayout.LowerVowelDy(d, d.Advance, l, f.Baseline) - f.Baseline);
         var line = Math.Max(f.LineHeight, baseline + below);
         return baseline == f.Baseline && line == f.LineHeight ? raw : BuildGlyphs(f, fontsDir, extra, fallbackTtf, baseline, line);
     }
@@ -105,7 +106,8 @@ public static class FontBuilder
             }
             case FontSourceKind.Bdf:
                 foreach (var g in Bdf.Read(source, baseline))
-                    if (cps.Contains(g.CodePoint)) font.Glyphs[g.CodePoint] = g;
+                    if (cps.Contains(g.CodePoint) || (g.CodePoint is ThaiText.YoYingNoTail or ThaiText.ThoThanNoTail && cps.Any(c => ThaiText.Tailless(c) == g.CodePoint)))
+                        font.Glyphs[g.CodePoint] = g;
                 foreach (var cp in cps.Where(c => !font.Glyphs.ContainsKey(c) && c != ' ')) font.Missing.Add(cp);
                 break;
             case FontSourceKind.Image:
