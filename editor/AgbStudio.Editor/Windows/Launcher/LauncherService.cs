@@ -250,7 +250,7 @@ public sealed class LauncherService
         var docs = Services.Documents;
         // the game of the project being closed stops (it kept running, and Pause / Step acted on it, in the new project)
         if (Services.GetService(typeof(Play.PlayController)) is Play.PlayController play && play.Session != null) play.Stop();
-        foreach (var d in docs.Open.ToList()) docs.Close(d);
+        foreach (var d in docs.Open.ToList()) docs.Close(d, force: true);
         Services.Undo.Clear();
         var p = Services.Project.Open(projectPath);
         Services.Preferences.Update(x => x.LastProject = p.ProjectPath);
@@ -411,7 +411,7 @@ public sealed class LauncherService
         if (await host.Overlays.Show(confirm) as string != "delete") return false;
         if (Services.Project.Current is { } cur && Same(cur.ProjectPath, s.Path))
         {
-            foreach (var d in Services.Documents.Open.ToList()) Services.Documents.Close(d);
+            foreach (var d in Services.Documents.Open.ToList()) Services.Documents.Close(d, force: true);
             Services.Project.Close();
         }
         if (Directory.Exists(root) && !DeleteFolder(root))
