@@ -15,6 +15,11 @@ public sealed class ToastService
 
     public ToastMessage Show(string text, ToastStatus status = ToastStatus.Success, TimeSpan? duration = null)
     {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => Show(text, status, duration));
+            return new ToastMessage(text, status);
+        }
         var t = new ToastMessage(text, status);
         Visible.Add(t);
         var d = duration ?? DefaultDuration;
@@ -22,5 +27,13 @@ public sealed class ToastService
         return t;
     }
 
-    public void Close(ToastMessage t) => Visible.Remove(t);
+    public void Close(ToastMessage t)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => Close(t));
+            return;
+        }
+        Visible.Remove(t);
+    }
 }

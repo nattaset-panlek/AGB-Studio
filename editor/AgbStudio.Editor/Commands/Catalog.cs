@@ -71,6 +71,10 @@ public static class Catalog
         C("scene.addActor.trigger", "Trigger Zone", "Add Actor", "link", palette: false),
         C("scene.addActor.camera", "Camera Zone", "Add Actor", "camera", palette: false),
         C("scene.addActor.text", "Text Label", "Add Actor", "type", palette: false),
+        C("scene.addActor.canvas", "UI Canvas", "Add Actor", "layers", palette: false),
+        C("scene.addActor.panel", "UI Panel", "Add Actor", "square", palette: false),
+        C("scene.addActor.button", "UI Button", "Add Actor", "play", palette: false),
+        C("scene.addActor.image", "UI Image", "Add Actor", "image", palette: false),
         C("scene.backgroundLayers", "Background Layers…", "Scene", "layers", window: "T-P03"),
         C("scene.worldMap", "World Map", "Scene", "nodes", "Ctrl+M", "T-P13"),
         // T-M05 Build

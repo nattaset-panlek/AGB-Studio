@@ -4,6 +4,8 @@ using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Support;
 using AgbStudio.Editor.Tests.Windows.Play;
+using AgbStudio.Editor.Windows.Audio;
+using AgbStudio.Editor.Windows.Database;
 using AgbStudio.Editor.Windows.Debugger;
 using AgbStudio.Editor.Windows.Play;
 using AgbStudio.Editor.Windows.SceneEditor;
@@ -206,7 +208,7 @@ public sealed class NavigationE2ETests : EditorDriver
         Click(Find<AgbButton>("OpenScriptingApi"));
         Check("T-P18", false, "Open Scripting API");
         Assert.Equal("Scripting API", Win.TitleBar.Document);
-        Assert.Equal(docsBefore, Fx.Services.Documents.Open);
+        Assert.Contains(Fx.Services.Documents.Open, d => d.Name == "Scripting API");
         var selected = Assert.Single(Visible<DocTab>(), t => t.IsSelected);
         Assert.Equal("Scripting API", selected.Label);
         // back to the script, then again to the scene
@@ -234,7 +236,7 @@ public sealed class NavigationE2ETests : EditorDriver
         // a project opened without a last scene (a new empty project) only had the Game document: it became the active
         // document, and every page showed Game selected, as if stuck in Play
         var docs = Fx.Services.Documents;
-        foreach (var d in docs.Open.ToList()) docs.Close(d);
+        foreach (var d in docs.Open.ToList()) docs.Close(d, force: true);
         docs.Add(new EditorDocument { Name = EditorDocument.GameName, Glyph = "pad" });
         Assert.Null(docs.Active);
         _ = Fx.Services.Windows.Open("T-P10", source: "nav");
@@ -275,5 +277,157 @@ public sealed class NavigationE2ETests : EditorDriver
         dbg.Refresh();
         Capture.Pump();
         Assert.Equal(dx, stop.TranslatePoint(default, Win)!.Value.X);
+    }
+
+    [AvaloniaFact]
+    public void Tabs_PersistAcrossPageSwitches_AndAllRouteProperly()
+    {
+        _ = Fx.Services.Windows.Open("T-P01", source: "nav");
+        Capture.Pump();
+        Assert.IsType<SceneWorkspace>(Win.CurrentPage);
+
+        _ = Fx.Services.Windows.Open("T-P04", source: "nav");
+        Capture.Pump();
+        Assert.IsType<ScriptEditorPage>(Win.CurrentPage);
+
+        _ = Fx.Services.Windows.Open("T-P07", source: "nav");
+        Capture.Pump();
+        Assert.IsType<DatabasePage>(Win.CurrentPage);
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "Scene");
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "PlayerController.cs");
+
+        _ = Fx.Services.Windows.Open("T-P15", source: "nav");
+        Capture.Pump();
+        Assert.IsType<AudioPage>(Win.CurrentPage);
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "Scene");
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "PlayerController.cs");
+
+        ClickTab("Doc_Scene");
+        Capture.Pump();
+        Assert.IsType<SceneWorkspace>(Win.CurrentPage);
+
+        var sceneTabs = Visible<DocTab>().Select(t => t.Label).ToList();
+        Assert.Contains("Scene", sceneTabs);
+        Assert.Contains("Game", sceneTabs);
+        Assert.Contains("PlayerController.cs", sceneTabs);
+        Assert.Contains("bgm_forest.xm", sceneTabs);
+
+        ClickTab("Doc_PlayerController.cs");
+        Capture.Pump();
+        Assert.IsType<ScriptEditorPage>(Win.CurrentPage);
+
+        ClickTab("Doc_bgm_forest.xm");
+        Capture.Pump();
+        Assert.IsType<AudioPage>(Win.CurrentPage);
+    }
+
+    [AvaloniaFact]
+    public void SceneAndGameTabs_AlwaysPresent_AndToggleSeamlessly()
+    {
+        _ = Fx.Services.Windows.Open("T-P01", source: "nav");
+        Capture.Pump();
+        Assert.IsType<SceneWorkspace>(Win.CurrentPage);
+
+        var tabs = Visible<DocTab>().ToList();
+        var sceneTab = Assert.Single(tabs, t => t.Name == "Doc_Scene");
+        var gameTab = Assert.Single(tabs, t => t.Name == "Doc_Game");
+
+        Assert.True(sceneTab.IsSelected, "Scene tab must be selected when on SceneWorkspace");
+        Assert.False(gameTab.IsSelected, "Game tab must not be selected when on SceneWorkspace");
+
+        ClickTab("Doc_Game");
+        Capture.Pump();
+        var playPage = Assert.IsType<PlayModePage>(Win.CurrentPage);
+
+        // Crucial Unity behavior: switching to Game tab does NOT auto-play the game
+        Assert.False(Play.IsRunning, "Navigating to Game tab must not auto-play the game");
+        Assert.Null(Play.Session);
+
+        var playTabs = Visible<DocTab>().ToList();
+        var playSceneTab = Assert.Single(playTabs, t => t.Name == "Doc_Scene");
+        var playGameTab = Assert.Single(playTabs, t => t.Name == "Doc_Game");
+
+        Assert.False(playSceneTab.IsSelected, "Scene tab must not be selected when in Play Mode");
+        Assert.True(playGameTab.IsSelected, "Game tab must be selected when in Play Mode");
+
+        ClickTab("Doc_Scene");
+        Capture.Pump();
+        Assert.IsType<SceneWorkspace>(Win.CurrentPage);
+
+        var returnTabs = Visible<DocTab>().ToList();
+        Assert.True(Assert.Single(returnTabs, t => t.Name == "Doc_Scene").IsSelected);
+        Assert.False(Assert.Single(returnTabs, t => t.Name == "Doc_Game").IsSelected);
+    }
+
+    [AvaloniaFact]
+    public void ToolTabs_OpenAsPersistentDocuments_WithCloseButtons_AndContextMenu()
+    {
+        _ = Fx.Services.Windows.Open("T-P01", source: "nav");
+        Capture.Pump();
+        Assert.IsType<SceneWorkspace>(Win.CurrentPage);
+
+        // Permanent tabs cannot be closed
+        var initialTabs = Visible<DocTab>().ToList();
+        var sceneTab = Assert.Single(initialTabs, t => t.Name == "Doc_Scene");
+        var gameTab = Assert.Single(initialTabs, t => t.Name == "Doc_Game");
+        Assert.False(sceneTab.IsClosable);
+        Assert.False(gameTab.IsClosable);
+
+        // Open Database
+        _ = Fx.Services.Windows.Open("T-P07", source: "nav");
+        Capture.Pump();
+        Assert.IsType<DatabasePage>(Win.CurrentPage);
+        var dbTab = Assert.Single(Visible<DocTab>(), t => t.Label is "Database" or "items.db");
+        Assert.True(dbTab.IsClosable);
+        Assert.True(dbTab.IsSelected);
+        Assert.NotNull(dbTab.ContextMenu);
+        Assert.Equal(5, dbTab.ContextMenu!.Items.Count); // Close, Separator, Close Others, Close Right, Close All
+
+        // Open Localization
+        _ = Fx.Services.Windows.Open("T-P14", source: "nav");
+        Capture.Pump();
+        Assert.IsType<AgbStudio.Editor.Windows.Localization.LocalizationPage>(Win.CurrentPage);
+        var locTab = Assert.Single(Visible<DocTab>(), t => t.Label == "Localization");
+        Assert.True(locTab.IsClosable);
+        Assert.True(locTab.IsSelected);
+
+        // Open Scripting API
+        _ = Fx.Services.Windows.Open("T-P18", source: "nav");
+        Capture.Pump();
+        Assert.IsType<AgbStudio.Editor.Windows.Scripts.ScriptingApiPage>(Win.CurrentPage);
+        var apiTab = Assert.Single(Visible<DocTab>(), t => t.Label == "Scripting API");
+        Assert.True(apiTab.IsClosable);
+        Assert.True(apiTab.IsSelected);
+
+        // Verify all 3 tool tabs persist simultaneously in tab strip
+        var currentLabels = Visible<DocTab>().Select(t => t.Label).ToList();
+        Assert.Contains(currentLabels, l => l is "Database" or "items.db");
+        Assert.Contains("Localization", currentLabels);
+        Assert.Contains("Scripting API", currentLabels);
+
+        // Click Database tab: goes to Database, Scripting API does not disappear!
+        var targetDbTab = Visible<DocTab>().First(t => t.Label is "Database" or "items.db");
+        Click(targetDbTab);
+        Capture.Pump();
+        Assert.IsType<DatabasePage>(Win.CurrentPage);
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "Scripting API");
+
+        // Close Scripting API via RequestClose
+        var docApi = Fx.Services.Documents.Open.First(d => d.Name == "Scripting API");
+        Fx.Services.Documents.Close(docApi);
+        Capture.Pump();
+        Assert.DoesNotContain(Visible<DocTab>(), t => t.Label == "Scripting API");
+        Assert.Contains(Visible<DocTab>(), t => t.Label is "Database" or "items.db");
+        Assert.Contains(Visible<DocTab>(), t => t.Label == "Localization");
+
+        // Close All Tabs via ContextMenu action on active tab
+        var activeTab = Visible<DocTab>().First(t => t.IsSelected);
+        var closeAllItem = activeTab.ContextMenu!.Items.OfType<MenuItem>().Single(m => m.Header as string == "Close All Tabs");
+        closeAllItem.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Capture.Pump();
+
+        // Only Scene and Game permanent tabs remain
+        var finalLabels = Visible<DocTab>().Select(t => t.Label).ToList();
+        Assert.Equal(["Scene", "Game"], finalLabels);
     }
 }

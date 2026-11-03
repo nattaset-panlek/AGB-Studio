@@ -23,7 +23,7 @@ public sealed class PlayModePage : DockPanel
 {
     readonly EditorServices _s;
     readonly PlayController _play;
-    readonly StackPanel _docTabs = new() { Orientation = Orientation.Horizontal };
+    readonly DocTabStrip _docTabs;
     readonly PanelTab[] _panelTabs;
     readonly ContentControl _bottomContent = new();
     readonly ItemsControl _consoleList = new() { Name = "PlayConsoleList" };
@@ -39,6 +39,7 @@ public sealed class PlayModePage : DockPanel
     public Chip SimulatingChip { get; } = new() { Content = "Simulating · mGBA", Glyph = "rec", Style = ChipStyle.Danger, Name = "SimulatingChip" };
     public Chip FrameChip { get; } = new() { Glyph = "clock", Name = "FrameChip" };
     public Chip SpeedChip { get; } = new() { Glyph = "clock", Name = "SpeedChip" };
+    public PlayControl PlayButton { get; } = new() { Kind = PlayKind.Play, Name = "PlayButton" };
     public PlayControl StopButton { get; } = new() { Kind = PlayKind.Stop, Name = "StopButton" };
     public PlayControl PauseButton { get; } = new() { Kind = PlayKind.Pause, Name = "PauseButton" };
     public PlayControl StepButton { get; } = new() { Kind = PlayKind.Step, Name = "StepButton" };
@@ -54,6 +55,7 @@ public sealed class PlayModePage : DockPanel
     {
         _s = s;
         _play = PlayController.Of(s);
+        _docTabs = new DocTabStrip(s);
         Name = "PlayModePage";
         LastChildFill = true;
         Focusable = true;
@@ -66,9 +68,11 @@ public sealed class PlayModePage : DockPanel
         ToolTip.SetTip(tools[0], new TipContent(s.Commands.Get("scene.tool.select").Title));
         HitboxesChip.Click += (_, _) => { _play.Hitboxes = !_play.Hitboxes; UpdateChrome(); Game.Screen.InvalidateVisual(); };
         CollisionChip.Click += (_, _) => { _play.TileCollision = !_play.TileCollision; UpdateChrome(); Game.Screen.InvalidateVisual(); };
+        PlayButton.Command = s.Commands.Get("build.play");
         StopButton.Command = s.Commands.Get("play.stop");
         PauseButton.Command = s.Commands.Get("play.pause");
         StepButton.Command = s.Commands.Get("play.frameStep");
+        ToolTip.SetTip(PlayButton, new TipContent("Play", s.Shortcuts.GestureOf("build.play") is { } g ? AgbStudio.Editor.Theme.Shortcuts.Format(g) : "F5"));
         ToolTip.SetTip(StopButton, new TipContent("Stop"));
         ToolTip.SetTip(PauseButton, new TipContent("Pause"));
         ToolTip.SetTip(StepButton, new TipContent("Frame step", "F10"));
@@ -76,7 +80,7 @@ public sealed class PlayModePage : DockPanel
         // the frame number changes every frame: a fixed width with tabular digits keeps the toolbar still
         FrameCounter.Fix(FrameChip, 128);
         var left = UI.Row(8, ToolGroup(tools), HitboxesChip, CollisionChip);
-        var center = UI.Row(4, StopButton, PauseButton, StepButton, SimulatingChip);
+        var center = UI.Row(4, PlayButton, StopButton, PauseButton, StepButton, SimulatingChip);
         var right = UI.Row(8, FrameChip, SpeedChip);
         var bar = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,*,Auto"), VerticalAlignment = VerticalAlignment.Center };
         void At(Control c, int col) { Grid.SetColumn(c, col); c.VerticalAlignment = VerticalAlignment.Center; bar.Children.Add(c); }
@@ -157,14 +161,18 @@ public sealed class PlayModePage : DockPanel
         _panelTabs[1].Count = _play.Console.Entries.Count;
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
-        RebuildTabs();
+        if (_s.Documents.Open.All(d => !d.IsGame))
+        {
+            var gameDoc = new EditorDocument { Name = EditorDocument.GameName, Glyph = "pad", IsClosable = false };
+            _s.Documents.Add(gameDoc);
+        }
+        _s.Documents.Active = _s.Documents.Open.FirstOrDefault(d => d.IsGame);
         UpdateChrome();
         RefreshBudget();
 
-        // Game tab, Build Report › Run in mGBA: start when nothing runs yet
+        // Build Report › Run in mGBA: start when nothing runs yet
         if (args is PlayStart how && _play.State != PlayState.Building) _ = _play.StartAsync(how);
         else if (args is string rom && File.Exists(rom) && _play.State != PlayState.Building) _ = _play.StartAsync(PlayStart.RunBuilt, rom);
-        else if (args is EditorDocument && !_play.IsRunning && _play.State != PlayState.Building) _ = _play.StartAsync(PlayStart.Play);
     }
 
     static Border ToolGroup(IEnumerable<Control> items) => UI.Frame(UI.Row(2, items.ToArray()), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);
@@ -225,25 +233,6 @@ public sealed class PlayModePage : DockPanel
             : _s.Windows.CreatePanel(id);
     }
 
-    void RebuildTabs()
-    {
-        _docTabs.Children.Clear();
-        foreach (var d in _s.Documents.Open)
-        {
-            var isGame = d.Name == "Game";
-            var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = isGame, Height = 33, Name = "Doc_" + d.Name };
-            var doc = d;
-            tab.Activated += (_, _) =>
-            {
-                if (doc.Name == "Game") return;
-                _s.Documents.Active = doc;
-                var target = doc.Name.EndsWith(".map", StringComparison.OrdinalIgnoreCase) ? "T-P03" : doc.Name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ? "T-P04" : "T-P01";
-                _ = _s.Windows.Open(target, target == "T-P01" ? null : doc, source: "Doc_" + doc.Name);
-            };
-            _docTabs.Children.Add(tab);
-        }
-    }
-
     void OnChanged()
     {
         UpdateChrome();
@@ -298,11 +287,10 @@ public sealed class PlayModePage : DockPanel
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _s.Documents.Changed += RebuildTabs;
         _play.Changed += OnChanged;
         _play.FrameUpdated += OnFrame;
         _play.Console.Entries.CollectionChanged += OnConsole;
-        RebuildTabs();
+        _docTabs.Rebuild();
         Game.Screen.Focus();
         OnChanged();
     }
@@ -310,7 +298,6 @@ public sealed class PlayModePage : DockPanel
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-        _s.Documents.Changed -= RebuildTabs;
         _play.Changed -= OnChanged;
         _play.FrameUpdated -= OnFrame;
         _play.Console.Entries.CollectionChanged -= OnConsole;

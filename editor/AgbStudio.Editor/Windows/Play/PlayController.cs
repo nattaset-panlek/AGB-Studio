@@ -179,7 +179,7 @@ public sealed class PlayController : IDisposable
                 BuildResult r;
                 _ownBuild = true;
                 try { r = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
-                catch (InvalidOperationException e) { Console.Add(ConsoleLevel.Error, e.Message); return Fail(); }
+                catch (Exception e) { Console.Add(ConsoleLevel.Error, e.Message); return Fail(); }
                 finally { _ownBuild = false; }
                 if (start != _starts)
                 {
@@ -288,17 +288,24 @@ public sealed class PlayController : IDisposable
     /// <summary>Play from Here: once the game runs, the Debug runtime's hand-over block (D-15) loads the scene the Scene Editor shows.</summary>
     void StartInScene(string scene)
     {
-        var index = WorldReader?.SceneNames.ToList().IndexOf(scene) ?? -1;
-        if (index < 0 || Session is null) return;
-        for (var i = 0; i < 120 && Session.Channel == null; i++) Session.Step();
-        if (Session.Channel == null) return;
-        var block = Session.Core.Memory(0x0203F000, 12);
-        BitConverter.TryWriteBytes(block, 0x544F4841u);
-        BitConverter.TryWriteBytes(block[4..], (ushort)index);
-        BitConverter.TryWriteBytes(block[6..], (short)-1);
-        BitConverter.TryWriteBytes(block[8..], (short)-1);
-        BitConverter.TryWriteBytes(block[10..], (ushort)0);
-        _quietHandover = true;
+        try
+        {
+            var index = WorldReader?.SceneNames.ToList().IndexOf(scene) ?? -1;
+            if (index < 0 || Session is null) return;
+            for (var i = 0; i < 120 && Session.Channel == null; i++) Session.Step();
+            if (Session.Channel == null) return;
+            var block = Session.Core.Memory(0x0203F000, 12);
+            BitConverter.TryWriteBytes(block, 0x544F4841u);
+            BitConverter.TryWriteBytes(block[4..], (ushort)index);
+            BitConverter.TryWriteBytes(block[6..], (short)-1);
+            BitConverter.TryWriteBytes(block[8..], (short)-1);
+            BitConverter.TryWriteBytes(block[10..], (ushort)0);
+            _quietHandover = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Add(ConsoleLevel.Warning, $"Could not start in scene '{scene}': {ex.Message}");
+        }
     }
 
     /// <summary>The pages that show the running game: Play Mode and the Debugger views.</summary>

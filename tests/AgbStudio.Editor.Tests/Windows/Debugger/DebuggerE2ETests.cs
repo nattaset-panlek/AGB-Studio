@@ -288,6 +288,13 @@ public class DebuggerE2ETests : EditorDriver
         Click(Find<DocTab>("Doc_Game"));
         Assert.IsType<PlayModePage>(Win.CurrentPage);
     }
+
+    [AvaloniaFact]
+    public void Tools_Screenshot_ExecutesWithoutError()
+    {
+        Fx.Services.Commands.Execute("tools.screenshot");
+        Capture.Pump();
+    }
 }
 
 /// <summary>Budget Details numbers and suggestions (P13.07) and Build Report history (P13.08).</summary>

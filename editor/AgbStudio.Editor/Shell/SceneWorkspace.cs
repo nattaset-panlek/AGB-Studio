@@ -17,7 +17,7 @@ public sealed class SceneWorkspace : DockPanel
 {
     readonly EditorServices _s;
     readonly IconButton[] _tools;
-    readonly StackPanel _docTabs = new() { Orientation = Orientation.Horizontal };
+    readonly DocTabStrip _docTabs;
     readonly ContentControl _bottomContent = new();
     readonly PanelTab[] _panelTabs;
 
@@ -28,6 +28,7 @@ public sealed class SceneWorkspace : DockPanel
     public SceneWorkspace(EditorServices s, object? args = null)
     {
         _s = s;
+        _docTabs = new DocTabStrip(s);
         Name = "SceneWorkspace";
         LastChildFill = true;
 
@@ -130,8 +131,6 @@ public sealed class SceneWorkspace : DockPanel
         Children.Add(body);
 
         SelectPanel(_panelTabs[0]);
-        s.Documents.Changed += RebuildTabs;
-        RebuildTabs();
     }
 
     void Tip(Control c, string commandId)
@@ -181,27 +180,6 @@ public sealed class SceneWorkspace : DockPanel
         if (row > 0) { Grid.SetRow(g, row); g.Height = 4; g.VerticalAlignment = VerticalAlignment.Top; g.ResizeDirection = GridResizeDirection.Rows; }
         else { Grid.SetColumn(g, col); g.Width = 4; g.HorizontalAlignment = align; g.ResizeDirection = GridResizeDirection.Columns; }
         return g;
-    }
-
-    void RebuildTabs()
-    {
-        _docTabs.Children.Clear();
-        foreach (var d in _s.Documents.Open)
-        {
-            var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = d == _s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
-            var doc = d;
-            tab.Activated += (_, _) => Activate(doc);
-            _docTabs.Children.Add(tab);
-        }
-    }
-
-    void Activate(EditorDocument d)
-    {
-        _s.Documents.Active = d;
-        // #15-#17 of the Editor Map: Game -> Play Mode, .map -> Tilemap Editor, .cs -> Script Editor
-        var target = d.Name == "Game" ? "T-P02" : d.Name.EndsWith(".map", StringComparison.OrdinalIgnoreCase) ? "T-P03"
-            : d.Name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ? "T-P04" : null;
-        if (target != null) _ = _s.Windows.Open(target, d, source: "Doc_" + d.Name);
     }
 
     Border StatusBar(StatusModel m)

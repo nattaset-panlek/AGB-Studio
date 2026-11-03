@@ -103,8 +103,8 @@ public sealed class DatabasePage : ToolPage
         Current = null;
         SelectedRow = -1;
         AllRowsSelected = false;
-        Document = null;
         if (_data?.Tables.FirstOrDefault() is { } first) Select(first, 0, refresh: false);
+        else Document = _data?.Document("Database", "db", null, () => Task.CompletedTask);
     }
 
     protected override void OnShown()
@@ -132,7 +132,7 @@ public sealed class DatabasePage : ToolPage
                 if (_data.StringsDirty) _data.SaveStrings();
                 return Task.CompletedTask;
             });
-            if (old != null && old != Document && !old.IsDirty) S.Documents.Close(old);
+            if (old != null && old != Document && !old.IsDirty) S.Documents.Close(old, showNext: false);
         }
         SelectedRow = table.Table.Rows.Count == 0 ? -1 : Math.Clamp(row, 0, table.Table.Rows.Count - 1);
         AllRowsSelected = false;

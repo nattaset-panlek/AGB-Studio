@@ -13,7 +13,12 @@ public static class Startup
         var prefs = s.Preferences.Current;
         if (prefs.OpenLastProjectOnStart && prefs.LastProject is { } last && File.Exists(last))
         {
-            try { s.Project.Open(last); }
+            try
+            {
+                var p = s.Project.Open(last);
+                s.Documents.EnsureProjectDocuments(p);
+                s.Status.Rom = AgbStudio.Editor.Windows.Launcher.LauncherService.BuildReportLine(p);
+            }
             catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException) { }
         }
         return s.Project.Current is null && s.Windows.IsRegistered("T-P12") ? "T-P12" : "T-P01";

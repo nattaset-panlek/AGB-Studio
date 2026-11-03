@@ -146,7 +146,24 @@ public sealed class SfxDesignerPage : DockPanel
         var centerStack = UI.Column(0, top, graphs, fields);
         centerStack.Margin = new Thickness(20, 14, 20, 14);
         _tab = PageFrame.Tab("", "sound", true);
-        var tabs = PageFrame.DocTabs(PageFrame.Tab("Audio", "music", false, () => _ = s.Windows.Open("T-P15", source: "SfxAudioTab")), _tab);
+        var tabStrip = new StackPanel { Orientation = Orientation.Horizontal };
+        var audioTab = PageFrame.Tab("Audio", "music", false, () => _ = s.Windows.Open("T-P15", source: "SfxAudioTab"));
+        void RebuildTabs()
+        {
+            tabStrip.Children.Clear();
+            tabStrip.Children.Add(audioTab);
+            foreach (var d in s.Documents.Open)
+            {
+                var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = d == s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
+                var doc = d;
+                tab.Activated += (_, _) => Tilemap.PageChrome.Activate(s, doc);
+                tabStrip.Children.Add(tab);
+            }
+        }
+        RebuildTabs();
+        var tabs = UI.Frame(tabStrip, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
+        tabs.Height = 34;
+        Tilemap.PageChrome.WhileAttached(tabs, () => { s.Documents.Changed += RebuildTabs; RebuildTabs(); }, () => s.Documents.Changed -= RebuildTabs);
         var center = new DockPanel();
         DockPanel.SetDock(tabs, Dock.Top);
         center.Children.AddRange([tabs, new ScrollViewer { Content = centerStack, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto }]);
@@ -174,7 +191,7 @@ public sealed class SfxDesignerPage : DockPanel
         Children.Add(PageFrame.Page(toolbar, status, PageFrame.Body(left, center, rightPanel)));
         Load(open);
         AttachedToVisualTree += (_, _) => { if (_doc != null && !_s.Documents.Open.Contains(_doc)) _s.Documents.Add(_doc); if (_doc != null) _s.Documents.Active = _doc; };
-        DetachedFromVisualTree += (_, _) => { StopPreview(); if (_doc is { IsDirty: false }) _s.Documents.Close(_doc); };
+        DetachedFromVisualTree += (_, _) => { StopPreview(); };
     }
 
     static TextBlock Value()
@@ -275,7 +292,7 @@ public sealed class SfxDesignerPage : DockPanel
     {
         if (_doc is { IsDirty: true } && file != FilePath) _ = _s.Documents.SaveAsync(_doc);
         StopPreview();
-        if (_doc != null && file != FilePath && !_doc.IsDirty) _s.Documents.Close(_doc);
+        if (_doc != null && file != FilePath && !_doc.IsDirty) _s.Documents.Close(_doc, showNext: false);
         FilePath = file;
         try { Sfx = file is null ? new SfxFile() : GameProject.Load<SfxFile>(file); }
         catch (Exception e) when (e is IOException or JsonException)

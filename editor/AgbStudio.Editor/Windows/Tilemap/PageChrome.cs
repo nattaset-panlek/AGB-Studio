@@ -70,26 +70,11 @@ public static class PageChrome
         UI.Frame(UI.Row(2, items.ToArray()), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);
 
     /// <summary>Document tabs (34 px) of the open documents; clicking one opens its editor.</summary>
-    /// <param name="page">For a page that is not a document (Scripting API, World Map): its own tab, selected, after the
-    /// documents, none of which is then shown selected. These pages had no tabs, so no way back but the title bar.</param>
     public static Border DocTabs(EditorServices s, string? page = null, string pageGlyph = "book")
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Stretch };
-        void Rebuild()
-        {
-            row.Children.Clear();
-            foreach (var d in s.Documents.Open)
-            {
-                var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = page is null && d == s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
-                var doc = d;
-                tab.Activated += (_, _) => Activate(s, doc);
-                row.Children.Add(tab);
-            }
-            if (page != null) row.Children.Add(new DocTab { Label = page, Glyph = pageGlyph, IsSelected = true, Height = 33, Name = "Doc_" + page.Replace(" ", "") });
-        }
-        Rebuild();
-        var frame = UI.Frame(row, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
-        WhileAttached(frame, () => { s.Documents.Changed += Rebuild; Rebuild(); }, () => s.Documents.Changed -= Rebuild);
+        if (page != null) s.Documents.EnsureToolDocument(page, pageGlyph);
+        var strip = new DocTabStrip(s);
+        var frame = UI.Frame(strip, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
         frame.Height = 34;
         return frame;
     }
@@ -103,15 +88,20 @@ public static class PageChrome
         if (n.EndsWith(".map", StringComparison.OrdinalIgnoreCase)) return "T-P03";
         if (n.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) return "T-P04";
         if (n.EndsWith(".font", StringComparison.OrdinalIgnoreCase)) return "T-P09";
-        if (n.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) return "T-P08";
+        if (n.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".aseprite", StringComparison.OrdinalIgnoreCase)) return "T-P08";
         // the other editors' documents: a tab of theirs used to make the document active without showing its page
-        if (n.EndsWith(".db", StringComparison.OrdinalIgnoreCase)) return "T-P07";
-        if (n.EndsWith(".dlg", StringComparison.OrdinalIgnoreCase)) return "T-P16";
-        if (n.EndsWith(".sfx", StringComparison.OrdinalIgnoreCase)) return "T-P25";
-        if (n.EndsWith(".xm", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".mod", StringComparison.OrdinalIgnoreCase)
+        if (d.Name == "Database" || n.EndsWith(".db", StringComparison.OrdinalIgnoreCase)) return "T-P07";
+        if (d.Name == "Localization") return "T-P14";
+        if (d.Name == "Scripting API") return "T-P18";
+        if (d.Name == "World Map") return "T-P13";
+        if (d.Name == "Debugger") return "T-P19";
+        if (d.Name == "Audio" || n.EndsWith(".xm", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".mod", StringComparison.OrdinalIgnoreCase)
             || n.EndsWith(".s3m", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".it", StringComparison.OrdinalIgnoreCase)) return "T-P15";
+        if (d.Name == "Dialogue Editor" || n.EndsWith(".dlg", StringComparison.OrdinalIgnoreCase)) return "T-P16";
+        if (n.EndsWith(".sfx", StringComparison.OrdinalIgnoreCase)) return "T-P25";
         if (d.Name == Palette.PaletteManagerPage.DocumentName) return "T-P10";
-        if (d.Path is null && d.Glyph == "nodes") return "T-P17";
+        if (d.Name == "Build Report" || n.EndsWith("report.json", StringComparison.OrdinalIgnoreCase)) return "T-P11";
+        if (d.Name == "Logic Graph" || (d.Path is null && d.Glyph == "nodes") || n.EndsWith(".graph", StringComparison.OrdinalIgnoreCase)) return "T-P17";
         return null;
     }
 
@@ -119,7 +109,7 @@ public static class PageChrome
     /// Database, Palette Manager), the file path for the audio and dialogue pages, else the document.</summary>
     static object? ArgsFor(string window, EditorDocument d) => window switch
     {
-        "T-P01" or "T-P07" or "T-P10" => null,
+        "T-P01" or "T-P07" or "T-P10" or "T-P11" or "T-P13" or "T-P14" or "T-P18" or "T-P19" => null,
         "T-P15" or "T-P16" or "T-P25" => d.Path,
         _ => d,
     };

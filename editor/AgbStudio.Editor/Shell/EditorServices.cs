@@ -71,6 +71,12 @@ public sealed class EditorServices : IServiceProvider
             Status = new StatusModel(),
         };
         s.System = new SystemShell(() => s.Top);
+        documents.DocumentActivated = doc => AgbStudio.Editor.Windows.Tilemap.PageChrome.Activate(s, doc);
+        project.Changed += () =>
+        {
+            if (project.Current != null)
+                documents.EnsureProjectDocuments(project.Current);
+        };
         windows.Services = s;
         windows.Discover(commands, [typeof(EditorServices).Assembly, .. extensions]);
         return s;

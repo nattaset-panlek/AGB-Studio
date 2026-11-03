@@ -18,7 +18,7 @@ public abstract class ToolPage : DockPanel
     protected EditorServices S { get; }
     public EditorServices Services => S;
     readonly StackPanel _toolbarLeft = new() { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
-    readonly StackPanel _docTabs = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Stretch };
+    readonly DocTabStrip _docTabs;
     readonly Border _left, _right, _content;
     readonly StackPanel _statusLeft = new() { Orientation = Orientation.Horizontal, Spacing = 16 };
     readonly StackPanel _statusRight = new() { Orientation = Orientation.Horizontal, Spacing = 16 };
@@ -27,6 +27,7 @@ public abstract class ToolPage : DockPanel
     protected ToolPage(EditorServices s, string name)
     {
         S = s;
+        _docTabs = new DocTabStrip(s);
         Name = name;
         LastChildFill = true;
 
@@ -81,7 +82,8 @@ public abstract class ToolPage : DockPanel
         body.Children.Add(center);
         Children.Add(body);
 
-        AttachedToVisualTree += (_, _) => OnShown();
+        AttachedToVisualTree += (_, _) => { S.Documents.Changed += RebuildTabs; RebuildTabs(); OnShown(); };
+        DetachedFromVisualTree += (_, _) => S.Documents.Changed -= RebuildTabs;
         // the Scene tab is there before the page has a document of its own (Dialogue Editor without a .dlg): the tab row
         // was empty, so the page had no way back
         RebuildTabs();
@@ -96,8 +98,12 @@ public abstract class ToolPage : DockPanel
             if (_doc == value) return;
             if (_doc != null) _doc.PropertyChanged -= OnDocChanged;
             _doc = value;
-            if (_doc != null) _doc.PropertyChanged += OnDocChanged;
-            RebuildTabs();
+            if (_doc != null)
+            {
+                _doc.PropertyChanged += OnDocChanged;
+                if (!S.Documents.Open.Contains(_doc)) S.Documents.Add(_doc);
+            }
+            _docTabs.Rebuild();
             if (IsAttached && _doc != null) S.Documents.Active = _doc;
         }
     }
@@ -134,16 +140,7 @@ public abstract class ToolPage : DockPanel
     /// <summary>A Figma tool group: bg/base, border, radius 7, padding 2, icon buttons 2 px apart.</summary>
     public static Border ToolGroup(IEnumerable<Control> items) => UI.Frame(UI.Row(2, items.ToArray()), "bg/base", "border/default", new Thickness(1), new Thickness(2), 7);
 
-    void RebuildTabs()
-    {
-        _docTabs.Children.Clear();
-        var scene = new DocTab { Label = "Scene", Glyph = "map", Height = 33, Name = "Doc_Scene" };
-        scene.Activated += (_, _) => GoToScene();
-        _docTabs.Children.Add(scene);
-        if (_doc == null) return;
-        var tab = new DocTab { Label = _doc.Path is { } p ? Path.GetFileName(p) : _doc.Name, Glyph = _doc.Glyph, IsDirty = _doc.IsDirty, IsSelected = true, Height = 33, Name = "Doc_Page" };
-        _docTabs.Children.Add(tab);
-    }
+    void RebuildTabs() => _docTabs.Rebuild();
 
     public IReadOnlyList<DocTab> DocTabs => _docTabs.Children.OfType<DocTab>().ToList();
 

@@ -112,11 +112,7 @@ public static class PageParts
             {
                 var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = d == s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
                 var doc = d;
-                tab.Activated += (_, _) =>
-                {
-                    s.Documents.Active = doc;
-                    if (WindowOf(doc) is { } w) _ = s.Windows.Open(w, w is "T-P08" or "T-P03" or "T-P04" or "T-P02" ? doc : null, source: "Doc_" + doc.Name);
-                };
+                tab.Activated += (_, _) => Tilemap.PageChrome.Activate(s, doc);
                 row.Children.Add(tab);
             }
         }

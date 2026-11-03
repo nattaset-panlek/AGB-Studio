@@ -136,17 +136,7 @@ public sealed class DebuggerPage : DockPanel, IPageBreadcrumb
         body.Children.Add(leftPanel);
 
         var center = new DockPanel();
-        // a Scene tab before Game and Debugger: without a running game the only tab (Game) started a build to get back
-        var tabs = UI.Row(0,
-            DocTabOf("Scene", "map", false, () =>
-            {
-                if (s.Documents.Open.FirstOrDefault(Services.EditorDocument.IsSceneDocument) is { } scene) s.Documents.Active = scene;
-                _ = s.Windows.Open("T-P01", source: "DebuggerSceneTab");
-            }),
-            DocTabOf("Game", "pad", false, () => _ = s.Windows.Open("T-P02", source: "DebuggerGameTab")),
-            DocTabOf("Debugger", "bug", true, null));
-        var tabRow = UI.Frame(tabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
-        tabRow.Height = 34;
+        var tabRow = Tilemap.PageChrome.DocTabs(s, "Debugger", "bug");
         DockPanel.SetDock(tabRow, Avalonia.Controls.Dock.Top);
         center.Children.Add(tabRow);
         center.Children.Add(new ScrollViewer { Content = _center, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto });
@@ -231,6 +221,8 @@ public sealed class DebuggerPage : DockPanel, IPageBreadcrumb
     /// <summary>Reads the model into the visible view, toolbar and status bar.</summary>
     public void Refresh()
     {
+        try
+        {
         var play = _m.Play;
         ArmButton.IsActive = _m.Armed;
         PausedChip.IsVisible = _m.IsPaused;
@@ -259,6 +251,11 @@ public sealed class DebuggerPage : DockPanel, IPageBreadcrumb
             case DebuggerView.Profiler: ProfilerCenter.Refresh(); Profiler.Refresh(); break;
             case DebuggerView.Breakpoints: BreakpointsCenter.Refresh(); Profiler.Refresh(); break;
             default: Vram.Refresh(); Profiler.Refresh(); break;
+        }
+        }
+        catch (Exception ex)
+        {
+            _s.Status.Build = $"Debugger: {ex.Message}";
         }
     }
 

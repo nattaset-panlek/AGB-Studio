@@ -88,7 +88,7 @@ public sealed class AudioPage : DockPanel
         right.Children.Add(new ScrollViewer { Content = _inspector, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled });
 
         _trackTab = PageFrame.Tab("", "music", true);
-        var tabs = PageFrame.DocTabs(PageFrame.Tab("Scene", "map", false, () => _ = s.Windows.Open("T-P01", source: "AudioSceneTab")), _trackTab);
+        var tabs = Tilemap.PageChrome.DocTabs(s);
         var center = new DockPanel();
         DockPanel.SetDock(tabs, Dock.Top);
         center.Children.AddRange([tabs, _center]);
@@ -98,7 +98,7 @@ public sealed class AudioPage : DockPanel
         _timer.Tick += (_, _) => Tick();
         Reload(select);
         AttachedToVisualTree += (_, _) => { if (_doc != null && !_s.Documents.Open.Contains(_doc)) _s.Documents.Add(_doc); if (_doc != null) _s.Documents.Active = _doc; };
-        DetachedFromVisualTree += (_, _) => { StopPreview(); if (_doc is { IsDirty: false }) _s.Documents.Close(_doc); };
+        DetachedFromVisualTree += (_, _) => { StopPreview(); };
     }
 
     static string EngineText(EditorServices s)
@@ -193,7 +193,7 @@ public sealed class AudioPage : DockPanel
     {
         if (_doc is { IsDirty: true } && file != Track) _ = _s.Documents.SaveAsync(_doc);
         StopPreview();
-        if (_doc != null && file != Track && !_doc.IsDirty) _s.Documents.Close(_doc);
+        if (_doc != null && file != Track && !_doc.IsDirty) _s.Documents.Close(_doc, showNext: false);
         Track = file;
         Module = null;
         Analysis = null;

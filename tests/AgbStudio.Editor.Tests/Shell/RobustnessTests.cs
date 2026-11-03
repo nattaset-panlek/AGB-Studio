@@ -141,6 +141,9 @@ public sealed class RobustnessTests : IDisposable
         s.Preferences.Update(p => { p.LastProject = project; p.OpenLastProjectOnStart = true; });
         Assert.Equal("T-P01", Startup.Choose(s));
         Assert.Equal(Path.GetFullPath(project), Path.GetFullPath(s.Project.Current!.ProjectPath));
+        Assert.True(s.Documents.Open.Count >= 2);
+        Assert.Equal("Scene", s.Documents.Open[0].Name);
+        Assert.Equal("Game", s.Documents.Open[1].Name);
         s.Project.Close();
         // preference off: the Launcher, nothing opened
         s.Preferences.Update(p => p.OpenLastProjectOnStart = false);

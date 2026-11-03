@@ -250,8 +250,8 @@
     <Setter Property="Height" Value="52" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Border BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="20,0,16,0">
-          <DockPanel HorizontalSpacing="10">
+        <Border Background="Transparent" BorderBrush="{DynamicResource border/default}" BorderThickness="0,0,0,1" Padding="20,0,16,0">
+          <DockPanel Background="Transparent" HorizontalSpacing="10">
             <g:Icon DockPanel.Dock="Left" Glyph="{TemplateBinding Glyph}" Size="16" Foreground="{DynamicResource text/secondary}" VerticalAlignment="Center"
                     IsVisible="{TemplateBinding Glyph, Converter={x:Static t:Conv.NotEmpty}}" />
             <c:IconButton Name="PART_Close" DockPanel.Dock="Right" Glyph="x" VerticalAlignment="Center" />

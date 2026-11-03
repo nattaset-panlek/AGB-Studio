@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using AgbStudio.Editor.Commands;
 using AgbStudio.Editor.Controls;
@@ -32,7 +32,7 @@ public sealed class ScriptEditorPage : DockPanel
     readonly ScriptWorkspace _ws;
     readonly StackPanel _scriptList = new() { Spacing = 1, Margin = new Thickness(6, 4, 6, 4), Name = "ScriptList" };
     readonly StackPanel _outline = new() { Spacing = 1, Margin = new Thickness(6, 4, 6, 4), Name = "Outline" };
-    readonly StackPanel _docTabs = new() { Orientation = Orientation.Horizontal, Name = "DocTabs" };
+    readonly DocTabStrip _docTabs;
     readonly StackPanel _breadcrumb = new() { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center, Name = "Breadcrumb" };
     readonly StackPanel _side = new() { Name = "SidePanel" };
     readonly StackPanel _problems = new() { Spacing = 2, Margin = new Thickness(12, 8, 12, 8), Name = "Problems" };
@@ -63,6 +63,7 @@ public sealed class ScriptEditorPage : DockPanel
     public ScriptEditorPage(EditorServices s, object? args = null)
     {
         _s = s;
+        _docTabs = new DocTabStrip(s);
         _ws = ScriptWorkspace.Of(s);
         Name = "ScriptEditorPage";
         LastChildFill = true;
@@ -150,6 +151,10 @@ public sealed class ScriptEditorPage : DockPanel
         Editor.CaretMoved += UpdateCaret;
         // Project Settings › Scripting › "Show inline hints in the editor": the analyzer hint opens next to the code
         Editor.IssueActivated += issue => { if (InlineHints) _ = ShowPopupAsync(issue); };
+        Editor.AddHandler(PointerPressedEvent, (_, _) =>
+        {
+            if (Popup != null && !Popup.IsPointerOver) ClosePopup();
+        }, RoutingStrategies.Tunnel);
         // breakpoints (Debugger, P13.06): click a line number or press F9
         Editor.GutterClicked += line => ToggleBreakpoint(line);
         Editor.HasBreakpoint = line => Buffer is { } b && s.GetService(typeof(Debugger.DebuggerModel)) is Debugger.DebuggerModel dm && dm.HasBreakpoint(b.Path, line);
@@ -354,32 +359,20 @@ public sealed class ScriptEditorPage : DockPanel
         }
     }
 
-    void RebuildTabs()
-    {
-        _docTabs.Children.Clear();
-        foreach (var d in _s.Documents.Open)
-        {
-            var tab = new DocTab { Label = d.Name, Glyph = d.Glyph, IsDirty = d.IsDirty, IsSelected = d == _s.Documents.Active, Height = 33, Name = "Doc_" + d.Name };
-            var doc = d;
-            tab.Activated += (_, _) => ActivateDocument(doc);
-            _docTabs.Children.Add(tab);
-        }
-    }
+    void RebuildTabs() => _docTabs.Rebuild();
 
     void ActivateDocument(EditorDocument d)
     {
         if (d.Path != null && d.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) && File.Exists(d.Path)) { Open(d.Path); return; }
-        _s.Documents.Active = d;
-        // the same routes as the Scene Editor Doc Tabs: Game, .map, .db, the scene
-        var target = d.Name == "Game" ? "T-P02" : d.Name.EndsWith(".map", StringComparison.OrdinalIgnoreCase) ? "T-P03"
-            : d.Name.EndsWith(".db", StringComparison.OrdinalIgnoreCase) ? "T-P07" : d.Name.EndsWith(".graph", StringComparison.OrdinalIgnoreCase) ? "T-P17" : "T-P01";
-        _ = _s.Windows.Open(target, target == "T-P01" ? null : d, source: "Doc_" + d.Name);
+        Tilemap.PageChrome.Activate(_s, d);
     }
 
     void UpdateCaret()
     {
         _statusCaret.Content = $"Ln {Editor.CaretLine}, Col {Editor.CaretColumn}";
         _breadcrumb.Children.Clear();
+        if (Popup != null && (Buffer is null || Editor.CaretOffset < Popup.Issue.Start || Editor.CaretOffset > Popup.Issue.End))
+            ClosePopup();
         if (Buffer is null) return;
         var root = _s.Project.Current?.Root;
         var folder = root is null ? "scripts" : Path.GetRelativePath(root, Path.GetDirectoryName(Buffer.Path)!).Replace('\\', '/');
@@ -762,7 +755,12 @@ public sealed class DiagnosticPopup : Border
         var bulb = PageChrome.Glyph("bulb", 16, issue.Severity == ScriptSeverity.Error ? "status/danger" : "status/warning");
         var title = UI.Text(issue.Title, "Body/12 Semibold", "text/primary");
         title.TextWrapping = TextWrapping.Wrap;
-        var head = UI.Row(10, bulb, title);
+        var closeBtn = new AgbButton { Glyph = "x", Kind = ButtonKind.Ghost, Padding = new Thickness(4), VerticalAlignment = VerticalAlignment.Top };
+        closeBtn.Click += (_, _) => Dismissed?.Invoke();
+        var head = new DockPanel();
+        DockPanel.SetDock(closeBtn, Dock.Right);
+        head.Children.Add(closeBtn);
+        head.Children.Add(UI.Row(10, bulb, title));
         var body = UI.Text(issue.Description, "Label/11", "text/secondary");
         body.TextWrapping = TextWrapping.Wrap;
         Child = UI.Column(8, head, body, _buttons);

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <AssemblyName>AGBStudio</AssemblyName>
@@ -23,9 +23,10 @@
     <ProjectReference Include="..\..\tools\AgbStudio.Build\AgbStudio.Build.csproj" />
     <ProjectReference Include="..\..\tools\AgbStudio.Emu\AgbStudio.Emu.csproj" />
     <ProjectReference Include="..\..\tools\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
+    <ProjectReference Include="..\..\tools\AgbStudio.Mcp\AgbStudio.Mcp.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- the user guides, opened offline from the install (Launcher › Learn) -->
+    <!-- the user guides, opened offline from the install (Launcher � Learn) -->
     <None Include="..\..\docs\user\**\*.md" Link="docs\user\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

@@ -134,6 +134,7 @@ public sealed class MainWindow : Window, IShellHost
     public void ShowPage(string id, Control page)
     {
         CurrentPageId = id;
+        EnsureDocumentForPage(id);
         _page.Content = page;
         // a page that changes the documents while it is being detached (it closes its own Doc Tab) could leave the new
         // page out of the window, an empty workspace: put it in again
@@ -141,6 +142,23 @@ public sealed class MainWindow : Window, IShellHost
         SettleActiveDocument(id);
         UpdateTitle();
         PageShown?.Invoke(id);
+    }
+
+    void EnsureDocumentForPage(string id)
+    {
+        if (_s.Documents.Open.Any(d => Windows.Tilemap.PageChrome.WindowFor(d) == id)) return;
+        switch (id)
+        {
+            case "T-P07": _s.Documents.EnsureToolDocument("Database", "db"); break;
+            case "T-P14": _s.Documents.EnsureToolDocument("Localization", "globe"); break;
+            case "T-P18": _s.Documents.EnsureToolDocument("Scripting API", "book"); break;
+            case "T-P13": _s.Documents.EnsureToolDocument("World Map", "map"); break;
+            case "T-P10": _s.Documents.EnsureToolDocument(Windows.Palette.PaletteManagerPage.DocumentName, "sliders"); break;
+            case "T-P15": _s.Documents.EnsureToolDocument("Audio", "sound"); break;
+            case "T-P16": _s.Documents.EnsureToolDocument("Dialogue Editor", "nodes"); break;
+            case "T-P17": _s.Documents.EnsureToolDocument("Logic Graph", "nodes"); break;
+            case "T-P19": _s.Documents.EnsureToolDocument("Debugger", "bug"); break;
+        }
     }
 
     /// <summary>After a page was shown (navigation tests, crash logs).</summary>
@@ -155,7 +173,18 @@ public sealed class MainWindow : Window, IShellHost
     {
         var docs = _s.Documents;
         if (docs.Active is { } a && !docs.Open.Contains(a)) docs.Active = null;
-        if (id == "T-P02") return;
+        if (id == "T-P02")
+        {
+            var game = docs.Open.FirstOrDefault(d => d.IsGame);
+            if (game != null) docs.Active = game;
+            return;
+        }
+        var match = docs.Open.FirstOrDefault(d => Windows.Tilemap.PageChrome.WindowFor(d) == id);
+        if (match != null)
+        {
+            docs.Active = match;
+            return;
+        }
         var scene = docs.Open.FirstOrDefault(EditorDocument.IsSceneDocument);
         if (docs.Active?.IsGame == true) docs.Active = scene ?? docs.Open.FirstOrDefault(d => !d.IsGame);
         else if (id == "T-P01" && scene != null && !EditorDocument.IsSceneDocument(docs.Active)) docs.Active = scene;

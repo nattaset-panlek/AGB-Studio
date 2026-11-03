@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using AgbStudio.Editor.Controls;
+using Avalonia.Threading;
 
 namespace AgbStudio.Editor.Windows.Play;
 
@@ -28,6 +29,16 @@ public sealed class PlayConsole
     public ConsoleEntry Add(ConsoleLevel level, string text)
     {
         var e = new ConsoleEntry(Clock(), level, text);
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                Entries.Add(e);
+                while (Entries.Count > MaxLines) Entries.RemoveAt(0);
+                Added?.Invoke(e);
+            });
+            return e;
+        }
         Entries.Add(e);
         while (Entries.Count > MaxLines) Entries.RemoveAt(0);
         Added?.Invoke(e);
