@@ -50,6 +50,7 @@ public class ApiTour : Behaviour
             Game.score += 10;
             other.Destroy();
         }
+        UI.Open("Bag", 1); UI.SetAmount("Hp", UI.GetAmount("Hp")); UI.SetOn("T", UI.IsOn("T")); UI.SetHidden("T", UI.WasChosen("T") || UI.IsOpen("Bag") || UI.AnyOpen()); if (UI.Data > 0) UI.Close();
         other.SetParent(actor);
         other.SetParent(null);
         if (other.parent == actor) other.SetActive(other.activeSelf);

@@ -122,6 +122,14 @@ void TextBox::fillRect(int x, int y, int w, int h, u8 index) {
     markDirty(y, y + h - 1);
 }
 
+void TextBox::blit(const u8* pixels, int stride, int w, int h, int x, int y) {
+    if (!tiles_) return;
+    for (int r = 0; r < h; ++r)
+        for (int c = 0; c < w; ++c)
+            if (const u8 index = pixels[r * stride + c]) setPixel(x + c, y + r, index);
+    markDirty(y, y + h - 1);
+}
+
 void TextBox::drawPanelFrame(Style style) {
     if (!tiles_) return;
     const int w = w_ * 8;

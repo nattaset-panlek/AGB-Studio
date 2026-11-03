@@ -512,6 +512,7 @@ void boot(const GameDef& def) {
     g_paused = false;
     actors::reset();
     ui::setKit(def.ui);
+    ui::setPages(def.pages);
     g_sceneScreen = new (g_sceneScreenStorage) SceneScreen();
 #if defined(AGB_DEBUG)
     const bool splash = def.splash && !def.skipSplash;
@@ -624,6 +625,7 @@ void replace(Screen* screen) {
 
 Screen* top() { return g_depth ? g_stack[g_depth - 1] : nullptr; }
 int depth() { return g_depth; }
+Screen* at(int depth) { return depth >= 0 && depth < g_depth ? g_stack[depth] : nullptr; }
 const GameDef& def() { return *g_def; }
 
 void loadScene(u16 index, int spawnX, int spawnY, render::effects::Transition t, u16 frames) {

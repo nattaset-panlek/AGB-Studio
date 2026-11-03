@@ -10,6 +10,7 @@
 #include "agb/rng.hpp"
 #include "agb/script.hpp"
 #include "agb/text.hpp"
+#include "agb/ui.hpp"
 
 namespace agb {
 
@@ -94,6 +95,26 @@ struct UI {
     static void ShowDialog(u16 textKey, int /*style*/ = 0) {
         text::say(textKey);
     }
+    static bool Open(const char* page, int data = 0) { return ui::openPage(page, data); }
+    static void Close() { ui::closePage(); }
+    static bool IsOpen(const char* page) { return ui::pageOpen(page); }
+    static bool AnyOpen() { return ui::pageOpen(); }
+    static int Data() { return ui::pageData(); }
+    static bool WasChosen(const char* element) {
+        static const char* last = nullptr;
+        if (const char* now = ui::pageChosen()) last = now;
+        if (!last) return false;
+        for (const char* a = last; *a || *element; ++a, ++element)
+            if (*a != *element) return false;
+        last = nullptr;
+        return true;
+    }
+    static void SetText(const char* element, u16 textKey) { ui::setPageText(element, ui::Label{static_cast<s16>(textKey), nullptr}); }
+    static void SetHidden(const char* element, bool hidden) { ui::setPageHidden(element, hidden); }
+    static void SetAmount(const char* element, int amount) { ui::setPageAmount(element, amount); }
+    static int GetAmount(const char* element) { return ui::pageAmount(element); }
+    static void SetOn(const char* element, bool on) { ui::setPageOn(element, on); }
+    static bool IsOn(const char* element) { return ui::pageOn(element); }
 };
 
 struct Random {

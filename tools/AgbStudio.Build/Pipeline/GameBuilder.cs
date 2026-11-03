@@ -65,7 +65,7 @@ public sealed class ScriptOutput
 }
 
 /// <summary>Builds a project into a .gba: scripts, assets, C++ codegen, devkitARM, gbafix, report.</summary>
-public sealed class GameBuilder
+public sealed partial class GameBuilder
 {
     public const string StepScripts = "C# → C++";
     public const string StepAssets = "Convert assets";
@@ -702,10 +702,11 @@ public sealed class GameBuilder
         _maps.Clear();
         foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
         GeneratePrefabs();
+        GenerateUiPages(names);
         foreach (var (file, scene) in scenes) CheckHardwareLimits(file, scene);
         CheckSaveFits();
         var splash = GenerateSplash();
-        var ui = GenerateUiKit(names, scenes.Any(s => s.Scene.Menu != null));
+        var ui = GenerateUiKit(names, _hasPages || scenes.Any(s => s.Scene.Menu != null));
         GenerateGameDef(names, splash, ui);
         return $"{scenes.Count} scenes";
     }
@@ -763,6 +764,8 @@ public sealed class GameBuilder
         if (tiles > BgVramBytes)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {tiles / 1024} KB of background VRAM; the GBA has 64 KB. " +
                 "Use fewer layers, a smaller tileset, or image layers with more repeated tiles."));
+        else if (tiles + _largestPageBytes > BgVramBytes)
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} leaves too little background VRAM for the largest UI page ({_largestPageBytes / 1024} KB), so that page won't open in this scene. Make the page smaller, or use a smaller tileset."));
         if (banks > SceneBgBanks)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {banks} background palettes; {SceneBgBanks} are free " +
                 "(of 16, two hold the menus and text). Reduce the colours of its tileset or images (Import Asset \"Reduce to 16\")."));
@@ -1305,7 +1308,8 @@ public sealed class GameBuilder
         if (_prefabCount > 0) sb.Append("extern const agb::PrefabDef agb_prefabs[];\n");
         foreach (var f in _p.SceneFiles()) sb.Append($"extern const agb::SceneDef agbasset_scene_{Cpp.Ident(GameProject.AssetName(f))};\n");
         if (_languages.Count > 0) sb.Append("#include \"agb/text.hpp\"\n");
-        if (splash || ui) sb.Append("#include \"agb/ui.hpp\"\n");
+        if (splash || ui || _hasPages) sb.Append("#include \"agb/ui.hpp\"\n");
+        if (_hasPages) sb.Append("extern const agb::ui::PageSet agb_pages;\n");
         if (ScriptsCompiled) sb.Append($"#include \"{_scriptOut.RegistryHeader}\"\n");
         if (splash) sb.Append("extern const agb::ui::Splash agb_splash;\n");
         if (ui) sb.Append("extern const agb::ui::Kit agb_ui;\n");
@@ -1342,7 +1346,7 @@ public sealed class GameBuilder
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
         sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount},\n");
-        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}, {(_musicIds.Count > 0 ? "agb_soundbank_music" : "nullptr")}, {_musicIds.Count}}};\n");
+        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}, {(_musicIds.Count > 0 ? "agb_soundbank_music" : "nullptr")}, {_musicIds.Count}{(_hasPages ? ", &agb_pages" : "")}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");

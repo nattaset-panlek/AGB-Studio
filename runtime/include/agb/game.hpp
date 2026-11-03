@@ -12,6 +12,7 @@ namespace agb::ui {
 struct MenuDef;
 struct Kit;
 struct Splash;
+struct PageSet;
 }  // namespace agb::ui
 
 namespace agb {
@@ -116,6 +117,7 @@ struct GameDef {
     u16 prefabCount;
     const void* music;         // agb::audio::MusicInfo by module id: MusicMeta volume, loop start, fade (nullptr = none)
     u16 musicCount;
+    const ui::PageSet* pages = nullptr;  // UI pages (ui/*.uipage), nullptr = none
 };
 
 namespace game {
@@ -132,6 +134,7 @@ void push(Screen* screen);  // overlay or sub-screen; the screen must live in pe
 void pop();
 void replace(Screen* screen);
 Screen* top();
+Screen* at(int depth);  // 0 = the bottom of the stack
 int depth();
 const GameDef& def();
 

@@ -192,6 +192,57 @@ public static class UI
         Text.Show(textKey);
     }
 
+    /// <summary>Opens a UI page (ui/&lt;Name&gt;.uipage) over the scene. The scene waits until the page closes.</summary>
+    /// <param name="page">The page's name.</param>
+    /// <param name="data">A number the page's script can read with <see cref="Data"/>.</param>
+    /// <returns>False when there is no such page or too many are open.</returns>
+    [Cpp("agb::api::UI::Open({0}, {1})")]
+    public static bool Open(string page, int data = 0) => true;
+
+    /// <summary>Closes the UI page on top.</summary>
+    [Cpp("agb::api::UI::Close()")]
+    public static void Close() { }
+
+    /// <summary>True while the named UI page is open.</summary>
+    [Cpp("agb::api::UI::IsOpen({0})")]
+    public static bool IsOpen(string page) => false;
+
+    /// <summary>True while any UI page is open.</summary>
+    [Cpp("agb::api::UI::AnyOpen()")]
+    public static bool AnyOpen() => false;
+
+    /// <summary>The number the top page was opened with.</summary>
+    [Cpp("agb::api::UI::Data()")]
+    public static int Data => 0;
+
+    /// <summary>True once when the named Button or Toggle was the last one pressed with A.</summary>
+    [Cpp("agb::api::UI::WasChosen({0})")]
+    public static bool WasChosen(string element) => false;
+
+    /// <summary>Changes the text of an element on the top page.</summary>
+    [Cpp("agb::api::UI::SetText({0}, {1})")]
+    public static void SetText(string element, [Asset(AssetKind.Text)] string textKey) { }
+
+    /// <summary>Hides or shows an element, and its children, on the top page.</summary>
+    [Cpp("agb::api::UI::SetHidden({0}, {1})")]
+    public static void SetHidden(string element, bool hidden) { }
+
+    /// <summary>Sets the value of a Slider or filled Image on the top page, 0 to 100.</summary>
+    [Cpp("agb::api::UI::SetAmount({0}, {1})")]
+    public static void SetAmount(string element, int amount) { }
+
+    /// <summary>The value of a Slider or filled Image on the top page, 0 to 100.</summary>
+    [Cpp("agb::api::UI::GetAmount({0})")]
+    public static int GetAmount(string element) => 0;
+
+    /// <summary>Turns a Toggle on the top page on or off.</summary>
+    [Cpp("agb::api::UI::SetOn({0}, {1})")]
+    public static void SetOn(string element, bool on) { }
+
+    /// <summary>True when a Toggle on the top page is on.</summary>
+    [Cpp("agb::api::UI::IsOn({0})")]
+    public static bool IsOn(string element) => false;
+
     /// <summary>Loads and instantiates a UI widget prefab onto the screen (Unreal-style Widget Blueprint / Unity UI Prefab).</summary>
     public static Actor LoadWidget(string prefabName)
     {

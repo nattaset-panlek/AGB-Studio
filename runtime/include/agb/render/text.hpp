@@ -45,6 +45,8 @@ public:
     void drawGlyph(const data::Font& font, u16 glyph, int x, int y);
     u8 pixel(int x, int y) const;  // palette index in the tile buffer (tests)
     void fillRect(int x, int y, int w, int h, u8 index);
+    // Copies w x h pixels of an 8-bit indexed image (`stride` pixels a row) to (x, y); index 0 stays see-through.
+    void blit(const u8* pixels, int stride, int w, int h, int x, int y);
     // Runtime ASCII text (HUD numbers); returns the pen x after the text.
     int drawAscii(const data::Font& font, const char* text, int x, int y);
     // Draws every glyph of a run now with its top-left at (x, y) (menus and titles).

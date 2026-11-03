@@ -30,6 +30,7 @@ public sealed class GameProject
     public string DialogueDir => Path.Combine(Root, "dialogue");
     public string SfxDir => Path.Combine(Root, "audio", "sfx");
     public string PalettesDir => Path.Combine(AssetsDir, "palettes");  // imported .pal / .gpl palettes (Import Asset)
+    public string UiDir => Path.Combine(Root, "ui");                // UI pages: ui/<Name>.uipage
     public string PrefabsDir => Path.Combine(Root, "prefabs");      // Make Prefab: prefabs/<Name>.prefab (an ActorData)
     // Project Settings · Build · Output folder (default "build/"), relative to the project folder.
     public string BuildDir => Path.Combine(Root, string.IsNullOrWhiteSpace(Settings.Build.Output) ? "build" : Settings.Build.Output.Trim().TrimEnd('/', '\\').Replace('/', Path.DirectorySeparatorChar));
@@ -113,6 +114,7 @@ public sealed class GameProject
     public IEnumerable<string> DialogueFiles() => Files(DialogueDir, "*.dlg");
     public IEnumerable<string> SfxFiles() => Files(SfxDir, "*.sfx");
     public IEnumerable<string> PrefabFiles() => Files(PrefabsDir, "*.prefab");
+    public IEnumerable<string> UiPageFiles() => Files(UiDir, "*.uipage");
     public IEnumerable<string> PaletteFiles() => Files(PalettesDir, "*.pal").Concat(Files(PalettesDir, "*.gpl")).OrderBy(f => f, StringComparer.OrdinalIgnoreCase);
     public IEnumerable<string> SpriteFiles() => Images(Path.Combine(AssetsDir, "sprites"));
     public IEnumerable<string> TilesetFiles() => Images(Path.Combine(AssetsDir, "tilesets"));

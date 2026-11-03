@@ -588,8 +588,10 @@ namespace {
 AGB_EWRAM_BSS u8 g_pauseStorage[sizeof(PauseScreen)] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_optionsStorage[sizeof(OptionsScreen)] AGB_ALIGN4;
 
+bool isPage(const Screen* s);
+
 bool isOverlay(const Screen* s) {
-    return s && (s == reinterpret_cast<const Screen*>(g_pauseStorage) || s == reinterpret_cast<const Screen*>(g_optionsStorage));
+    return s && (isPage(s) || s == reinterpret_cast<const Screen*>(g_pauseStorage) || s == reinterpret_cast<const Screen*>(g_optionsStorage));
 }
 }  // namespace
 
@@ -659,5 +661,490 @@ void openOptions() {
 }
 
 bool overlayOpen() { return game::depth() && isOverlay(game::top()); }
+
+// ---- UI pages -------------------------------------------------------------------------------------------
+
+namespace {
+const PageSet* g_pages = nullptr;
+const char* g_pageChosen = nullptr;
+
+bool sameName(const char* a, const char* b) {
+    while (*a && *a == *b) {
+        ++a;
+        ++b;
+    }
+    return *a == *b;
+}
+
+class PageScreen final : public Screen {
+public:
+    PageScreen(const PageDef& def, int data) : def_(def), data_(data) {
+        for (int i = 0; i < def.count && i < kMaxPageElements; ++i) {
+            const ElementDef& e = def.elements[i];
+            amount_[i] = e.amount;
+            if (e.hidden) hidden_ |= 1ull << i;
+            if (e.on) on_ |= 1ull << i;
+        }
+        focus_ = def.firstFocus;
+    }
+
+    const char* name() const override { return def_.name; }
+    bool overlay() const override { return true; }
+
+    void enter() override {
+        const int bg = text::layer();
+        restore_.take();
+        render::palettes::setBank(false, kBank, g_pages->palette);
+        debug::logf("UI page %s opened", def_.name);
+        if (bg < 0 || !box_.init(bg, def_.tileX, def_.tileY, def_.widthTiles, def_.heightTiles, kBank, render::TextBox::Style{kInk, 0, 0})) {
+            debug::warnOnce(22, "A UI page did not open: there is no background memory left for its panel. Make the page smaller or use fewer map tiles in this scene.");
+            return;
+        }
+        ready_ = true;
+        redraw(0, 0, 240, 160);
+    }
+
+    void update() override {
+        if (!ready_) {
+            game::pop();
+            return;
+        }
+        box_.update();
+        render::palettes::update();
+        const int old = focus_;
+        if (input::repeated(Key::Up)) moveFocus(0);
+        else if (input::repeated(Key::Down)) moveFocus(1);
+        if (focus_ == old && focus_ >= 0 && def_.elements[focus_].kind == ElementKind::Slider) {
+            const int change = (input::repeated(Key::Right) ? 5 : 0) - (input::repeated(Key::Left) ? 5 : 0);
+            if (change) {
+                setAmount(focus_, amount_[focus_] + change);
+                return;
+            }
+        }
+        if (focus_ == old) {
+            if (input::repeated(Key::Left)) moveFocus(2);
+            else if (input::repeated(Key::Right)) moveFocus(3);
+        }
+        if (focus_ != old) {
+            if (old >= 0) redrawElement(old);
+            if (focus_ >= 0) redrawElement(focus_);
+            return;
+        }
+        if (input::pressed(Key::A) && focus_ >= 0) {
+            activate(focus_);
+            return;
+        }
+        if (input::pressed(Key::B) && def_.cancel) game::pop();
+    }
+
+    void exit() override {
+        debug::logf("UI page %s closed", def_.name);
+        if (ready_) box_.unmap(text::blankEntry());
+        box_.release();
+        restore_.give();
+        if (g_sceneMenu.isOpen() && g_kit) loadPalette(*g_kit);
+    }
+
+    void resume() override { box_.remap(); }
+
+    int data() const { return data_; }
+    int focus() const { return focus_; }
+    const PageDef& def() const { return def_; }
+
+    int find(const char* element) const {
+        for (int i = 0; i < def_.count; ++i)
+            if (sameName(def_.elements[i].name, element)) return i;
+        return -1;
+    }
+
+    void setHidden(int i, bool hidden) {
+        const u64 bit = 1ull << i;
+        if (((hidden_ & bit) != 0) == hidden) return;
+        hidden_ = hidden ? hidden_ | bit : hidden_ & ~bit;
+        if (hidden && focus_ == i) moveAway();
+        if (ready_) redrawElement(i);
+    }
+
+    void setAmount(int i, int amount) {
+        amount = amount < 0 ? 0 : amount > 100 ? 100 : amount;
+        if (amount_[i] == amount) return;
+        amount_[i] = static_cast<u8>(amount);
+        if (ready_) redrawElement(i);
+    }
+
+    void setText(int i, const Label& label) {
+        int slot = 0;
+        while (slot < kMaxChangedTexts && changedText_[slot] != i + 1 && changedText_[slot]) ++slot;
+        if (slot == kMaxChangedTexts) {
+            debug::warnOnce(25, "UI.SetText: a page can change the text of 16 elements while it is open, so this one kept its text.");
+            return;
+        }
+        changedText_[slot] = static_cast<u8>(i + 1);
+        changedLabel_[slot] = label;
+        if (ready_) redrawElement(i);
+    }
+
+    void setOn(int i, bool on) {
+        const u64 bit = 1ull << i;
+        const ElementDef& e = def_.elements[i];
+        if (on && e.group >= 0)
+            for (int k = 0; k < def_.count; ++k)
+                if (k != i && def_.elements[k].group == e.group && (on_ & (1ull << k))) {
+                    on_ &= ~(1ull << k);
+                    if (ready_) redrawElement(k);
+                }
+        on_ = on ? on_ | bit : on_ & ~bit;
+        if (ready_) redrawElement(i);
+    }
+
+    bool on(int i) const { return (on_ & (1ull << i)) != 0; }
+    int amount(int i) const { return amount_[i]; }
+
+    bool shown(int i) const {
+        for (; i >= 0; i = def_.elements[i].parent)
+            if (hidden_ & (1ull << i)) return false;
+        return true;
+    }
+
+private:
+    void moveFocus(int way) {
+        if (focus_ < 0) return;
+        const ElementDef& e = def_.elements[focus_];
+        const s8 next = way == 0 ? e.up : way == 1 ? e.down : way == 2 ? e.left : e.right;
+        if (next >= 0 && shown(next)) focus_ = next;
+    }
+
+    // A hidden control gives the cursor to its nearest neighbour; with none showing, nothing is selected.
+    void moveAway() {
+        const ElementDef& e = def_.elements[focus_];
+        const s8 ways[4] = {e.down, e.up, e.right, e.left};
+        focus_ = -1;
+        for (const s8 n : ways)
+            if (n >= 0 && shown(n)) {
+                focus_ = n;
+                if (ready_) redrawElement(n);
+                return;
+            }
+    }
+
+    void activate(int i) {
+        const ElementDef& e = def_.elements[i];
+        if (e.kind == ElementKind::Toggle) setOn(i, e.group >= 0 ? true : !on(i));
+        g_pageChosen = e.name;
+        switch (e.action) {
+            case ActionKind::OpenPage:
+                openPage(static_cast<int>(e.target), e.data);
+                break;
+            case ActionKind::ClosePage:
+                game::pop();
+                break;
+            case ActionKind::LoadScene: {
+                const u16 scene = static_cast<u16>(e.target);
+                while (overlayOpen()) game::pop();
+                game::loadScene(scene);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    // Everything under a rectangle again, parents first (the build lists parents before children).
+    void redraw(int x, int y, int w, int h) {
+        const int ox = def_.tileX * 8, oy = def_.tileY * 8;
+        x -= ox;
+        y -= oy;
+        if (x < 0) { w += x; x = 0; }
+        if (y < 0) { h += y; y = 0; }
+        if (w > box_.widthPx() - x) w = box_.widthPx() - x;
+        if (h > box_.heightPx() - y) h = box_.heightPx() - y;
+        if (w <= 0 || h <= 0) return;
+        clipX_ = x;
+        clipY_ = y;
+        clipR_ = x + w;
+        clipB_ = y + h;
+        box_.fillRect(x, y, w, h, 0);
+        for (int i = 0; i < def_.count; ++i) {
+            const ElementDef& e = def_.elements[i];
+            if (e.x - ox >= clipR_ || e.y - oy >= clipB_ || e.x - ox + e.w <= clipX_ || e.y - oy + e.h <= clipY_) continue;
+            if (shown(i)) draw(i, e.x - ox, e.y - oy);
+        }
+        box_.update();
+    }
+
+    void redrawElement(int i) {
+        const ElementDef& e = def_.elements[i];
+        redraw(e.x, e.y, e.w, e.h);
+    }
+
+    void fill(int x, int y, int w, int h, u8 index) {
+        if (!index) return;
+        if (x < clipX_) { w -= clipX_ - x; x = clipX_; }
+        if (y < clipY_) { h -= clipY_ - y; y = clipY_; }
+        if (w > clipR_ - x) w = clipR_ - x;
+        if (h > clipB_ - y) h = clipB_ - y;
+        if (w > 0 && h > 0) box_.fillRect(x, y, w, h, index);
+    }
+
+    void blit(const ImageDef& im, int sx, int sy, int w, int h, int x, int y) {
+        if (x < clipX_) { const int d = clipX_ - x; w -= d; sx += d; x = clipX_; }
+        if (y < clipY_) { const int d = clipY_ - y; h -= d; sy += d; y = clipY_; }
+        if (w > clipR_ - x) w = clipR_ - x;
+        if (h > clipB_ - y) h = clipB_ - y;
+        if (w > 0 && h > 0) box_.blit(im.pixels + sy * im.width + sx, im.width, w, h, x, y);
+    }
+
+    // Repeats a piece of the image over a rectangle.
+    void tile(const ImageDef& im, int sx, int sy, int sw, int sh, int x, int y, int w, int h) {
+        if (sw <= 0 || sh <= 0) return;
+        for (int dy = 0; dy < h; dy += sh)
+            for (int dx = 0; dx < w; dx += sw)
+                blit(im, sx, sy, sw < w - dx ? sw : w - dx, sh < h - dy ? sh : h - dy, x + dx, y + dy);
+    }
+
+    void drawImage(const ElementDef& e, int amount, int x, int y) {
+        const ImageDef& im = *e.image;
+        const int iw = im.width, ih = im.height;
+        switch (e.imageMode) {
+            case ImageMode::Sliced: {
+                const int l = e.sliceL, t = e.sliceT, r = e.sliceR, b = e.sliceB;
+                const int mw = iw - l - r, mh = ih - t - b;
+                const int cw = e.w - l - r, ch = e.h - t - b;
+                blit(im, 0, 0, l, t, x, y);
+                blit(im, iw - r, 0, r, t, x + e.w - r, y);
+                blit(im, 0, ih - b, l, b, x, y + e.h - b);
+                blit(im, iw - r, ih - b, r, b, x + e.w - r, y + e.h - b);
+                tile(im, l, 0, mw, t, x + l, y, cw, t);
+                tile(im, l, ih - b, mw, b, x + l, y + e.h - b, cw, b);
+                tile(im, 0, t, l, mh, x, y + t, l, ch);
+                tile(im, iw - r, t, r, mh, x + e.w - r, y + t, r, ch);
+                tile(im, l, t, mw, mh, x + l, y + t, cw, ch);
+                break;
+            }
+            case ImageMode::Tiled:
+                tile(im, 0, 0, iw, ih, x, y, e.w, e.h);
+                break;
+            case ImageMode::FilledHorizontal:
+                blit(im, 0, 0, iw * amount / 100, ih, x, y);
+                break;
+            case ImageMode::FilledVertical: {
+                const int part = ih * amount / 100;  // fills upward from the bottom
+                blit(im, 0, ih - part, iw, part, x, y + ih - part);
+                break;
+            }
+            default:
+                blit(im, 0, 0, iw, ih, x, y);
+                break;
+        }
+    }
+
+    int labelWidth(const Label& l) const {
+        if (l.key >= 0) {
+            if (const data::TextRun* r = text::run(static_cast<u16>(l.key))) {
+                int w = 0;
+                for (u16 i = 0; i < r->count; ++i) {
+                    const int e = r->glyphs[i].x + r->font->glyphs[r->glyphs[i].glyph].advance;
+                    if (e > w) w = e;
+                }
+                return w;
+            }
+        }
+        const data::Font* f = g_kit ? g_kit->font : nullptr;
+        if (!l.ascii || !f || !f->ascii) return 0;
+        int w = 0;
+        for (const char* p = l.ascii; *p; ++p) {
+            const u8 c = static_cast<u8>(*p);
+            if (c < 128 && f->ascii[c] != 0xFFFF) w += f->glyphs[f->ascii[c]].advance;
+        }
+        return w;
+    }
+
+    void drawLabel(const ElementDef& e, const Label& l, u8 ink, int x, int y, int w) {
+        if (!ink || (l.key < 0 && !l.ascii) || !g_kit || !g_kit->font) return;
+        const int lw = labelWidth(l), lh = g_kit->font->lineHeight;
+        const int tx = x + (e.alignX == Align::Center ? (w - lw) / 2 : e.alignX == Align::End ? w - lw : 0);
+        const int ty = y + (e.alignY == Align::Center ? (e.h - lh) / 2 : e.alignY == Align::End ? e.h - lh : 0);
+        box_.setInk(ink);
+        const data::TextRun* r = l.key >= 0 ? text::run(static_cast<u16>(l.key)) : nullptr;
+        if (r) box_.drawRun(*r, tx, ty);
+        else if (l.ascii) box_.drawAscii(*g_kit->font, l.ascii, tx, ty);
+        box_.setInk(kInk);
+    }
+
+    const Label& labelOf(int i) const {
+        for (int slot = 0; slot < kMaxChangedTexts && changedText_[slot]; ++slot)
+            if (changedText_[slot] == i + 1) return changedLabel_[slot];
+        return def_.elements[i].label;
+    }
+
+    void draw(int i, int x, int y) {
+        const ElementDef& e = def_.elements[i];
+        const bool focused = i == focus_;
+        const u8 fillColor = focused && e.focusFill ? e.focusFill : e.fill;
+        const u8 border = focused && e.focusBorder ? e.focusBorder : e.border;
+        const u8 ink = focused && e.focusInk ? e.focusInk : e.ink;
+        fill(x, y, e.w, e.h, fillColor);
+        if (e.image) drawImage(e, amount_[i], x, y);
+        if (e.kind == ElementKind::Slider) {
+            const int inset = e.border ? e.borderWidth : 0;
+            fill(x + inset, y + inset, (e.w - 2 * inset) * amount_[i] / 100, e.h - 2 * inset, e.accent);
+        }
+        if (border && e.borderWidth) {
+            const int b = e.borderWidth;
+            fill(x, y, e.w, b, border);
+            fill(x, y + e.h - b, e.w, b, border);
+            fill(x, y + b, b, e.h - 2 * b, border);
+            fill(x + e.w - b, y + b, b, e.h - 2 * b, border);
+        }
+        int textX = x, textW = e.w;
+        if (e.kind == ElementKind::Toggle) {
+            const int size = e.h < 10 ? e.h : 10, top = y + (e.h - size) / 2;
+            const u8 frame = ink ? ink : e.accent;
+            fill(x, top, size, 1, frame);
+            fill(x, top + size - 1, size, 1, frame);
+            fill(x, top + 1, 1, size - 2, frame);
+            fill(x + size - 1, top + 1, 1, size - 2, frame);
+            if (on(i)) fill(x + 2, top + 2, size - 4, size - 4, e.accent ? e.accent : ink);
+            textX += size + 4;
+            textW -= size + 4;
+        } else if (e.kind == ElementKind::Button && e.cursor) {
+            if (focused) {
+                const u8 c = e.accent ? e.accent : ink;
+                const int top = y + e.h / 2 - 3;
+                for (int k = 0; k < 3; ++k) fill(x + 1 + k, top + k, 1, 7 - 2 * k, c);
+            }
+            textX += 8;
+            textW -= 8;
+        }
+        drawLabel(e, labelOf(i), ink, textX, y, textW);
+    }
+
+    // Three pages' worth of state stays in the Text row of the RAM budget, so only the texts a script changed are kept.
+    static constexpr int kMaxChangedTexts = 16;
+
+    const PageDef& def_;
+    int data_;
+    Restore restore_;
+    render::TextBox box_;
+    bool ready_ = false;
+    s8 focus_ = -1;
+    int clipX_ = 0, clipY_ = 0, clipR_ = 0, clipB_ = 0;
+    u64 hidden_ = 0, on_ = 0;
+    u8 amount_[kMaxPageElements] = {};
+    u8 changedText_[kMaxChangedTexts] = {};  // element index + 1, 0 = free
+    Label changedLabel_[kMaxChangedTexts] = {};
+};
+
+alignas(8) AGB_EWRAM_BSS u8 g_pageStorage[kMaxOpenPages][sizeof(PageScreen)];
+
+Screen* storedPage(u8* storage) { return reinterpret_cast<PageScreen*>(storage); }
+
+bool isPage(const Screen* s) {
+    for (auto& storage : g_pageStorage)
+        if (s == storedPage(storage)) return true;
+    return false;
+}
+
+PageScreen* topPage() {
+    if (!game::depth()) return nullptr;
+    Screen* top = game::top();
+    for (auto& storage : g_pageStorage)
+        if (top == storedPage(storage)) return static_cast<PageScreen*>(top);
+    return nullptr;
+}
+
+// A storage in use is one the screen stack holds: a scene load drops open pages without telling this file.
+u8* freePageStorage() {
+    for (auto& storage : g_pageStorage) {
+        bool used = false;
+        for (int d = 0; d < game::depth(); ++d)
+            if (game::at(d) == storedPage(storage)) used = true;
+        if (!used) return storage;
+    }
+    return nullptr;
+}
+}  // namespace
+
+void setPages(const PageSet* pages) { g_pages = pages; }
+
+bool openPage(int index, int data) {
+    if (!g_pages || index < 0 || index >= g_pages->count) {
+        debug::warnOnce(23, "UI.Open: there is no such UI page. Check the name against the pages in the project's ui folder.");
+        return false;
+    }
+    u8* storage = freePageStorage();
+    if (!storage || game::depth() >= game::kMaxScreens) {
+        debug::warnOnce(24, "UI.Open: too many UI pages are open at once, so the new one did not open. Close one first.");
+        return false;
+    }
+    game::push(new (storage) PageScreen(g_pages->pages[index], data));
+    return true;
+}
+
+bool openPage(const char* name, int data) {
+    if (g_pages)
+        for (int i = 0; i < g_pages->count; ++i)
+            if (sameName(g_pages->pages[i].name, name)) return openPage(i, data);
+    return openPage(-1, data);
+}
+
+void closePage() {
+    if (topPage()) game::pop();
+}
+
+bool pageOpen(const char* name) {
+    for (int d = 0; d < game::depth(); ++d)
+        for (auto& storage : g_pageStorage)
+            if (game::at(d) == storedPage(storage) && (!name || sameName(reinterpret_cast<PageScreen*>(storage)->def().name, name))) return true;
+    return false;
+}
+
+int pageData() {
+    const PageScreen* p = topPage();
+    return p ? p->data() : 0;
+}
+
+int pageFocus() {
+    const PageScreen* p = topPage();
+    return p ? p->focus() : -1;
+}
+
+const char* pageChosen() {
+    const char* chosen = g_pageChosen;
+    g_pageChosen = nullptr;
+    return chosen;
+}
+
+void setPageHidden(const char* element, bool hidden) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setHidden(i, hidden);
+}
+
+void setPageAmount(const char* element, int amount) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setAmount(i, amount);
+}
+
+void setPageText(const char* element, const Label& label) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setText(i, label);
+}
+
+void setPageOn(const char* element, bool on) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setOn(i, on);
+}
+
+bool pageOn(const char* element) {
+    const PageScreen* p = topPage();
+    const int i = p ? p->find(element) : -1;
+    return i >= 0 && p->on(i);
+}
+
+int pageAmount(const char* element) {
+    const PageScreen* p = topPage();
+    const int i = p ? p->find(element) : -1;
+    return i >= 0 ? p->amount(i) : 0;
+}
 
 }  // namespace agb::ui

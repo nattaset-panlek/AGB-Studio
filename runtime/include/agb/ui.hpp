@@ -101,6 +101,74 @@ private:
     s8 waiting_ = -1;
 };
 
+// ---- UI pages (ui/<Name>.uipage) ------------------------------------------------------------------------
+// A page is made once and opened by a script or a button. The build works out every rectangle, the layout groups and
+// the D-pad neighbours, so the game only draws. All of a page is drawn into one panel on the text layer, in the colours
+// of the project's UI palette (palette bank 14 while a page is open). The scene waits underneath.
+enum class ElementKind : u8 { Panel, Image, Text, Button, Toggle, Slider };
+enum class ImageMode : u8 { Simple, Sliced, Tiled, FilledHorizontal, FilledVertical };
+enum class Align : u8 { Start, Center, End };
+enum class ActionKind : u8 { None, OpenPage, ClosePage, LoadScene };
+
+struct ImageDef {
+    const u8* pixels;  // one palette index a pixel, 0 = see-through
+    u16 width, height;
+};
+
+struct ElementDef {
+    const char* name;
+    ElementKind kind;
+    s8 parent;                       // index in the page, -1 = root; parents come before their children
+    s16 x, y, w, h;                  // screen pixels
+    u8 fill, border, borderWidth;    // palette indices, 0 = none
+    u8 accent, focusFill, focusBorder, ink, focusInk;
+    Align alignX, alignY;
+    Label label;
+    const ImageDef* image;
+    ImageMode imageMode;
+    u8 sliceL, sliceT, sliceR, sliceB;
+    u8 amount;                       // 0..100
+    bool on, hidden, cursor;
+    s8 group;                        // Toggle Group number, -1 = none
+    s8 up, down, left, right;        // D-pad neighbours, -1 = none
+    ActionKind action;
+    s16 target;                      // page or scene index
+    s16 data;
+};
+
+struct PageDef {
+    const char* name;
+    const ElementDef* elements;
+    u8 count;
+    u8 tileX, tileY, widthTiles, heightTiles;  // the panel holding the whole page
+    s8 firstFocus;                             // -1 = nothing to select
+    bool cancel;                               // B closes
+};
+
+struct PageSet {
+    const PageDef* pages;
+    u16 count;
+    const u16* palette;  // 16 colours
+};
+
+constexpr int kMaxOpenPages = 3;     // one screen of the stack stays for the scene
+constexpr int kMaxPageElements = 64;
+
+void setPages(const PageSet* pages);
+bool openPage(const char* name, int data = 0);  // false (with a warning) when there is no such page or no room
+bool openPage(int index, int data = 0);
+void closePage();                               // the top page
+bool pageOpen(const char* name = nullptr);      // nullptr = any page
+int pageData();                                 // what the top page was opened with
+int pageFocus();                                // element index under the cursor on the top page, -1 = none
+const char* pageChosen();                       // the last element activated with A, nullptr = none; reading clears it
+void setPageHidden(const char* element, bool hidden);
+void setPageAmount(const char* element, int amount);
+void setPageText(const char* element, const Label& label);
+void setPageOn(const char* element, bool on);
+bool pageOn(const char* element);
+int pageAmount(const char* element);
+
 // ---- game integration (called by the game framework) -----------------------------------------------
 void setKit(const Kit* kit);
 const Kit* kit();

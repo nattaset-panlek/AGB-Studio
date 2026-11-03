@@ -82,8 +82,9 @@ public sealed class ViewportRomTests(ITestOutputHelper log)
             var moved = live.Actors[i].X != a.X || live.Actors[i].Y != a.Y || !rom.Actors.Any(x => x.Name == a.Name);
             if (!animated && !moved) continue;
             masked.Add(i);
-            foreach (var p in new[] { (a.X, a.Y), (live.Actors[i].X, live.Actors[i].Y) })
-                Mask(p.Item1 - camX - (sbyte)meta.OriginX, p.Item2 - camY - (sbyte)meta.OriginY, sheet.FrameWidth, sheet.FrameHeight);
+            Mask(a.X - camX - (sbyte)meta.OriginX, a.Y - camY - (sbyte)meta.OriginY, sheet.FrameWidth, sheet.FrameHeight);
+            // the frame on screen shows the actor one game frame before the position read back, so it can be a pixel off
+            Mask(live.Actors[i].X - camX - (sbyte)meta.OriginX - 1, live.Actors[i].Y - camY - (sbyte)meta.OriginY - 1, sheet.FrameWidth + 2, sheet.FrameHeight + 2);
         }
         // Text Labels a script writes to (HUD.cs adds the score after "SCORE"): the editor draws the label's own text
         foreach (var a in scene.Actors.Where(a => a.Kind == ActorKind.TextLabel && a.Components.Count > 0)) Mask(a.X, a.Y, 240 - a.X, 16);
