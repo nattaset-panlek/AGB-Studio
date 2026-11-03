@@ -228,13 +228,19 @@ public sealed class GbaScreenView : Control
         return -1;
     }
 
-    // Trigger / camera zones and labels: their box from the actor position (the build's collider for zones).
-    static (int X, int Y, int W, int H) ZoneRect(ActorData a) => a.Kind switch
+    // Trigger / camera zones, UI panels, canvas, and labels: their box from the actor position (the build's collider for zones).
+    (int X, int Y, int W, int H) ZoneRect(ActorData a)
     {
-        ActorKind.TriggerZone or ActorKind.CameraZone => (a.X, a.Y - a.ZoneH, a.ZoneW, a.ZoneH),
-        ActorKind.TextLabel => (a.X / 8 * 8, a.Y / 8 * 8, 64, 16),
-        _ => (a.X - 4, a.Y - 4, 8, 8),
-    };
+        var (wx, wy) = a.GetWorldPosition(_m.Scene?.Actors);
+        return a.Kind switch
+        {
+            ActorKind.TriggerZone or ActorKind.CameraZone => (wx, wy - a.ZoneH, a.ZoneW, a.ZoneH),
+            ActorKind.TextLabel => (wx / 8 * 8, wy / 8 * 8, Math.Max(16, a.ZoneW), 16),
+            ActorKind.Panel => (wx / 8 * 8, wy / 8 * 8, Math.Max(16, a.ZoneW), Math.Max(16, a.ZoneH)),
+            ActorKind.Canvas => (wx, wy, 240, 160),
+            _ => (wx - 4, wy - 4, 8, 8),
+        };
+    }
 
     /// <summary>Selection rectangle of an actor in scene pixels.</summary>
     public (int X, int Y, int W, int H)? ActorRect(int index)
@@ -244,7 +250,8 @@ public sealed class GbaScreenView : Control
         if (a.Sprite.Length > 0 && _m.Assets?.Sprite(a.Sprite) is { } sheet)
         {
             var meta = _m.Assets.SpriteMeta(a.Sprite);
-            return (a.X - (sbyte)meta.OriginX, a.Y - (sbyte)meta.OriginY, sheet.SourceWidth, sheet.SourceHeight);
+            var (wx, wy) = a.GetWorldPosition(scene.Actors);
+            return (wx - (sbyte)meta.OriginX, wy - (sbyte)meta.OriginY, sheet.SourceWidth, sheet.SourceHeight);
         }
         return ZoneRect(a);
     }
@@ -476,9 +483,10 @@ public sealed class GbaScreenView : Control
         var a = _m.Scene!.Actors[actor];
         _dragActor = actor;
         _dragStart = p;
-        var r = ActorRect(actor) ?? (a.X, a.Y, 0, 0);
+        var (wx, wy) = a.GetWorldPosition(_m.Scene.Actors);
+        var r = ActorRect(actor) ?? (wx, wy, 0, 0);
         _actorStart = (r.X, r.Y);
-        _grab = (a.X - r.X, a.Y - r.Y);
+        _grab = (wx - r.X, wy - r.Y);
         e.Pointer.Capture(this);
         e.Handled = true;
     }
@@ -507,8 +515,13 @@ public sealed class GbaScreenView : Control
         var mx = (int)Math.Round((p.X - _dragStart.X) / k);
         var my = (int)Math.Round((p.Y - _dragStart.Y) / k);
         if (mx == 0 && my == 0) return;
-        var nx = _m.SnapValue(_actorStart.X + mx) + _grab.X;
-        var ny = _m.SnapValue(_actorStart.Y + my) + _grab.Y;
+        var newWorldX = _m.SnapValue(_actorStart.X + mx) + _grab.X;
+        var newWorldY = _m.SnapValue(_actorStart.Y + my) + _grab.Y;
+        var curActor = _m.Scene!.Actors[_dragActor];
+        var parentActor = string.IsNullOrEmpty(curActor.Parent) ? null : _m.Scene.Actors.FirstOrDefault(x => x.Name == curActor.Parent);
+        var (pwx, pwy) = parentActor?.GetWorldPosition(_m.Scene.Actors) ?? (0, 0);
+        var nx = newWorldX - pwx;
+        var ny = newWorldY - pwy;
         _m.MoveActor(_dragActor, nx, ny, merge: true);
     }
 

@@ -26,7 +26,7 @@ public class DesignSystemTests
     public void Icons_All70ExportedFromFigma()
     {
         var names = Directory.EnumerateFiles(Path.Combine(Repo.Editor, "Assets", "Icons"), "*.svg").Select(Path.GetFileNameWithoutExtension).ToList();
-        Assert.Equal(70, names.Count);
+        Assert.Equal(71, names.Count);   // 70 from Figma + eye-off (scope log 2026-11-03)
         foreach (var f in Directory.EnumerateFiles(Path.Combine(Repo.Editor, "Assets", "Icons"), "*.svg"))
         {
             var img = SvgImage.Parse(File.ReadAllText(f));
@@ -60,7 +60,7 @@ public class DesignSystemTests
     [AvaloniaFact]
     public void Icons_EveryNameUsedInTheUiExists()
     {
-        Assert.Equal(70, IconCatalog.Names.Count);
+        Assert.Equal(71, IconCatalog.Names.Count);
         var used = new HashSet<string>();
         var rx = new Regex(@"Glyph(?:\s*=\s*|="")""?([a-z]+)""", RegexOptions.Compiled);
         foreach (var f in EditorSources)

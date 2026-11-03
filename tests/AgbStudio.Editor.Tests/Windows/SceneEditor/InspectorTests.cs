@@ -193,6 +193,9 @@ public sealed class InspectorTests : IDisposable
         // back to the Scene Editor
         _ = _w.S.Windows.Open("T-P01", source: "test");
         Capture.Pump();
+        // the button sits under the Inspector fold of a long actor: scroll to it as a user would
+        _w.Find<Button>("AddComponentButton").BringIntoView();
+        Capture.Pump();
         _w.Click(_w.Find<Button>("AddComponentButton"));
         Assert.Equal(("T-O05", "AddComponent"), _w.S.Windows.Requests[^1]);
         var picker = Assert.IsType<ComponentPicker>(_w.Win.Overlays.Open.Single());

@@ -25,6 +25,71 @@ public static class SceneCommands
     [CommandHandler("scene.addActor.trigger")] public static void AddTrigger(EditorServices s) => AddActor(s, ActorKind.TriggerZone);
     [CommandHandler("scene.addActor.camera")] public static void AddCamera(EditorServices s) => AddActor(s, ActorKind.CameraZone);
     [CommandHandler("scene.addActor.text")] public static void AddText(EditorServices s) => AddActor(s, ActorKind.TextLabel);
+    [CommandHandler("scene.addActor.canvas")] public static void AddCanvas(EditorServices s) => AddActor(s, ActorKind.Canvas);
+    [CommandHandler("scene.addActor.panel")] public static void AddPanel(EditorServices s) => AddUiActor(s, ActorKind.Panel);
+    [CommandHandler("scene.addActor.button")]
+    public static void AddButton(EditorServices s)
+    {
+        var m = M(s);
+        var idx = AddUiActor(s, ActorKind.Panel);
+        if (idx >= 0 && m.Scene != null)
+        {
+            var btn = m.Scene.Actors[idx];
+            btn.Name = m.UniqueName("Button");
+            btn.ZoneW = 64;
+            btn.ZoneH = 20;
+            var text = m.NewActor(ActorKind.TextLabel);
+            text.Name = m.UniqueName("ButtonText");
+            text.Parent = btn.Name;
+            text.X = 8;
+            text.Y = 4;
+            text.Text = "ui.menu.start";
+            m.AddActor(text, "Add Button Text");
+        }
+    }
+    [CommandHandler("scene.addActor.image")]
+    public static void AddImage(EditorServices s)
+    {
+        var m = M(s);
+        var idx = AddUiActor(s, ActorKind.Empty);
+        if (idx >= 0 && m.Scene != null)
+        {
+            var img = m.Scene.Actors[idx];
+            img.Name = m.UniqueName("Image");
+            img.Priority = 0;
+        }
+    }
+
+    /// <summary>Adds a UI actor; parents under selected Canvas/Panel or creates a root Canvas if needed.</summary>
+    public static int AddUiActor(EditorServices s, ActorKind kind, string? parent = null)
+    {
+        var m = M(s);
+        if (m.Scene == null) return -1;
+
+        if (kind != ActorKind.Canvas && parent == null)
+        {
+            var sel = m.SelectedActor;
+            if (sel != null && (sel.Kind is ActorKind.Canvas or ActorKind.Panel))
+            {
+                parent = sel.Name;
+            }
+            else
+            {
+                var canvas = m.Scene.Actors.FirstOrDefault(a => a.Kind == ActorKind.Canvas);
+                if (canvas == null)
+                {
+                    var c = m.NewActor(ActorKind.Canvas);
+                    m.AddActor(c, "Add Canvas");
+                    canvas = c;
+                }
+                parent = canvas.Name;
+            }
+        }
+
+        var a = m.NewActor(kind);
+        if (!string.IsNullOrEmpty(parent)) a.Parent = parent;
+        return m.AddActor(a, $"Add {kind}");
+    }
 
     /// <summary>Adds an actor of a kind; its sprite is the one the project uses most for that kind (or <paramref name="sprite"/>).</summary>
     public static int AddActor(EditorServices s, ActorKind kind, string? sprite = null)
@@ -80,9 +145,18 @@ public static class SceneCommands
             }
             return list;
         }
+        IReadOnlyList<MenuEntry> UiElements() =>
+        [
+            new RecentEntry("Canvas (Root Overlay)", "layers", false, new Relay(() => AddCanvas(ctx.Services))),
+            new RecentEntry("Panel (Window Box)", "square", false, new Relay(() => AddPanel(ctx.Services))),
+            new RecentEntry("Text Label", "type", false, new Relay(() => AddText(ctx.Services))),
+            new RecentEntry("Button", "play", false, new Relay(() => AddButton(ctx.Services))),
+            new RecentEntry("Image (UI Graphic)", "image", false, new Relay(() => AddImage(ctx.Services))),
+        ];
         return
         [
             new CommandEntry("scene.addActor.empty", true), new CommandEntry("scene.addActor.player", true), new SubmenuEntry("T-M11.Enemy", "Enemy", Enemies, "bug"),
+            new SubmenuEntry("T-M11.UI", "UI", UiElements, "layers"),
             new CommandEntry("scene.addActor.pickup", true), new CommandEntry("scene.addActor.trigger", true), new CommandEntry("scene.addActor.camera", true),
             new CommandEntry("scene.addActor.text", true), SeparatorEntry.Instance,
             new CommandEntry("scene.addLayer", true), new CommandEntry("scene.addPrefab", true),
@@ -144,16 +218,88 @@ public static class SceneCommands
         m.SetPan(a.X - 120 - sx, a.Y - 80 - sy);
     }
 
+    [EditorCommand("actor.unparent", "Unparent (Move to Root)", Glyph = "corner-up-left", InPalette = false)]
+    public static void Unparent(EditorServices s)
+    {
+        var m = M(s);
+        if (m.SelectedActorIndex >= 0) m.UnparentActor(m.SelectedActorIndex);
+    }
+
+    [EditorCommand("actor.addChildPanel", "Create Child Panel", Glyph = "square", InPalette = false)]
+    public static void AddChildPanel(EditorServices s)
+    {
+        var m = M(s);
+        if (m.SelectedActor is { } a) AddUiActor(s, ActorKind.Panel, a.Name);
+    }
+
+    [EditorCommand("actor.addChildText", "Create Child Text", Glyph = "type", InPalette = false)]
+    public static void AddChildText(EditorServices s)
+    {
+        var m = M(s);
+        if (m.SelectedActor is { } a) AddUiActor(s, ActorKind.TextLabel, a.Name);
+    }
+
+    [EditorCommand("actor.addChildButton", "Create Child Button", Glyph = "play", InPalette = false)]
+    public static void AddChildButton(EditorServices s)
+    {
+        var m = M(s);
+        if (m.SelectedActor is { } a)
+        {
+            var idx = AddUiActor(s, ActorKind.Panel, a.Name);
+            if (idx >= 0 && m.Scene != null)
+            {
+                var btn = m.Scene.Actors[idx];
+                btn.Name = m.UniqueName("Button");
+                btn.ZoneW = 64;
+                btn.ZoneH = 20;
+            }
+        }
+    }
+
+    [EditorCommand("actor.addChildImage", "Create Child Image", Glyph = "image", InPalette = false)]
+    public static void AddChildImage(EditorServices s)
+    {
+        var m = M(s);
+        if (m.SelectedActor is { } a)
+        {
+            var idx = AddUiActor(s, ActorKind.Empty, a.Name);
+            if (idx >= 0 && m.Scene != null)
+            {
+                var img = m.Scene.Actors[idx];
+                img.Name = m.UniqueName("Image");
+            }
+        }
+    }
+
     [EditorMenu("T-M12")]
     public static IReadOnlyList<MenuEntry> ActorContextMenu(WindowContext ctx)
     {
-        SceneEditTarget.Of(M(ctx.Services)).Active = SceneEditTarget.Panel.Scene;
-        return
+        var m = M(ctx.Services);
+        SceneEditTarget.Of(m).Active = SceneEditTarget.Panel.Scene;
+        IReadOnlyList<MenuEntry> ChildUi() =>
         [
-            new CommandEntry("scene.rename"), new CommandEntry("edit.duplicate"), new CommandEntry("edit.delete", Danger: true), SeparatorEntry.Instance,
-            new CommandEntry("actor.addBehaviour", true), new CommandEntry("actor.editScript", true), new CommandEntry("actor.makePrefab"), SeparatorEntry.Instance,
-            new CommandEntry("scene.focusSelection", Label: "Focus in View"),
+            new CommandEntry("actor.addChildPanel", true),
+            new CommandEntry("actor.addChildText", true),
+            new CommandEntry("actor.addChildButton", true),
+            new CommandEntry("actor.addChildImage", true),
         ];
+        var list = new List<MenuEntry>
+        {
+            new CommandEntry("scene.rename"), new CommandEntry("edit.duplicate"), new CommandEntry("edit.delete", Danger: true),
+        };
+        if (m.SelectedActor is { } sel && !string.IsNullOrEmpty(sel.Parent))
+        {
+            list.Add(new CommandEntry("actor.unparent"));
+        }
+        list.Add(SeparatorEntry.Instance);
+        list.Add(new SubmenuEntry("T-M12.UI", "UI", ChildUi, "layers"));
+        list.Add(SeparatorEntry.Instance);
+        list.Add(new CommandEntry("actor.addBehaviour", true));
+        list.Add(new CommandEntry("actor.editScript", true));
+        list.Add(new CommandEntry("actor.makePrefab"));
+        list.Add(SeparatorEntry.Instance);
+        list.Add(new CommandEntry("scene.focusSelection", Label: "Focus in View"));
+        return list;
     }
 
     // ---- Asset Context Menu (T-M13) -------------------------------------------------------------------

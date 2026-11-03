@@ -19,7 +19,18 @@ public static class IconCatalog
 
     public static SvgImage Icon(string name)
     {
-        if (!Icons.TryGetValue(name, out var img)) Icons[name] = img = SvgImage.Load(new Uri(IconRoot + name + ".svg"));
+        if (!Icons.TryGetValue(name, out var img))
+        {
+            try
+            {
+                Icons[name] = img = SvgImage.Load(new Uri(IconRoot + name + ".svg"));
+            }
+            catch (Exception)
+            {
+                var fallback = name.StartsWith("eye", StringComparison.OrdinalIgnoreCase) ? "eye" : "cube";
+                Icons[name] = img = SvgImage.Load(new Uri(IconRoot + fallback + ".svg"));
+            }
+        }
         return img;
     }
 

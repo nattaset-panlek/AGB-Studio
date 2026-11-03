@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace AgbStudio.Editor.Controls;
 
@@ -64,10 +65,41 @@ public class DocTab : SelectableRow
     public static readonly StyledProperty<string?> LabelProperty = AvaloniaProperty.Register<DocTab, string?>(nameof(Label));
     public static readonly StyledProperty<string?> GlyphProperty = AvaloniaProperty.Register<DocTab, string?>(nameof(Glyph), "map");
     public static readonly StyledProperty<bool> IsDirtyProperty = AvaloniaProperty.Register<DocTab, bool>(nameof(IsDirty));
+    public static readonly StyledProperty<bool> IsClosableProperty = AvaloniaProperty.Register<DocTab, bool>(nameof(IsClosable));
 
     public string? Label { get => GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
     public string? Glyph { get => GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
     public bool IsDirty { get => GetValue(IsDirtyProperty); set => SetValue(IsDirtyProperty, value); }
+    public bool IsClosable { get => GetValue(IsClosableProperty); set => SetValue(IsClosableProperty, value); }
+
+    public static readonly RoutedEvent<RoutedEventArgs> CloseRequestedEvent = RoutedEvent.Register<DocTab, RoutedEventArgs>(nameof(CloseRequested), RoutingStrategies.Bubble);
+    public event EventHandler<RoutedEventArgs>? CloseRequested { add => AddHandler(CloseRequestedEvent, value); remove => RemoveHandler(CloseRequestedEvent, value); }
+
+    public void RequestClose() => RaiseEvent(new RoutedEventArgs(CloseRequestedEvent));
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        if (e.NameScope.Find<Button>("PART_Close") is { } b)
+        {
+            b.Click += (_, ev) =>
+            {
+                ev.Handled = true;
+                RequestClose();
+            };
+        }
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed && IsClosable)
+        {
+            RequestClose();
+            e.Handled = true;
+            return;
+        }
+        base.OnPointerPressed(e);
+    }
 }
 
 /// <summary>Figma "Panel Tab": Default / Active / Hover with an optional count badge.</summary>

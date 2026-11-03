@@ -287,6 +287,53 @@ public sealed class HierarchyTests : IDisposable
     }
 
     /// <summary>Points on the top edge of the outline the viewport would draw around each actor other than <paramref name="primary"/>, in window pixels (on screen, clear of the first actor's name tag and handles).</summary>
+    [AvaloniaFact]
+    public void ReparentActor_ReparentsAndMaintainsHierarchy()
+    {
+        var player = _w.M.Scene!.Actors[0];
+        var slime = _w.M.Scene.Actors[1];
+        var origSlimeX = slime.X;
+        var origSlimeY = slime.Y;
+
+        // Reparent Slime under Player
+        var success = Panel.ReparentActor(1, 0, worldPositionStays: true);
+        Assert.True(success);
+        Assert.Equal(player.Name, slime.Parent);
+
+        // World position stays identical
+        var (wx, wy) = slime.GetWorldPosition(_w.M.Scene.Actors);
+        Assert.Equal(origSlimeX, wx);
+        Assert.Equal(origSlimeY, wy);
+
+        // Circular reparenting is prevented
+        var circular = Panel.ReparentActor(0, 1);
+        Assert.False(circular);
+        Assert.Equal("", player.Parent);
+
+        // Unparent back to scene root
+        var unparentSuccess = Panel.ReparentActor(1, null, worldPositionStays: true);
+        Assert.True(unparentSuccess);
+        Assert.Equal("", slime.Parent);
+        Assert.Equal(origSlimeX, slime.X);
+        Assert.Equal(origSlimeY, slime.Y);
+    }
+
+    [AvaloniaFact]
+    public void ReorderActor_ChangesIndexAndOrder()
+    {
+        var firstActor = _w.M.Scene!.Actors[0].Name;
+        var secondActor = _w.M.Scene.Actors[1].Name;
+
+        Panel.ReorderActor(0, 1);
+        Assert.Equal(secondActor, _w.M.Scene.Actors[0].Name);
+        Assert.Equal(firstActor, _w.M.Scene.Actors[1].Name);
+
+        // Reorder back using ReorderAndReparent
+        _w.M.ReorderAndReparent(1, 0, insertBefore: true);
+        Assert.Equal(firstActor, _w.M.Scene.Actors[0].Name);
+        Assert.Equal(secondActor, _w.M.Scene.Actors[1].Name);
+    }
+
     List<PixelPoint> OutlineSamples(GbaScreenView view, int primary)
     {
         var screen = new Rect(view.Origin, new Size(240 * view.Scale, 160 * view.Scale));

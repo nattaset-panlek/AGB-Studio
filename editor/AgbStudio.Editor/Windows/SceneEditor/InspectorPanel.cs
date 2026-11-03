@@ -105,9 +105,15 @@ public sealed class InspectorPanel : Panel
         _content.Children.Add(ActorHeader(a, index));
         _content.Children.Add(Section(ComponentList(a)).Named("ComponentList"));
         _content.Children.Add(Section(TransformSection(index)));
+        if (a.Kind == ActorKind.Canvas)
+            _content.Children.Add(Section(CanvasSection(index)));
+        if (a.Kind == ActorKind.Panel)
+            _content.Children.Add(Section(PanelSection(index)));
+        if (a.Kind == ActorKind.TextLabel)
+            _content.Children.Add(Section(TextLabelSection(index)));
         var assets = _m.Assets;
         var sheet = a.Sprite.Length > 0 ? assets?.Sprite(a.Sprite) : null;
-        if (a.Kind is not (ActorKind.TriggerZone or ActorKind.CameraZone or ActorKind.TextLabel) || a.Sprite.Length > 0)
+        if (a.Kind is not (ActorKind.TriggerZone or ActorKind.CameraZone or ActorKind.TextLabel or ActorKind.Panel or ActorKind.Canvas) || a.Sprite.Length > 0)
             _content.Children.Add(Section(SpriteSection(a, index, sheet)));
         var colliderPlaced = false;
         for (var c = 0; c < a.Components.Count; c++)
@@ -142,6 +148,21 @@ public sealed class InspectorPanel : Panel
 
     Control ActorHeader(ActorData a, int index)
     {
+        var activeToggle = new CheckBox
+        {
+            IsChecked = !a.Hidden,
+            VerticalAlignment = VerticalAlignment.Center,
+            Name = "ActorActiveToggle",
+            Margin = new Thickness(0, 0, 4, 0)
+        };
+        ToolTip.SetTip(activeToggle, new TipContent("Active in hierarchy (SetActive)"));
+        activeToggle.IsCheckedChanged += (_, _) =>
+        {
+            var hidden = activeToggle.IsChecked != true;
+            if (_m.Scene!.Actors[index].Hidden != hidden)
+                _m.Edit("Toggle Active", () => _m.Scene!.Actors[index].Hidden = hidden);
+        };
+
         var avatar = UI.Frame(PixelArt.View(a.Sprite.Length > 0 ? PixelArt.SpriteBitmap(_m.Assets, a.Sprite, FirstFrame(a)) : null, 32, 32), "bg/base", "border/default", null, null, 8);
         avatar.Width = avatar.Height = 40;
         avatar.Name = "ActorAvatar";
@@ -154,12 +175,17 @@ public sealed class InspectorPanel : Panel
         prio.Content = prioText;
         ToolTip.SetTip(prio, new TipContent("OBJ priority 0-3 (click to change)"));
         prio.Click += (_, _) => _m.Edit("Change Priority", () => _m.Scene!.Actors[index].Priority = (_m.Scene.Actors[index].Priority + 1) & 3);
-        Refresh(() => { name.Text = _m.Scene!.Actors[index].Name; prioText.Text = $"Layer OBJ · Prio {_m.Scene.Actors[index].Priority}"; });
+        Refresh(() =>
+        {
+            activeToggle.IsChecked = !_m.Scene!.Actors[index].Hidden;
+            name.Text = _m.Scene!.Actors[index].Name;
+            prioText.Text = $"Layer OBJ · Prio {_m.Scene.Actors[index].Priority}";
+        });
         name.Margin = new Thickness(0, -2, 0, 0);
         var text = UI.Column(4, name, UI.Row(8, chip, prio));
         text.VerticalAlignment = VerticalAlignment.Top;
         avatar.VerticalAlignment = VerticalAlignment.Top;
-        var row = UI.Row(10, avatar, text);
+        var row = UI.Row(10, activeToggle, avatar, text);
         return UI.Frame(row, null, "border/default", new Thickness(0, 0, 0, 1), new Thickness(12, 14, 12, 12)).Named("ActorHeader");
     }
 
@@ -168,13 +194,46 @@ public sealed class InspectorPanel : Panel
 
     Control TransformSection(int index)
     {
-        var pos = new InspectorField { Kind = FieldKind.XY, Label = "Position", Name = "Field_Position" };
+        var rows = new List<Control>();
+        var parentField = new InspectorField { Kind = FieldKind.Text, Label = "Parent", Name = "Field_Parent" };
         Refresh(() =>
         {
-            if (Editing(pos)) return;
+            if (Editing(parentField)) return;
             var a = _m.Scene!.Actors[index];
-            pos.Value = a.X.ToString(CultureInfo.InvariantCulture);
-            pos.Value2 = a.Y.ToString(CultureInfo.InvariantCulture);
+            parentField.Value = a.Parent;
+        });
+        parentField.PropertyChanged += (_, e) =>
+        {
+            if (!Editing(parentField) || e.Property != InspectorField.ValueProperty) return;
+            var target = parentField.Value?.Trim() ?? "";
+            var a = _m.Scene!.Actors[index];
+            if (target != a.Parent) _m.SetActorParent(index, target, worldPositionStays: true);
+        };
+        rows.Add(parentField);
+
+        var pos = new InspectorField { Kind = FieldKind.XY, Label = "Position", Name = "Field_Position" };
+        var worldInfo = UI.Text("", "Label/11", "text/muted");
+        worldInfo.Margin = new Thickness(86, 0, 0, 0);
+
+        Refresh(() =>
+        {
+            var a = _m.Scene!.Actors[index];
+            if (!Editing(pos))
+            {
+                pos.Label = string.IsNullOrEmpty(a.Parent) ? "Position" : "Local Pos";
+                pos.Value = a.X.ToString(CultureInfo.InvariantCulture);
+                pos.Value2 = a.Y.ToString(CultureInfo.InvariantCulture);
+            }
+            if (!string.IsNullOrEmpty(a.Parent))
+            {
+                var (wx, wy) = a.GetWorldPosition(_m.Scene.Actors);
+                worldInfo.Text = $"Screen: ({wx}, {wy}) px";
+                worldInfo.IsVisible = true;
+            }
+            else
+            {
+                worldInfo.IsVisible = false;
+            }
         });
         pos.PropertyChanged += (_, e) =>
         {
@@ -182,7 +241,106 @@ public sealed class InspectorPanel : Panel
             if (int.TryParse(pos.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var x) && int.TryParse(pos.Value2, NumberStyles.Integer, CultureInfo.InvariantCulture, out var y))
                 _m.MoveActor(index, x, y, merge: true);
         };
-        return SectionBody(new SectionHeader { Title = "Transform", Glyph = "move" }, [pos]);
+        rows.Add(pos);
+        rows.Add(worldInfo);
+
+        var kids = _m.GetChildActorIndices(index);
+        if (kids.Count > 0)
+        {
+            var kidsInfo = UI.Text($"Children: {kids.Count} element{(kids.Count > 1 ? "s" : "")}", "Label/11", "accent/default");
+            kidsInfo.Margin = new Thickness(86, 0, 0, 0);
+            rows.Add(kidsInfo);
+        }
+
+        return SectionBody(new SectionHeader { Title = "Transform", Glyph = "move" }, rows);
+    }
+
+    Control CanvasSection(int index)
+    {
+        var info = UI.Text("Screen Space - Overlay (240 × 160)\nRoot canvas for UI elements and panels.", "Body/12", "text/secondary");
+        return SectionBody(new SectionHeader { Title = "Canvas", Glyph = "layers" }, [info]);
+    }
+
+    Control PanelSection(int index)
+    {
+        var rows = new List<Control>();
+        var sizeField = new InspectorField { Kind = FieldKind.XY, Label = "Size", Name = "Field_PanelSize" };
+        Refresh(() =>
+        {
+            if (Editing(sizeField)) return;
+            var a = _m.Scene!.Actors[index];
+            sizeField.Value = a.ZoneW.ToString(CultureInfo.InvariantCulture);
+            sizeField.Value2 = a.ZoneH.ToString(CultureInfo.InvariantCulture);
+        });
+        sizeField.PropertyChanged += (_, e) =>
+        {
+            if (!Editing(sizeField) || (e.Property != InspectorField.ValueProperty && e.Property != InspectorField.Value2Property)) return;
+            if (int.TryParse(sizeField.Value, out var w) && int.TryParse(sizeField.Value2, out var h))
+                _m.Edit("Change Panel Size", () => { _m.Scene!.Actors[index].ZoneW = Math.Max(8, w); _m.Scene.Actors[index].ZoneH = Math.Max(8, h); }, "panelSize:" + index);
+        };
+        rows.Add(sizeField);
+
+        var padField = new InspectorField { Kind = FieldKind.Text, Label = "Padding", Name = "Field_Padding" };
+        Refresh(() =>
+        {
+            if (Editing(padField)) return;
+            var p = _m.Scene!.Actors[index].Padding ?? new UiPadding(4, 4, 4, 4);
+            padField.Value = $"{p.Left}, {p.Top}, {p.Right}, {p.Bottom}";
+        });
+        padField.PropertyChanged += (_, e) =>
+        {
+            if (!Editing(padField) || e.Property != InspectorField.ValueProperty) return;
+            var parts = (padField.Value ?? "").Split(',', StringSplitOptions.TrimEntries);
+            if (parts.Length == 4 && int.TryParse(parts[0], out var l) && int.TryParse(parts[1], out var t) && int.TryParse(parts[2], out var r) && int.TryParse(parts[3], out var b))
+                _m.Edit("Change Padding", () => _m.Scene!.Actors[index].Padding = new UiPadding(l, t, r, b), "padding:" + index);
+        };
+        rows.Add(padField);
+
+        var snapField = new InspectorField { Kind = FieldKind.Toggle, Label = "Tile Snap", Name = "Field_TileSnap" };
+        Refresh(() => snapField.IsOn = _m.Scene!.Actors[index].TileSnap);
+        snapField.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == InspectorField.IsOnProperty && snapField.IsOn != _m.Scene!.Actors[index].TileSnap)
+                _m.Edit("Toggle Tile Snap", () => _m.Scene!.Actors[index].TileSnap = snapField.IsOn);
+        };
+        rows.Add(snapField);
+
+        return SectionBody(new SectionHeader { Title = "UI Panel", Glyph = "square" }, rows);
+    }
+
+    Control TextLabelSection(int index)
+    {
+        var rows = new List<Control>();
+        var textField = new InspectorField { Kind = FieldKind.Text, Label = "Text Key", Name = "Field_TextKey" };
+        Refresh(() =>
+        {
+            if (Editing(textField)) return;
+            textField.Value = _m.Scene!.Actors[index].Text;
+        });
+        textField.PropertyChanged += (_, e) =>
+        {
+            if (!Editing(textField) || e.Property != InspectorField.ValueProperty) return;
+            _m.Edit("Change Text Key", () => _m.Scene!.Actors[index].Text = textField.Value?.Trim() ?? "", "textKey:" + index);
+        };
+        rows.Add(textField);
+
+        var padField = new InspectorField { Kind = FieldKind.Text, Label = "Padding", Name = "Field_TextPadding" };
+        Refresh(() =>
+        {
+            if (Editing(padField)) return;
+            var p = _m.Scene!.Actors[index].Padding ?? new UiPadding(4, 4, 4, 4);
+            padField.Value = $"{p.Left}, {p.Top}, {p.Right}, {p.Bottom}";
+        });
+        padField.PropertyChanged += (_, e) =>
+        {
+            if (!Editing(padField) || e.Property != InspectorField.ValueProperty) return;
+            var parts = (padField.Value ?? "").Split(',', StringSplitOptions.TrimEntries);
+            if (parts.Length == 4 && int.TryParse(parts[0], out var l) && int.TryParse(parts[1], out var t) && int.TryParse(parts[2], out var r) && int.TryParse(parts[3], out var b))
+                _m.Edit("Change Text Padding", () => _m.Scene!.Actors[index].Padding = new UiPadding(l, t, r, b), "textPadding:" + index);
+        };
+        rows.Add(padField);
+
+        return SectionBody(new SectionHeader { Title = "Text Label", Glyph = "type" }, rows);
     }
 
     Control SpriteSection(ActorData a, int index, AgbStudio.Build.Graphics.ConvertedSprite? sheet)

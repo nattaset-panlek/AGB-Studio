@@ -187,19 +187,24 @@ public sealed class PopoverAndMenuTests : IDisposable
         Assert.Equal("Player (1)", M.Scene.Actors.Last(a => a.Kind == ActorKind.Player).Name);
 
         var add = SceneCommands.AddToScene(Ctx("T-M11"));
-        Assert.Equal(["Empty Actor", "Player", "Enemy", "Pickup", "Trigger Zone", "Camera Zone", "Text Label", "-", "Tilemap Layer", "Prefab…"], Labels(add, c));
+        Assert.Equal(["Empty Actor", "Player", "Enemy", "UI", "Pickup", "Trigger Zone", "Camera Zone", "Text Label", "-", "Tilemap Layer", "Prefab…"], Labels(add, c));
+        // UI opens a submenu: Canvas, Panel, Text Label, Button, Image
+        var ui = ((SubmenuEntry)add[3]).Entries();
+        Assert.Equal(["Canvas (Root Overlay)", "Panel (Window Box)", "Text Label", "Button", "Image (UI Graphic)"], Labels(ui, c));
+        Run(ui[0]); // Add Canvas
+        Assert.Equal(ActorKind.Canvas, M.Scene.Actors[^1].Kind);
         // Enemy opens a submenu: a plain enemy and the enemy sheets of the project
         var enemies = ((SubmenuEntry)add[2]).Entries();
         Assert.Equal(["Enemy", "bat.png", "slime.png", "slime_king.png"], Labels(enemies, c));
         Run(enemies[1]);
         Assert.Equal(("bat", ActorKind.Enemy, "Bat"), (M.Scene.Actors[^1].Sprite, M.Scene.Actors[^1].Kind, M.Scene.Actors[^1].Name));
         // Tilemap Layer: BG3 (free) added to the map, selected
-        Run(add[8]);
+        Run(add[9]);
         var map = GameProject.Load<MapFile>(M.MapPath!);
         Assert.Equal(4, map.Layers.Count);
         Assert.Equal(3, map.Layers[3].Bg);
         Assert.Equal(new SceneItem(SceneItemKind.Layer, 3), M.Selection);
-        Run(add[9]);
+        Run(add[10]);
         Assert.Equal(("T-O04", "AddToScenePrefab"), _w.S.Windows.Requests[^1]);
     }
 
@@ -209,7 +214,7 @@ public sealed class PopoverAndMenuTests : IDisposable
         var c = _w.S.Commands;
         M.SelectActor(0);
         var menu = SceneCommands.ActorContextMenu(Ctx("T-M12"));
-        Assert.Equal(["Rename", "Duplicate", "Delete", "-", "Add Behaviour…", "Edit Script", "Make Prefab", "-", "Focus in View"], Labels(menu, c));
+        Assert.Equal(["Rename", "Duplicate", "Delete", "-", "UI", "-", "Add Behaviour…", "Edit Script", "Make Prefab", "-", "Focus in View"], Labels(menu, c));
         Assert.Equal("F2", AgbStudio.Editor.Theme.Shortcuts.Format(_w.S.Shortcuts.GestureOf("scene.rename")!));
         var count = M.Scene!.Actors.Count;
         Run(menu[1]);                                               // Duplicate
@@ -220,16 +225,17 @@ public sealed class PopoverAndMenuTests : IDisposable
         Run(menu[0]);                                               // Rename: inline in the Hierarchy
         Assert.NotNull(_w.All<HierarchyPanel>().Single().RenameBox);
         _w.Key(PhysicalKey.Escape);
-        Run(menu[4]);                                               // Add Behaviour…
+        Run(menu[6]);                                               // Add Behaviour…
         Assert.IsType<ComponentPicker>(_w.Win.Overlays.Open.Single());
         _w.Key(PhysicalKey.Escape);
-        Run(menu[5]);                                               // Edit Script: PlayerController.cs
+        Run(menu[7]);                                               // Edit Script: PlayerController.cs
         Assert.Equal(("T-P04", "actor.editScript"), _w.S.Windows.Requests[^1]);
         if (_w.Win.Overlays.IsOpen) _w.Key(PhysicalKey.Escape);
-        Run(menu[6]);                                               // Make Prefab
+        Run(menu[8]);                                               // Make Prefab
         Assert.True(File.Exists(Path.Combine(_w.Fx.Root, "prefabs", "Player.prefab")));
         M.SelectActor(M.Scene.Actors.FindIndex(a => a.Name == "Goal Flag"));
-        Run(menu[8]);                                               // Focus in View: the flag at the centre of the screen
+        var menuFlag = SceneCommands.ActorContextMenu(Ctx("T-M12"));
+        Run(menuFlag[10]);                                          // Focus in View: the flag at the centre of the screen
         Assert.Equal((224 - 120, 288 - 80), M.Camera);
     }
 

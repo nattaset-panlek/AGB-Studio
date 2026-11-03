@@ -187,30 +187,14 @@ public sealed class SceneEditorModel
     /// <summary>The "Scene" document tab shows the open scene file (title bar breadcrumb).</summary>
     void UpdateDocument()
     {
+        if (ScenePath == null) return;
         var docs = _s.Documents;
-        var old = docs.Open.FirstOrDefault(d => d.Name == "Scene");
-        if (ScenePath == null)
+        docs.EnsureProjectDocuments(Project, ScenePath);
+        var sceneDoc = docs.Open.FirstOrDefault(EditorDocument.IsSceneDocument);
+        if (sceneDoc != null)
         {
-            return;
-        }
-        if (old != null && old.Path is { } p && string.Equals(Path.GetFullPath(p), Path.GetFullPath(ScenePath), StringComparison.OrdinalIgnoreCase))
-        {
-            old.SaveHandler ??= _ => { Save(); return Task.CompletedTask; };
-            if (docs.Active == null) docs.Active = old;
-            return;
-        }
-        var doc = new EditorDocument { Name = "Scene", Glyph = "map", Path = ScenePath, SaveHandler = _ => { Save(); return Task.CompletedTask; } };
-        var index = old == null ? 0 : docs.Open.IndexOf(old);
-        var wasActive = old == null || docs.Active == old || docs.Active == null;
-        if (old != null) docs.Close(old);
-        docs.Add(doc, activate: wasActive);
-        var at = docs.Open.IndexOf(doc);
-        if (at != index && index >= 0 && index < docs.Open.Count)
-        {
-            docs.Open.Move(at, index);
-            // DocumentService raises Changed on Add before the move; nudge the dirty flag so the tabs re-read the order
-            doc.IsDirty = true;
-            doc.IsDirty = false;
+            sceneDoc.SaveHandler = _ => { Save(); return Task.CompletedTask; };
+            if (docs.Active == null || EditorDocument.IsSceneDocument(docs.Active)) docs.Active = sceneDoc;
         }
     }
 
@@ -489,6 +473,8 @@ public sealed class SceneEditorModel
             case ActorKind.TriggerZone: a.Name = "Trigger Zone"; a.ZoneW = 16; a.ZoneH = 32; break;
             case ActorKind.CameraZone: a.Name = "Camera Zone"; a.ZoneW = 240; a.ZoneH = 160; break;
             case ActorKind.TextLabel: a.Name = "Text Label"; break;
+            case ActorKind.Panel: a.Name = "Panel"; a.ZoneW = 120; a.ZoneH = 64; break;
+            case ActorKind.Canvas: a.Name = "Canvas"; a.X = 0; a.Y = 0; a.ZoneW = 240; a.ZoneH = 160; break;
         }
         if (a.Tag.Length > 0 && Project is { } p && !p.Settings.Tags.Contains(a.Tag)) a.Tag = "";
         if (a.Sprite.Length > 0 && Assets?.Sprite(a.Sprite) is { } sheet && Assets.SpriteMeta(a.Sprite).Animations.FirstOrDefault() is { } anim)
@@ -504,10 +490,12 @@ public sealed class SceneEditorModel
         if (name.Length == 0 || name == old) return;
         Edit("Rename", () =>
         {
-            Scene.Actors[index].Name = UniqueName(name);
+            var newName = UniqueName(name);
+            Scene.Actors[index].Name = newName;
             // Links and the camera follow the actor by name.
-            foreach (var l in Scene.Links.Where(l => l.From == old)) l.From = Scene.Actors[index].Name;
-            if (Scene.Camera.Follow == old) Scene.Camera.Follow = Scene.Actors[index].Name;
+            foreach (var l in Scene.Links.Where(l => l.From == old)) l.From = newName;
+            if (Scene.Camera.Follow == old) Scene.Camera.Follow = newName;
+            foreach (var child in Scene.Actors.Where(c => c.Parent == old)) child.Parent = newName;
         });
     }
 
@@ -527,6 +515,7 @@ public sealed class SceneEditorModel
                 var name = Scene.Actors[i].Name;
                 Scene.Actors.RemoveAt(i);
                 Scene.Links.RemoveAll(l => l.From == name);
+                foreach (var child in Scene.Actors.Where(c => c.Parent == name)) child.Parent = "";
             }
             _actors = null;
             _selection = Scene.Actors.Count == 0 ? new SceneItem(SceneItemKind.Scene) : SceneItem.ForActor(Math.Min(list[0], Scene.Actors.Count - 1));
@@ -576,6 +565,108 @@ public sealed class SceneEditorModel
         var a = Scene.Actors[index];
         if (a.X == x && a.Y == y) return;
         Edit("Move", () => { a.X = x; a.Y = y; }, merge ? "move:" + index : null);
+    }
+
+    public bool IsDescendantOf(int childIndex, int potentialAncestorIndex)
+    {
+        if (Scene == null || childIndex < 0 || childIndex >= Scene.Actors.Count || potentialAncestorIndex < 0 || potentialAncestorIndex >= Scene.Actors.Count) return false;
+        var ancestor = Scene.Actors[potentialAncestorIndex];
+        var current = Scene.Actors[childIndex];
+        var visited = new HashSet<string>(StringComparer.Ordinal) { current.Name };
+
+        while (!string.IsNullOrEmpty(current.Parent) && visited.Add(current.Parent))
+        {
+            if (current.Parent == ancestor.Name) return true;
+            var parent = Scene.Actors.FirstOrDefault(a => a.Name == current.Parent);
+            if (parent == null) break;
+            current = parent;
+        }
+
+        return false;
+    }
+
+    public IReadOnlyList<int> GetChildActorIndices(int parentIndex)
+    {
+        if (Scene == null || parentIndex < 0 || parentIndex >= Scene.Actors.Count) return [];
+        var parentName = Scene.Actors[parentIndex].Name;
+        var list = new List<int>();
+        for (var i = 0; i < Scene.Actors.Count; i++)
+            if (Scene.Actors[i].Parent == parentName) list.Add(i);
+        return list;
+    }
+
+    public void SetActorParent(int index, string? parentName, bool worldPositionStays = true)
+    {
+        if (Scene == null || index < 0 || index >= Scene.Actors.Count) return;
+        var a = Scene.Actors[index];
+        parentName ??= "";
+
+        if (a.Parent == parentName) return;
+        if (parentName == a.Name) return;
+
+        var targetIndex = Scene.Actors.FindIndex(x => x.Name == parentName);
+        if (targetIndex >= 0 && IsDescendantOf(targetIndex, index)) return;
+
+        Edit("Reparent", () =>
+        {
+            if (worldPositionStays)
+            {
+                var (curWx, curWy) = a.GetWorldPosition(Scene.Actors);
+                var targetParent = targetIndex >= 0 ? Scene.Actors[targetIndex] : null;
+                var (targetWx, targetWy) = targetParent?.GetWorldPosition(Scene.Actors) ?? (0, 0);
+                a.X = curWx - targetWx;
+                a.Y = curWy - targetWy;
+            }
+            a.Parent = parentName;
+        });
+    }
+
+    public void UnparentActor(int index, bool worldPositionStays = true) => SetActorParent(index, "", worldPositionStays);
+
+    public void ReorderActor(int fromIndex, int toIndex)
+    {
+        if (Scene == null || fromIndex < 0 || fromIndex >= Scene.Actors.Count || toIndex < 0 || toIndex >= Scene.Actors.Count || fromIndex == toIndex) return;
+        Edit("Reorder Actor", () =>
+        {
+            var actor = Scene.Actors[fromIndex];
+            Scene.Actors.RemoveAt(fromIndex);
+            Scene.Actors.Insert(toIndex, actor);
+            _actors = null;
+        });
+        Selection = new SceneItem(SceneItemKind.Actor, toIndex);
+    }
+
+    public void ReorderAndReparent(int sourceIndex, int targetIndex, bool insertBefore, bool worldPositionStays = true)
+    {
+        if (Scene == null || sourceIndex < 0 || sourceIndex >= Scene.Actors.Count || targetIndex < 0 || targetIndex >= Scene.Actors.Count || sourceIndex == targetIndex) return;
+        var src = Scene.Actors[sourceIndex];
+        var target = Scene.Actors[targetIndex];
+
+        Edit("Reorder Actor", () =>
+        {
+            var newParent = target.Parent;
+            if (src.Parent != newParent)
+            {
+                if (worldPositionStays)
+                {
+                    var (curWx, curWy) = src.GetWorldPosition(Scene.Actors);
+                    var targetParentIdx = Scene.Actors.FindIndex(a => a.Name == newParent);
+                    var (pWx, pWy) = targetParentIdx >= 0 ? Scene.Actors[targetParentIdx].GetWorldPosition(Scene.Actors) : (0, 0);
+                    src.X = curWx - pWx;
+                    src.Y = curWy - pWy;
+                }
+                src.Parent = newParent;
+            }
+
+            Scene.Actors.RemoveAt(sourceIndex);
+            var destIndex = Scene.Actors.IndexOf(target);
+            if (!insertBefore) destIndex++;
+            Scene.Actors.Insert(Math.Clamp(destIndex, 0, Scene.Actors.Count), src);
+            _actors = null;
+        });
+
+        var newIdx = Scene.Actors.IndexOf(src);
+        Selection = new SceneItem(SceneItemKind.Actor, newIdx);
     }
 
     /// <summary>Changes a field of the selected actor's component (Inspector).</summary>

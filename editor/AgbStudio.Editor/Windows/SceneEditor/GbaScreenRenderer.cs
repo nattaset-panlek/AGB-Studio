@@ -212,8 +212,9 @@ public static class GbaScreenRenderer
                     // a map layer on the same BG (no free one) is replaced: its scroll stays (set below)
                     bgs[frame.TextLayer] = new Bg { Priority = 0 };
                 }
+                var (wx, wy) = a.GetWorldPosition(actors);
                 var lh = run.Font.LineHeight;
-                int tx = a.X / 8, ty = a.Y / 8, w = (240 - a.X + 7) / 8, h = (lh * run.Lines + 7) / 8;
+                int tx = wx / 8, ty = wy / 8, w = (240 - wx + 7) / 8, h = (lh * run.Lines + 7) / 8;
                 if (w <= 0 || h <= 0) continue;
                 var px = TextRenderer.Render(run.Layout, run.Font, w * 8, h * 8, new TextRenderer.Style(1, 4, 0));
                 labels.Add((tx, ty, w, h, px));
@@ -234,8 +235,9 @@ public static class GbaScreenRenderer
         foreach (var (s, prio) in oam)
         {
             var a = actors[s.Actor];
-            var left = a.X - camX - (sbyte)s.Meta.OriginX;
-            var top = a.Y - camY - (sbyte)s.Meta.OriginY;
+            var (wx, wy) = a.GetWorldPosition(actors);
+            var left = wx - camX - (sbyte)s.Meta.OriginX;
+            var top = wy - camY - (sbyte)s.Meta.OriginY;
             if (left >= 240 || top >= 160 || left + s.Sheet.FrameWidth <= 0 || top + s.Sheet.FrameHeight <= 0) continue;
             frame.Sprites.Add(new SpritePlacement(s.Actor, left, top, s.Sheet.FrameWidth, s.Sheet.FrameHeight, s.Sheet.SourceWidth, s.Sheet.SourceHeight, prio, s.Frame, s.Bank));
         }

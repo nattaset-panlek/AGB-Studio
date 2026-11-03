@@ -44,15 +44,174 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         Name = "HierarchyPanel";
         Children.Add(new ScrollViewer { Content = _rows, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled });
         _m.Changed += Rebuild;
-        _m.SelectionChanged += Rebuild;
+        _m.SelectionChanged += UpdateSelectionOnly;
         SceneEditTarget.Of(_m).RenameRequested += p => { if (p == SceneEditTarget.Panel.Scene) BeginRename(); };
         AttachedToVisualTree += (_, _) => HookSearch();
         // where in the row the pointer went down (the chevron opens and closes folders)
         AddHandler(PointerPressedEvent, (_, e) =>
         {
-            if (e.Source is Visual v && v.FindAncestorOfType<TreeItem>(true) is { } t) _lastPointerX = e.GetPosition(t).X;
-        }, RoutingStrategies.Tunnel);
+            if (e.Source is Visual v && v.FindAncestorOfType<TreeItem>(true) is { } t)
+            {
+                _lastPointerX = e.GetPosition(t).X;
+                if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && t.Tag is HierarchyRow r && r.Item.Kind == SceneItemKind.Actor)
+                {
+                    _dragActorIndex = r.Item.Index;
+                    _dragStartPoint = e.GetPosition(this);
+                    _isDragging = false;
+                }
+            }
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        AddHandler(PointerMovedEvent, (_, e) =>
+        {
+            if (_dragActorIndex >= 0 && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                var cur = e.GetPosition(this);
+                if (!_isDragging && (Math.Abs(cur.X - _dragStartPoint.X) > 4 || Math.Abs(cur.Y - _dragStartPoint.Y) > 4))
+                {
+                    _isDragging = true;
+                    e.Pointer.Capture(this);
+                }
+                if (_isDragging)
+                {
+                    UpdateDropFeedback(cur);
+                }
+            }
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        AddHandler(PointerReleasedEvent, (_, e) =>
+        {
+            if (_isDragging && _dragActorIndex >= 0)
+            {
+                e.Pointer.Capture(null);
+                ApplyDrop(e.GetPosition(this));
+                e.Handled = true;
+            }
+            _dragActorIndex = -1;
+            _isDragging = false;
+            ClearDropFeedback();
+        }, RoutingStrategies.Tunnel, handledEventsToo: true);
         Rebuild();
+    }
+
+    int _dragActorIndex = -1;
+    Point _dragStartPoint;
+    bool _isDragging;
+    TreeItem? _highlightedItem;
+    DropPosition _currentDropPos = DropPosition.None;
+
+    public enum DropPosition { None, Above, Inside, Below, Root }
+
+    public (TreeItem? Item, DropPosition Pos) HitTestRow(Point pos)
+    {
+        var items = Items;
+        for (var i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            var origin = item.TranslatePoint(new Point(0, 0), this);
+            if (origin == null) continue;
+            var rel = pos - origin.Value;
+            var h = Math.Max(20, item.Bounds.Height);
+            if (rel.Y >= 0 && rel.Y <= h)
+            {
+                if (item.Tag is HierarchyRow r && r.Item.Kind == SceneItemKind.Actor)
+                {
+                    if (rel.Y < h * 0.25) return (item, DropPosition.Above);
+                    if (rel.Y > h * 0.75) return (item, DropPosition.Below);
+                    return (item, DropPosition.Inside);
+                }
+                return (item, DropPosition.Root);
+            }
+        }
+        return (null, DropPosition.Root);
+    }
+
+    void UpdateDropFeedback(Point pos)
+    {
+        var (item, dropPos) = HitTestRow(pos);
+        if (item != _highlightedItem || dropPos != _currentDropPos)
+        {
+            ClearDropFeedback();
+            _highlightedItem = item;
+            _currentDropPos = dropPos;
+            if (_highlightedItem != null)
+            {
+                if (_currentDropPos == DropPosition.Inside)
+                {
+                    _highlightedItem.Background = (Application.Current?.FindResource("accent/subtle") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.DarkSlateBlue;
+                }
+                else if (_currentDropPos == DropPosition.Above)
+                {
+                    _highlightedItem.BorderBrush = (Application.Current?.FindResource("accent/default") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.Cyan;
+                    _highlightedItem.BorderThickness = new Thickness(0, 2, 0, 0);
+                }
+                else if (_currentDropPos == DropPosition.Below)
+                {
+                    _highlightedItem.BorderBrush = (Application.Current?.FindResource("accent/default") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.Cyan;
+                    _highlightedItem.BorderThickness = new Thickness(0, 0, 0, 2);
+                }
+            }
+        }
+    }
+
+    void ClearDropFeedback()
+    {
+        if (_highlightedItem != null)
+        {
+            _highlightedItem.Background = null;
+            _highlightedItem.BorderBrush = null;
+            _highlightedItem.BorderThickness = new Thickness(0);
+            _highlightedItem = null;
+        }
+        _currentDropPos = DropPosition.None;
+    }
+
+    public void ApplyDrop(Point pos)
+    {
+        var (item, dropPos) = HitTestRow(pos);
+        if (_dragActorIndex < 0 || _m.Scene == null || _dragActorIndex >= _m.Scene.Actors.Count) return;
+
+        if (item?.Tag is HierarchyRow r && r.Item.Kind == SceneItemKind.Actor)
+        {
+            var targetIdx = r.Item.Index;
+            if (targetIdx == _dragActorIndex) return;
+
+            switch (dropPos)
+            {
+                case DropPosition.Inside:
+                    ReparentActor(_dragActorIndex, targetIdx, worldPositionStays: true);
+                    break;
+                case DropPosition.Above:
+                    _m.ReorderAndReparent(_dragActorIndex, targetIdx, insertBefore: true, worldPositionStays: true);
+                    break;
+                case DropPosition.Below:
+                    _m.ReorderAndReparent(_dragActorIndex, targetIdx, insertBefore: false, worldPositionStays: true);
+                    break;
+            }
+        }
+        else
+        {
+            _m.UnparentActor(_dragActorIndex, worldPositionStays: true);
+        }
+    }
+
+    public void ReorderActor(int fromIndex, int toIndex) => _m.ReorderActor(fromIndex, toIndex);
+
+    public bool ReparentActor(int actorIndex, int? newParentIndex, bool worldPositionStays = true)
+    {
+        if (_m.Scene == null || actorIndex < 0 || actorIndex >= _m.Scene.Actors.Count) return false;
+        if (newParentIndex == null)
+        {
+            _m.UnparentActor(actorIndex, worldPositionStays);
+            return true;
+        }
+        var targetIdx = newParentIndex.Value;
+        if (targetIdx < 0 || targetIdx >= _m.Scene.Actors.Count || targetIdx == actorIndex) return false;
+        if (_m.IsDescendantOf(targetIdx, actorIndex)) return false;
+
+        var targetActor = _m.Scene.Actors[targetIdx];
+        _m.SetActorParent(actorIndex, targetActor.Name, worldPositionStays);
+        return true;
     }
 
     public string Query => _search?.Text?.Trim() ?? "";
@@ -72,16 +231,24 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         ActorKind.TriggerZone => a.Sprite.Length > 0 ? "flag" : "link",
         ActorKind.CameraZone => "camera",
         ActorKind.TextLabel => "type",
+        ActorKind.Panel => "square",
+        ActorKind.Canvas => "layers",
         _ => "cube",
     };
 
-    static string? ActorMeta(ActorData a) => a.Kind switch
+    static string? ActorMeta(ActorData a)
     {
-        ActorKind.TriggerZone when a.Sprite.Length == 0 => "trigger",
-        ActorKind.CameraZone => "camera",
-        ActorKind.TextLabel => "text",
-        _ => null,
-    };
+        if (a.Hidden) return "inactive";
+        return a.Kind switch
+        {
+            ActorKind.TriggerZone when a.Sprite.Length == 0 => "trigger",
+            ActorKind.CameraZone => "camera",
+            ActorKind.TextLabel => "text",
+            ActorKind.Panel => "panel",
+            ActorKind.Canvas => "canvas",
+            _ => null,
+        };
+    }
 
     public static string Parallax(double p) => "×" + p.ToString("0.0#", CultureInfo.InvariantCulture);
 
@@ -107,28 +274,61 @@ public sealed class HierarchyPanel : Panel, IEditTarget
                 list.Add(new(new SceneItem(SceneItemKind.Layer, i), $"BG{l.Bg} · {l.Name}", l.Type == LayerType.Image ? "image" : "tiles", meta, 2, TreeToggle.None, "layer:" + i));
             }
         }
-        var groups = scene.Actors.Where(a => a.Group.Length > 0).GroupBy(a => a.Group).Where(g => g.Count() >= 2).ToDictionary(g => g.Key, g => g.Count());
-        // Actors in scene (spawn) order; grouped actors sit in their folder and the folders are listed together where
-        // the first grouped actor is (Player, Enemies, Coins, Question Block ...).
+        var childrenOf = new Dictionary<string, List<(ActorData Actor, int Index)>>(StringComparer.Ordinal);
+        var actorByName = scene.Actors.ToDictionary(a => a.Name, StringComparer.Ordinal);
+        for (var i = 0; i < scene.Actors.Count; i++)
+        {
+            var a = scene.Actors[i];
+            if (!string.IsNullOrEmpty(a.Parent) && actorByName.ContainsKey(a.Parent))
+            {
+                if (!childrenOf.TryGetValue(a.Parent, out var kids))
+                {
+                    kids = [];
+                    childrenOf[a.Parent] = kids;
+                }
+                kids.Add((a, i));
+            }
+        }
+
+        var emitted = new HashSet<int>();
+
+        void EmitActor(ActorData a, int index, int depth)
+        {
+            if (!emitted.Add(index)) return;
+            var hasKids = childrenOf.TryGetValue(a.Name, out var kids) && kids.Count > 0;
+            var key = "actor:" + index;
+            list.Add(new(SceneItem.ForActor(index), a.Name, ActorGlyph(a), ActorMeta(a), depth, hasKids ? TreeToggle.Open : TreeToggle.None, key, ActorComponents.Of(a, scene)));
+            if (hasKids && kids != null)
+            {
+                foreach (var (child, childIdx) in kids)
+                    EmitActor(child, childIdx, depth + 1);
+            }
+        }
+
+        var groups = scene.Actors.Where(a => a.Group.Length > 0 && (string.IsNullOrEmpty(a.Parent) || !actorByName.ContainsKey(a.Parent)))
+            .GroupBy(a => a.Group).Where(g => g.Count() >= 2).ToDictionary(g => g.Key, g => g.Count());
         var foldersDone = false;
         for (var i = 0; i < scene.Actors.Count; i++)
         {
             var a = scene.Actors[i];
+            if (emitted.Contains(i)) continue;
+            if (!string.IsNullOrEmpty(a.Parent) && actorByName.ContainsKey(a.Parent)) continue;
+
             if (!groups.ContainsKey(a.Group))
             {
-                list.Add(new(SceneItem.ForActor(i), a.Name, ActorGlyph(a), ActorMeta(a), 1, TreeToggle.None, "actor:" + i, ActorComponents.Of(a, scene)));
+                EmitActor(a, i, 1);
                 continue;
             }
             if (foldersDone) continue;
             foldersDone = true;
             foreach (var g in scene.Actors.Select(x => x.Group).Where(groups.ContainsKey).Distinct())
             {
-                var members = scene.Actors.Select((x, k) => (x, k)).Where(t => t.x.Group == g).ToList();
+                var members = scene.Actors.Select((x, k) => (x, k)).Where(t => t.x.Group == g && (string.IsNullOrEmpty(t.x.Parent) || !actorByName.ContainsKey(t.x.Parent))).ToList();
                 var glyphs = members.Select(t => ActorGlyph(t.x)).Distinct().ToList();
                 list.Add(new(new SceneItem(SceneItemKind.Group, -1, g), g, glyphs.Count == 1 && glyphs[0] != "cube" ? glyphs[0] : "folder",
                     groups[g].ToString(CultureInfo.InvariantCulture), 1, TreeToggle.Open, "group:" + g));
                 foreach (var (x, k) in members)
-                    list.Add(new(SceneItem.ForActor(k), x.Name, ActorGlyph(x), ActorMeta(x), 2, TreeToggle.None, "actor:" + k, ActorComponents.Of(x, scene)));
+                    EmitActor(x, k, 2);
             }
         }
         // groups with more than three members start closed (Coins), smaller ones open (Enemies)
@@ -185,11 +385,13 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         {
             var selected = r.Item.Kind == SceneItemKind.Actor ? _m.IsActorSelected(r.Item.Index)
                 : sel == r.Item || (sel is { Kind: SceneItemKind.Group } g && r.Item.Kind == SceneItemKind.Group && g.Name == r.Item.Name);
+            var isActorHidden = r.Item.Kind == SceneItemKind.Actor && _m.Scene?.Actors.ElementAtOrDefault(r.Item.Index)?.Hidden == true;
             var item = new TreeItem
             {
-                Label = r.Label, Glyph = r.Glyph, Depth = r.Depth, Toggle = r.Toggle, IsSelected = selected,
-                Meta = selected && r.Item.Kind == SceneItemKind.Actor ? "Actor" : r.Meta,
+                Label = r.Label, Glyph = isActorHidden ? "eye-off" : r.Glyph, Depth = r.Depth, Toggle = r.Toggle, IsSelected = selected,
+                Meta = selected && r.Item.Kind == SceneItemKind.Actor ? (isActorHidden ? "Actor (Inactive)" : "Actor") : r.Meta,
                 Tag = r, Name = "Row_" + r.Key,
+                Opacity = isActorHidden ? 0.55 : 1.0,
                 // what the actor is made of: small icons after the name, the full list as the tooltip
                 Badges = r.Parts is { } parts ? ActorComponents.Glyphs(parts) : null,
             };
@@ -197,14 +399,31 @@ public sealed class HierarchyPanel : Panel, IEditTarget
             item.Activated += (_, e) => OnActivated(item, r, e.ClickCount, e.Modifiers);
             item.PointerPressed += (_, e) =>
             {
-                if (!e.GetCurrentPoint(item).Properties.IsRightButtonPressed) return;
-                SceneEditTarget.Of(_m).Active = SceneEditTarget.Panel.Scene;
-                if (r.Item.Kind != SceneItemKind.Actor) return;
-                _m.Selection = r.Item;
-                _ = _s.Windows.Open("T-M12", anchor: Items.FirstOrDefault(t => t.Tag is HierarchyRow h && h.Key == r.Key) ?? (Control)this, source: "HierarchyActor");
-                e.Handled = true;
+                if (e.GetCurrentPoint(item).Properties.IsRightButtonPressed)
+                {
+                    SceneEditTarget.Of(_m).Active = SceneEditTarget.Panel.Scene;
+                    if (r.Item.Kind != SceneItemKind.Actor) return;
+                    _m.Selection = r.Item;
+                    _ = _s.Windows.Open("T-M12", anchor: Items.FirstOrDefault(t => t.Tag is HierarchyRow h && h.Key == r.Key) ?? (Control)this, source: "HierarchyActor");
+                    e.Handled = true;
+                }
             };
             _rows.Children.Add(item);
+        }
+    }
+
+    void UpdateSelectionOnly()
+    {
+        var sel = _m.Selection;
+        foreach (var item in _rows.Children.OfType<TreeItem>())
+        {
+            if (item.Tag is HierarchyRow r)
+            {
+                var selected = r.Item.Kind == SceneItemKind.Actor ? _m.IsActorSelected(r.Item.Index)
+                    : sel == r.Item || (sel is { Kind: SceneItemKind.Group } g && r.Item.Kind == SceneItemKind.Group && g.Name == r.Item.Name);
+                item.IsSelected = selected;
+                item.Meta = selected && r.Item.Kind == SceneItemKind.Actor ? "Actor" : r.Meta;
+            }
         }
     }
 
