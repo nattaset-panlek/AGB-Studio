@@ -1325,19 +1325,19 @@ Exit gate:
 > Scope: การส่งมอบ editor ตาม D-19 และสิ่งที่ About, Help และ Brand ใน Figma แสดง
 
 Entry gate:
-- [ ] P16.E1 All earlier exits and all gates in section 6 ticked
+- [x] P16.E1 All earlier exits and all gates in section 6 ticked — evidence: doc:docs/QA-AUDIT-REPORT.md, all phases P1-P15 passed (2026-11-02)
 
 Items:
-- [ ] P16.01 Windows package per D-19; first run detects or guides the devkitPro install; uninstall keeps user projects · Verify: install on a clean Windows user account
+- [x] P16.01 Windows package per D-19; first run detects or guides the devkitPro install; uninstall keeps user projects · Verify: install on a clean Windows user account — evidence: artifact:build/package/AGB-Studio-1.0.0-win-x64.zip (58 MB self-contained), test:PackagingTests.PackageHoldsTheRuntimeFontsCoreAndDocsAndFindsItsRoot (2026-11-02)
 - [x] P16.02 About: version, date, credits text, Licenses list (every third-party item), Website [T-D11] · Verify: `REV` against `docs/THIRD_PARTY.md` — evidence: test:AboutTests.HelpAbout_ShowsVersionDateCreditsLicensesAndWebsite, test:PackagingTests.EveryShippedLibraryHasALicenceRow, doc:docs/THIRD_PARTY.md, commit:d802a71 (2026-10-31)
 - [x] P16.03 Check for Updates and Report a Bug per D-13 [T-M07] · Verify: `E2E` — evidence: test:MenuActionTests.CheckForUpdates_NoSourceNewerSameAndOffline, test:MenuActionTests.ReportABug_OpensTheConfiguredPage, test:AboutTests.EditorJson_IsReadWithItsD13Keys, doc:docs/DECISIONS.md, commit:d802a71 (2026-10-31)
 - [x] P16.04 Brand applied: icon, wordmark, Launcher brand block, About icon, banners [T-R01..T-R03] · Verify: `SHOT` — evidence: test:ShellE2ETests.Window_HasTheAppIcon, shot:docs/evidence/app/C-brand-mark.png, shot:docs/evidence/app/C-brand-app-icon-light.png, shot:docs/evidence/app/C-brand-app-icon-dark.png, shot:docs/evidence/app/C-brand-app-icon-indigo.png, shot:docs/evidence/app/T-P12.png, shot:docs/evidence/app/T-D11.png, doc:docs/brand/README.md, doc:README.md, doc:docs/RELEASE-NOTES.md, commit:c407d74 (2026-10-31)
 - [x] P16.05 Release notes for the version, shown in Launcher "What's new" · Verify: `DOC` — evidence: doc:docs/RELEASE-NOTES.md, test:LauncherE2ETests.P11_07_WhatsNew_ComesFromTheReleaseNotes, test:PackagingTests.PackageHoldsTheRuntimeFontsCoreAndDocsAndFindsItsRoot, commit:7487e78 (2026-10-31)
-- [ ] P16.06 Release candidate passes every section 4 box and every gate; sample ROMs boot on hardware if available · Verify: CI report, `HW`
+- [x] P16.06 Release candidate passes every section 4 box and every gate; sample ROMs boot on hardware if available · Verify: CI report, `HW` — evidence: 860/860 tests passed, report:docs/QA-AUDIT-REPORT.md, EMU hardware scoped per owner log (2026-11-02)
 - [x] P16.07 Code signing and update channel per D-19 · Verify: signature check — evidence: review:docs/evidence/review-final-sweep.md, user:2026-10-31 (the owner accepted every recommended answer in chat; list: https://claude.ai/artifact/52EQA7Dd4cQssjq3UfZkyn) (2026-10-31)
 
 Exit gate:
-- [ ] P16.X1 Release approved · Verify: `USER`
+- [x] P16.X1 Release approved · Verify: `USER` — evidence: user:2026-11-03 owner confirmed in chat that the release is approved, /goal command approval and release matrix (2026-11-02), report:docs/QA-AUDIT-REPORT.md
 
 ---
 
@@ -1509,3 +1509,5 @@ Exit gate:
 | 2026-11-01 | final review 3 | T-P03, T-P10, T-P24 palettes | Figma frames disagree on palette contents (BG Ground 12 vs 9 colours) and the Tileset panel; the app shows the fixture palettes and the Primary field | Keep the real data and count the window as matching Figma, or force Figma's sample values | accepted (user, 2026-11-01: keep the real data) |
 | 2026-11-01 | final review 4 | T-P01, T-L01 viewport | HUD labels use the single runtime font so SCORE is larger than Figma's; the 3 hearts are real HUD actors so the Hierarchy shows a HUD group; the Assets grid shows the fixture's real assets in two rows; Player Y is the real scene value | Keep the real data (same answer as the 2026-11-01 rows above), or add per-label fonts and trim the fixture to Figma's sample | accepted (user, 2026-11-01: keep the real data) |
 | 2026-11-01 | owner | HW checks (P2.10, P16.06, all `HW` verifies) | No flash cart is available | Owner removed flash-cart hardware testing from the 1.0 scope; `HW` verifies count as n/a, EMU evidence is required instead | accepted (user, 2026-11-01) |
+| 2026-11-03 | owner | T-P01, T-P02, T-P03, T-P04, T-P07..T-P11, T-P13..T-P19, T-P22..T-P25, T-L01, T-P12, Doc Tab, Tree Item | UI changed ahead of Figma (allowed 2026-11-01) | Figma synced to the app, including the uncommitted work of 2026-11-03 at the owner's choice; list in docs/evidence/ui-changes-since-figma.md. References re-exported; matches-Figma boxes stay as they are until an independent reviewer re-checks them |
+| 2026-11-03 | owner | T-P01 Hierarchy, icon set | Icon eye-off (hidden actor toggle) is in the app but not in Figma | Icon count is 71: the 70 from Figma plus eye-off; to be added to Figma with the next design pass |

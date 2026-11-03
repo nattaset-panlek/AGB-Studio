@@ -1084,7 +1084,7 @@
   "node": "3407:21229",
   "set": "Doc Tab",
   "variant": "State=Default",
-  "w": 85,
+  "w": 76,
   "h": 34
  },
  {
@@ -1092,7 +1092,7 @@
   "node": "3407:21236",
   "set": "Doc Tab",
   "variant": "State=Active",
-  "w": 84,
+  "w": 75,
   "h": 34
  },
  {
@@ -1100,7 +1100,7 @@
   "node": "3422:81924",
   "set": "Doc Tab",
   "variant": "State=Hover",
-  "w": 85,
+  "w": 76,
   "h": 34
  },
  {

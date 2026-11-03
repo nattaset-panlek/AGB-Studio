@@ -37,3 +37,28 @@ Windows whose UI differs from the Figma file on purpose, with the reason. Each b
 | T-P01 Hierarchy | Actor rows showed the kind icon, the name and a meta word only; nothing told which components an actor had. | Actor rows show up to four small component badges after the name (behaviours first: rocket physics, sword combat, bug AI, sound audio, code script; then image sprite, type text, flag zone, link scene link, camera followed by the camera). The row tooltip lists every component ("Components: Sprite, Animation idle, Platformer Body, PlayerController (script), Collider, Camera follows"). | The owner could not tell which objects of the New Project templates use which components, or how they work. |
 | T-P01 Inspector | Header, then Transform, Sprite, one section per behaviour, Collider, Add Component. | A "Components" section under the header lists every part of the actor as pills (sprite, animation, built-in and script behaviours, collider, text label, trigger zone, camera follow, scene links) with the count; scripts use the accent colour, the tooltip says what each kind is, a click scrolls to the section that edits it. | Same: one place that names everything an actor is made of. |
 | T-D12 New Project | A project made from a genre template opened on its Title scene (one text label, no components). | It opens on the template's main scene (Level_01, Village, Story, Board, Stage_01, Meadow, Circuit, Pier); the game still starts on the title screen. The project folder has a README.md that lists every scene, object, component and script and what to try changing. | The title screen showed nothing to learn from, so the templates looked as if no object used components. |
+
+## Figma sync, 2026-11-03
+
+Figma now follows the app, including the uncommitted work in the tree on 2026-11-03 (the owner chose this; that work has not passed review or CI). Named Figma version before the edits: "Before app sync 2026-11-03".
+
+| Figma node | Now in Figma |
+|---|---|
+| Doc Tab component | Padding 12/8, gap 6, new `Show Close` property with an 18 px close button |
+| Doc Tabs row of 20 frames | Scene, Game, then the open documents as in the app; Debugger frames gain the Scene tab; close buttons only on closable tabs |
+| Scripting API, World Map, Logic Graph, Build Report | New 34 px Doc Tabs row over the centre column |
+| Debugger, Debugger · Memory, Debugger · Palettes | Paused chip 184 px, left aligned |
+| Play Mode | Frame chip 128 px, left aligned |
+| Tree Item component | New `Badges` slot (Badge 1-4, each with an icon property) |
+| Hierarchy of Scene Editor, Light, Play Mode | Component badges; HUD group with 4 children before Coins; loose "HUD · Score" row removed |
+| Inspector of Scene Editor, Light | Active checkbox, Components section with 6 pills, Transform Parent field, Position 48, 288 |
+| Tilemap Editor Tileset panel | Primary field |
+| New frame "Launcher · Project open" (reference `figma/T-P12-project-open.png`) | "Back to Sky Hopper" ghost button |
+| New frame "Extract AGB Studio first" (reference `figma/startup-extract-first.png`) | 520 px dialog, warn icon, Continue anyway / Close AGB Studio |
+
+Not changed in Figma:
+- Behaviour-only rows above (breadcrumb, state kept on page switch, Stop, tab routing, disabled Pause with no game): no frame shows them.
+- Crash toast text: no frame shows it.
+- Tabular digits (OpenType tnum) cannot be set through the plugin API; the text keeps Inter's default digits in Figma.
+- Inspector Canvas, UI Panel and Text Label sections, hierarchy eye-off for hidden actors and tab context menu from the uncommitted work: no existing frame shows those states.
+- Logic Graph node palette and Tileset grid keep their Figma sample data (scope-log rows of 2026-11-01).
