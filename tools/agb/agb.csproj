@@ -8,5 +8,6 @@
     <ProjectReference Include="..\AgbStudio.Emu\AgbStudio.Emu.csproj" />
     <ProjectReference Include="..\AgbStudio.Build\AgbStudio.Build.csproj" />
     <ProjectReference Include="..\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
+    <ProjectReference Include="..\AgbStudio.Mcp\AgbStudio.Mcp.csproj" />
   </ItemGroup>
 </Project>

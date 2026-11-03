@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>AgbStudio.Mcp</AssemblyName>
+    <RootNamespace>AgbStudio.Mcp</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AgbStudio.Core\AgbStudio.Core.csproj" />
+    <ProjectReference Include="..\AgbStudio.Build\AgbStudio.Build.csproj" />
+    <ProjectReference Include="..\AgbStudio.Emu\AgbStudio.Emu.csproj" />
+    <ProjectReference Include="..\AgbStudio.Scripting\AgbStudio.Scripting.csproj" />
+  </ItemGroup>
+</Project>

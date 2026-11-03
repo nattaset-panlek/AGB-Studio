@@ -31,6 +31,7 @@ public static class Program
                 "text-preview" => TextPreview(args[1..]),
                 "pixel-font" => PixelFont(args.Length > 1 ? args[1] : Path.Combine(NativeBuild.RepoRoot, "third_party", "fonts")),
                 "lint" => RunLint(args.Length > 1 ? args[1] : NativeBuild.RepoRoot),
+                "mcp" => Mcp(args[1..]),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -51,6 +52,7 @@ public static class Program
         ["template"] = "<template id> <folder> [name]",
         ["package"] = "[output folder]",
         ["lint"] = "[repository folder]",
+        ["mcp"] = "[project folder] [--project <path>]",
         ["text-preview"] = "<font.ttf|font.bdf> <size px> <box width> <out.png> <text...>",
         ["pixel-font"] = "[output folder]",
         ["make-test-audio"] = "<folder>",
@@ -260,6 +262,8 @@ public static class Program
         Console.WriteLine($"wrote beep.wav, tune.mod and loop.mod to {dir}");
         return 0;
     }
+
+    static int Mcp(string[] args) => AgbStudio.Mcp.Program.Main(args).GetAwaiter().GetResult();
 
     static string? Option(string[] args, string name)
     {
