@@ -136,6 +136,13 @@ public sealed class Actor
     [Cpp("{this.}name")]
     public string name => null;
 
+    /// <summary>Parent actor in the scene hierarchy (null if scene root).</summary>
+    public Actor parent => null;
+
+    /// <summary>Sets the parent actor in the hierarchy (Unity-style GameObject parenting).</summary>
+    /// <param name="newParent">The new parent actor, or null for root.</param>
+    public void SetParent(Actor newParent) { }
+
     /// <summary>World position of the origin in pixels.</summary>
     [Cpp("{this.}pos")]
     public fixed2 pos;
@@ -179,6 +186,16 @@ public sealed class Actor
     /// <param name="key">String key from Localization.</param>
     [Cpp("agb::text::setLabelRun({this.}textLabel, ::agb::text::run({0}))")]
     public void SetLabelText([Asset(AssetKind.Text)] string key) { }
+
+    /// <summary>For an Image or HUD element: sets the fill amount (0.0 to 1.0) like Unity UI Image.</summary>
+    [Cpp("agb::text::setLabelFillRatio({this.}textLabel, {0}, {1})")]
+    public void SetFillRatio(int current, int max) { }
+
+    /// <summary>Sets active state (Unity style SetActive).</summary>
+    public void SetActive(bool active) => visible = active;
+
+    /// <summary>Active self property (Unity style activeSelf).</summary>
+    public bool activeSelf => visible;
 }
 
 /// <summary>Limits an Inspector field to a range (a slider in the Inspector).</summary>

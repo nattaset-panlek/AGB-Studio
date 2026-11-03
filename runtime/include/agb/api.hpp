@@ -87,6 +87,15 @@ struct Debug {
     static void Log(const char* fmt, Args... args) { debug::logf(fmt, args...); }
 };
 
+struct UI {
+    static int CreatePanel(int x, int y, int width, int /*height*/, int /*style*/) {
+        return text::addLabel(x, y, width, nullptr, -1);
+    }
+    static void ShowDialog(u16 textKey, int /*style*/ = 0) {
+        text::say(textKey);
+    }
+};
+
 struct Random {
     static int Range(int lo, int hi) { return rng::range(lo, hi); }
 };

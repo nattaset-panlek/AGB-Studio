@@ -49,7 +49,13 @@ public sealed class SceneEvents
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ActorKind { Empty, Player, Enemy, Pickup, TriggerZone, CameraZone, TextLabel }
+public enum ActorKind { Empty, Player, Enemy, Pickup, TriggerZone, CameraZone, TextLabel, Panel, Canvas }
+
+public sealed record UiPadding(int Left, int Top, int Right, int Bottom);
+public sealed record UiMargin(int Left, int Top, int Right, int Bottom);
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum PanelBackground { None, SolidPaper, NineSlice, Transparent }
 
 public sealed class ActorData
 {
@@ -64,11 +70,42 @@ public sealed class ActorData
     public bool Hidden { get; set; }
     public string Prefab { get; set; } = "";
     public string Group { get; set; } = "";         // Hierarchy folder (Enemies, Coins ...)
+    public string Parent { get; set; } = "";        // Parent actor name (Unity GameObject hierarchy), empty = scene root
     public ColliderData? Collider { get; set; }     // null = from the sprite
-    public int ZoneW { get; set; } = 16;            // Trigger / Camera zones
+    public int ZoneW { get; set; } = 16;            // Trigger / Camera zones / UI Panel width
     public int ZoneH { get; set; } = 16;
     public string Text { get; set; } = "";          // Text Label: string key
+    public UiPadding Padding { get; set; } = new(4, 4, 4, 4);
+    public UiMargin Margin { get; set; } = new(0, 0, 0, 0);
+    public PanelBackground Background { get; set; } = PanelBackground.SolidPaper;
+    public byte PaperColorIndex { get; set; } = 5;
+    public byte BorderColorIndex { get; set; } = 1;
+    public bool TileSnap { get; set; } = true;
     public List<ComponentData> Components { get; set; } = new();
+
+    [JsonIgnore]
+    public bool IsUi => Kind is ActorKind.Canvas or ActorKind.Panel or ActorKind.TextLabel;
+
+    public (int X, int Y) GetWorldPosition(IReadOnlyList<ActorData>? allActors)
+    {
+        var x = X;
+        var y = Y;
+        if (string.IsNullOrEmpty(Parent) || allActors == null) return (x, y);
+
+        var current = Parent;
+        var visited = new HashSet<string>(StringComparer.Ordinal) { Name };
+
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            var p = allActors.FirstOrDefault(a => a.Name == current);
+            if (p == null) break;
+            x += p.X;
+            y += p.Y;
+            current = p.Parent;
+        }
+
+        return (x, y);
+    }
 }
 
 public sealed class ColliderData

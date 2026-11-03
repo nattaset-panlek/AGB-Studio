@@ -146,15 +146,15 @@ s32 Choice(Context& ctx, const s32* args, int argc) {
         return 0;
     }
     if (text::languageCount() > 0) {
-        u16 keys[8];
+        static u16 s_choiceKeys[8];
         u8 count = 0;
         ctx.userData[0] = ctx.userData[1] = 0;
         for (int i = 0; i < n; ++i) {
             if (options[i] < 0) continue;
             ctx.userData[count >> 2] = static_cast<s32>(static_cast<u32>(ctx.userData[count >> 2]) | (static_cast<u32>(i) << ((count & 3) * 8)));
-            keys[count++] = static_cast<u16>(options[i]);
+            s_choiceKeys[count++] = static_cast<u16>(options[i]);
         }
-        text::choose(keys, count);
+        text::choose(s_choiceKeys, count);
         ctx.wait = textChoiceDone;
         return 0;
     }

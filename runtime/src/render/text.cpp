@@ -24,6 +24,7 @@ bool TextBox::init(int bg, int tileX, int tileY, int widthTiles, int heightTiles
     if (!p.valid()) return false;
     charBlock_ = p.charBlock;
     firstTile_ = p.firstTile;
+    maxTiles_ = static_cast<u16>(w_ * h_);
     tiles_ = static_cast<u32*>(screenArena().alloc(static_cast<u32>(w_ * h_) * 32));
     if (!tiles_) return false;
     // Tiles in a later char block are reachable from the layer's char block while the index stays below
@@ -41,6 +42,17 @@ bool TextBox::init(int bg, int tileX, int tileY, int widthTiles, int heightTiles
     remap();
     clear();
     commitTiles();
+    return true;
+}
+
+bool TextBox::resize(int tileX, int tileY, int widthTiles, int heightTiles) {
+    if (!tiles_ || widthTiles * heightTiles > maxTiles_) return false;
+    tileX_ = tileX;
+    tileY_ = tileY;
+    w_ = widthTiles;
+    h_ = heightTiles;
+    clear();
+    remap();
     return true;
 }
 
@@ -108,6 +120,19 @@ void TextBox::fillRect(int x, int y, int w, int h, u8 index) {
     if (!tiles_) return;
     detail::fillRect(tiles_, w_, h_, x, y, w, h, index);
     markDirty(y, y + h - 1);
+}
+
+void TextBox::drawPanelFrame(Style style) {
+    if (!tiles_) return;
+    const int w = w_ * 8;
+    const int h = h_ * 8;
+    const u8 paper = style.paper != 0 ? style.paper : 5;
+    fillRect(0, 0, w, h, paper);
+    fillRect(0, 0, w, 1, style.ink);
+    fillRect(0, h - 1, w, 1, style.ink);
+    fillRect(0, 0, 1, h, style.ink);
+    fillRect(w - 1, 0, 1, h, style.ink);
+    markDirty(0, h - 1);
 }
 
 int TextBox::drawAscii(const data::Font& font, const char* text, int x, int y) {

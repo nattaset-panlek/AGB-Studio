@@ -723,7 +723,7 @@ public sealed class GameBuilder
     public const int SplashMapBytes = 32 * 32 * 2;
     /// <summary>A rotate / scale layer needs a whole empty character block for its 8bpp tiles.</summary>
     public const int AffineTileBlockBytes = 16 * 1024;
-    public const int MaxTextLabels = 6;               // text::addLabel slots
+    public const int MaxTextLabels = 12;               // text::addLabel slots
 
     /// <summary>G-HW.01 / G-HW.03: what a scene puts in VRAM and palette RAM at once, against the hardware: background
     /// tiles, maps and the text layer (labels, dialogue box, menu) in the 64 KB of BG VRAM; the sprite frames its actors
@@ -822,18 +822,54 @@ public sealed class GameBuilder
     {
         var bytes = 32L;
         var labels = 0;
-        foreach (var a in scene.Actors.Where(a => a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && StringKey(a.Text) >= 0))
+        var textActors = scene.Actors.Where(a => !a.Hidden && (a.Kind is ActorKind.TextLabel or ActorKind.Panel) && a.Text.Length > 0 && StringKey(a.Text) >= 0).ToList();
+        var footprints = new List<(ActorData Actor, int YStart, int YEnd, int HeightPx)>();
+
+        foreach (var a in textActors)
         {
-            var height = 0;
+            var maxLines = 1;
+            var maxFontLh = 16;
             foreach (var t in _texts)
+            {
                 if (t.Strings.TryGetValue(a.Text, out var s))
                 {
                     var lines = Math.Max(1, Fonts.TextLayout.Layout(s, t.Font.Font, t.BoxWidth(a.Text), _p.Settings.Localization.ThaiWrap).Lines);
-                    height = Math.Max(height, (t.Font.Font.LineHeight * lines + 7) / 8);
+                    maxLines = Math.Max(maxLines, lines);
+                    maxFontLh = Math.Max(maxFontLh, t.Font.Font.LineHeight);
                 }
-            bytes += Math.Max(1, (240 - a.X + 7) / 8) * Math.Max(1, height) * 32L;
+            }
+            var padTop = a.Kind == ActorKind.Panel ? (a.Padding?.Top ?? 0) : 0;
+            var padBottom = a.Kind == ActorKind.Panel ? (a.Padding?.Bottom ?? 0) : 0;
+            var heightPx = padTop + (maxLines * maxFontLh) + padBottom;
+            var heightTiles = Math.Max(1, (heightPx + 7) / 8);
+
+            var (wx, wy) = a.GetWorldPosition(scene.Actors);
+            bytes += Math.Max(1, (240 - wx + 7) / 8) * heightTiles * 32L;
             labels++;
+
+            var yStartTile = wy / 8;
+            var yEndTile = (wy + heightPx + 7) / 8;
+            footprints.Add((a, yStartTile, yEndTile, heightPx));
         }
+
+        for (var i = 0; i < footprints.Count; i++)
+        {
+            for (var j = i + 1; j < footprints.Count; j++)
+            {
+                var f1 = footprints[i];
+                var f2 = footprints[j];
+                var (wx1, _) = f1.Actor.GetWorldPosition(scene.Actors);
+                var (wx2, _) = f2.Actor.GetWorldPosition(scene.Actors);
+                var w1 = f1.Actor.Kind == ActorKind.Panel && f1.Actor.ZoneW > 0 ? f1.Actor.ZoneW : (240 - wx1);
+                var w2 = f2.Actor.Kind == ActorKind.Panel && f2.Actor.ZoneW > 0 ? f2.Actor.ZoneW : (240 - wx2);
+                if (wx1 < wx2 + w2 && wx2 < wx1 + w1 && f1.YStart < f2.YEnd && f2.YStart < f1.YEnd)
+                {
+                    Add(new Diagnostic(Severity.Warning, file, 0, 0, "",
+                        $"Scene {scene.Name}: UI elements '{f1.Actor.Name}' and '{f2.Actor.Name}' share VRAM tile rows (Y {f1.Actor.Y}..{f1.Actor.Y + f1.HeightPx} vs Y {f2.Actor.Y}..{f2.Actor.Y + f2.HeightPx}). Moving or padding them vertically prevents tile clearing collisions."));
+                }
+            }
+        }
+
         if (labels > MaxTextLabels)
             Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} has {labels} Text Labels; {MaxTextLabels} can show at once, so the rest stay empty."));
         if (_texts.Count > 0) bytes += DialogueBoxBytes;
@@ -943,7 +979,7 @@ public sealed class GameBuilder
         var actorNames = scene.Actors.Select(a => a.Name).ToList();
         var actors = new StringBuilder();
         for (var ai = 0; ai < scene.Actors.Count; ai++)
-            actors.Append("    ").Append(ActorCpp(sb, externs, file, scene.Actors[ai], $"agbmake_{id}_{ai}", $"agbasset_scene_{id}_a{ai}_b")).Append(",\n");
+            actors.Append("    ").Append(ActorCpp(sb, externs, file, scene.Actors[ai], $"agbmake_{id}_{ai}", $"agbasset_scene_{id}_a{ai}_b", scene.Actors)).Append(",\n");
         if (scene.Actors.Count > 0) sb.Append($"const agb::ActorDef agbasset_scene_{id}_actors[] = {{\n{actors}}};\n");
 
         // Links
@@ -1107,7 +1143,7 @@ public sealed class GameBuilder
     /// <summary>
     /// The behaviour creators of one actor (scene actor or prefab) and its <c>agb::ActorDef</c> initializer.
     /// </summary>
-    string ActorCpp(StringBuilder sb, StringBuilder externs, string file, ActorData a, string makePrefix, string listName)
+    string ActorCpp(StringBuilder sb, StringBuilder externs, string file, ActorData a, string makePrefix, string listName, IReadOnlyList<ActorData>? sceneActors = null)
     {
         var creators = new List<string>();
         for (var ci = 0; ci < a.Components.Count; ci++)
@@ -1165,12 +1201,13 @@ public sealed class GameBuilder
             }
         }
         var box = a.Collider != null ? $"{{{a.Collider.X}, {a.Collider.Y}, {a.Collider.W}, {a.Collider.H}}}"
-            : a.Kind is ActorKind.TriggerZone or ActorKind.CameraZone ? $"{{0, {-a.ZoneH}, {a.ZoneW}, {a.ZoneH}}}" : "{0, 0, 0, 0}";
+            : a.Kind is ActorKind.TriggerZone or ActorKind.CameraZone ? $"{{0, {-a.ZoneH}, {a.ZoneW}, {a.ZoneH}}}" : (a.Kind == ActorKind.Panel && a.ZoneW > 0 && a.ZoneH > 0 ? $"{{0, 0, {a.ZoneW}, {a.ZoneH}}}" : "{0, 0, 0, 0}");
         var tag = a.Tag.Length == 0 ? 0 : _p.Settings.Tags.IndexOf(a.Tag) + 1;
         var behaviours = creators.Count > 0 ? listName : "nullptr";
         var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
         if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables, so the label stays empty. Add the key in Localization, or change the text in the Inspector."));
-        return $"{{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {a.X}, {a.Y}, {Math.Max(0, tag)}, {a.Priority}, " +
+        var (wx, wy) = a.GetWorldPosition(sceneActors);
+        return $"{{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {wx}, {wy}, {Math.Max(0, tag)}, {a.Priority}, " +
                (a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr") +
                $", {box}, {behaviours}, {creators.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}}";
     }

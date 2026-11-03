@@ -34,7 +34,7 @@ public:
 };
 
 // Kinds from the Add Actor menu (T-M10).
-enum class ActorKind : u8 { Empty, Player, Enemy, Pickup, TriggerZone, CameraZone, TextLabel };
+enum class ActorKind : u8 { Empty, Player, Enemy, Pickup, TriggerZone, CameraZone, TextLabel, Panel, Canvas };
 
 struct Box {
     s16 x, y;  // offset from the actor origin

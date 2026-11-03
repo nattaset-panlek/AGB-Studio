@@ -7,6 +7,8 @@
 
 namespace agb::text {
 
+void remapPanels();
+
 namespace {
 const Table* const* g_tables = nullptr;
 u8 g_count = 0, g_fallback = 0, g_lang = 0;
@@ -19,8 +21,14 @@ bool g_awaitA = false;
 bool g_acked = false;  // the player pressed A for the line on screen (wait only once per line)
 void (*g_blip)() = nullptr;
 
-// Choice state (options drawn under the text)
-const u16* g_options = nullptr;
+// Dedicated Side Menu / Choice window: separate from bottom dialogue box
+AGB_EWRAM_DATA render::TextBox g_menuBox;
+bool g_menuBoxReady = false;
+bool g_menuOpen = false;
+u16 g_blank = 0;
+
+// Choice state: stored in EWRAM so pointers never dangle from the C++ stack
+AGB_EWRAM_BSS u16 g_options[8];
 u8 g_optionCount = 0, g_cursor = 0;
 s8 g_chosen = -1;
 bool g_choosing = false;
@@ -32,22 +40,58 @@ void loadPalette() {
 
 const data::TextRun* g_current = nullptr;
 
+void closeMenu() {
+    if (!g_menuOpen) return;
+    g_menuBox.unmap(g_blank);
+    g_menuBox.clear();
+    g_menuOpen = false;
+    remapPanels();
+}
+
+void moveCursor(u8 oldCursor, u8 newCursor) {
+    if (!g_menuOpen) return;
+    const data::TextRun* firstRun = (g_optionCount > 0) ? run(g_options[0]) : nullptr;
+    const data::Font* font = firstRun ? firstRun->font : (g_current ? g_current->font : nullptr);
+    const int lh = (font && font->lineHeight > 0) ? font->lineHeight : 14;
+
+    const int oldY = 4 + oldCursor * lh;
+    g_menuBox.fillRect(4, oldY + lh / 2 - 4, 8, 9, 5);
+
+    const int newY = 4 + newCursor * lh;
+    for (int k = 0; k < 3; ++k)
+        g_menuBox.fillRect(4 + k, newY + lh / 2 - 3 + k, 1, 7 - 2 * k, 1);
+
+    g_menuBox.update();
+}
+
 void drawChoices() {
-    if (!g_current) return;
-    const int lh = g_current->font->lineHeight;
+    if (!g_menuOpen) return;
+    const data::TextRun* firstRun = (g_optionCount > 0) ? run(g_options[0]) : nullptr;
+    const data::Font* font = firstRun ? firstRun->font : (g_current ? g_current->font : nullptr);
+    if (!font) return;
+    const int lh = font->lineHeight > 0 ? font->lineHeight : 14;
+
+    // Draw solid window frame with 1px border
+    g_menuBox.drawPanelFrame(render::TextBox::Style{1, 4, 5});
+
     for (u8 i = 0; i < g_optionCount; ++i) {
         const data::TextRun* r = run(g_options[i]);
-        const int y = (g_current->lines + i) * lh;
-        g_box.fillRect(0, y, g_box.widthPx(), lh, 0);
-        // Cursor: a small right-pointing triangle beside the selected option.
-        if (i == g_cursor)
-            for (int k = 0; k < 3; ++k) g_box.fillRect(2 + k, y + lh / 2 - 3 + k, 1, 7 - 2 * k, 1);
+        const int y = 4 + i * lh;
+        if (y + lh > g_menuBox.heightPx()) break;
+
+        // Cursor: small right-pointing triangle beside the selected option
+        if (i == g_cursor) {
+            for (int k = 0; k < 3; ++k)
+                g_menuBox.fillRect(4 + k, y + lh / 2 - 3 + k, 1, 7 - 2 * k, 1);
+        }
+
         if (!r) continue;
         for (u16 k = 0; k < r->count; ++k) {
             const data::PlacedGlyph& pg = r->glyphs[k];
-            if (pg.line == 0) g_box.drawGlyph(*r->font, pg.glyph, pg.x + 10, y + pg.dy);
+            if (pg.line == 0) g_menuBox.drawGlyph(*font, pg.glyph, pg.x + 14, y + pg.dy);
         }
     }
+    g_menuBox.update();
 }
 }  // namespace
 
@@ -90,7 +134,7 @@ render::TextBox& box() { return g_box; }
 namespace {
 bool g_layerReady = false;
 int g_bg = 0;  // the BG the text layer took for this scene
-constexpr int kMaxLabels = 6;
+constexpr int kMaxLabels = 12;
 AGB_EWRAM_DATA render::TextBox g_labels[kMaxLabels];
 // What each HUD label shows (setLabelValue): the same value is not redrawn, and a new value with the same text
 // before it only redraws the digits.
@@ -112,7 +156,6 @@ struct LabelText {
 AGB_EWRAM_BSS LabelText g_labelTexts[kMaxLabels];
 int g_labelCount = 0;
 
-u16 g_blank = 0;
 // The dialogue box keeps its tiles for the whole scene: closing only points its map at the blank tile, so dialogue
 // after dialogue does not use more VRAM.
 bool g_boxReady = false;
@@ -226,6 +269,23 @@ void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits)
     b.update();
 }
 
+void setLabelFillRatio(int label, int current, int max) {
+    if (label < 0 || label >= g_labelCount) return;
+    render::TextBox& b = g_labels[label];
+    b.clear();
+    const int w = b.widthPx();
+    const int h = b.heightPx() > 4 ? 4 : b.heightPx();
+    b.fillRect(0, 0, w, h, 4);
+    if (max > 0 && current > 0) {
+        int fillW = (current * w) / max;
+        if (fillW > w) fillW = w;
+        if (fillW < 1 && current > 0) fillW = 1;
+        const u8 col = (current * 4 > max) ? 2 : 1;
+        b.fillRect(0, 0, fillW, h, col);
+    }
+    b.update();
+}
+
 void setLabelRun(int label, const data::TextRun* r) {
     if (label < 0 || label >= g_labelCount) return;
     g_labelValues[label].shown = false;
@@ -268,11 +328,16 @@ void clearLabels() {
     g_layerReady = false;
     g_open = false;
     g_boxReady = false;  // the scene's arena and VRAM are reset
+    g_menuBox.release();
+    g_menuBoxReady = false;
+    g_menuOpen = false;
+    g_choosing = false;
 }
 
 void remapPanels() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].remap();
     if (g_open) g_box.remap();
+    if (g_menuOpen) g_menuBox.remap();
 }
 
 static bool ensureOpen() {
@@ -308,11 +373,81 @@ bool sayRun(const data::TextRun* r, void (*blip)(), s8 speed) {
 bool say(u16 key, void (*blip)(), s8 speed) { return sayRun(run(key), blip, speed); }
 
 void choose(const u16* optionKeys, u8 count) {
-    g_options = optionKeys;
-    g_optionCount = count;
+    if (!ensureLayer()) return;
+    g_optionCount = count < 8 ? count : 8;
+    for (u8 i = 0; i < g_optionCount; ++i) g_options[i] = optionKeys[i];
     g_cursor = 0;
     g_chosen = -1;
     g_choosing = true;
+    g_acked = true;
+
+    // Content-driven dynamic layout calculation:
+    // Compute required width from the longest text run among the options
+    int maxW = 56;
+    for (u8 i = 0; i < g_optionCount; ++i) {
+        const data::TextRun* r = run(g_options[i]);
+        if (!r) continue;
+        int w = 0;
+        for (u16 k = 0; k < r->count; ++k) {
+            const int e = r->glyphs[k].x + r->font->glyphs[r->glyphs[k].glyph].advance;
+            if (e > w) w = e;
+        }
+        if (w > maxW) maxW = w;
+    }
+    // 16px left padding (triangle cursor + spacing) and 10px right padding
+    const int totalW = maxW + 26;
+    int wTiles = (totalW + 7) / 8;
+    if (wTiles < 10) wTiles = 10;
+    if (wTiles > 20) wTiles = 20;
+
+    const data::TextRun* firstRun = (g_optionCount > 0) ? run(g_options[0]) : nullptr;
+    const data::Font* font = firstRun ? firstRun->font : (g_current ? g_current->font : nullptr);
+    const int lh = (font && font->lineHeight > 0) ? font->lineHeight : 14;
+    const int neededH = (g_optionCount * lh + 8 + 7) / 8;
+    const int hTiles = neededH > 14 ? 14 : (neededH < 4 ? 4 : neededH);
+
+    constexpr int kMenuMaxW = 20;
+    constexpr int kMenuMaxH = 12;
+
+    // Smart collision avoidance: choice menu must NEVER overlap dialogue box (g_box) or HUD labels
+    auto collides = [&](int tx, int ty, int tw, int th) -> bool {
+        if (g_open) {
+            const int bx = g_style.tileX, by = g_style.tileY;
+            const int bw = g_style.widthTiles, bh = g_style.heightTiles;
+            if (tx < bx + bw && bx < tx + tw && ty < by + bh && by < ty + th) return true;
+        }
+        for (int i = 0; i < g_labelCount; ++i) {
+            const int lx = g_labels[i].tileX(), ly = g_labels[i].tileY();
+            const int lw = g_labels[i].wTiles(), lh = g_labels[i].hTiles();
+            if (tx < lx + lw && lx < tx + tw && ty < ly + lh && ly < ty + th) return true;
+        }
+        return false;
+    };
+
+    int tileX = 29 - wTiles;
+    int tileY = g_open ? (g_style.tileY >= hTiles ? g_style.tileY - hTiles : 1) : 1;
+    if (collides(tileX, tileY, wTiles, hTiles)) {
+        if (!collides(29 - wTiles, 1, wTiles, hTiles)) {
+            tileX = 29 - wTiles;
+            tileY = 1;
+        } else if (!collides(1, g_open && g_style.tileY >= hTiles ? g_style.tileY - hTiles : 1, wTiles, hTiles)) {
+            tileX = 1;
+            tileY = g_open && g_style.tileY >= hTiles ? g_style.tileY - hTiles : 1;
+        } else if (!collides(1, 1, wTiles, hTiles)) {
+            tileX = 1;
+            tileY = 1;
+        }
+    }
+
+    if (!g_menuBoxReady) {
+        if (!g_menuBox.init(g_bg, tileX, tileY, kMenuMaxW, kMenuMaxH, g_style.paletteBank, render::TextBox::Style{1, 4, 5}))
+            return;
+        g_menuBoxReady = true;
+    }
+
+    g_menuBox.unmap(g_blank);
+    g_menuBox.resize(tileX, tileY, wTiles, hTiles);
+    g_menuOpen = true;
     drawChoices();
 }
 
@@ -320,21 +455,29 @@ int choice() { return g_chosen; }
 
 void update() {
     for (int i = 0; i < g_labelCount; ++i) g_labels[i].update();
-    if (!g_open) return;
-    if (!g_box.done()) {
-        if (input::pressed(Key::A) || input::pressed(Key::B)) g_box.fastForward();
-        g_box.update();
-        return;
-    }
+
     if (g_choosing) {
         const u8 before = g_cursor;
         if (input::pressed(Key::Up) && g_cursor > 0) --g_cursor;
         if (input::pressed(Key::Down) && g_cursor + 1 < g_optionCount) ++g_cursor;
-        if (before != g_cursor) drawChoices();
+        if (before != g_cursor) moveCursor(before, g_cursor);
         if (input::pressed(Key::A)) {
             g_chosen = static_cast<s8>(g_cursor);
             g_choosing = false;
+            closeMenu();
+        } else if (input::pressed(Key::B)) {
+            g_chosen = static_cast<s8>(g_optionCount - 1);
+            g_choosing = false;
+            closeMenu();
         }
+        if (g_menuOpen) g_menuBox.update();
+        if (g_open) g_box.update();
+        return;
+    }
+
+    if (!g_open) return;
+    if (!g_box.done()) {
+        if (input::pressed(Key::A) || input::pressed(Key::B)) g_box.fastForward();
         g_box.update();
         return;
     }
@@ -350,12 +493,14 @@ void update() {
 }
 
 // Waiting until the line has been read: typing, then A pressed once (or a choice made).
-bool waiting() { return g_open && (!g_box.done() || !g_acked || g_choosing); }
+bool waiting() { return (g_open && (!g_box.done() || !g_acked)) || g_choosing; }
 
 void close() {
     if (!g_open) return;
     g_box.unmap(g_blank);
+    g_box.clear();
     g_open = false;
+    g_current = nullptr;
 }
 
 }  // namespace agb::text

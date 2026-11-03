@@ -82,7 +82,7 @@ Actor* spawnAt(const ActorDef& def, Arena& arena, int x, int y) {
         a.sheet = def.sheet;
         a.label = def.label;
         a.pos = {fixed(x), fixed(y)};
-        a.solid = def.kind != ActorKind::TriggerZone && def.kind != ActorKind::CameraZone;
+        a.solid = def.kind != ActorKind::TriggerZone && def.kind != ActorKind::CameraZone && def.kind != ActorKind::TextLabel && def.kind != ActorKind::Panel && def.kind != ActorKind::Canvas;
         if (def.collider.w) a.collider = def.collider;
         else if (def.sheet)
             a.collider = Box{static_cast<s16>(def.sheet->colliderX - def.sheet->originX), static_cast<s16>(def.sheet->colliderY - def.sheet->originY),

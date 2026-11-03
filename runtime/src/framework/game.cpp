@@ -121,12 +121,14 @@ void followCamera() {
 void makeLabels(const SceneDef* d) {
     for (int i = 0; i < d->actorCount; ++i) {
         const ActorDef& ad = d->actors[i];
-        if (ad.kind != ActorKind::TextLabel) continue;
+        if (ad.kind != ActorKind::TextLabel && ad.kind != ActorKind::Panel) continue;
+        if (ad.hidden) continue;
         Actor* a = actors::at(i);
         const data::TextRun* label = ad.label ? ad.label : ad.labelKey >= 0 ? text::run(static_cast<u16>(ad.labelKey)) : nullptr;
-        if (a && label) {
+        if (a) {
             a->label = label;
-            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, 240 - ad.x, label, ad.label ? static_cast<s16>(-1) : ad.labelKey));
+            const int w = ad.collider.w > 0 ? ad.collider.w : (240 - ad.x);
+            a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, w, label, ad.label ? static_cast<s16>(-1) : ad.labelKey));
         }
     }
 }

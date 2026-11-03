@@ -82,7 +82,9 @@
               "Pickup",
               "TriggerZone",
               "CameraZone",
-              "TextLabel"
+              "TextLabel",
+              "Panel",
+              "Canvas"
             ]
           },
           "sprite": {
@@ -110,6 +112,9 @@
             "type": "string"
           },
           "group": {
+            "type": "string"
+          },
+          "parent": {
             "type": "string"
           },
           "collider": {
@@ -140,6 +145,69 @@
           },
           "text": {
             "type": "string"
+          },
+          "padding": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "integer"
+              },
+              "top": {
+                "type": "integer"
+              },
+              "right": {
+                "type": "integer"
+              },
+              "bottom": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "left",
+              "top",
+              "right",
+              "bottom"
+            ]
+          },
+          "margin": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "integer"
+              },
+              "top": {
+                "type": "integer"
+              },
+              "right": {
+                "type": "integer"
+              },
+              "bottom": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "left",
+              "top",
+              "right",
+              "bottom"
+            ]
+          },
+          "background": {
+            "enum": [
+              "None",
+              "SolidPaper",
+              "NineSlice",
+              "Transparent"
+            ]
+          },
+          "paperColorIndex": {
+            "type": "integer"
+          },
+          "borderColorIndex": {
+            "type": "integer"
+          },
+          "tileSnap": {
+            "type": "boolean"
           },
           "components": {
             "type": "array",

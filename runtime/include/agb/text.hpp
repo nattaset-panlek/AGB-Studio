@@ -59,6 +59,7 @@ void setLabelText(int label, const data::Font& font, const char* ascii);  // run
 void setLabelValue(int label, const data::TextRun* prefix, s32 value, u8 digits);
 // Replaces a label's text (C# Actor.SetLabelText): speaker name tags, signs, status lines.
 void setLabelRun(int label, const data::TextRun* run);
+void setLabelFillRatio(int label, int current, int max);
 void clearLabels();
 // An overlay panel (pause menu, options screen) closed over the scene and pointed its map entries at the blank tile:
 // point the labels and the open dialogue box at their tiles again.
