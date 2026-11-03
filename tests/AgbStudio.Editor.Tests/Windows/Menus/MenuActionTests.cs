@@ -115,6 +115,8 @@ public sealed class MenuActionTests : IDisposable
         ["tools.logicGraph"] = new Opens("T-P17", "11.L Logic Graph"),
         ["tools.debugger"] = new Opens("T-P19", "Phase 13 Debugger"),
         ["tools.screenshot"] = new Acts(Mine),
+        ["tools.layout.reset"] = new Acts(Mine),
+        ["tools.layout.save"] = new Acts(Mine),
         // T-M07 Help
         ["help.gettingStarted"] = new Opens("T-P12", "11.A Launcher"),
         ["help.scriptingApi"] = new Opens("T-P18", "11.O Scripting API"),

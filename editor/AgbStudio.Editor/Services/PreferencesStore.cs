@@ -33,6 +33,10 @@ public sealed partial class Preferences
 
     public string? LastProject { get; set; }
 
+    // Scene Editor workspace: the docking layout in use and the layouts saved by name (JSON of DockLayout)
+    public string? SceneLayout { get; set; }
+    public Dictionary<string, string> SavedLayouts { get; set; } = new(StringComparer.Ordinal);
+
     /// <summary>Appearance › "Show pixel grid at 400% zoom and above": true when a view at this zoom (pixels per game
     /// pixel; 4 = 400%) draws the grid between game pixels.</summary>
     public bool PixelGridAt(double scale) => ShowPixelGrid && scale * 100 >= Math.Max(100, PixelGridMinZoom);

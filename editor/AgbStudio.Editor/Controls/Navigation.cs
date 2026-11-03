@@ -98,7 +98,31 @@ public class DocTab : SelectableRow
             e.Handled = true;
             return;
         }
+        if (DeferActivation && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            _pressedClicks = e.ClickCount;
+            _pressedKeys = e.KeyModifiers;
+            e.Handled = true;
+            return;
+        }
         base.OnPointerPressed(e);
+    }
+
+    /// <summary>Activates on release instead of on press, so that the tab can be dragged without leaving the page.</summary>
+    public bool DeferActivation { get; set; }
+    int _pressedClicks;
+    KeyModifiers _pressedKeys;
+
+    /// <summary>A drag started: the release that ends it does not activate the tab.</summary>
+    public void CancelActivation() => _pressedClicks = 0;
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (_pressedClicks == 0) return;
+        var clicks = _pressedClicks;
+        _pressedClicks = 0;
+        if (new Rect(Bounds.Size).Contains(e.GetPosition(this))) Activate(clicks, _pressedKeys);
     }
 }
 

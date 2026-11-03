@@ -108,6 +108,16 @@ public sealed class DocumentService
     public Action<EditorDocument>? DocumentActivated { get; set; }
 
     /// <param name="showNext">False when the caller replaces the document on the same page: the next tab becomes active without opening its page.</param>
+    public void Move(EditorDocument doc, int index)
+    {
+        var from = Open.IndexOf(doc);
+        if (from < 0) return;
+        index = Math.Clamp(index, 0, Open.Count - 1);
+        if (index == from) return;
+        Open.Move(from, index);
+        Changed?.Invoke();
+    }
+
     public void Close(EditorDocument doc, bool force = false, bool showNext = true)
     {
         if (!force && !doc.CanClose) return;

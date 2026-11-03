@@ -1,4 +1,5 @@
 using AgbStudio.Editor.Controls;
+using AgbStudio.Editor.Docking;
 using AgbStudio.Editor.Services;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,7 +11,8 @@ namespace AgbStudio.Editor.Shell;
 /// The Scene Editor frame (T-P01) without its Phase 11 content: toolbar, docking layout (Hierarchy 260 px, document
 /// tabs + viewport, bottom panel 250 px with Assets / Console / Animation / Database, Inspector 320 px) and status bar.
 /// The panels are slots filled by registered windows: "T-P01:Hierarchy", "T-P01:Viewport", "T-P01:Inspector",
-/// "T-P01:Assets", "T-P05" (Console) and "T-P06" (Animation). Splitters resize the docks.
+/// "T-P01:Assets", "T-P05" (Console) and "T-P06" (Animation). They live in a <see cref="DockHost"/>: splitters resize,
+/// tabs and headers drag to tab, split or float, and the layout is kept in the preferences.
 /// </summary>
 [EditorWindow("T-P01")]
 public sealed class SceneWorkspace : DockPanel
@@ -18,7 +20,6 @@ public sealed class SceneWorkspace : DockPanel
     readonly EditorServices _s;
     readonly IconButton[] _tools;
     readonly DocTabStrip _docTabs;
-    readonly ContentControl _bottomContent = new();
     readonly PanelTab[] _panelTabs;
 
     public SceneWorkspace(WindowContext ctx) : this(ctx.Services, ctx.Args) { }
@@ -77,60 +78,39 @@ public sealed class SceneWorkspace : DockPanel
         Children.Add(status);
 
         // ---- body ----
-        var body = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("260,*,320"), Name = "Body" };
         var hierarchyHeader = new PanelHeader { Title = "Hierarchy", Glyph = "layers", ActionGlyph = "plus", Name = "HierarchyHeader" };
         hierarchyHeader.ActionCommand = new Relay(() => _ = s.Windows.Open("T-M11", anchor: hierarchyHeader, source: "HierarchyAdd"));
         var search = new SearchField { Watermark = "Search scene…", Name = "HierarchySearch" };
         var hierarchy = new DockPanel();
-        DockAt(hierarchy, hierarchyHeader, Avalonia.Controls.Dock.Top);
         DockAt(hierarchy, new Border { Padding = new Thickness(10, 8, 10, 4), Child = search }, Avalonia.Controls.Dock.Top);
         hierarchy.Children.Add(Slot("T-P01:Hierarchy"));
-        var left = UI.Frame(hierarchy, "bg/panel", "border/default", new Thickness(0, 0, 1, 0)).Named("HierarchyPanel");
-        left.ClipToBounds = true;
-        body.Children.Add(left);
 
         var inspectorHeader = new PanelHeader { Title = "Inspector", Glyph = "sliders", ActionGlyph = "dots", Name = "InspectorHeader" };
         inspectorHeader.ActionCommand = new Relay(() => _ = s.Windows.Open("T-M14", anchor: inspectorHeader, source: "InspectorMenu"));
-        var inspector = new DockPanel();
-        DockAt(inspector, inspectorHeader, Avalonia.Controls.Dock.Top);
-        inspector.Children.Add(Slot("T-P01:Inspector"));
-        var right = UI.Frame(inspector, "bg/panel", "border/default", new Thickness(1, 0, 0, 0)).Named("InspectorPanel");
-        right.ClipToBounds = true;
-        Grid.SetColumn(right, 2);
-        body.Children.Add(right);
 
-        var center = new Grid { RowDefinitions = RowDefinitions.Parse("34,*,250"), Name = "Center" };
-        Grid.SetColumn(center, 1);
         var tabs = UI.Frame(_docTabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
         _docTabs.VerticalAlignment = VerticalAlignment.Stretch;
-        center.Children.Add(tabs);
         var viewport = UI.Frame(Slot("T-P01:Viewport", args), "bg/canvas").Named("Viewport");
+        var document = new Grid { RowDefinitions = RowDefinitions.Parse("34,*"), Name = "DocumentGroup" };
         Grid.SetRow(viewport, 1);
-        center.Children.Add(viewport);
+        document.Children.AddRange([tabs, viewport]);
 
-        _panelTabs =
+        DockPanelDef[] panels =
         [
-            new PanelTab { Label = "Assets", Glyph = "folder", Name = "Tab_Assets", Tag = "T-P01:Assets" },
-            new PanelTab { Label = "Console", Glyph = "code", Name = "Tab_Console", Tag = "T-P05" },
-            new PanelTab { Label = "Animation", Glyph = "film", Name = "Tab_Animation", Tag = "T-P06" },
-            new PanelTab { Label = "Database", Glyph = "db", Name = "Tab_Database", Tag = "T-P07" },
+            new() { Id = DockLayout.Hierarchy, Title = "Hierarchy", Glyph = "layers", FrameName = "HierarchyPanel", Header = hierarchyHeader, Keep = true, Content = () => hierarchy },
+            new() { Id = DockLayout.Inspector, Title = "Inspector", Glyph = "sliders", FrameName = "InspectorPanel", Header = inspectorHeader, Keep = true, Content = () => Slot("T-P01:Inspector") },
+            new() { Id = DockLayout.Viewport, Title = "Viewport", Glyph = "map" },
+            new() { Id = DockLayout.Assets, Title = "Assets", Glyph = "folder", Content = () => s.Windows.CreatePanel(DockLayout.Assets) },
+            new() { Id = DockLayout.Console, Title = "Console", Glyph = "code", Content = () => s.Windows.CreatePanel(DockLayout.Console) },
+            new() { Id = DockLayout.Animation, Title = "Animation", Glyph = "film", Content = () => s.Windows.CreatePanel(DockLayout.Animation) },
+            new() { Id = DockLayout.Database, Title = "Database", Glyph = "db", ActivateOnly = () => _ = s.Windows.Open(DockLayout.Database, source: "DatabaseTab") },
         ];
-        foreach (var t in _panelTabs) t.Activated += (_, _) => SelectPanel(t);
-        var panelTabRow = new Border { Height = 33, Padding = new Thickness(6, 0), Child = UI.Row(2, _panelTabs) }.Token(Border.BorderBrushProperty, "border/default");
-        panelTabRow.BorderThickness = new Thickness(0, 0, 0, 1);
-        var bottom = new DockPanel();
-        DockAt(bottom, panelTabRow, Avalonia.Controls.Dock.Top);
-        bottom.Children.Add(_bottomContent);
-        var bottomPanel = UI.Frame(bottom, "bg/panel", "border/default", new Thickness(0, 1, 0, 0)).Named("BottomPanel");
-        Grid.SetRow(bottomPanel, 2);
-        center.Children.Add(bottomPanel);
-        center.Children.Add(Splitter(row: 2));
-        body.Children.Add(center);
-        body.Children.Add(Splitter(col: 1, align: HorizontalAlignment.Left));
-        body.Children.Add(Splitter(col: 1, align: HorizontalAlignment.Right));
-        Children.Add(body);
-
-        SelectPanel(_panelTabs[0]);
+        DockArea = new DockHost(DockLayout.FromJson(s.Preferences.Current.SceneLayout, panels.Select(p => p.Id).ToList()), panels, () => document);
+        _panelTabs = [DockArea.Tab(DockLayout.Assets), DockArea.Tab(DockLayout.Console), DockArea.Tab(DockLayout.Animation), DockArea.Tab(DockLayout.Database)];
+        DockArea.LayoutChanged += () => s.Preferences.Update(x => x.SceneLayout = DockArea.Layout.ToJson());
+        DockArea.PanelSelected += (id, tab) => { if (id != DockLayout.Assets) s.Windows.Requests.Add((id, tab.Name)); };
+        Children.Add(DockArea);
+        WorkspaceLayouts.Attach(s, DockArea);
     }
 
     void Tip(Control c, string commandId)
@@ -145,6 +125,8 @@ public sealed class SceneWorkspace : DockPanel
     public event Action<int>? ToolChanged;
     public IReadOnlyList<PanelTab> PanelTabs => _panelTabs;
     public PanelTab? SelectedPanel => _panelTabs.FirstOrDefault(t => t.IsSelected);
+    /// <summary>The panels of the workspace: drag tabs and headers to rearrange them.</summary>
+    public DockHost DockArea { get; }
 
     /// <summary>The console badge (Figma shows 2 when there are build messages).</summary>
     public int? ConsoleCount { get => _panelTabs[1].Count; set => _panelTabs[1].Count = value; }
@@ -153,15 +135,6 @@ public sealed class SceneWorkspace : DockPanel
     {
         for (var k = 0; k < 5; k++) _tools[k].IsActive = k == i;
         ToolChanged?.Invoke(i);
-    }
-
-    void SelectPanel(PanelTab tab)
-    {
-        var id = (string)tab.Tag!;
-        if (id == "T-P07") { _ = _s.Windows.Open(id, source: "DatabaseTab"); return; }
-        foreach (var t in _panelTabs) t.IsSelected = t == tab;
-        _bottomContent.Content = _s.Windows.CreatePanel(id);
-        if (id != "T-P01:Assets") _s.Windows.Requests.Add((id, tab.Name));
     }
 
     Control Slot(string id, object? args = null) => (Control?)_s.Windows.CreatePanel(id, args) ?? new Panel { Name = "Slot_" + id.Replace(':', '_').Replace('-', '_') };
@@ -173,14 +146,6 @@ public sealed class SceneWorkspace : DockPanel
     }
 
     static void DockAt(DockPanel p, Control c, Dock d) { DockPanel.SetDock(c, d); p.Children.Add(c); }
-
-    static GridSplitter Splitter(int col = 0, int row = 0, HorizontalAlignment align = HorizontalAlignment.Stretch)
-    {
-        var g = new GridSplitter { Background = Avalonia.Media.Brushes.Transparent };
-        if (row > 0) { Grid.SetRow(g, row); g.Height = 4; g.VerticalAlignment = VerticalAlignment.Top; g.ResizeDirection = GridResizeDirection.Rows; }
-        else { Grid.SetColumn(g, col); g.Width = 4; g.HorizontalAlignment = align; g.ResizeDirection = GridResizeDirection.Columns; }
-        return g;
-    }
 
     Border StatusBar(StatusModel m)
     {

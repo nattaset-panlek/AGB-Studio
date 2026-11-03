@@ -641,6 +641,7 @@ public sealed class SceneEditorModel
         if (Scene == null || sourceIndex < 0 || sourceIndex >= Scene.Actors.Count || targetIndex < 0 || targetIndex >= Scene.Actors.Count || sourceIndex == targetIndex) return;
         var src = Scene.Actors[sourceIndex];
         var target = Scene.Actors[targetIndex];
+        if (IsDescendantOf(targetIndex, sourceIndex)) return;
 
         Edit("Reorder Actor", () =>
         {

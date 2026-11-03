@@ -80,7 +80,8 @@ public static class MenuModel
         [
             E("tools.paletteManager", true), E("tools.fontManager", true), E("tools.database", true), E("tools.localization", true),
             E("tools.audio", true), E("tools.dialogueEditor", true), E("tools.logicGraph", true), S,
-            E("tools.debugger", true), E("tools.screenshot", true),
+            E("tools.debugger", true), E("tools.screenshot", true), S,
+            new SubmenuEntry("T-M06-Layout", "Workspace Layout", Docking.WorkspaceLayouts.Entries),
         ]),
         new("T-M07", "Help",
         [

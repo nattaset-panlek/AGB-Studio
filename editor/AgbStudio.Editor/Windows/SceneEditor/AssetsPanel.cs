@@ -137,7 +137,9 @@ public sealed class AssetsPanel : DockPanel, IEditTarget
             _dragging = true;
             e.Pointer.Capture(this);
             Cursor = new Cursor(StandardCursorType.DragCopy);
+            DragGhost.Show(this, e, "image", _drag.Stem);
         }
+        if (_dragging) DragGhost.Move(this, e);
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -148,6 +150,7 @@ public sealed class AssetsPanel : DockPanel, IEditTarget
         _drag = null;
         _dragging = false;
         Cursor = null;
+        DragGhost.Hide();
         e.Pointer.Capture(null);
         if (drag == null || !dragging || TopLevel.GetTopLevel(this) is not { } top) return;
         var pt = e.GetPosition(top);

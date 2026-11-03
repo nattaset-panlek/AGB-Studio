@@ -105,6 +105,7 @@ public abstract class SelectableRow : TemplatedControl
     public bool IsSelected { get => GetValue(IsSelectedProperty); set => SetValue(IsSelectedProperty, value); }
 
     public event EventHandler<RoutedEventArgsWrapper>? Activated;
+    protected void Activate(int clickCount, KeyModifiers modifiers) => Activated?.Invoke(this, new RoutedEventArgsWrapper(clickCount, modifiers));
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {

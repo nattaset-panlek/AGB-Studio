@@ -5,6 +5,7 @@ using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -43,6 +44,10 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         _m = SceneEditorModel.Of(s);
         Name = "HierarchyPanel";
         Children.Add(new ScrollViewer { Content = _rows, HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled });
+        _dropLine.Token(Border.BackgroundProperty, "accent/default");
+        _dropDot.Token(Shape.FillProperty, "accent/default");
+        _dropBox.Token(Border.BackgroundProperty, "accent/subtle").Token(Border.BorderBrushProperty, "accent/default");
+        Children.Add(new Canvas { IsHitTestVisible = false, Children = { _dropBox, _dropLine, _dropDot } });
         _m.Changed += Rebuild;
         _m.SelectionChanged += UpdateSelectionOnly;
         SceneEditTarget.Of(_m).RenameRequested += p => { if (p == SceneEditTarget.Panel.Scene) BeginRename(); };
@@ -71,9 +76,11 @@ public sealed class HierarchyPanel : Panel, IEditTarget
                 {
                     _isDragging = true;
                     e.Pointer.Capture(this);
+                    if (_m.Scene?.Actors.ElementAtOrDefault(_dragActorIndex) is { } dragged) DragGhost.Show(this, e, ActorGlyph(dragged), dragged.Name);
                 }
                 if (_isDragging)
                 {
+                    DragGhost.Move(this, e);
                     UpdateDropFeedback(cur);
                 }
             }
@@ -83,21 +90,34 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         {
             if (_isDragging && _dragActorIndex >= 0)
             {
-                e.Pointer.Capture(null);
+                // the drop first: releasing the pointer ends the drag
                 ApplyDrop(e.GetPosition(this));
+                e.Pointer.Capture(null);
                 e.Handled = true;
             }
             _dragActorIndex = -1;
             _isDragging = false;
+            DragGhost.Hide();
             ClearDropFeedback();
         }, RoutingStrategies.Tunnel, handledEventsToo: true);
+
+        AddHandler(PointerCaptureLostEvent, (_, _) =>
+        {
+            if (!_isDragging) return;
+            _dragActorIndex = -1;
+            _isDragging = false;
+            DragGhost.Hide();
+            ClearDropFeedback();
+        });
         Rebuild();
     }
 
     int _dragActorIndex = -1;
     Point _dragStartPoint;
     bool _isDragging;
-    TreeItem? _highlightedItem;
+    readonly Border _dropLine = new() { Height = 2, IsVisible = false, Name = "HierarchyDropLine" };
+    readonly Ellipse _dropDot = new() { Width = 6, Height = 6, IsVisible = false, Name = "HierarchyDropDot" };
+    readonly Border _dropBox = new() { IsVisible = false, BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(4), Name = "HierarchyDropBox" };
     DropPosition _currentDropPos = DropPosition.None;
 
     public enum DropPosition { None, Above, Inside, Below, Root }
@@ -126,43 +146,81 @@ public sealed class HierarchyPanel : Panel, IEditTarget
         return (null, DropPosition.Root);
     }
 
+    /// <summary>The actor a drop on this row would act on, or -1 when the row cannot take the dragged actor (itself or
+    /// one of its own children).</summary>
+    int DropTarget(TreeItem? item)
+    {
+        if (item?.Tag is not HierarchyRow { Item.Kind: SceneItemKind.Actor } r) return -1;
+        return r.Item.Index == _dragActorIndex || _m.IsDescendantOf(r.Item.Index, _dragActorIndex) ? -1 : r.Item.Index;
+    }
+
     void UpdateDropFeedback(Point pos)
     {
         var (item, dropPos) = HitTestRow(pos);
-        if (item != _highlightedItem || dropPos != _currentDropPos)
+        _currentDropPos = dropPos;
+        _dropLine.IsVisible = _dropDot.IsVisible = _dropBox.IsVisible = false;
+        var name = (item?.Tag as HierarchyRow)?.Label;
+        if (dropPos != DropPosition.Root && DropTarget(item) < 0)
         {
-            ClearDropFeedback();
-            _highlightedItem = item;
-            _currentDropPos = dropPos;
-            if (_highlightedItem != null)
-            {
-                if (_currentDropPos == DropPosition.Inside)
-                {
-                    _highlightedItem.Background = (Application.Current?.FindResource("accent/subtle") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.DarkSlateBlue;
-                }
-                else if (_currentDropPos == DropPosition.Above)
-                {
-                    _highlightedItem.BorderBrush = (Application.Current?.FindResource("accent/default") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.Cyan;
-                    _highlightedItem.BorderThickness = new Thickness(0, 2, 0, 0);
-                }
-                else if (_currentDropPos == DropPosition.Below)
-                {
-                    _highlightedItem.BorderBrush = (Application.Current?.FindResource("accent/default") as Avalonia.Media.IBrush) ?? Avalonia.Media.Brushes.Cyan;
-                    _highlightedItem.BorderThickness = new Thickness(0, 0, 0, 2);
-                }
-            }
+            DragGhost.SetHint("Can't drop on itself or its children", refused: true);
+            return;
         }
+        switch (dropPos)
+        {
+            case DropPosition.Inside:
+                PlaceBox(item!);
+                DragGhost.SetHint("Child of " + name);
+                break;
+            case DropPosition.Above:
+                PlaceLine(item!.TranslatePoint(default, this)!.Value.Y, item!.Depth);
+                DragGhost.SetHint("Above " + name);
+                break;
+            case DropPosition.Below:
+                // a sibling goes after the whole subtree of the row, so the line is drawn there
+                var last = LastOfSubtree(item!);
+                PlaceLine(last.TranslatePoint(new Point(0, last.Bounds.Height), this)!.Value.Y, item!.Depth);
+                DragGhost.SetHint("Below " + name);
+                break;
+            default:
+                if (Items.LastOrDefault() is { } end) PlaceLine(end.TranslatePoint(new Point(0, end.Bounds.Height), this)!.Value.Y, 0);
+                DragGhost.SetHint("Scene root");
+                break;
+        }
+    }
+
+    TreeItem LastOfSubtree(TreeItem row)
+    {
+        var items = Items;
+        var last = row;
+        for (var i = items.ToList().IndexOf(row) + 1; i < items.Count && items[i].Depth > row.Depth; i++) last = items[i];
+        return last;
+    }
+
+    void PlaceLine(double y, int depth)
+    {
+        var x = _rows.Margin.Left + TreeItem.IndentOf(depth);
+        var width = Math.Max(16, Bounds.Width - x - _rows.Margin.Right);
+        Canvas.SetLeft(_dropLine, x);
+        Canvas.SetTop(_dropLine, y - 1);
+        _dropLine.Width = width;
+        Canvas.SetLeft(_dropDot, x - 3);
+        Canvas.SetTop(_dropDot, y - 3);
+        _dropLine.IsVisible = _dropDot.IsVisible = true;
+    }
+
+    void PlaceBox(TreeItem row)
+    {
+        var at = row.TranslatePoint(default, this)!.Value;
+        Canvas.SetLeft(_dropBox, at.X);
+        Canvas.SetTop(_dropBox, at.Y);
+        _dropBox.Width = row.Bounds.Width;
+        _dropBox.Height = row.Bounds.Height;
+        _dropBox.IsVisible = true;
     }
 
     void ClearDropFeedback()
     {
-        if (_highlightedItem != null)
-        {
-            _highlightedItem.Background = null;
-            _highlightedItem.BorderBrush = null;
-            _highlightedItem.BorderThickness = new Thickness(0);
-            _highlightedItem = null;
-        }
+        _dropLine.IsVisible = _dropDot.IsVisible = _dropBox.IsVisible = false;
         _currentDropPos = DropPosition.None;
     }
 
@@ -173,8 +231,8 @@ public sealed class HierarchyPanel : Panel, IEditTarget
 
         if (item?.Tag is HierarchyRow r && r.Item.Kind == SceneItemKind.Actor)
         {
-            var targetIdx = r.Item.Index;
-            if (targetIdx == _dragActorIndex) return;
+            var targetIdx = DropTarget(item);
+            if (targetIdx < 0) return;
 
             switch (dropPos)
             {
