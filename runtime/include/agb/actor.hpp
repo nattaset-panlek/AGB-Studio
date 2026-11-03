@@ -62,6 +62,9 @@ public:
     void playAnimation(const char* name);
     void setVisible(bool v);
     void setFacingLeft(bool left);
+    // Hierarchy: the child keeps its world position now, then moves with the parent, hides with it and is destroyed
+    // with it. nullptr makes it a scene root. A parent that would make a loop is refused with a warning.
+    void setParent(Actor* newParent);
     Box worldBox() const;  // collider in world pixels
     bool overlaps(const Actor& other) const;
 
@@ -82,6 +85,11 @@ public:
     s8 textLabel = -1;   // Text Label actors: index of their label on the text layer
     Behaviour* behaviours[kMaxBehaviours] = {};
     u8 behaviourCount = 0;
+    // Kept last: the editor reads the fields above by their offsets through the debug channel.
+    Actor* parent = nullptr;
+    fixed2 lastPos;      // position at the end of the last followParents, while actors have parents
+    u8 followStamp = 0;
+    bool hiddenInTree = false;  // not shown: itself or a parent is hidden
 };
 
 using BehaviourCreate = Behaviour* (*)(Arena& arena);
@@ -101,6 +109,7 @@ struct ActorDef {
     const data::TextRun* label;  // Text Label actors (fixed run), or
     bool hidden;
     s16 labelKey;                // string key looked up in the current language (-1 = none)
+    s8 parent = -1;              // index of the parent in the same list (-1 = scene root)
 };
 
 // Live actor table read by the editor through the debug channel (Play Mode Inspector "live").
@@ -128,6 +137,8 @@ int count();
 void startNew();
 void updateBehaviours();
 void lateUpdate();
+void followParents();    // children move with their parents; after physics, before touches
+void linkParents(const ActorDef* defs, int count);  // after a scene spawned defs into slots 0..count-1
 void touches();          // overlap pairs -> onTouch on both sides
 void removeDead();
 void syncSprites(int cameraX, int cameraY);

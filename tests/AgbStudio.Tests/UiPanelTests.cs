@@ -183,6 +183,11 @@ public sealed class UiPanelTests
         // ScoreText World coordinates should be 16 + 8 = 24, and 24 + 16 = 40
         Assert.Contains("ScoreText", genScene);
         Assert.Contains("24, 40", genScene);
+        // the children name their parent by its index in the scene, the root has none
+        var lines = genScene.Split('\n');
+        Assert.EndsWith(", 1},", lines.First(l => l.Contains("\"ScoreText\"")).TrimEnd());
+        Assert.EndsWith(", 0},", lines.First(l => l.Contains("\"UIPanel\"")).TrimEnd());
+        Assert.EndsWith("-1},", lines.First(l => l.Contains("\"UICanvas\"")).TrimEnd());
     }
     #endregion
 }

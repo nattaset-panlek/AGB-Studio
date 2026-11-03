@@ -137,10 +137,13 @@ public sealed class Actor
     public string name => null;
 
     /// <summary>Parent actor in the scene hierarchy (null if scene root).</summary>
+    [Cpp("{this.}parent")]
     public Actor parent => null;
 
-    /// <summary>Sets the parent actor in the hierarchy (Unity-style GameObject parenting).</summary>
+    /// <summary>Sets the parent actor in the hierarchy (Unity-style GameObject parenting). The actor keeps its world
+    /// position, then moves with the parent, hides with it and is destroyed with it.</summary>
     /// <param name="newParent">The new parent actor, or null for root.</param>
+    [Cpp("{this.}setParent({0})")]
     public void SetParent(Actor newParent) { }
 
     /// <summary>World position of the origin in pixels.</summary>
@@ -192,9 +195,11 @@ public sealed class Actor
     public void SetFillRatio(int current, int max) { }
 
     /// <summary>Sets active state (Unity style SetActive).</summary>
+    [Cpp("{this.}setVisible({0})")]
     public void SetActive(bool active) => visible = active;
 
     /// <summary>Active self property (Unity style activeSelf).</summary>
+    [Cpp("{this.}visible")]
     public bool activeSelf => visible;
 }
 

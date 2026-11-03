@@ -50,6 +50,9 @@ public class ApiTour : Behaviour
             Game.score += 10;
             other.Destroy();
         }
+        other.SetParent(actor);
+        other.SetParent(null);
+        if (other.parent == actor) other.SetActive(other.activeSelf);
         if (other.tag == "Enemy")
         {
             var potion = Items.Get(ItemId.Potion);

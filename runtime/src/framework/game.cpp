@@ -218,6 +218,7 @@ public:
                     return false;
                 }
                 for (int i = 0; i < d->actorCount; ++i) actors::spawn(d->actors[i], screenArena());
+                actors::linkParents(d->actors, d->actorCount);
                 g_scene.follow = d->camera.followActor >= 0 ? actors::at(d->camera.followActor) : nullptr;
                 if (g_scene.follow && g_scene.spawnX >= 0) g_scene.follow->pos = {fixed(g_scene.spawnX), fixed(g_scene.spawnY)};
                 g_scene.camX = d->camera.startX;
@@ -299,6 +300,7 @@ public:
             task::runAll();
             debug::tracePhase(debug::Phase::Physics);
             actors::lateUpdate();  // bodies move here (physics and tile collision)
+            actors::followParents();
             text::update();
             // A finished conversation (or Text.Show the player dismissed) takes the box off the screen.
             if (text::open() && !text::waiting() && !script::cutsceneRunning()) text::close();
@@ -780,7 +782,10 @@ Actor* spawn(const char* name, int x, int y) {
         return nullptr;
     }
     Actor* actor = actors::spawnAt(*def, screenArena(), x, y);
-    if (actor) actor->setVisible(true);
+    if (actor) {
+        actor->setVisible(true);
+        if (def->parent >= 0) actor->setParent(actors::at(def->parent));
+    }
     else debug::logf("warning: Spawn %s: all %d actor slots are in use, so it was not spawned. Destroy actors you no longer need.", name, actors::kMaxActors);
     return actor;
 }

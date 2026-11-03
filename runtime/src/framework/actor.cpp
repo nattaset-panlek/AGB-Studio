@@ -20,6 +20,28 @@ AGB_EWRAM_BSS_NAMED(agb_actor_table) ActorDebug g_debug[actors::kMaxActors];
 constexpr u32 kSlotBytes = 128;
 alignas(8) AGB_EWRAM_BSS u8 g_slotMemory[actors::kMaxActors][kSlotBytes];
 
+int g_parentLinks = 0;  // no links: the hierarchy costs nothing per frame
+u8 g_followStamp = 0;
+
+void refreshShown(Actor& a) {
+    a.hiddenInTree = !a.visible || (a.parent && a.parent->hiddenInTree);
+    if (a.sprite != render::sprites::kNone) render::sprites::setVisible(a.sprite, !a.hiddenInTree);
+    if (g_parentLinks == 0) return;
+    for (Actor& c : kAll)
+        if (c.alive && c.parent == &a) refreshShown(c);
+}
+
+// Parents first; each actor adds what its parent moved since the last pass to its own position.
+void follow(Actor& a) {
+    if (a.followStamp == g_followStamp) return;
+    a.followStamp = g_followStamp;
+    Actor* p = a.parent;
+    if (!p) return;
+    follow(*p);
+    a.pos.x.raw += p->pos.x.raw - p->lastPos.x.raw;
+    a.pos.y.raw += p->pos.y.raw - p->lastPos.y.raw;
+}
+
 bool streq(const char* a, const char* b) {
     if (!a || !b) return false;
     while (*a && *a == *b) ++a, ++b;
@@ -30,6 +52,27 @@ bool streq(const char* a, const char* b) {
 void Actor::destroy() {
     if (!alive || dying) return;
     dying = true;
+    if (g_parentLinks == 0) return;
+    for (Actor& c : kAll)
+        if (c.alive && c.parent == this) c.destroy();
+}
+
+void Actor::setParent(Actor* newParent) {
+    if (newParent == parent) return;
+    for (Actor* p = newParent; p; p = p->parent) {
+        if (p == this) {
+            debug::warnOnce(21, "SetParent: an actor cannot be the child of itself or of its own children, so the parent did not change.");
+            return;
+        }
+    }
+    if (parent) --g_parentLinks;
+    parent = newParent;
+    if (parent) {
+        ++g_parentLinks;
+        parent->lastPos = parent->pos;
+    }
+    lastPos = pos;
+    refreshShown(*this);
 }
 
 void Actor::playAnimation(const char* animName) {
@@ -38,7 +81,7 @@ void Actor::playAnimation(const char* animName) {
 
 void Actor::setVisible(bool v) {
     visible = v;
-    if (sprite != render::sprites::kNone) render::sprites::setVisible(sprite, v);
+    refreshShown(*this);
 }
 
 void Actor::setFacingLeft(bool left) {
@@ -59,6 +102,7 @@ bool Actor::overlaps(const Actor& o) const {
 namespace actors {
 
 void reset() {
+    g_parentLinks = 0;
     for (int i = 0; i < kMaxActors; ++i) {
         Actor& a = g_actors[i];
         if (a.alive && a.sprite != render::sprites::kNone) render::sprites::destroy(a.sprite);
@@ -156,6 +200,24 @@ void lateUpdate() {
     }
 }
 
+void followParents() {
+    if (g_parentLinks == 0) return;
+    ++g_followStamp;
+    for (Actor& a : kAll)
+        if (a.alive) follow(a);
+    for (Actor& a : kAll)
+        if (a.alive) a.lastPos = a.pos;
+}
+
+void linkParents(const ActorDef* defs, int count) {
+    for (int i = 0; i < count; ++i) {
+        if (defs[i].parent < 0) continue;
+        Actor* child = at(i);
+        Actor* parent = at(defs[i].parent);
+        if (child && parent) child->setParent(parent);
+    }
+}
+
 // Sort and sweep: the boxes of all colliding actors are taken once, sorted by left edge, and each actor is only
 // compared with the ones that start before its right edge (a stage full of bullets stays cheap). Two projectiles
 // never touch each other: bullets fired together start on top of one another.
@@ -201,6 +263,7 @@ void removeDead() {
             a.behaviours[i]->~Behaviour();
         }
         if (a.sprite != render::sprites::kNone) render::sprites::destroy(a.sprite);
+        if (a.parent) --g_parentLinks;
         a = Actor{};
     }
 }

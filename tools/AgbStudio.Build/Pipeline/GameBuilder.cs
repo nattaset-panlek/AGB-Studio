@@ -1207,9 +1207,10 @@ public sealed class GameBuilder
         var labelKey = a.Text.Length > 0 ? StringKey(a.Text) : -1;
         if (a.Text.Length > 0 && labelKey < 0) Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{a.Name}: string key '{a.Text}' is not in the Localization tables, so the label stays empty. Add the key in Localization, or change the text in the Inspector."));
         var (wx, wy) = a.GetWorldPosition(sceneActors);
+        var parent = a.Parent.Length > 0 && sceneActors != null ? sceneActors.ToList().FindIndex(x => x.Name == a.Parent) : -1;
         return $"{{{Cpp.Str(a.Name)}, agb::ActorKind::{a.Kind}, {sheet}, {wx}, {wy}, {Math.Max(0, tag)}, {a.Priority}, " +
                (a.Animation.Length > 0 ? Cpp.Str(a.Animation) : "nullptr") +
-               $", {box}, {behaviours}, {creators.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}}}";
+               $", {box}, {behaviours}, {creators.Count}, nullptr, {(a.Hidden ? "true" : "false")}, {labelKey}{(parent >= 0 ? $", {parent}" : "")}}}";
     }
 
     int _prefabCount;

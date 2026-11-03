@@ -318,6 +318,72 @@ AGB_TEST(empty_actor_spawns_and_runs_its_behaviours) {
     CHECK_EQ(bare->pos.y.floor(), 60);
 }
 
+AGB_TEST(actor_hierarchy_children_follow_hide_and_die_with_their_parent) {
+    alignas(8) static AGB_EWRAM_BSS u8 memory[64];
+    Arena arena(memory, sizeof(memory), nullptr);
+    actors::reset();
+    static const ActorDef defs[3] = {
+        {"Root", ActorKind::Empty, nullptr, 10, 20, 0, 1, nullptr, {0, 0, 0, 0}, nullptr, 0, nullptr, false, -1},
+        {"Child", ActorKind::Empty, nullptr, 15, 30, 0, 1, nullptr, {0, 0, 0, 0}, nullptr, 0, nullptr, false, -1, 0},
+        {"Grandchild", ActorKind::Empty, nullptr, 17, 33, 0, 1, nullptr, {0, 0, 0, 0}, nullptr, 0, nullptr, false, -1, 1},
+    };
+    for (const ActorDef& d : defs) actors::spawn(d, arena);
+    actors::linkParents(defs, 3);
+    Actor* root = actors::find("Root");
+    Actor* child = actors::find("Child");
+    Actor* grand = actors::find("Grandchild");
+    CHECK(child->parent == root);
+    CHECK(grand->parent == child);
+
+    // linking keeps the world positions
+    actors::followParents();
+    CHECK_EQ(child->pos.x.floor(), 15);
+    CHECK_EQ(grand->pos.y.floor(), 33);
+
+    // the parent's move reaches the whole chain
+    root->pos.x += fixed(5);
+    root->pos.y += fixed(-2);
+    actors::followParents();
+    CHECK_EQ(child->pos.x.floor(), 20);
+    CHECK_EQ(child->pos.y.floor(), 28);
+    CHECK_EQ(grand->pos.x.floor(), 22);
+    CHECK_EQ(grand->pos.y.floor(), 31);
+
+    // a child's own move adds to the parent's
+    child->pos.x += fixed(1);
+    root->pos.x += fixed(1);
+    actors::followParents();
+    CHECK_EQ(child->pos.x.floor(), 22);
+    CHECK_EQ(grand->pos.x.floor(), 24);
+
+    // no loops
+    root->setParent(grand);
+    CHECK(root->parent == nullptr);
+
+    // hiding: a parent hides its children and showing it gives back what they were
+    child->setVisible(false);
+    CHECK(grand->hiddenInTree);
+    CHECK(!root->hiddenInTree);
+    child->setVisible(true);
+    CHECK(!grand->hiddenInTree);
+
+    // a child taken out keeps its place and stops following
+    grand->setParent(nullptr);
+    const int x = grand->pos.x.floor();
+    root->pos.x += fixed(9);
+    actors::followParents();
+    CHECK_EQ(grand->pos.x.floor(), x);
+    grand->setParent(child);
+
+    // destroying a parent takes the children with it, and the frame cost goes back to none
+    root->destroy();
+    CHECK(child->dying);
+    CHECK(grand->dying);
+    actors::removeDead();
+    CHECK_EQ(actors::count(), 0);
+    actors::followParents();
+}
+
 int main() {
     system::init();
     test::runAll();
