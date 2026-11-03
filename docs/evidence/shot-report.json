@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03 13:44:02Z",
+  "generated": "2026-11-03 16:06:35Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3390,8 +3390,8 @@
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.07,
-      "ColourDiffPercent": 5.77
+      "MeanChannelError": 3.15,
+      "ColourDiffPercent": 6.13
     },
     {
       "Id": "T-M07",
@@ -3900,8 +3900,8 @@
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.4,
-      "ColourDiffPercent": 5.36
+      "MeanChannelError": 3.41,
+      "ColourDiffPercent": 5.37
     },
     {
       "Id": "T-P24",
@@ -4193,15 +4193,15 @@
       "set": "frame Script Editor",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.91,
-      "BestShiftDiffPercent": 2.91,
+      "DiffPercent": 2.95,
+      "BestShiftDiffPercent": 2.95,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.47,
-      "ColourDiffPercent": 5.35
+      "MeanChannelError": 3.53,
+      "ColourDiffPercent": 5.38
     },
     {
       "Id": "T-D14",

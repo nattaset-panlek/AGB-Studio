@@ -231,7 +231,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M03 | menu Assets menu | 264x175 | 264x175 | 2.26 | 2.26 | 0,0 | 0 | 2.58 |
 | T-M04 | menu Scene menu | 264x184 | 264x184 | 3.11 | 3.11 | 0,0 | 0 | 3.62 |
 | T-M05 | menu Build menu | 264x210 | 264x210 | 2.69 | 2.69 | 0,0 | 0 | 3.27 |
-| T-M06 | menu Tools menu | 264x253 | 264x253 | 2.63 | 2.63 | 0,0 | 0 | 3.07 |
+| T-M06 | menu Tools menu | 264x253 | 264x253 | 2.63 | 2.63 | 0,0 | 0 | 3.15 |
 | T-M07 | menu Help menu | 264x184 | 264x184 | 3.22 | 3.22 | 0,0 | 0 | 3.77 |
 | T-M08 | menu Open Recent | 264x123 | 264x123 | 2.16 | 2.16 | 0,0 | 0 | 2.47 |
 | T-P15 | frame Audio | 1440x900 | 1440x900 | 3.25 | 3.25 | 0,0 | 0 | 3.89 |
@@ -265,7 +265,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-P02 | frame Play Mode | 1440x900 | 1440x900 | 2.93 | 2.93 | 0,0 | 0 | 3.99 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
 | T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.18 | 5.18 | 0,0 | 0 | 6.33 |
-| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 2.98 | 2.98 | 0,0 | 0 | 3.40 |
+| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 2.98 | 2.98 | 0,0 | 0 | 3.41 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.32 | 2.32 | 0,0 | 0 | 2.81 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 2.89 | 2.89 | 0,0 | 0 | 3.13 |
@@ -285,7 +285,7 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-M14 | menu Component Menu | 264x149 | 264x149 | 2.15 | 2.15 | 0,0 | 0 | 2.09 |
 | T-M15 | menu Zoom | 264x175 | 264x175 | 1.62 | 1.62 | 0,0 | 0 | 1.90 |
 | T-M16 | menu Animation List | 264x149 | 264x149 | 1.15 | 1.15 | 0,0 | 0 | 1.34 |
-| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.91 | 2.91 | 0,0 | 0 | 3.47 |
+| T-P04 | frame Script Editor | 1440x900 | 1440x900 | 2.95 | 2.95 | 0,0 | 0 | 3.53 |
 | T-D14 | frame New Script | 560x564 | 560x564 | 1.98 | 1.98 | 0,0 | 0 | 2.02 |
 | T-O11 | frame Find & Replace | 540x124 | 540x124 | 1.90 | 1.90 | 0,0 | 0 | 2.28 |
 | T-P18 | frame Scripting API | 1440x900 | 1440x900 | 1.27 | 1.27 | 0,0 | 0 | 1.47 |
