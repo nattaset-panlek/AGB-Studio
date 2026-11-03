@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03 16:06:35Z",
+  "generated": "2026-11-03 18:14:07Z",
   "threshold": 48,
   "note": "diffPercent: pixels whose max channel difference \u003E threshold at 0 offset; bestShiftDiffPercent: same at the best shift in [-3,3]; colourDiffPercent: pixels differing by \u003E 8; layoutOffset: max(|shift|, size delta) in px",
   "items": [
@@ -3848,8 +3848,8 @@
       "set": "frame Play Mode",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.93,
-      "BestShiftDiffPercent": 2.93,
+      "DiffPercent": 2.92,
+      "BestShiftDiffPercent": 2.92,
       "shift": [
         0,
         0
@@ -3893,15 +3893,15 @@
       "set": "frame Debugger \u00B7 Memory",
       "figma": "1440x900",
       "app": "1440x900",
-      "DiffPercent": 2.98,
-      "BestShiftDiffPercent": 2.98,
+      "DiffPercent": 3,
+      "BestShiftDiffPercent": 3,
       "shift": [
         0,
         0
       ],
       "LayoutOffset": 0,
-      "MeanChannelError": 3.41,
-      "ColourDiffPercent": 5.37
+      "MeanChannelError": 3.42,
+      "ColourDiffPercent": 5.38
     },
     {
       "Id": "T-P24",

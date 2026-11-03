@@ -262,10 +262,10 @@ A pixel differs when a channel differs by more than 48/255. Offset = best alignm
 | T-D01 | frame New Project | 1180x668 | 1180x668 | 1.06 | 1.06 | 0,0 | 0 | 1.24 |
 | T-L02 | frame New Project · Light | 1180x668 | 1180x668 | 1.13 | 1.13 | 0,0 | 0 | 1.28 |
 | T-P22 | frame Scene Editor · Empty project | 1440x900 | 1440x900 | 0.94 | 0.94 | 0,0 | 0 | 1.20 |
-| T-P02 | frame Play Mode | 1440x900 | 1440x900 | 2.93 | 2.93 | 0,0 | 0 | 3.99 |
+| T-P02 | frame Play Mode | 1440x900 | 1440x900 | 2.92 | 2.92 | 0,0 | 0 | 3.99 |
 | T-M18 | menu Play Speed | 264x175 | 264x175 | 0.78 | 0.78 | 0,0 | 0 | 0.90 |
 | T-P19 | frame Debugger | 1440x900 | 1440x900 | 5.18 | 5.18 | 0,0 | 0 | 6.33 |
-| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 2.98 | 2.98 | 0,0 | 0 | 3.41 |
+| T-P23 | frame Debugger · Memory | 1440x900 | 1440x900 | 3.00 | 3.00 | 0,0 | 0 | 3.42 |
 | T-P24 | frame Debugger · Palettes | 1440x900 | 1440x900 | 2.32 | 2.32 | 0,0 | 0 | 2.81 |
 | T-P05 | frame Console panel | 860x250 | 860x250 | 1.63 | 1.63 | 0,0 | 0 | 2.09 |
 | T-P06 | frame Animation panel | 860x250 | 860x250 | 2.89 | 2.89 | 0,0 | 0 | 3.13 |
