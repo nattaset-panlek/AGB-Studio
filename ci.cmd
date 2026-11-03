@@ -20,7 +20,7 @@ if exist build\ci\results rd /s /q build\ci\results
 rem One test project at a time: they build ROMs into shared folders under build\.
 for %%t in (AgbStudio.Tests AgbStudio.Scripting.Tests AgbStudio.Editor.Tests) do (
     set STEP=%%t
-    dotnet test tests\%%t\%%t.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=%%t.trx" --results-directory build\ci\results || goto failed
+    dotnet test tests\%%t\%%t.csproj -c Release --no-build -v q --nologo --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type none --logger "console;verbosity=normal" --logger "trx;LogFileName=%%t.trx" --results-directory build\ci\results || goto failed
 )
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\ci-artifacts.ps1 -Result passed
 echo CI passed
