@@ -34,6 +34,7 @@ public:
     u16 framesSinceGround = 0;  // for coyote time in scripts
     bool climbing = false;      // set by scripts while on a ladder
 
+    void carryOver(const fixed2& velocity, bool grounded) override { vx = velocity.x; vy = velocity.y; onGround = grounded; }
     void jump() { vy = -jumpForce; onGround = false; }
     void setVelocity(fixed x, fixed y) { vx = x; vy = y; }
     void addForce(fixed x, fixed y) { vx += x; vy += y; }

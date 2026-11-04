@@ -22,6 +22,8 @@ public:
     virtual void lateUpdate() {}  // after physics (built-in bodies use it)
     virtual void onTouch(Actor& other) { AGB_UNUSED(other); }
     virtual void onDestroy() {}
+    // Walking into a connected scene makes the player anew: a body goes on at the speed it had.
+    virtual void carryOver(const fixed2& velocity, bool grounded) { AGB_UNUSED(velocity); AGB_UNUSED(grounded); }
     // Exposed fields for the live Inspector: count, and name / kind / pointer of field i.
     virtual int fieldCount() const { return 0; }
     virtual const char* fieldName(int i) const { AGB_UNUSED(i); return ""; }

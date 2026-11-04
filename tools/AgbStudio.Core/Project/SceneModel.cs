@@ -23,6 +23,9 @@ public sealed class SceneFile
     public string Page { get; set; } = "";  // a UI page (ui/<Name>.uipage) that opens when the scene has entered: a title screen
     public string Hud { get; set; } = "";   // a UI page that stays over the scene while it plays: scores, lives, a timer
     public string Picture { get; set; } = "";  // Modes 3, 4, 5: an image in assets/images (no extension) the scene shows; empty = the backdrop colour
+    // Scenes that join this one edge to edge: the player walks across with no load (null = none, left out of the file).
+    // Naming the join in one of the two scenes is enough.
+    public List<SceneConnection>? Connections { get; set; }
     // World Map card position and the template it started from.
     public int MapX { get; set; }
     public int MapY { get; set; }
@@ -145,6 +148,16 @@ public sealed class LinkData
     public Transition Transition { get; set; } = Transition.Fade;
     public double Duration { get; set; } = 0.5;     // seconds
     public string OnlyIf { get; set; } = "";        // C# condition, empty = always
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum MapSide { North, South, East, West }
+
+public sealed class SceneConnection
+{
+    public MapSide Side { get; set; }
+    public string Scene { get; set; } = "";
+    public int Offset { get; set; }  // 16 px tiles along the edge: where the other scene starts
 }
 
 // maps/<Name>.map (Tilemap Editor)

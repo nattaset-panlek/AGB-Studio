@@ -313,9 +313,77 @@ public sealed class PlayController : IDisposable
 
     /// <summary>Stop: saves the save file, unloads the ROM and returns to the Scene Editor (T-C11) from Play Mode or the
     /// Debugger. Stopped from another page (the Command Palette), the page stays: Stop never pulls the user off their work.</summary>
+    /// <summary>Record in Play Mode: the game starts again from its first frame and every frame is written down; pressing it
+    /// again, or Stop, saves replays/Replay N.replay.</summary>
+    public bool Recording => Session?.Recorder != null;
+
+    public void ToggleRecording()
+    {
+        if (Session is not { } session || _s.Project.Current == null) return;
+        if (session.Recorder != null) { FinishRecording(); Changed?.Invoke(); return; }
+        var chip = session.Core.SaveRam.ToArray();
+        session.Start(session.RomPath);
+        chip.CopyTo(session.Core.SaveRam);
+        session.Recorder = new ReplayRecorder(chip);
+        Say(ConsoleLevel.Info, "Recording a replay from the start of the game. Press Record again to save it.");
+        Changed?.Invoke();
+    }
+
+    void FinishRecording()
+    {
+        if (Session is not { Recorder: { } recorder } session || _s.Project.Current is not { } p) return;
+        session.Recorder = null;
+        if (recorder.Frames == 0) return;
+        Directory.CreateDirectory(p.ReplaysDir);
+        var n = 1;
+        while (File.Exists(Path.Combine(p.ReplaysDir, $"Replay {n}.replay"))) n++;
+        var name = $"Replay {n}";
+        GameProject.Save(Path.Combine(p.ReplaysDir, name + ".replay"), recorder.Finish(name, session.Core.Frame));
+        Say(ConsoleLevel.Success, $"Saved replays/{name}.replay ({recorder.Frames} frames). Tools › Run Recorded Tests plays every replay.");
+        _s.Toasts.Show($"Saved the replay {name}.", ToastStatus.Success, TimeSpan.FromSeconds(3));
+    }
+
+    /// <summary>Tools › Run Recorded Tests: stops the game, builds as Play does and plays every replay without showing it. The Console lists the results.</summary>
+    public async Task<IReadOnlyList<ReplayResult>> RunReplaysAsync()
+    {
+        if (_s.Project.Current is not { } p || _replaysRunning) return [];
+        var files = p.ReplayFiles().ToList();
+        if (files.Count == 0)
+        {
+            Say(ConsoleLevel.Info, "This project has no replays yet. Press Record in Play Mode to make one.");
+            _s.Toasts.Show("No replays yet. Press Record in Play Mode to make one.", ToastStatus.Error, TimeSpan.FromSeconds(3));
+            return [];
+        }
+        _replaysRunning = true;
+        try
+        {
+            StopSession(save: true);
+            Changed?.Invoke();
+            BuildResult built;
+            try { built = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
+            catch (InvalidOperationException e) { Say(ConsoleLevel.Error, e.Message); return []; }
+            if (!built.Success)
+            {
+                Say(ConsoleLevel.Error, "The build failed, so no replay ran. The Console shows what to fix.");
+                return [];
+            }
+            var core = _s.GetService(typeof(LibretroCore)) as LibretroCore ?? _s.Emulator.Acquire();
+            var results = await Task.Run(() => ReplayRunner.RunAll(core, p, built.RomPath));
+            foreach (var r in results)
+                Say(r.Passed ? ConsoleLevel.Success : ConsoleLevel.Error, $"{r.Name}: {r.Message}");
+            var passed = results.Count(r => r.Passed);
+            _s.Toasts.Show($"{passed} of {results.Count} replays pass.", passed == results.Count ? ToastStatus.Success : ToastStatus.Error, TimeSpan.FromSeconds(4));
+            return results;
+        }
+        finally { _replaysRunning = false; }
+    }
+
+    bool _replaysRunning;
+
     public void Stop()
     {
         _starts++;
+        FinishRecording();
         StopSession(save: true);
         Changed?.Invoke();
         var page = _s.Windows.CurrentPage;

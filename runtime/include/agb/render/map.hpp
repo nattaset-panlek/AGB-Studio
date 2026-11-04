@@ -7,6 +7,12 @@
 
 namespace agb::render {
 
+// A layer of a scene joined to this one, drawn past this map's edge. It uses the same tileset.
+struct MapNeighbor {
+    const data::MapLayer* layer;
+    s16 tileX, tileY;  // its top-left corner in this map's 16 px tiles
+};
+
 class MapLayerView {
 public:
     // Loads the tileset, picks screen blocks and configures `layer.bg`. Call while the screen is blank.
@@ -23,6 +29,11 @@ public:
     // Runtime map edits: switch to a RAM copy of the layer (same layout) and redraw one 16 px cell.
     void retarget(const data::MapLayer* layer) { layer_ = layer; }
     void redrawMetatile(int mx, int my);
+    // Connected scenes: what to draw past the map's edges. The list must stay valid while the view uses it.
+    void setNeighbors(const MapNeighbor* list, u8 count) { neighbors_ = list; neighborCount_ = count; }
+    // Connected scenes: map space moves by (dx, dy) pixels, a multiple of 16, with the camera: what is on the screen and
+    // in the hardware map stays where it is, so walking into the next scene draws nothing.
+    void moveOrigin(int dx, int dy) { originX_ += dx; originY_ += dy; cameraX_ -= dx; cameraY_ -= dy; }
     int bgIndex() const { return layer_ ? layer_->bg : -1; }
     int screenBlock() const { return screenBlock_; }
     const bg::TilesetPlacement& placement() const { return placement_; }
@@ -34,6 +45,7 @@ public:
 
 private:
     u16 screenEntry(int tileX, int tileY) const;
+    u16 neighborEntry(int tileX, int tileY) const;
     void drawTile(int tileX, int tileY);
     void drawColumn(int tileX, int tileY0, int tileY1);
     void drawRow(int tileY, int tileX0, int tileX1);
@@ -49,6 +61,9 @@ private:
     u32 dirtyRows_[4] = {};  // per screen block: bit per row that changed
     int scrollX_ = 0, scrollY_ = 0, cameraX_ = 0, cameraY_ = 0;
     int drawnX0_ = 0, drawnX1_ = -1, drawnY0_ = 0, drawnY1_ = -1;  // drawn tile window (inclusive)
+    int originX_ = 0, originY_ = 0;  // this map's corner in the space of the hardware map, in pixels (moveOrigin)
+    const MapNeighbor* neighbors_ = nullptr;
+    u8 neighborCount_ = 0;
 };
 
 }  // namespace agb::render

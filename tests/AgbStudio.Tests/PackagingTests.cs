@@ -55,6 +55,8 @@ public sealed class PackagingTests
             "HarfBuzzSharp" => "HarfBuzzSharp",
             "libHarfBuzzSharp" => "HarfBuzz",
             "Humanizer" => "Humanizer",
+            "NLayer" => "NLayer",
+            "NVorbis" => "NVorbis",
             "MicroCom.Runtime" => "MicroCom",
             "av_libglesv2" => "ANGLE",
             "mgba_libretro" => "mGBA",

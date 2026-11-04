@@ -33,6 +33,29 @@ public sealed class WorldMapTests : IDisposable
     Point Card(WorldMapPage page, string name) => _h.Center(page.Canvas.CardOf(name)!);
 
     [AvaloniaFact]
+    public void Connections_AddOffsetRenameDuplicateAndDeleteKeepThemRight()
+    {
+        var page = Open();
+        var m = page.Model;
+        var forest = m.Find("Forest_01")!;
+        m.AddConnection(forest, MapSide.East, "Forest_02");
+        m.SetConnectionOffset(m.Find("Forest_01")!, 0, 3);
+        var saved = Scene("Forest_01").Connections!.Single();
+        Assert.Equal((MapSide.East, "Forest_02", 3), (saved.Side, saved.Scene, saved.Offset));
+
+        Assert.True(m.Rename(m.Find("Forest_02")!, "Woods"));
+        Assert.Equal("Woods", Scene("Forest_01").Connections!.Single().Scene);
+        var copy = m.Duplicate(m.Find("Forest_01")!);
+        Assert.Null(Scene(copy).Connections);
+        m.Delete(m.Find("Woods")!);
+        Assert.Null(Scene("Forest_01").Connections);
+
+        m.AddConnection(m.Find("Forest_01")!, MapSide.West, "Cave_01");
+        m.RemoveConnection(m.Find("Forest_01")!, 0);
+        Assert.Null(Scene("Forest_01").Connections);
+    }
+
+    [AvaloniaFact]
     public void CtrlM_ShowsScenesLinksStartSceneAndInspector()
     {
         var page = Open();

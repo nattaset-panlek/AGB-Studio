@@ -96,6 +96,7 @@ public static class Catalog
         C("tools.logicGraph", "Logic Graph", "Tools", "nodes", window: "T-P17"),
         C("tools.debugger", "Debugger", "Tools", "bug", "Ctrl+Shift+D", "T-P19"),
         C("tools.screenshot", "Screenshot / GIF", "Tools", "camera", "F12"),
+        C("tools.runReplays", "Run Recorded Tests", "Tools", "rec"),
         C("tools.layout.reset", "Default Layout", "Tools", "layers"),
         C("tools.layout.save", "Save Layout…", "Tools", "plus"),
         // T-M07 Help

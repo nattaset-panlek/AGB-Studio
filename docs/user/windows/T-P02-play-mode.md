@@ -28,7 +28,10 @@ FPS and live values in the Inspector, and the Console shows the log from your sc
 - **Playing the game**: the GBA buttons use the keys set in Project Settings › Input, or a gamepad. Hold the
   fast-forward key (Tab by default, 4x) to speed up.
 - **Toolbar, left**: only the Select tool works while the game runs. **Hitboxes** draws each actor's collision box;
-  **Tile collision** shows the solid tiles.
+  **Tile collision** shows the solid tiles. **Record** starts the game again from its first frame and writes down the
+  buttons you press; press it again (**Stop recording**), or Stop, to save `replays/Replay N.replay`. Tools › Run Recorded
+  Tests plays every replay and lists in the Console which still show the same screens, and `agb test` does the same from
+  the command line. A replay compares what is on the screen, so new art or text means recording it again.
 - **Toolbar, centre**: **Stop** ends the game, keeps its save file and goes back to the Scene Editor. **Pause**
   pauses and resumes. **Step** (F10) pauses and runs exactly one frame. "Simulating · mGBA" shows while the game runs.
 - **Toolbar, right**: the frame number, and the speed chip, which opens the Play Speed menu (1/4x, 1/2x, 1x, 2x, 4x,

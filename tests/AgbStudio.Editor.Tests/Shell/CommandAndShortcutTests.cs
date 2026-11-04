@@ -41,6 +41,8 @@ public class CommandAndShortcutTests
         if (id == "T-M06") app = app.Take(app.Count - 2).ToList();
         // Tools › UI Editor too (scope log 2026-11-04)
         if (id == "T-M06") app = app.Where(e => e is not CommandEntry { CommandId: "tools.uiEditor" }).ToList();
+        // Tools › Run Recorded Tests too (scope log 2026-11-05)
+        if (id == "T-M06") app = app.Where(e => e is not CommandEntry { CommandId: "tools.runReplays" }).ToList();
         Assert.Equal(fig.Count, app.Count);
         for (var i = 0; i < fig.Count; i++)
         {

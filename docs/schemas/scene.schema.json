@@ -335,6 +335,31 @@
     "picture": {
       "type": "string"
     },
+    "connections": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "side": {
+            "enum": [
+              "North",
+              "South",
+              "East",
+              "West"
+            ]
+          },
+          "scene": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      }
+    },
     "mapX": {
       "type": "integer"
     },

@@ -42,6 +42,7 @@ After `dotnet build tools/agb/agb.csproj -c Release` it is `tools\agb\bin\Releas
 |---|---|
 | `agb build [project folder] [--release] [--clean] [--verbose]` | builds a project to `.gba` (all pipeline steps); the folder defaults to the current one |
 | `agb runtime-test [name ...] [--verbose] [--shots]` | builds `runtime/tests/*` (all but the `host_*` folders, which their own C# tests drive) and runs each ROM headless |
+| `agb test [project folder]` | builds a project as Play does (Debug), plays every `replays/*.replay` and fails when a screen differs from the recording; the screen goes to `build/replays` |
 | `agb romtest <rom.gba> [--frames N] [--shot out.png] [--dumpsave] [--memmap]` | runs any ROM headless until it reports pass or fail |
 | `agb sample mini\|skyhopper\|cavequest\|snowrun\|duskstory <folder>` | creates the mini platformer, the Sky Hopper fixture or a sample game from generated original content |
 | `agb template <id> <folder> [name]` | creates a project from a New Project template (`platformer`, `topdown`, `visualnovel`, `puzzle`, `shmup`, `rpg`, `racing`, `brawler`) |

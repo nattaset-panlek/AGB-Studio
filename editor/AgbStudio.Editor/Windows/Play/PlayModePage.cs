@@ -33,6 +33,7 @@ public sealed class PlayModePage : DockPanel
     public LiveInspector Inspector { get; }
     public Chip HitboxesChip { get; } = new() { Content = "Hitboxes", Glyph = "square", Name = "HitboxesChip" };
     public Chip CollisionChip { get; } = new() { Content = "Tile collision", Glyph = "grid", Name = "TileCollisionChip" };
+    public Chip RecordChip { get; } = new() { Content = "Record", Glyph = "rec", Name = "RecordChip" };
     public Chip SimulatingChip { get; } = new() { Content = "Simulating · mGBA", Glyph = "rec", Style = ChipStyle.Danger, Name = "SimulatingChip" };
     public Chip FrameChip { get; } = new() { Glyph = "clock", Name = "FrameChip" };
     public Chip SpeedChip { get; } = new() { Glyph = "clock", Name = "SpeedChip" };
@@ -64,6 +65,7 @@ public sealed class PlayModePage : DockPanel
         ToolTip.SetTip(tools[0], new TipContent(s.Commands.Get("scene.tool.select").Title));
         HitboxesChip.Click += (_, _) => { _play.Hitboxes = !_play.Hitboxes; UpdateChrome(); Game.Screen.InvalidateVisual(); };
         CollisionChip.Click += (_, _) => { _play.TileCollision = !_play.TileCollision; UpdateChrome(); Game.Screen.InvalidateVisual(); };
+        RecordChip.Click += (_, _) => { _play.ToggleRecording(); UpdateChrome(); };
         PlayButton.Command = s.Commands.Get("build.play");
         StopButton.Command = s.Commands.Get("play.stop");
         PauseButton.Command = s.Commands.Get("play.pause");
@@ -75,7 +77,7 @@ public sealed class PlayModePage : DockPanel
         SpeedChip.Click += (_, _) => _ = s.Windows.Open("T-M18", anchor: SpeedChip, source: "SpeedChip");
         // the frame number changes every frame: a fixed width with tabular digits keeps the toolbar still
         FrameCounter.Fix(FrameChip, 128);
-        var left = UI.Row(8, ToolGroup(tools), HitboxesChip, CollisionChip);
+        var left = UI.Row(8, ToolGroup(tools), HitboxesChip, CollisionChip, RecordChip);
         var center = UI.Row(4, PlayButton, StopButton, PauseButton, StepButton, SimulatingChip);
         var right = UI.Row(8, FrameChip, SpeedChip);
         var bar = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,*,Auto"), VerticalAlignment = VerticalAlignment.Center };
@@ -217,6 +219,8 @@ public sealed class PlayModePage : DockPanel
     public void UpdateChrome()
     {
         HitboxesChip.Style = _play.Hitboxes ? ChipStyle.Accent : ChipStyle.Default;
+        RecordChip.Style = _play.Recording ? ChipStyle.Danger : ChipStyle.Default;
+        RecordChip.Content = _play.Recording ? "Stop recording" : "Record";
         CollisionChip.Style = _play.TileCollision ? ChipStyle.Accent : ChipStyle.Default;
         FrameChip.Content = "Frame " + _play.Frame.ToString(CultureInfo.InvariantCulture);
         SpeedChip.Content = PlayCommands.SpeedText(_play.FastForwarding ? _play.Options.FastForwardSpeed : _play.Speed);

@@ -145,6 +145,29 @@ public class TilemapE2ETests : IDisposable
         Assert.Null(doc.Meta.Primary);
     }
 
+    // Tile section: Over actors names the tile drawn in front of the actors; saved in the meta file, undoable
+    [AvaloniaFact]
+    public void TileSection_OverField_SavesUndoesAndRefusesAnotherTilesetsNumbers()
+    {
+        var page = OpenFromTab();
+        var doc = page.Session!.Doc;
+        page.Session.SelectTile(1);
+        _h.Pump();
+        Assert.Equal("", _h.Find<InspectorField>("OverField").Value ?? "");
+        Assert.False(doc.SetOver(1, 1));
+        Assert.False(doc.SetOver(1, -2));
+        Assert.False(doc.SetOver(1, 100000));
+        Assert.Null(doc.Props(1)?.Over);
+        Assert.True(doc.SetOver(1, 2));
+        _h.Pump();
+        Assert.Equal("2", _h.Find<InspectorField>("OverField").Value);
+        _h.Key(PhysicalKey.S, RawInputModifiers.Control);
+        Assert.Equal(2, GameProject.Load<TilesetMeta>(GameProject.MetaPath(doc.TilesetPath!)).Tiles[1].Over);
+        _h.Key(PhysicalKey.Z, RawInputModifiers.Control);
+        _h.Pump();
+        Assert.Null(doc.Props(1)?.Over);
+    }
+
     // P11.29 Tile properties: collision type, flip H, tag, animation, auto-tile set; collision view
     [AvaloniaFact]
     public void TileProperties_CollisionFlipTagAnimationAutoTile_CollisionView()

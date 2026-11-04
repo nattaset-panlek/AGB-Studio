@@ -127,9 +127,15 @@ copies it in any scene when the scene has no actor of that name.
   `originX` / `originY`, `collider`, `palette` (a shared palette name, empty = own), `reduceColors`,
   `trimEmptyFrames`, `compress`, `animations` (each `name`, `frames`, `ticks` per frame or per-frame `frameTicks`,
   `loop`, `pingPong`).
+- `replays/<Name>.replay` (`ReplayFile`, `AgbStudio.Emu`): `format`, `name`, `save` (the save chip at the start, deflated
+  and base64, left out when empty), `keys` (runs of `[frames, buttons]`), `checks` (`frame` and a `picture` fingerprint,
+  FNV-1a of the screen, every 120 frames and at the end). A replay belongs to the project and goes in version control.
+- `SceneFile.connections` (left out when empty): `side` (`North`, `South`, `East`, `West`), `scene`, `offset` in 16 px
+  tiles along that edge. A join named in one scene counts for both.
 - `TilesetMeta`: `tiles` by metatile index (`name`, `collision` = `None`, `Solid`, `OneWay`, `Ladder`, `Hazard`,
-  `Water`, `SlopeUp`, `SlopeDown`, `tag`, `animation` frames and `animationTicks`), `autoTiles` (rule sets: each rule a
-  3x3 `mask` and the `tile` it picks), `compress` (LZ77, default on).
+  `Water`, `SlopeUp`, `SlopeDown`, `tag`, `animation` frames and `animationTicks`, `over` = another tile of this tileset
+  drawn in front of the actors in the same cell), `autoTiles` (rule sets: each rule a 3x3 `mask` and the `tile` it
+  picks), `compress` (LZ77, default on), `primary` (the tileset this one extends; a primary cannot have a primary).
 - `MusicMeta`: `volume`, `loopStart` (pattern order), `fadeOnSceneChange`. The build reads it for every MOD / XM (the
   defaults when the file is missing: 0.8, 0, true): `loopStart`, clamped to the module's last order, becomes the
   module's restart order in the soundbank, so maxmod continues there when a looping song ends; `volume` (0..256) and

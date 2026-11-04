@@ -49,6 +49,12 @@ struct LinkDef {
     bool (*condition)(); // "Only if" (nullptr = always)
 };
 
+// A scene joined to this one edge to edge: its top-left corner in this scene's 16 px tiles.
+struct MapConnection {
+    u16 scene;
+    s16 tileX, tileY;
+};
+
 struct CameraDef {
     s16 followActor;    // -1 = fixed camera
     u8 deadZoneW, deadZoneH;
@@ -83,6 +89,8 @@ struct SceneDef {
     const char* page = nullptr;   // a UI page opened when the scene has entered: a title screen (nullptr = none)
     bool pageIsHud = false;       // that page stays over the scene while it plays, and the game goes on (Scene › Hud)
     const data::Picture* picture = nullptr;  // Modes 3, 4, 5: the picture the scene shows (nullptr = the backdrop colour)
+    const MapConnection* connections = nullptr;
+    u8 connectionCount = 0;
 };
 
 // A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.

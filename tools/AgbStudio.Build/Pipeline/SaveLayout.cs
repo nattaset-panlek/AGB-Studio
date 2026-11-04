@@ -10,6 +10,8 @@ public static class SaveLayout
 {
     public const int CopyHeaderBytes = 16;
     public const int MaxSlotBytes = 4096;
+    /// <summary>sizeof(agb::script::CutsceneSave): Project Settings · Save data "Save during cutscenes".</summary>
+    public const int CutsceneBytes = 320;
     public const int SaveHeaderBytes = 8;      // agb::SaveHeader: scene, x, y, flags
     public const int OptionsBytes = 8;         // agb::save::kOptionsBytes: the global options block outside the slots
     public const int ScriptStoreBytes = 160;   // agb::script::PersistentStore: 256 flag bits + 32 vars
@@ -56,7 +58,7 @@ public static class SaveLayout
     }
 
     /// <summary>sizeof(GameState): the save header, the fields and, when scripts are compiled, the saved script store.</summary>
-    public static int SlotBytes(IEnumerable<SaveField> fields, bool scriptStore)
+    public static int SlotBytes(IEnumerable<SaveField> fields, bool scriptStore, bool cutscenes = false)
     {
         var offset = SaveHeaderBytes;
         var align = 2;
@@ -70,6 +72,7 @@ public static class SaveLayout
         {
             offset = (offset + 3) / 4 * 4 + ScriptStoreBytes;
             align = 4;
+            if (cutscenes) offset += CutsceneBytes;
         }
         return (offset + align - 1) / align * align;
     }
@@ -102,7 +105,7 @@ public static class SaveLayout
     public static string? Problem(SaveSettings save, bool scriptStore)
     {
         if (save.Type == SaveType.None) return null;
-        var need = SlotBytes(save.Fields, scriptStore);
+        var need = SlotBytes(save.Fields, scriptStore, save.Cutscenes);
         var room = SlotCapacity(save.Type, save.Slots);
         if (need <= room) return null;
         var slots = Math.Max(1, save.Slots);

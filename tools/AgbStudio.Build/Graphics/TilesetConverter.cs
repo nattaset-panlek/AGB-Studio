@@ -10,6 +10,8 @@ public sealed class ConvertedTileset
     public List<ushort[]> Metatiles { get; } = new();   // 4 screen entries each, relative to the tileset
     public List<CollisionType> Collision { get; } = new();
     public List<byte> Tags { get; } = new();
+    /// <summary>Per metatile, the tile it draws in front of the actors (TileProperties.Over), or -1.</summary>
+    public List<int> Over { get; } = new();
     public List<ImportProblem> Problems { get; } = new();
     public int MetatileColumns { get; init; }
     public List<(int BaseTile, byte[] FrameTiles, int Frames, int Ticks)> Anims { get; } = new();
@@ -132,6 +134,13 @@ public static class TilesetConverter
             result.Collision.Add(props?.Collision ?? CollisionType.None);
             var tag = props == null || props.Tag == "" ? 0 : tagNames.ToList().IndexOf(props.Tag) + 1;
             result.Tags.Add((byte)Math.Max(0, tag));
+            var over = props?.Over ?? -1;
+            if (over != -1 && (over < 0 || over >= mcols * mrows || over == m))
+            {
+                result.Problems.Add(new ImportProblem(file, $"Tile {m} draws tile {over} over the actors, but that is not another tile of this tileset, so nothing is drawn. Pick another tile in the Tilemap Editor.", []));
+                over = -1;
+            }
+            result.Over.Add(over);
         }
         return result;
     }

@@ -189,6 +189,7 @@ public sealed partial class WorldMapModel
             {
                 var changed = false;
                 foreach (var l in other.Data.Links.Where(l => l.To == old)) { l.To = newName; changed = true; }
+                foreach (var c in other.Data.Connections ?? []) if (c.Scene == old) { c.Scene = newName; changed = true; }
                 foreach (var m in other.Data.Menu?.Items ?? []) if (m.Scene == old) { m.Scene = newName; changed = true; }
                 UiPageLinks.RenameScene(Project!, old, newName);
                 if (changed && other != s) Save(other);
@@ -212,6 +213,7 @@ public sealed partial class WorldMapModel
         {
             var copy = GameProject.Load<SceneFile>(s.Path);
             copy.Name = name;
+            copy.Connections = null;  // an edge joins two scenes: the copy is not joined to the original's neighbours
             copy.MapX = s.Data.MapX + 40;
             copy.MapY = s.Data.MapY + 40;
             if (Project is { } p && s.Map is { } map)
@@ -231,7 +233,15 @@ public sealed partial class WorldMapModel
     public void Delete(MapScene s) => Edit("Delete scene", () =>
     {
         foreach (var other in Scenes.Where(o => o != s))
-            if (other.Data.Links.RemoveAll(l => l.To == s.Name) > 0) Save(other);
+        {
+            var removed = other.Data.Links.RemoveAll(l => l.To == s.Name) > 0;
+            if (other.Data.Connections is { } joins && joins.RemoveAll(c => c.Scene == s.Name) > 0)
+            {
+                removed = true;
+                if (joins.Count == 0) other.Data.Connections = null;
+            }
+            if (removed) Save(other);
+        }
         File.Delete(s.Path);
     });
 
@@ -243,6 +253,26 @@ public sealed partial class WorldMapModel
         if (Find(r.Scene) is not { } s || Link(r) is not { } l) return;
         Edit(name, () => { change(l); Save(s); });
     }
+
+    /// <summary>Joins another scene to one edge of this one, so the player walks across with no load. The build checks that the two can be joined.</summary>
+    public void AddConnection(MapScene s, MapSide side, string scene) => Edit("Connect scene", () =>
+    {
+        (s.Data.Connections ??= []).Add(new SceneConnection { Side = side, Scene = scene });
+        Save(s);
+    });
+
+    public void RemoveConnection(MapScene s, int index) => Edit("Remove connection", () =>
+    {
+        s.Data.Connections!.RemoveAt(index);
+        if (s.Data.Connections.Count == 0) s.Data.Connections = null;
+        Save(s);
+    });
+
+    public void SetConnectionOffset(MapScene s, int index, int offset) => Edit("Connection offset", () =>
+    {
+        s.Data.Connections![index].Offset = offset;
+        Save(s);
+    });
 
     /// <summary>Adds a link from one scene to another (link tool) and returns it.</summary>
     public LinkRef AddLink(MapScene from, MapScene to)

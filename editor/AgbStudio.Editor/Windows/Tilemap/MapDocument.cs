@@ -376,7 +376,7 @@ public sealed class MapDocument
 
     static TileProperties Clone(TileProperties p) => new()
     {
-        Name = p.Name, Collision = p.Collision, Tag = p.Tag, Animation = p.Animation?.ToList(), AnimationTicks = p.AnimationTicks,
+        Name = p.Name, Collision = p.Collision, Tag = p.Tag, Animation = p.Animation?.ToList(), AnimationTicks = p.AnimationTicks, Over = p.Over,
     };
 
     public void SetCollision(int tile, CollisionType type)
@@ -390,6 +390,15 @@ public sealed class MapDocument
         tag = tag.Trim();
         if ((Props(tile)?.Tag ?? "") == tag) return;
         EditProps("Tag", tile, p => p.Tag = tag);
+    }
+
+    /// <summary>Two-layer metatile: the tile drawn in front of the actors in the same cell, or null for none. False for a tile that is not another tile of the tileset.</summary>
+    public bool SetOver(int tile, int? over)
+    {
+        if (over is { } o && (o < 0 || o == tile || (TilesetImage is { } img && o >= img.Width / 16 * (img.Height / 16)))) return false;
+        if (Props(tile)?.Over == over) return true;
+        EditProps("Draw over actors", tile, p => p.Over = over);
+        return true;
     }
 
     /// <summary>Animation: <paramref name="frames"/> consecutive tiles of the tileset starting at the tile (0 or 1 = none).</summary>

@@ -142,9 +142,27 @@ pre-laid-out text runs. Scenes, actors and links are `SceneDef`, `ActorDef` and 
 attributes ROM bytes per asset by the generated object file each asset is written to (`gen/assets/sprite_*`,
 `tileset_*`, `gen/text/font_*`, `gen/data/db_*`, `gen/maps/map_*`, `gen/audio/soundbank`), read from the linker map.
 
-Not built from blueprint 08: primary / secondary tilesets (a map has one tileset), two-layer metatiles, a separate
-layout file shared between maps (layers live in `maps/<Name>.map`), and seamless map streaming (out of scope,
-checklist 1.2). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on the frame Up
+A map has one tileset. That tileset can extend a shared primary (`TilesetMeta.primary`): the ROM stores only its own
+tiles and palette banks, and `bg::loadTileset` loads the primary's first; one level only. A tile can draw another tile
+in front of the actors (`TileProperties.over`): `OverLayers.Expand` gives a tile layer that uses such tiles one more
+layer on the highest free BG at priority 0, appended after the map's own so layer numbers and collision stay the same,
+and `Scene.SetTile` keeps it in step.
+
+Saving during a cutscene (`SaveSettings.cutscenes`): `Save.Write` and `Save.Checkpoint` copy the running `[Cutscene]`
+context into `GameState::cutsceneSave`, and the scene load after `Save.Read` restores it (`script::resumeCutscene`). A wait
+is stored as the native call that began it and made again, because a wait predicate is a pointer into the ROM and a text
+box or move has state outside the context. A CRC of the running scripts refuses a save from an older version of them.
+Actors other than the player start from the scene file, as after any load.
+
+Connected scenes (`SceneFile.connections`): a scene's layers draw the joined scene's cells past the edge
+(`MapLayerView::neighborEntry`), collision reads across it, and the camera may go over it. When the followed actor's
+position crosses, `crossInto` makes the other scene current: actors start anew from a separate part of the arena, the
+player keeps its place and speed, and `MapLayerView::moveOrigin` changes what the hardware maps mean, so nothing is
+redrawn or copied and the crossing takes no load step. `GameBuilder.JoinProblem` refuses scenes that this could not
+show correctly.
+
+Not built from blueprint 08: a separate
+layout file shared between maps (layers live in `maps/<Name>.map`). Links of kind On touch fire when the player overlaps the trigger actor; Door fires on the frame Up
 goes down during that overlap (holding Up does not fire it); Respawn fires on the overlap or when the player is lost
 (destroyed, out of hearts or fallen below the map) (`game.cpp` `checkLinks`).
 

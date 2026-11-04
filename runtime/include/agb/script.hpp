@@ -38,6 +38,7 @@ constexpr int kMaxContexts = 8;
 constexpr int kStackSize = 24;
 constexpr int kMaxLocals = 16;
 constexpr int kCallDepth = 8;
+inline constexpr u16 kNoNative = 0xFFFF;
 
 struct Frame {
     u16 script;
@@ -63,6 +64,33 @@ struct Context {
     s32 userData[4] = {};              // natives keep per-call state here
     u16 lastLine = 0;
 };
+
+// A running cutscene as it goes into a save (Project Settings · Save data "Save during cutscenes"): where it is, its values
+// and the wait it was in. A wait is kept as the call that started it and made again on load, so the box or the move shows
+// again. Function pointers are not stored, and a cutscene changed since the save was made does not resume.
+constexpr u16 kCutsceneSaved = 0xC5AE;
+struct CutsceneSave {
+    u16 marker;  // kCutsceneSaved, or anything else for no cutscene
+    u8 depth, sp, localTop, locks;
+    u16 waitFrames, waitNative;
+    u8 waitArgc;
+    bool pushAfter;  // saved from inside a call that did not wait: its result still has to be pushed
+    Frame frames[kCallDepth];
+    s32 stack[kStackSize];
+    s32 locals[kMaxLocals * 2];
+    s32 waitArgs[8];
+    u32 codeCrc;
+};
+static_assert(sizeof(CutsceneSave) == 320, "SaveLayout.CutsceneBytes counts this size");
+
+// Where the game keeps it in its save data; never called when the project does not save cutscenes.
+void setCutsceneSave(CutsceneSave* save);
+// Before a save is written: remembers the running cutscene, or that none runs. A cutscene still waiting to resume stays as it is.
+void captureCutscene();
+// After a save is read: the next finished scene load resumes the cutscene in it.
+void armCutsceneResume();
+// Starts the saved cutscene where it was. Returns false when no resume is due or the cutscene changed since the save.
+bool resumeCutscene();
 
 // Registration (generated per game): scripts and natives tables.
 void setTables(const Script* scripts, u16 scriptCount, const Native* natives, u16 nativeCount);

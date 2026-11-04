@@ -209,14 +209,20 @@ void animateTiles() {
     for (int i = 0; i < g_loadedCount; ++i) {
         LoadedTileset& l = g_loaded[i];
         const data::Tileset* ts = l.tileset;
-        if (!ts->animCount) continue;
+        const data::Tileset* primary = ts->primary;
+        if (!ts->animCount && !(primary && primary->animCount)) continue;
         ++l.animTick;
-        for (int a = 0; a < ts->animCount; ++a) {
-            const data::TileAnim& an = ts->anims[a];
-            if (!an.ticksPerFrame || l.animTick % an.ticksPerFrame) continue;
-            const u32 frame = (l.animTick / an.ticksPerFrame) % an.frameCount;
-            u8* dst = reinterpret_cast<u8*>(commit::bgTiles(l.placement.charBlock)) + (static_cast<u32>(l.placement.firstTile) + an.baseTile) * 32;
-            commit::queueCopy(dst, static_cast<const u8*>(an.frameTiles) + frame * 4 * 32, 4 * 32);
+        // The primary's tiles come first in the run, so its animations keep their tile numbers.
+        const data::Tileset* const owners[] = {primary, ts};
+        for (const data::Tileset* owner : owners) {
+            if (!owner) continue;
+            for (int a = 0; a < owner->animCount; ++a) {
+                const data::TileAnim& an = owner->anims[a];
+                if (!an.ticksPerFrame || l.animTick % an.ticksPerFrame) continue;
+                const u32 frame = (l.animTick / an.ticksPerFrame) % an.frameCount;
+                u8* dst = reinterpret_cast<u8*>(commit::bgTiles(l.placement.charBlock)) + (static_cast<u32>(l.placement.firstTile) + an.baseTile) * 32;
+                commit::queueCopy(dst, static_cast<const u8*>(an.frameTiles) + frame * 4 * 32, 4 * 32);
+            }
         }
     }
 }

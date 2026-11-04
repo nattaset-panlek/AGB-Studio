@@ -37,6 +37,13 @@ it to plan the levels and the order of the story.
   - **Backgrounds**: a parallax slider for each background layer (how fast it scrolls with the camera).
   - **Music**: the track (or None) and its volume.
   - **Events**: the OnEnter and OnExit code run when the scene starts and ends.
+  - **Connections**: scenes joined to this one edge to edge. **Connect** picks a side and a scene; **Offset** is where
+    the other scene starts along that edge, in 16 px tiles; pick **Remove** on a row to take the join away. The next
+    scene shows past the edge and the player walks across with no load and no fade. Naming the join in one of the two
+    scenes is enough. Both scenes need the same tileset, the same layers and the same Hud, tile layers with parallax 1,
+    and no Text Label or Panel actors, Menu or Page; the build says what to change. Other actors start anew at the
+    crossing, as after any scene change, so keep them more than a screen from the edge or they appear on screen. The
+    editor's Scene and Tilemap views show one scene at a time; to see a join, press Play.
 - **Status line**: Ready, the start scene (click to select it) and the zoom level (click to go back to 100%).
 
 Every change is saved to the scene files at once and can be undone.

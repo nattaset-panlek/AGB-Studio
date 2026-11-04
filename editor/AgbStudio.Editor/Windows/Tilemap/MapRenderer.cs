@@ -108,14 +108,17 @@ public sealed class MapRenderer
     {
         var px = new uint[width * height];
         Array.Fill(px, Backdrop(doc.Scene));
-        var layers = doc.Map.Layers;
+        var expanded = OverLayers.Expand(doc.Map, Tileset(doc)?.Converted);
+        var layers = expanded.Map.Layers;
+        // An over layer shows when the layer it belongs to does.
+        int Source(int li) => li < doc.Map.Layers.Count ? li : Array.IndexOf(expanded.Partner, li);
         // Priority 3 first, then 2, 1, 0; within a priority BG3 under BG0; sprites of priority p above BGs of priority p.
         for (var prio = 3; prio >= 0; prio--)
         {
             foreach (var li in Enumerable.Range(0, layers.Count).Where(i => layers[i].Priority == prio && layers[i].Type != LayerType.CollisionOnly).OrderByDescending(i => layers[i].Bg))
             {
-                if (layerVisible != null && !layerVisible(li)) continue;
-                DrawLayer(doc, li, px, camX, camY, width, height);
+                if (layerVisible != null && !layerVisible(Source(li))) continue;
+                DrawLayer(doc, layers[li], px, camX, camY, width, height);
             }
             if (sprites) DrawSprites(doc, px, camX, camY, width, height, prio);
         }
@@ -130,9 +133,8 @@ public sealed class MapRenderer
         return 0xFF000000u;
     }
 
-    void DrawLayer(MapDocument doc, int li, uint[] px, int camX, int camY, int width, int height)
+    void DrawLayer(MapDocument doc, MapLayerData l, uint[] px, int camX, int camY, int width, int height)
     {
-        var l = doc.Map.Layers[li];
         var sx = Scroll(camX, l.ParallaxX);
         var sy = Scroll(camY, l.ParallaxY);
         if (l.Type == LayerType.Image)

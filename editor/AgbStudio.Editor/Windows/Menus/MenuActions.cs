@@ -51,6 +51,7 @@ public static partial class MenuActions
         }
 
         Own("tools.screenshot", () => Screenshot(s), () => GameCapture.Of(s).CanCapture);
+        Own("tools.runReplays", () => _ = Windows.Play.PlayController.Of(s).RunReplaysAsync(), () => s.Project.Current != null);
         Own("help.reportBug", () => ReportBug(s), () => EditorLinks.Of(s).Config.BugUrl.Trim().Length > 0);
         Own("help.checkUpdates", () => _ = CheckUpdatesAsync(s), () => true);
         Own("build.clean", () => CleanBuild(s), () => HasProject() && Idle());

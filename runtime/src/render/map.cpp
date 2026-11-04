@@ -41,6 +41,9 @@ bool MapLayerView::init(const data::MapLayer& layer, bg::Size size) {
     if (layer.type == data::LayerType::CollisionOnly) return true;
     // Rotate / scale layers (Mode 1-2, the Mode 7 floor): the whole map is loaded once, the camera moves the matrix.
     if (layer.type == data::LayerType::Affine) return affine::load(layer.bg, layer);
+    originX_ = originY_ = 0;
+    neighbors_ = nullptr;
+    neighborCount_ = 0;
     if (layer.tileset) placement_ = bg::loadTileset(layer.tileset);
     if (layer.tileset && !placement_.valid()) return false;
     // The build's entries are relative to the tileset: valid ones fit their fields after the layer's offsets.
@@ -75,10 +78,28 @@ void MapLayerView::release() {
 void MapLayerView::redrawMetatile(int mx, int my) {
     if (!layer_ || !shadow_) return;
     const bool image = layer_->type == data::LayerType::Image;
-    const int x0 = image ? mx : mx * 2, y0 = image ? my : my * 2, n = image ? 1 : 2;
+    const int x0 = image ? mx : mx * 2 + (originX_ >> 3), y0 = image ? my : my * 2 + (originY_ >> 3), n = image ? 1 : 2;
     for (int y = y0; y < y0 + n; ++y)
         for (int x = x0; x < x0 + n; ++x)
             if (x >= drawnX0_ && x <= drawnX1_ && y >= drawnY0_ && y <= drawnY1_) drawTile(x, y);
+}
+
+// A tile past the map's edge (map tile coordinates, 8 px): from the scene joined there, blank where none is. Thumb code in
+// ROM: at most a row or column a frame comes here, and only in connected scenes.
+u16 MapLayerView::neighborEntry(int tileX, int tileY) const {
+    for (int i = 0; i < neighborCount_; ++i) {
+        const MapNeighbor& n = neighbors_[i];
+        const data::MapLayer& l = *n.layer;
+        const int x = tileX - n.tileX * 2, y = tileY - n.tileY * 2;
+        if (x < 0 || y < 0 || x >= l.width * 2 || y >= l.height * 2) continue;
+        const u16 mt = l.cells[(y >> 1) * l.width + (x >> 1)];
+        if (!l.tileset || mt >= l.tileset->metatileCount) return 0;
+        const u16 se = l.tileset->metatiles[mt].se[(x & 1) + (y & 1) * 2];
+        const u16 tile = static_cast<u16>((data::seTile(se) + placement_.firstTile) & 0x3FF);
+        const u16 pal = static_cast<u16>((data::sePal(se) + placement_.paletteBank) & 15);
+        return static_cast<u16>(tile | (se & (data::kSeHFlip | data::kSeVFlip)) | (pal << 12));
+    }
+    return 0;
 }
 
 u16 MapLayerView::cell(int tileX, int tileY) const { return shadow_ ? shadow_[shadowIndex(tileX, tileY)] : 0; }
@@ -88,7 +109,7 @@ void MapLayerView::setCamera(int x, int y) {
     if (!layer_ || layer_->type == data::LayerType::CollisionOnly) return;
     cameraX_ = x;
     cameraY_ = y;
-    const int sx = (x * layer_->parallaxX) >> 8, sy = (y * layer_->parallaxY) >> 8;
+    const int sx = ((x + originX_) * layer_->parallaxX) >> 8, sy = ((y + originY_) * layer_->parallaxY) >> 8;
     if (layer_->type == data::LayerType::Affine) {
         scrollX_ = sx;
         scrollY_ = sy;

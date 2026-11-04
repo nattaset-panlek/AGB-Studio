@@ -380,6 +380,12 @@ void setShowTextHook(ShowTextHook hook) { g_showText = hook; }
 void setGiveItemHook(GiveItemHook hook) { g_giveItem = hook; }
 void setLockHook(LockHook hook) { g_lockHook = hook; }
 bool locked() { return g_locks != 0; }
+u8 lockCount() { return g_locks; }
+void restoreLocks(u8 count) {
+    if (!g_locks && count && g_lockHook) g_lockHook(true);
+    if (g_locks && !count && g_lockHook) g_lockHook(false);
+    g_locks = count;
+}
 
 void setPaths(const MovePath* paths, u16 count) {
     g_paths = paths;

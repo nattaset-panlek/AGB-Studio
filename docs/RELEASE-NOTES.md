@@ -29,6 +29,9 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 
 ### Engine
 - Tile, image and rotate / scale layers, including the Mode 7 floor of the Racing template; maps stream as the camera moves.
+- Connected scenes: join scenes edge to edge in the World Map and the player walks across with no load.
+- Tiles that draw in front of the actors (two-layer metatiles), and a secondary tileset that shares a primary's tiles.
+- Save during cutscenes (Project Settings · Save data), and replays: Record in Play Mode, Tools › Run Recorded Tests, `agb test`.
 - Bitmap video modes 3, 4 and 5: a scene shows a full-screen picture, and C# scripts draw on it (Bitmap: clear, set pixel, filled rectangle, show a picture, page flip in Modes 4 and 5).
 - Slopes, one-way platforms, ladders, hazards and water tiles; built-in behaviours from the Component Picker.
 - Up to 64 actors with up to 6 behaviours each, spawning and touches; up to 128 sprites with animation and 32 affine matrices.

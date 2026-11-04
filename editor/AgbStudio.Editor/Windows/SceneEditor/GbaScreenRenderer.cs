@@ -172,6 +172,7 @@ public static class GbaScreenRenderer
         if (map != null && !bitmap)
         {
             var tileset = assets.Tileset(map.Tileset);
+            map = OverLayers.Expand(map, tileset).Map;
             for (var i = 0; i < map.Layers.Count && i < 4; i++)
             {
                 var l = map.Layers[i];

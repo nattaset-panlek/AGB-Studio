@@ -57,6 +57,9 @@ public sealed class TileProperties
     public string Tag { get; set; } = "";
     public List<int>? Animation { get; set; }        // metatile frames
     public int AnimationTicks { get; set; } = 8;
+    // Two-layer metatile: another tile of this tileset drawn in front of the actors in the same cell (null = none, left
+    // out of the file). The map's collision and tags still come from this tile.
+    public int? Over { get; set; }
 }
 
 // Auto-tile Rules panel: a rule set chooses a tile from the 3x3 neighbourhood while painting.

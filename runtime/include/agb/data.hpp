@@ -69,7 +69,11 @@ struct Tileset {
     // load right after the primary's (tile indices of the metatiles count from the primary's first tile); `palette`
     // holds the primary's banks followed by the own banks.
     const Tileset* primary = nullptr;
+    // Two-layer metatiles: per metatile, the metatile it draws in front of the actors (kNoOver = none), or null.
+    const u16* over = nullptr;
 };
+
+inline constexpr u16 kNoOver = 0xFFFF;
 
 enum class LayerType : u8 { Tile, Image, Affine, CollisionOnly };
 
@@ -85,6 +89,8 @@ struct MapLayer {
     // per u16, the low byte first, as the hardware map stores them).
     const u16* cells;
     const Tileset* tileset;
+    // The layer that shows this layer's over tiles (appended by the build), or -1: Scene.SetTile keeps it in step.
+    s8 overLayer = -1;
 };
 
 // ---- sprites --------------------------------------------------------------------------------------

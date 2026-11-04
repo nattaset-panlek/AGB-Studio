@@ -83,6 +83,11 @@ void reset() {
     g_dirty = true;
 }
 
+void resetObj() {
+    for (int i = 16; i < 32; ++i) g_owner[i] = {};
+    g_dirty = true;
+}
+
 int acquire(const data::Palette* palette, bool obj) {
     const int base = obj ? 16 : 0;
     for (int i = 0; i < 16; ++i)

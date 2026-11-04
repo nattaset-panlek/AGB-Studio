@@ -25,6 +25,7 @@ public static class Program
                 "runtime-test" => RuntimeTest(args[1..]),
                 "make-test-audio" => MakeTestAudio(args[1]),
                 "build" => Build(args[1..]),
+                "test" => Test(args[1..]),
                 "sample" => Sample(args[1..]),
                 "template" => Template(args[1..]),
                 "package" => Package(args.Length > 1 ? args[1] : Path.Combine(NativeBuild.RepoRoot, "build", "package")),
@@ -46,6 +47,7 @@ public static class Program
     static readonly Dictionary<string, string> s_usage = new()
     {
         ["build"] = "[project folder] [--release] [--clean] [--verbose]",
+        ["test"] = "[project folder]",
         ["romtest"] = "<rom.gba> [--frames N] [--shot out.png] [--memmap] [--dumpsave]",
         ["runtime-test"] = "[test ...] [--verbose] [--shots]",
         ["sample"] = "<mini|skyhopper> <folder>",
@@ -142,6 +144,26 @@ public static class Program
             ? $"Build OK in {result.Elapsed.TotalSeconds:0.00} s: {result.RomPath} ({new FileInfo(result.RomPath).Length / 1024} KB; {result.AssetsConverted} assets converted, {result.AssetsCached} cached)"
             : $"Build failed at {result.FailedStep}: {result.Errors.Count()} errors above. Fix them, then run agb build again.");
         return result.Success ? 0 : 1;
+    }
+
+    // Builds the project as Play does (Debug), plays every replays/*.replay and says which still do what they did.
+    static int Test(string[] args)
+    {
+        var project = AgbStudio.Core.Project.GameProject.Open(args.FirstOrDefault(a => !a.StartsWith("--")) ?? ".");
+        var built = new AgbStudio.Build.Pipeline.GameBuilder(project, new Toolchain(), new ConsoleObserver(false)) { Scripts = new AgbStudio.Scripting.ScriptBackend() }
+            .Build(new AgbStudio.Build.Pipeline.BuildOptions { Configuration = AgbStudio.Core.Project.BuildConfiguration.Debug });
+        if (!built.Success)
+        {
+            foreach (var d in built.Errors) Console.WriteLine($"error: {d}");
+            Console.WriteLine($"Build failed at {built.FailedStep}, so no replay ran. Fix the errors, then run agb test again.");
+            return 1;
+        }
+        using var core = new LibretroCore();
+        var results = ReplayRunner.RunAll(core, project, built.RomPath);
+        foreach (var r in results) Console.WriteLine($"{(r.Passed ? "pass" : "FAIL")}  {r.Name}: {r.Message}");
+        if (results.Count == 0) Console.WriteLine("This project has no replays. In the editor, press Record in Play Mode to make one.");
+        else Console.WriteLine($"{results.Count(r => r.Passed)} of {results.Count} replays pass.");
+        return results.All(r => r.Passed) ? 0 : 1;
     }
 
     static int Sample(string[] args)

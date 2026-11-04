@@ -1,5 +1,7 @@
 #include "agb/debug.hpp"
 #include "agb/fixed.hpp"
+#include "agb/natives.hpp"
+#include "agb/save.hpp"
 #include "agb/script.hpp"
 
 namespace agb::script {
@@ -21,6 +23,19 @@ s32 g_mapVars[32], g_sessionVars[32];
 
 AGB_EWRAM_BSS_NAMED(agb_debugger) DebugState g_debug;
 u8 g_stepContext = 0xFF;  // context that resumed with "step one line" (0xFF = any)
+
+CutsceneSave* g_cutsceneSave = nullptr;
+bool g_resumeArmed = false;
+const Context* g_inNative = nullptr;  // the context whose native is running: a save from there has a result to push
+// The wait of one cutscene, as the call that began it. Only that cutscene can be saved while waiting on a native, so one
+// record is enough; several cutscenes at once are rare, and a save then keeps the one recorded here.
+struct WaitRecord {
+    const Context* owner;
+    u16 native;
+    u8 argc;
+    s32 args[8];
+};
+AGB_EWRAM_BSS WaitRecord g_wait;
 
 constexpr int kOperandBytes[] = {
 #define AGB_OP(name, operands, note) operands,
@@ -157,7 +172,9 @@ bool step(Context& c, int budget, bool immediate) {
                     break;
                 }
                 c.wait = nullptr;
+                g_inNative = &c;
                 const s32 r = g_natives[id].fn(c, args, argc);
+                g_inNative = nullptr;
                 if (c.wait) {
                     if (immediate) {
                         debug::logf("warning: %s waits, but this script must finish in one frame (OnLoad), so it did not wait. Use a [Cutscene] to wait.", g_natives[id].name);
@@ -166,6 +183,12 @@ bool step(Context& c, int budget, bool immediate) {
                         break;
                     }
                     c.waitResult = r;
+                    if (c.priority == Priority::Cutscene && (!g_wait.owner || !g_wait.owner->active || g_wait.owner == &c)) {
+                        g_wait.owner = &c;
+                        g_wait.native = id;
+                        g_wait.argc = static_cast<u8>(argc < 8 ? argc : 8);
+                        for (int i = 0; i < g_wait.argc; ++i) g_wait.args[i] = args[i];
+                    }
                     return true;  // result is pushed when the wait ends
                 }
                 push(c, r);
@@ -366,6 +389,90 @@ void resetContexts() {
     g_debug.pausedContext = 0xFF;
     g_stepContext = 0xFF;
     clearMapStore();
+}
+
+void setCutsceneSave(CutsceneSave* save) { g_cutsceneSave = save; }
+
+namespace {
+u32 codeCrc(const Frame* frames, int depth) {
+    u32 crc = 0;
+    for (int i = 0; i < depth; ++i) crc = save::crc32(g_scripts[frames[i].script].code, g_scripts[frames[i].script].size, crc);
+    return crc;
+}
+}  // namespace
+
+void captureCutscene() {
+    if (!g_cutsceneSave || g_resumeArmed) return;
+    CutsceneSave& s = *g_cutsceneSave;
+    s.marker = 0;
+    for (const Context& c : g_ctx) {
+        if (!c.active || c.priority != Priority::Cutscene) continue;
+        // Waiting, with the call that began the wait not on record: a second cutscene. Nothing could start that wait again.
+        if (c.wait && g_wait.owner != &c) continue;
+        s.marker = kCutsceneSaved;
+        s.depth = c.depth;
+        s.sp = c.sp;
+        s.localTop = c.localTop;
+        s.locks = natives::lockCount();
+        s.waitFrames = c.waitFrames;
+        s.waitNative = c.wait ? g_wait.native : kNoNative;
+        s.waitArgc = g_wait.argc;
+        s.pushAfter = g_inNative == &c;
+        for (int i = 0; i < kCallDepth; ++i) s.frames[i] = c.frames[i];
+        for (int i = 0; i < kStackSize; ++i) s.stack[i] = c.stack[i];
+        for (int i = 0; i < kMaxLocals * 2; ++i) s.locals[i] = c.locals[i];
+        for (int i = 0; i < 8; ++i) s.waitArgs[i] = g_wait.args[i];
+        s.codeCrc = codeCrc(c.frames, c.depth);
+        return;
+    }
+}
+
+void armCutsceneResume() { g_resumeArmed = g_cutsceneSave && g_cutsceneSave->marker == kCutsceneSaved; }
+
+bool resumeCutscene() {
+    if (!g_resumeArmed) return false;
+    g_resumeArmed = false;
+    const CutsceneSave& s = *g_cutsceneSave;
+    bool sound = s.depth > 0 && s.depth <= kCallDepth && s.sp <= kStackSize && s.localTop <= kMaxLocals * 2 && (s.waitNative == kNoNative || s.waitNative < g_nativeCount);
+    for (int i = 0; sound && i < s.depth; ++i)
+        sound = s.frames[i].script < g_scriptCount && s.frames[i].pc <= g_scripts[s.frames[i].script].size;
+    if (!sound || codeCrc(s.frames, s.depth) != s.codeCrc) {
+        debug::log("warning: this save was made during a cutscene that has changed since, so the cutscene does not go on from where it was.");
+        return false;
+    }
+    // A cutscene the scene started as it entered gives way to the saved one.
+    Context* free = nullptr;
+    for (Context& c : g_ctx) {
+        if (c.active && c.priority == Priority::Cutscene) c.active = false;
+        if (!c.active && !free) free = &c;
+    }
+    Context& c = *free;
+    c = Context{};
+    c.active = true;
+    c.priority = Priority::Cutscene;
+    c.id = g_nextId++;
+    c.depth = s.depth;
+    c.sp = s.sp;
+    c.localTop = s.localTop;
+    c.waitFrames = s.waitFrames;
+    for (int i = 0; i < kCallDepth; ++i) c.frames[i] = s.frames[i];
+    for (int i = 0; i < kStackSize; ++i) c.stack[i] = s.stack[i];
+    for (int i = 0; i < kMaxLocals * 2; ++i) c.locals[i] = s.locals[i];
+    natives::restoreLocks(s.locks);
+    if (s.waitNative != kNoNative) {
+        g_wait.owner = &c;
+        g_wait.native = s.waitNative;
+        g_wait.argc = s.waitArgc;
+        for (int i = 0; i < 8; ++i) g_wait.args[i] = s.waitArgs[i];
+        const s32 r = g_natives[s.waitNative].fn(c, g_wait.args, g_wait.argc);
+        if (c.wait) {
+            c.waitResult = r;
+        } else {
+            push(c, r);
+        }
+    }
+    if (s.pushAfter) push(c, 1);
+    return true;
 }
 
 Context* context(int i) { return i >= 0 && i < kMaxContexts && g_ctx[i].active ? &g_ctx[i] : nullptr; }

@@ -91,6 +91,9 @@
         "checksum": {
           "type": "boolean"
         },
+        "cutscenes": {
+          "type": "boolean"
+        },
         "fields": {
           "type": "array",
           "items": {

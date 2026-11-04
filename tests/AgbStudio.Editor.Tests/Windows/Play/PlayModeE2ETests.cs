@@ -349,6 +349,28 @@ public class PlayModeE2ETests : EditorDriver
     }
 
     [AvaloniaFact]
+    public void RecordChip_SavesAReplayAndRunReplayTestsPassesIt()
+    {
+        var page = OpenPlayMode();
+        var project = Fx.Services.Project.Current!;
+        Click(page.RecordChip);
+        Assert.True(Play.Recording);
+        Assert.Equal("Stop recording", page.RecordChip.Content);
+        Assert.Equal(0, Play.Session!.Frame);
+        Play.RunFrames(200);
+        Click(page.RecordChip);
+        Assert.False(Play.Recording);
+        var file = Assert.Single(project.ReplayFiles());
+        Assert.Equal("Replay 1.replay", Path.GetFileName(file));
+        Assert.Equal(200, AgbStudio.Core.Project.GameProject.Load<ReplayFile>(file).Frames);
+
+        var run = Play.RunReplaysAsync();
+        AgbStudio.Editor.Tests.Windows.Build.GroupFixture.PumpUntil(() => run.IsCompleted, 120_000);
+        var result = Assert.Single(run.Result);
+        Assert.True(result.Passed, result.Message);
+    }
+
+    [AvaloniaFact]
     public void P12_07_Console_EngineLogsAndDebugLog_WithTimestamps()
     {
         OpenPlayMode();

@@ -33,6 +33,9 @@ saved and how big they are.
   them alone; the Slots meter counts them (on Flash they take the chip's last 4 KB sector).
 - **Bytes per slot**: the total size of one slot.
 - **Checksum each slot**: stores a check value so a damaged save can be found.
+- **Save during cutscenes**: a save made while a cutscene runs also keeps where the cutscene is, and loading goes on from
+  there: the line on screen shows again, or the move runs again. Actors other than the player stand where the scene puts
+  them. It takes 320 bytes a slot, and a cutscene you change after the save does not go on.
 - **Code sample**: shows how a script writes and reads a slot.
 - **Footer**: Cancel (or Esc) drops the changes; Save writes them to the project.
 

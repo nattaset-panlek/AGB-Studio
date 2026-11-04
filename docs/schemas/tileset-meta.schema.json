@@ -40,6 +40,12 @@
           },
           "animationTicks": {
             "type": "integer"
+          },
+          "over": {
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         }
       }

@@ -15,6 +15,10 @@ int MapLayerView::shadowIndex(int tileX, int tileY) const {
 u16 MapLayerView::screenEntry(int tileX, int tileY) const {
     const data::MapLayer& l = *layer_;
     const bool image = l.type == data::LayerType::Image;
+    if (!image) {
+        tileX -= originX_ >> 3;
+        tileY -= originY_ >> 3;
+    }
     const int w = image ? l.width : l.width * 2, h = image ? l.height : l.height * 2;
     if (l.wrap) {
         // The ARM7 has no divide instruction: wrap by subtraction (the camera is rarely more than a few map
@@ -24,7 +28,7 @@ u16 MapLayerView::screenEntry(int tileX, int tileY) const {
         while (tileY >= h) tileY -= h;
         while (tileY < 0) tileY += h;
     } else if (tileX < 0 || tileY < 0 || tileX >= w || tileY >= h) {
-        return 0;
+        return neighborEntry(tileX, tileY);
     }
     u16 se;
     if (image) {
@@ -94,7 +98,9 @@ void MapLayerView::drawRow(int tileY, int x0, int x1) {
     }
     const bool wrap = l.wrap;
     const int w = image ? l.width : l.width * 2, h = image ? l.height : l.height * 2;  // in screen entries
-    const int ty = wrap ? wrapped(tileY, h) : tileY;
+    // Image layers keep to the hardware map's space; a tile layer's map may have moved in it (moveOrigin).
+    const int ox = image ? 0 : originX_ >> 3, oy = image ? 0 : originY_ >> 3;
+    const int ty = wrap ? wrapped(tileY, h) : tileY - oy;
     const bool inside = ty >= 0 && ty < h;  // rows above or below a map that does not wrap are blank
     RowSource r{l.cells + (inside ? (image ? ty : ty >> 1) * l.width : 0), image ? nullptr : l.tileset->metatiles,
                 image ? 0u : l.tileset->metatileCount, static_cast<u32>(ty & 1) * 2,
@@ -103,7 +109,7 @@ void MapLayerView::drawRow(int tileY, int x0, int x1) {
     const int y = tileY & heightMask_;
     const int blocksWide = (widthMask_ + 1) >> 5;
     u16* const rowBase = shadow_ + (y >> 5) * blocksWide * 1024 + (y & 31) * 32;
-    int tx = wrap ? wrapped(x0, w) : x0;  // source column (screen entries)
+    int tx = wrap ? wrapped(x0, w) : x0 - ox;  // source column (screen entries)
     for (int x = x0; x <= x1;) {
         const int col = x & widthMask_;
         int run = 32 - (col & 31);
@@ -113,7 +119,7 @@ void MapLayerView::drawRow(int tileY, int x0, int x1) {
         x += run;
         for (int k = 0; k < run;) {
             if (!inside || tx < 0 || tx >= w) {  // beside a map that does not wrap
-                dst[k++] = 0;
+                dst[k++] = neighborEntry(tx, ty);
                 ++tx;
                 continue;
             }

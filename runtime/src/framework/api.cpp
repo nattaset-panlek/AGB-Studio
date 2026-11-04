@@ -40,6 +40,7 @@ void Save::Checkpoint(int slot) {
         h.x = static_cast<s16>(player->pos.x.floor());
         h.y = static_cast<s16>(player->pos.y.floor());
     }
+    script::captureCutscene();
     save::write(slot, game::state());
 }
 

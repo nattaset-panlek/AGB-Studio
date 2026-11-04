@@ -212,7 +212,39 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
         var onExit = PageChrome.Field("OnExit", FieldKind.Text, d.Events.OnExit, "OnExit");
         OnCommit(onExit, v => { if (v != d.Events.OnExit) Model.Edit("OnExit", () => { d.Events.OnExit = v; Model.Save(sc); }); });
         _inspector.Children.Add(Section("Events", "code", "", "Section_Events", onEnter, onExit));
+        _inspector.Children.Add(ConnectionsSection(sc));
         _loading = false;
+    }
+
+    // Scenes joined edge to edge: one row per join with its offset, and a row that adds one. Choosing "Remove" takes a join away.
+    StackPanel ConnectionsSection(MapScene sc)
+    {
+        const string Remove = "Remove";
+        var joins = sc.Data.Connections ?? [];
+        var rows = new List<Control>();
+        for (var i = 0; i < joins.Count; i++)
+        {
+            var k = i;
+            var c = joins[i];
+            rows.Add(PageChrome.Field(c.Side.ToString(), FieldKind.Dropdown, c.Scene, "Connection_" + i)
+                .Choices(() => [Remove], _ => { Model.RemoveConnection(sc, k); Refresh(); }));
+            var offset = PageChrome.Field("Offset", FieldKind.Text, c.Offset.ToString(), "ConnectionOffset_" + i);
+            OnCommit(offset, v =>
+            {
+                if (int.TryParse(v, out var n) && n != c.Offset) Model.SetConnectionOffset(sc, k, n);
+                else offset.Value = c.Offset.ToString();
+            });
+            rows.Add(offset);
+        }
+        var others = Model.Scenes.Where(o => o != sc && joins.All(j => j.Scene != o.Name)).Select(o => o.Name).ToList();
+        string[] choices = [.. others.SelectMany(n => Enum.GetNames<MapSide>().Select(side => $"{side}: {n}"))];
+        rows.Add(PageChrome.Field("Connect", FieldKind.Dropdown, "none", "AddConnection").Choices(() => choices, v =>
+        {
+            var parts = v.Split(": ", 2);
+            Model.AddConnection(sc, Enum.Parse<MapSide>(parts[0]), parts[1]);
+            Refresh();
+        }));
+        return Section("Connections", "link", "", "Section_Connections", [.. rows]);
     }
 
     void SetParallax(MapScene sc, string layer, double v)

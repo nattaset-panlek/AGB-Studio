@@ -106,6 +106,8 @@ public sealed class SaveSettings
     public int Slots { get; set; } = 3;
     public bool Autosave { get; set; } = true;   // on every scene change
     public bool Checksum { get; set; } = true;
+    // A save made while a [Cutscene] runs also keeps where it is, and loading goes on from there. It takes 320 bytes a slot.
+    public bool Cutscenes { get; set; }
     public List<SaveField> Fields { get; set; } = new();
     // Saved Event Script flags that dialogues declare: name -> flag id, written by the build. A flag keeps its id and
     // a new flag never reuses one, so adding a flag does not change what existing save data means.

@@ -78,6 +78,9 @@ void setGiveItemHook(GiveItemHook hook);
 using LockHook = void (*)(bool locked);
 void setLockHook(LockHook hook);
 bool locked();
+// How many LockAll calls are in force, for a saved cutscene, and setting that again when it resumes.
+u8 lockCount();
+void restoreLocks(u8 count);
 
 // Movement paths for Move (generated from the project): points are pixel pairs, relative to where the
 // actor stands when Move starts unless `relative` is false; speed in pixels per frame.

@@ -89,8 +89,16 @@ struct Scene {
 
 struct Save {
     static SaveHeader& header() { return *static_cast<SaveHeader*>(game::state()); }
-    static bool Write(int slot) { return game::state() && save::write(slot, game::state()); }
-    static bool Read(int slot) { return game::state() && save::read(slot, game::state()); }
+    static bool Write(int slot) {
+        if (!game::state()) return false;
+        script::captureCutscene();
+        return save::write(slot, game::state());
+    }
+    static bool Read(int slot) {
+        if (!game::state() || !save::read(slot, game::state())) return false;
+        script::armCutsceneResume();
+        return true;
+    }
     static bool Exists(int slot) { return save::exists(slot); }
     static void Erase(int slot) { save::erase(slot); }
     // Remembers the current scene and the player's position, then writes slot 0 (Scene Settings OnExit).

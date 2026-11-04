@@ -193,6 +193,13 @@ public sealed class TilemapEditorPage : DockPanel
             }).ToList();
             var tag = PageChrome.Field("Tag", FieldKind.Text, null, "TagField");
             PageChrome.OnCommit(tag, () => ses.Doc.SetTag(ses.SelectedTile, tag.Value ?? ""));
+            var over = PageChrome.Field("Over actors", FieldKind.Text, null, "OverField");
+            PageChrome.OnCommit(over, () =>
+            {
+                var t = ses.SelectedTile;
+                var ok = string.IsNullOrWhiteSpace(over.Value) ? ses.Doc.SetOver(t, null) : int.TryParse(over.Value, out var n) && ses.Doc.SetOver(t, n);
+                if (!ok) over.Value = ses.Doc.Props(t)?.Over?.ToString() ?? "";
+            });
             var anim = PageChrome.Field("Animation", FieldKind.Dropdown, null, "AnimationField");
             PageChrome.OnDropdown(anim, () => PageChrome.Choose(anim, AnimationChoices, anim.Value, i => ses.Doc.SetAnimation(ses.SelectedTile, i == 0 ? 0 : i + 1)));
             var auto = PageChrome.Field("Auto-tile", FieldKind.Dropdown, null, "AutoTileField");
@@ -202,7 +209,7 @@ public sealed class TilemapEditorPage : DockPanel
                 PageChrome.Choose(auto, ["none", .. sets.Select(MapDocument.SetLabel)], auto.Value, i => ses.Doc.SetAutoTile(ses.SelectedTile, i == 0 ? null : sets[i - 1].Name));
             });
             chips.Margin = new Thickness(0, 0, 0, 0);
-            var section = PageChrome.Section(tileHeader, [chips, tag, anim, auto], 12, "TileSection");
+            var section = PageChrome.Section(tileHeader, [chips, tag, over, anim, auto], 12, "TileSection");
             section.Margin = new Thickness(0, 8, 0, 0);
             stack.Children.Add(section);
             _refresh.Add(() =>
@@ -217,6 +224,7 @@ public sealed class TilemapEditorPage : DockPanel
                     chip.Glyph = on ? "square" : null;
                 }
                 if (!tag.IsKeyboardFocusWithin) tag.Value = ses.Doc.Props(t)?.Tag ?? "";
+                if (!over.IsKeyboardFocusWithin) over.Value = ses.Doc.Props(t)?.Over?.ToString() ?? "";
                 var frames = ses.Doc.AnimationFrames(t);
                 anim.Value = frames == 0 ? "none" : $"{frames} frames";
                 auto.Value = ses.Doc.SetOf(t) is { } st ? MapDocument.SetLabel(st) : "none";

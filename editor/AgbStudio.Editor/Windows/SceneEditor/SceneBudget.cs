@@ -44,7 +44,7 @@ public sealed class SceneBudget
         if (map != null)
         {
             var tileset = assets.Tileset(map.Tileset);
-            foreach (var l in map.Layers.Take(4).Where(l => l.Type != LayerType.CollisionOnly))
+            foreach (var l in AgbStudio.Build.Graphics.OverLayers.Expand(map, tileset).Map.Layers.Take(4).Where(l => l.Type != LayerType.CollisionOnly))
             {
                 object? owner = l.Type == LayerType.Image ? assets.Image(l.Image)?.Tiles : tileset;
                 if (owner is not AgbStudio.Build.Graphics.ConvertedTileset t) continue;

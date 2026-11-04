@@ -31,6 +31,7 @@ public sealed class GameProject
     public string SfxDir => Path.Combine(Root, "audio", "sfx");
     public string PalettesDir => Path.Combine(AssetsDir, "palettes");  // imported .pal / .gpl palettes (Import Asset)
     public string UiDir => Path.Combine(Root, "ui");                // UI pages: ui/<Name>.uipage
+    public string ReplaysDir => Path.Combine(Root, "replays");      // recorded play sessions: replays/<Name>.replay
     public string PrefabsDir => Path.Combine(Root, "prefabs");      // Make Prefab: prefabs/<Name>.prefab (an ActorData)
     // Project Settings · Build · Output folder (default "build/"), relative to the project folder.
     public string BuildDir => Path.Combine(Root, string.IsNullOrWhiteSpace(Settings.Build.Output) ? "build" : Settings.Build.Output.Trim().TrimEnd('/', '\\').Replace('/', Path.DirectorySeparatorChar));
@@ -107,6 +108,7 @@ public sealed class GameProject
 
     public IEnumerable<string> SceneFiles() => Files(ScenesDir, "*.scene");
     public IEnumerable<string> MapFiles() => Files(MapsDir, "*.map");
+    public IEnumerable<string> ReplayFiles() => Files(ReplaysDir, "*.replay");
     public IEnumerable<string> TableFiles() => Files(DataDir, "*.db");
     public IEnumerable<string> FontFiles() => Files(FontsDir, "*.font");
     public IEnumerable<string> ScriptFiles() => Files(ScriptsDir, "*.cs", true);

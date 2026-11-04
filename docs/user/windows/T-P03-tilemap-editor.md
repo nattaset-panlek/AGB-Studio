@@ -27,7 +27,10 @@ edges for you, and see how much video memory (VRAM) each layer uses.
   kept in the tileset's meta file and can be undone. Click a tile to make it
   the brush; drag over tiles to pick a block as a stamp. The "..." button opens the asset menu for the tileset.
 - **Tile section**: for the selected tile, pick its collision (Solid, One-way, Ladder, Hazard, Water, None), give it a
-  **Tag**, an **Animation** (none, 2, 3 or 4 frames) and the **Auto-tile** set it belongs to.
+  **Tag**, an **Animation** (none, 2, 3 or 4 frames) and the **Auto-tile** set it belongs to. **Over actors** takes the
+  number of another tile of this tileset (counted from 0, left to right, top to bottom; empty = none): painting the
+  selected tile then also draws that tile in front of the actors, for a treetop or a roof you walk behind. Collision
+  still comes from the tile you painted. It takes one free background layer, and an actor with Prio 0 stays in front.
 - **Map view**: the real GBA screen (240 x 160) drawn from the data the ROM uses, with a 16 px grid. Right or middle
   drag moves the camera, the mouse wheel scrolls (Shift: sideways, Ctrl: zoom), arrow keys move one tile.
 - **View chips**: the tile under the pointer, the current brush (click to pick the Brush tool), a legend of the

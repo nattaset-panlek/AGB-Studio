@@ -14,6 +14,8 @@ constexpr u32 kAll = 0xFFFFFFFF;
 enum class Direction : u8 { Left, Right, PingPong };
 
 void reset();
+// Frees the OBJ banks only: a connected scene keeps the background's palettes and brings its own sprites.
+void resetObj();
 // Loads a palette into free banks (shared by pointer, reference counted). Returns the first bank or -1.
 int acquire(const data::Palette* palette, bool obj);
 void release(const data::Palette* palette, bool obj);

@@ -22,6 +22,8 @@ public sealed class PlaySession : IDisposable
     public long Frame => _core.FrameCount;
     public LibretroCore Core => _core;
     public event Action<string>? LogLine;
+    /// <summary>While set, every frame is written down for a replay (Play Mode's Record).</summary>
+    public ReplayRecorder? Recorder { get; set; }
 
     public PlaySession(LibretroCore? core = null)
     {
@@ -71,7 +73,9 @@ public sealed class PlaySession : IDisposable
 
     void RunOneFrame()
     {
+        Recorder?.Before(Keys);
         _core.RunFrame();
+        Recorder?.After(_core.Frame);
         Channel ??= DebugChannel.Find(_core);
         if (Channel == null) return;
         foreach (var line in Channel.ReadNewLog())
@@ -91,6 +95,7 @@ public sealed class PlaySession : IDisposable
     /// writes the hand-over block before its first frame; the Debug runtime continues from there.</summary>
     public bool HotReload(string newRomPath)
     {
+        Recorder = null;  // a replay is of one ROM
         byte[]? state = null;
         ushort scene = 0;
         short px = 0, py = 0;

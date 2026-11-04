@@ -235,7 +235,8 @@ public sealed class ProjectSettingsDialog : SettingsDialog
         _perSlot = Caption("");
         UpdateSlots();
         var right = Column(10, slots, autosave, Caption("Autosave runs on every scene change."), _slotsMeter, _perSlot,
-            Check("Checksum each slot", save.Checksum, v => Edit(() => save.Checksum = v), "Checksum"), CodeSample());
+            Check("Checksum each slot", save.Checksum, v => Edit(() => save.Checksum = v), "Checksum"),
+            Check("Save during cutscenes (320 B a slot)", save.Cutscenes, v => Edit(() => { save.Cutscenes = v; UpdateSlots(); }), "SaveCutscenes"), CodeSample());
 
         var cols = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("350,20,*") };
         Grid.SetColumn(right, 2);

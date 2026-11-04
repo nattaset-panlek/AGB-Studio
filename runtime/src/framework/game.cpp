@@ -29,6 +29,8 @@ u32 g_pausedFrame = 0;  // frame of Scene.Pause (the Start press that paused doe
 
 // ---- the built-in scene screen ------------------------------------------------------------------------
 constexpr int kMaxLayers = 4;
+constexpr int kMaxConnections = 4;  // the build refuses more
+constexpr u32 kConnectedActorBytes = 32 * 1024;
 
 struct SceneState {
     const SceneDef* def = nullptr;
@@ -69,12 +71,42 @@ void holdLoadStep() { g_holdStep = true; }
 
 const char* const kLoadSteps[] = {"fade out", "free and reset", "tiles to VRAM", "map and palette", "spawn actors", "OnLoad script", "fade in"};
 
+// Actors of a connected scene live in a part of the scene's arena that can be emptied on the way to the next scene,
+// while the maps, the text and the UI pages stay.
+AGB_EWRAM_BSS alignas(Arena) u8 g_connectedArenaObject[sizeof(Arena)];
+Arena* g_connectedArena = nullptr;
+render::MapNeighbor* g_neighbors = nullptr;  // kMaxLayers x kMaxConnections, in the arena of a connected scene
+
+Arena& actorArena() { return g_connectedArena ? *g_connectedArena : screenArena(); }
+
+const SceneDef* sceneOf(const MapConnection& c) { return g_def->scenes[c.scene]; }
+
+// The connection whose scene holds this 16 px tile (tile coordinates of scene d), or null.
+const MapConnection* connectionAt(const SceneDef* d, int tx, int ty) {
+    for (int i = 0; i < d->connectionCount; ++i) {
+        const MapConnection& c = d->connections[i];
+        const SceneDef* n = sceneOf(c);
+        if (tx >= c.tileX && ty >= c.tileY && tx < c.tileX + n->widthTiles && ty < c.tileY + n->heightTiles) return &c;
+    }
+    return nullptr;
+}
+
 void clampCamera() {
     const SceneDef* d = g_scene.def;
     if (!d || !d->camera.clampToMap) return;
-    const int w = d->widthTiles * 16, h = d->heightTiles * 16;
-    g_scene.camX = w <= 240 ? 0 : (g_scene.camX < 0 ? 0 : g_scene.camX > w - 240 ? w - 240 : g_scene.camX);
-    g_scene.camY = h <= 160 ? 0 : (g_scene.camY < 0 ? 0 : g_scene.camY > h - 160 ? h - 160 : g_scene.camY);
+    // A joined edge is no edge: the view may go on over the scene next door.
+    int minX = 0, minY = 0, maxX = d->widthTiles * 16, maxY = d->heightTiles * 16;
+    for (int i = 0; i < d->connectionCount; ++i) {
+        const MapConnection& c = d->connections[i];
+        const SceneDef* n = sceneOf(c);
+        const int x0 = c.tileX * 16, y0 = c.tileY * 16, x1 = x0 + n->widthTiles * 16, y1 = y0 + n->heightTiles * 16;
+        if (x0 >= d->widthTiles * 16) maxX = x1 > maxX ? x1 : maxX;
+        else if (x1 <= 0) minX = x0 < minX ? x0 : minX;
+        else if (y0 >= d->heightTiles * 16) maxY = y1 > maxY ? y1 : maxY;
+        else if (y1 <= 0) minY = y0 < minY ? y0 : minY;
+    }
+    g_scene.camX = maxX - minX <= 240 ? minX : (g_scene.camX < minX ? minX : g_scene.camX > maxX - 240 ? maxX - 240 : g_scene.camX);
+    g_scene.camY = maxY - minY <= 160 ? minY : (g_scene.camY < minY ? minY : g_scene.camY > maxY - 160 ? maxY - 160 : g_scene.camY);
 }
 
 // The Camera Zone actor whose box holds the middle of `a` (its collider, else its origin), or -1.
@@ -119,6 +151,19 @@ void followCamera() {
     confineToZone();
 }
 
+// What the layers of scene d show past its edges: the same layers of the scenes joined to it.
+void linkNeighbors(const SceneDef* d) {
+    for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+        if (d->layers[i].type != data::LayerType::Tile) continue;
+        int count = 0;
+        for (int k = 0; k < d->connectionCount && k < kMaxConnections; ++k) {
+            const MapConnection& c = d->connections[k];
+            g_neighbors[i * kMaxConnections + count++] = {&sceneOf(c)->layers[i], c.tileX, c.tileY};
+        }
+        g_scene.views[i].setNeighbors(g_neighbors + i * kMaxConnections, static_cast<u8>(count));
+    }
+}
+
 // Text Label actors of the scene: their text drawn on the text layer (load step 6).
 void makeLabels(const SceneDef* d) {
     for (int i = 0; i < d->actorCount; ++i) {
@@ -133,6 +178,72 @@ void makeLabels(const SceneDef* d) {
             a->textLabel = static_cast<s8>(text::addLabel(ad.x, ad.y, w, label, ad.label ? static_cast<s16>(-1) : ad.labelKey));
         }
     }
+}
+
+void applyVideoEffects(const SceneDef* d);
+
+// The followed actor walked over a joined edge: the other scene becomes the scene with no load and no fade. The hardware
+// maps stay as they are and only change what they mean (MapLayerView::moveOrigin); the build checked that both scenes use
+// the same tileset and layers. Actors start anew, as after any scene change, except that the player keeps its place,
+// speed and facing.
+void crossInto(const MapConnection& c) {
+    const SceneDef* from = g_scene.def;
+    const SceneDef* to = sceneOf(c);
+    Actor* player = g_scene.follow;
+    const int dx = c.tileX * 16, dy = c.tileY * 16;
+    const fixed2 pos = player->pos - fixed2{fixed(dx), fixed(dy)};
+    const fixed2 vel = player->vel;
+    const bool facingLeft = player->facingLeft, grounded = player->onGround;
+    if (from->onExit) from->onExit();
+    actors::reset();
+    render::sprites::reset();
+    render::palettes::resetObj();
+    task::destroyAll();
+    script::resetContexts();
+    g_connectedArena->reset();
+    g_scene.def = to;
+    g_scene.index = c.scene;
+    g_scene.zone = -1;
+    for (int i = 0; i < to->layerCount && i < kMaxLayers; ++i) {
+        g_scene.edited[i] = false;
+        g_scene.views[i].retarget(&to->layers[i]);
+        g_scene.views[i].moveOrigin(dx, dy);
+    }
+    linkNeighbors(to);
+    g_scene.camX -= dx;
+    g_scene.camY -= dy;
+    for (int i = 0; i < to->actorCount; ++i) actors::spawn(to->actors[i], actorArena());
+    actors::linkParents(to->actors, to->actorCount);
+    g_scene.follow = to->camera.followActor >= 0 ? actors::at(to->camera.followActor) : nullptr;
+    if (g_scene.follow) {
+        g_scene.follow->pos = pos;
+        g_scene.follow->setFacingLeft(facingLeft);
+    }
+    render::palettes::setBackdrop(to->backdrop);
+    if (to->onLoad) to->onLoad();
+    actors::startNew();
+    if (g_scene.follow) {
+        g_scene.follow->vel = vel;
+        g_scene.follow->onGround = grounded;
+        for (Behaviour* b : g_scene.follow->behaviours)
+            if (b) b->carryOver(vel, grounded);
+    }
+    applyVideoEffects(to);
+    if (to->music >= 0 && to->music != from->music && audio::ready()) {
+        audio::setGameMusicVolume(fixed::fromRaw(to->musicVolume));
+        audio::playMusic(static_cast<u16>(to->music));
+    }
+    if (g_def->autosave && g_def->state) api::Save::Checkpoint(save::lastSlot());
+    if (to->onEnter) to->onEnter();
+}
+
+void crossConnection() {
+    const SceneDef* d = g_scene.def;
+    Actor* p = g_scene.follow;
+    if (!d || !d->connectionCount || !g_connectedArena || !g_neighbors || !p || !p->isAlive() || g_scene.changePending || script::cutsceneRunning()) return;
+    const int x = p->pos.x.floor(), y = p->pos.y.floor();
+    if (x >= 0 && y >= 0 && x < d->widthTiles * 16 && y < d->heightTiles * 16) return;
+    if (const MapConnection* c = connectionAt(d, x >> 4, y >> 4)) crossInto(*c);
 }
 
 // Video Mode popover (T-O02), applied when the scene's layers are loaded and before it fades in.
@@ -192,6 +303,7 @@ public:
                 g_scene.labelsMade = false;
                 g_scene.zone = -1;
                 g_paused = false;
+                g_connectedArena = nullptr;
                 for (bool& e : g_scene.edited) e = false;
                 // Drawing a bitmap scene left in the queue must not land on the next scene's tiles.
                 if (render::bg::videoMode() >= 3) commit::dropQueued();
@@ -246,7 +358,12 @@ public:
                     if (g_scene.drawnLayers < d->layerCount && g_scene.drawnLayers < kMaxLayers) holdLoadStep();
                     return false;
                 }
-                for (int i = 0; i < d->actorCount; ++i) actors::spawn(d->actors[i], screenArena());
+                if (d->connectionCount) {
+                    if (void* memory = screenArena().alloc(kConnectedActorBytes)) g_connectedArena = new (g_connectedArenaObject) Arena(memory, kConnectedActorBytes, "connected scene actors");
+                    g_neighbors = static_cast<render::MapNeighbor*>(screenArena().alloc(sizeof(render::MapNeighbor) * kMaxLayers * kMaxConnections));
+                    if (g_neighbors) linkNeighbors(d);
+                }
+                for (int i = 0; i < d->actorCount; ++i) actors::spawn(d->actors[i], actorArena());
                 actors::linkParents(d->actors, d->actorCount);
                 g_scene.follow = d->camera.followActor >= 0 ? actors::at(d->camera.followActor) : nullptr;
                 if (g_scene.follow && g_scene.spawnX >= 0) g_scene.follow->pos = {fixed(g_scene.spawnX), fixed(g_scene.spawnY)};
@@ -292,6 +409,7 @@ public:
                 // Autosave: gameplay scenes only (a scene with a menu is a title or menu screen).
                 if (g_def->autosave && !d->menu && (!d->page || d->pageIsHud) && g_def->state) api::Save::Checkpoint(save::lastSlot());
                 if (d->onEnter) d->onEnter();
+                if (!g_scene.changePending) script::resumeCutscene();  // a Scene.Load in OnEnter: it resumes in that scene
                 if (d->menu) ui::openSceneMenu(*d->menu);
                 g_scene.pagePending = d->page != nullptr;  // next frame: a screen pushed during a load would not enter
                 return true;
@@ -345,6 +463,7 @@ public:
             if (text::open() && !text::waiting() && !script::cutsceneRunning()) text::close();
             actors::touches();
             checkLinks();
+            crossConnection();
             actors::removeDead();
             debug::tracePhase(debug::Phase::Animation);
             render::sprites::update();
@@ -761,8 +880,17 @@ data::Collision collisionAt(int x, int y) {
     const SceneDef* d = g_scene.def;
     if (!d || d->collisionLayer < 0) return data::Collision::None;
     const data::MapLayer& l = collisionLayer(d);
-    if (x < 0 || y < 0) return data::Collision::Solid;  // map edges are walls
     const int tx = x >> 4, ty = y >> 4;
+    if (tx < 0 || ty < 0 || tx >= l.width || ty >= l.height) {
+        if (const MapConnection* c = connectionAt(d, tx, ty)) {
+            const SceneDef* n = sceneOf(*c);
+            if (n->collisionLayer < 0) return data::Collision::None;
+            const data::MapLayer& nl = n->layers[n->collisionLayer];
+            const u16 mt = nl.cells[(ty - c->tileY) * nl.width + tx - c->tileX];
+            return nl.tileset && nl.tileset->collision && mt < nl.tileset->metatileCount ? nl.tileset->collision[mt] : data::Collision::None;
+        }
+    }
+    if (x < 0 || y < 0) return data::Collision::Solid;  // map edges are walls
     if (tx >= l.width) return data::Collision::Solid;
     if (ty >= l.height) return data::Collision::None;  // falling out of the bottom is allowed
     const u16 mt = l.cells[ty * l.width + tx];
@@ -799,6 +927,8 @@ void setTile(int layer, int tx, int ty, u16 metatile) {
     }
     const_cast<u16*>(g_scene.ramLayers[layer].cells)[ty * src.width + tx] = metatile;
     if (!isBitmapScene(d)) g_scene.views[layer].redrawMetatile(tx, ty);
+    if (src.overLayer >= 0 && src.tileset && src.tileset->over)
+        setTile(src.overLayer, tx, ty, metatile < src.tileset->metatileCount ? src.tileset->over[metatile] : data::kNoOver);
 }
 
 void mode7(fixed x, fixed y, int angle, int height, int horizon) {
@@ -828,7 +958,7 @@ Actor* spawn(const char* name, int x, int y) {
         debug::logf("warning: Spawn: %s has no actor or prefab named %s, so nothing spawned. Add a prefab or hidden actor of that name.", d->name, name);
         return nullptr;
     }
-    Actor* actor = actors::spawnAt(*def, screenArena(), x, y);
+    Actor* actor = actors::spawnAt(*def, actorArena(), x, y);
     if (actor) {
         actor->setVisible(true);
         if (def->parent >= 0) actor->setParent(actors::at(def->parent));
