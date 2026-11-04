@@ -351,8 +351,11 @@ public class PlayModeE2ETests : EditorDriver
     [AvaloniaFact]
     public void P12_07_Console_EngineLogsAndDebugLog_WithTimestamps()
     {
-        var page = OpenPlayMode();
-        var lines = Lines(page);
+        OpenPlayMode();
+        var workspace = Assert.IsType<AgbStudio.Editor.Shell.SceneWorkspace>(Fx.Services.Windows.PageFor("T-P01"));
+        workspace.DockArea.Select(AgbStudio.Editor.Docking.DockLayout.Console);
+        Capture.Pump();
+        var lines = Lines(workspace);
         // the BGs the game turned on: the three map layers and the text layer of the HUD, which takes a free BG
         Assert.True(lines.Any(l => System.Text.RegularExpressions.Regex.IsMatch(l.Text!, @"^Scene Forest_01 loaded \(BG 4 · OBJ \d+\)$") && l.Level == ConsoleLevel.Info),
             string.Join(" | ", lines.Select(l => l.Text)));
@@ -370,15 +373,14 @@ public class PlayModeE2ETests : EditorDriver
         debug.Resume();
         Play.RunFrames(5);
         Capture.Pump();
-        lines = Lines(page);
+        lines = Lines(workspace);
         Assert.Contains(lines, l => l.Level == ConsoleLevel.Warning && l.Text!.Contains("took longer than one frame"));  // engine warning, "warning: " prefix removed
         Assert.All(lines, l => Assert.Matches(@"^\d\d:\d\d:\d\d$", l.Time));
-        Assert.Equal(Play.Console.Entries.Count, page.PanelTabs[1].Count);
         // a Debug.Log line from the game appears with the time it arrived
         Play.Console.Clock = () => new DateTime(2026, 10, 31, 12, 4, 53);
         Play.Console.AddGameLine("Debug.Log: jumpPower = 3.50");
         Capture.Pump();
-        var last = Lines(page).Last();
+        var last = Lines(workspace).Last();
         Assert.Equal(("12:04:53", "Debug.Log: jumpPower = 3.50", ConsoleLevel.Info), (last.Time, last.Text, last.Level));
         Assert.Same(Play.Console, Fx.Services.Get<PlayConsole>());
     }

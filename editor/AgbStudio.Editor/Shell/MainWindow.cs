@@ -28,7 +28,7 @@ public sealed class MainWindow : Window, IShellHost
     public TitleBar TitleBar { get; }
     public Menu MenuBar { get; }
     public OverlayHost Overlays { get; } = new() { Name = "Overlays" };
-    public Control? CurrentPage => _page.Content as Control;
+    public Control? CurrentPage { get; private set; }
     public string? CurrentPageId { get; private set; }
     public EditorServices Services => _s;
 
@@ -135,13 +135,25 @@ public sealed class MainWindow : Window, IShellHost
     {
         CurrentPageId = id;
         EnsureDocumentForPage(id);
-        _page.Content = page;
+        CurrentPage = page;
+        var view = Place(id, page);
+        _page.Content = view;
         // a page that changes the documents while it is being detached (it closes its own Doc Tab) could leave the new
         // page out of the window, an empty workspace: put it in again
-        if (page.GetVisualRoot() is null && IsVisible) { _page.Content = null; _page.Content = page; }
+        if (view.GetVisualRoot() is null && IsVisible) { _page.Content = null; _page.Content = view; }
         SettleActiveDocument(id);
         UpdateTitle();
         PageShown?.Invoke(id);
+    }
+
+    /// <summary>A document's page goes in the document area of the one Scene workspace, so the panels around it stay as
+    /// they are. The Launcher and the empty project have no documents to work on and take the whole window.</summary>
+    Control Place(string id, Control page)
+    {
+        if (_s.Windows.Info(id).Kind != WindowKind.Page || id is "T-P12" or "T-P20" or "T-P21" or "T-P22") return page;
+        if (_s.Windows.PageFor("T-P01") is not SceneWorkspace workspace) return page;
+        workspace.ShowDocument(page == workspace ? null : page);
+        return workspace;
     }
 
     void EnsureDocumentForPage(string id)

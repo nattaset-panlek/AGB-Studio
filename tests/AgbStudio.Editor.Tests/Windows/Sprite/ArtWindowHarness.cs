@@ -21,7 +21,7 @@ public abstract class ArtWindowHarness : IDisposable
     {
         Lib = ArtFixture.Open(Fx);
         ArtFixture.AddSceneDocument(Fx);
-        Win = new MainWindow(Fx.Services) { Width = 1440, Height = 900 };
+        Win = new MainWindow(Fx.Services) { Width = 1440, Height = 1150 };  // 900 + the shared bottom panel, so the page has the room of its Figma frame
         Win.Show();
         Capture.Pump();
     }

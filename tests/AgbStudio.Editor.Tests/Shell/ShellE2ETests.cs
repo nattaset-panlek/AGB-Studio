@@ -168,6 +168,38 @@ public class ShellE2ETests : IDisposable
     }
 
     [AvaloniaFact]
+    public void DocTabs_ChangeOnlyTheDocumentArea_ThePanelsStayAsTheyAre()
+    {
+        var ws = Assert.IsType<SceneWorkspace>(_win.CurrentPage);
+        var dock = ws.DockArea;
+        Click(ws.PanelTabs[1]);
+        var panel = Find<Border>("BottomPanel");
+        var console = panel.GetVisualDescendants().OfType<AgbStudio.Editor.Windows.SceneEditor.ConsolePanel>().Single();
+        var width = panel.Bounds.Width;
+        foreach (var page in new[] { "T-P02", "T-P03", "T-P04", "T-P07", "T-P08", "T-P09", "T-P13", "T-P15", "T-P19" })
+        {
+            _ = _fx.Services.Windows.Open(page, source: "test");
+            Capture.Pump();
+            Assert.Equal(page, _win.CurrentPageId);
+            Assert.Same(dock, _win.GetVisualDescendants().OfType<AgbStudio.Editor.Docking.DockHost>().Single());
+            Assert.Equal("Console", ws.SelectedPanel!.Label);
+            Assert.Same(console, _win.GetVisualDescendants().OfType<AgbStudio.Editor.Windows.SceneEditor.ConsolePanel>().Single());
+            Assert.Equal(250, console.GetVisualAncestors().OfType<Border>().First(b => b.Name == "BottomPanel").Bounds.Height);
+            Assert.Single(_win.GetVisualDescendants().OfType<PanelTab>(), t => t.Name == "Tab_Console");
+            Assert.Contains(dock, _win.CurrentPage!.GetVisualAncestors());
+        }
+        // a panel changed on another page is still changed on the Scene tab
+        Click(ws.PanelTabs[0]);
+        _ = _fx.Services.Windows.Open("T-P01", source: "test");
+        Capture.Pump();
+        Assert.Same(ws, _win.CurrentPage);
+        Assert.Equal("Assets", ws.SelectedPanel!.Label);
+        Assert.Equal(width, Find<Border>("BottomPanel").Bounds.Width);
+        Assert.Equal(260, Find<Border>("HierarchyPanel").Bounds.Width);
+        Assert.Equal(320, Find<Border>("InspectorPanel").Bounds.Width);
+    }
+
+    [AvaloniaFact]
     public void Docking_PanelsTabsAndDirtyDot()
     {
         var ws = Assert.IsType<SceneWorkspace>(_win.CurrentPage);

@@ -24,9 +24,6 @@ public sealed class PlayModePage : DockPanel
     readonly EditorServices _s;
     readonly PlayController _play;
     readonly DocTabStrip _docTabs;
-    readonly PanelTab[] _panelTabs;
-    readonly ContentControl _bottomContent = new();
-    readonly ItemsControl _consoleList = new() { Name = "PlayConsoleList" };
     readonly StackPanel _budgetMeters = new() { Spacing = 7, Name = "BudgetMeters" };
     readonly TextBlock _budgetStatus = UI.Text("all good", "Label/11", "status/success");
     readonly Avalonia.Controls.Shapes.Ellipse _budgetDot = new() { Width = 7, Height = 7, VerticalAlignment = VerticalAlignment.Center };
@@ -47,7 +44,6 @@ public sealed class PlayModePage : DockPanel
     public StatusItem HotReload { get; } = new() { Glyph = "refresh", Content = "Hot reload on", Name = "Status_HotReload" };
     public StatusItem Performance { get; } = new() { Glyph = "clock", Name = "Status_Performance" };
     public StatusItem EmulatorItem { get; } = new() { Glyph = "pad", Content = "mGBA core", Name = "Status_Emulator" };
-    public IReadOnlyList<PanelTab> PanelTabs => _panelTabs;
 
     public PlayModePage(WindowContext ctx) : this(ctx.Services, ctx.Args) { }
 
@@ -128,37 +124,16 @@ public sealed class PlayModePage : DockPanel
         Grid.SetColumn(rightPanel, 2);
         body.Children.Add(rightPanel);
 
-        var centerGrid = new Grid { RowDefinitions = RowDefinitions.Parse("34,*,250"), Name = "Center" };
+        var centerGrid = new Grid { RowDefinitions = RowDefinitions.Parse("34,*"), Name = "Center" };
         Grid.SetColumn(centerGrid, 1);
         _docTabs.VerticalAlignment = VerticalAlignment.Stretch;
         centerGrid.Children.Add(UI.Frame(_docTabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs"));
         var viewport = UI.Frame(Game, "lit/black").Named("Viewport");
         Grid.SetRow(viewport, 1);
         centerGrid.Children.Add(viewport);
-        _panelTabs =
-        [
-            new PanelTab { Label = "Assets", Glyph = "folder", Name = "Tab_Assets", Tag = "T-P01:Assets" },
-            new PanelTab { Label = "Console", Glyph = "code", Name = "Tab_Console", Tag = "Console" },
-            new PanelTab { Label = "Animation", Glyph = "film", Name = "Tab_Animation", Tag = "T-P06" },
-            new PanelTab { Label = "Database", Glyph = "db", Name = "Tab_Database", Tag = "T-P07" },
-        ];
-        foreach (var t in _panelTabs) t.Activated += (_, _) => SelectPanel(t);
-        var panelTabRow = new Border { Height = 33, Padding = new Thickness(6, 0), Child = UI.Row(2, _panelTabs), BorderThickness = new Thickness(0, 0, 0, 1) }.Token(Border.BorderBrushProperty, "border/default");
-        var bottom = new DockPanel();
-        DockAt(bottom, panelTabRow, Avalonia.Controls.Dock.Top);
-        bottom.Children.Add(_bottomContent);
-        var bottomPanel = UI.Frame(bottom, "bg/panel", "border/default", new Thickness(0, 1, 0, 0)).Named("BottomPanel");
-        Grid.SetRow(bottomPanel, 2);
-        centerGrid.Children.Add(bottomPanel);
         body.Children.Add(centerGrid);
         Children.Add(body);
 
-        _consoleList.ItemsSource = _play.Console.Entries;
-        _consoleList.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<ConsoleEntry>((e, _) => new ConsoleLine { Time = e?.TimeText, Text = e?.Text, Level = e?.Level ?? ConsoleLevel.Info });
-        _consoleList.ItemsPanel = new Avalonia.Controls.Templates.FuncTemplate<Panel?>(() => new StackPanel { Spacing = 2 });
-        SelectPanel(_panelTabs[1]);
-
-        _panelTabs[1].Count = _play.Console.Entries.Count;
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnKeyUp, RoutingStrategies.Tunnel);
         if (_s.Documents.Open.All(d => !d.IsGame))
@@ -223,16 +198,6 @@ public sealed class PlayModePage : DockPanel
         _budgetDot.Token(Avalonia.Controls.Shapes.Shape.FillProperty, token);
     }
 
-    void SelectPanel(PanelTab tab)
-    {
-        var id = (string)tab.Tag!;
-        if (id == "T-P07") { _ = _s.Windows.Open(id, source: "DatabaseTab"); return; }
-        foreach (var t in _panelTabs) t.IsSelected = t == tab;
-        _bottomContent.Content = id == "Console"
-            ? new ScrollViewer { Content = new Border { Padding = new Thickness(12, 6, 12, 6), Child = _consoleList }, Name = "PlayConsole" }
-            : _s.Windows.CreatePanel(id);
-    }
-
     void OnChanged()
     {
         UpdateChrome();
@@ -282,14 +247,11 @@ public sealed class PlayModePage : DockPanel
         if (_play.KeyUp(e.Key)) e.Handled = true;
     }
 
-    void OnConsole(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => _panelTabs[1].Count = _play.Console.Entries.Count;
-
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         _play.Changed += OnChanged;
         _play.FrameUpdated += OnFrame;
-        _play.Console.Entries.CollectionChanged += OnConsole;
         _docTabs.Rebuild();
         Game.Screen.Focus();
         OnChanged();
@@ -300,6 +262,5 @@ public sealed class PlayModePage : DockPanel
         base.OnDetachedFromVisualTree(e);
         _play.Changed -= OnChanged;
         _play.FrameUpdated -= OnFrame;
-        _play.Console.Entries.CollectionChanged -= OnConsole;
     }
 }

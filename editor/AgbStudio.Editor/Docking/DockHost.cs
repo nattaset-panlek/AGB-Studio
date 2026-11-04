@@ -37,6 +37,7 @@ public sealed class DockHost : Panel
     readonly Dictionary<string, PanelTab> _tabs = [];
     readonly Dictionary<string, Control> _kept = [];
     readonly Dictionary<string, Window> _floats = [];
+    readonly HashSet<string> _hidden = [];
     readonly Dictionary<DockNode, (Control Frame, Control? TabRow, ContentControl? Content)> _groups = [];
     readonly Func<Control> _documentView;
     readonly Canvas _overlay = new() { IsHitTestVisible = false, Name = "DockOverlay" };
@@ -120,6 +121,17 @@ public sealed class DockHost : Panel
 
     public Window? FloatWindow(string panel) => _floats.GetValueOrDefault(panel);
 
+    /// <summary>Leaves these panels out of the view without changing the layout; the rest keep their place and size.</summary>
+    public void Hide(params string[] panels)
+    {
+        if (_hidden.SetEquals(panels)) return;
+        _hidden.Clear();
+        _hidden.UnionWith(panels);
+        Rebuild();
+    }
+
+    IEnumerable<string> Shown(DockNode g) => g.Panels.Where(p => !_hidden.Contains(p));
+
     void Changed()
     {
         Rebuild();
@@ -162,30 +174,31 @@ public sealed class DockHost : Panel
     {
         if (n.IsGroup) return BuildGroup(n, parent, index);
         var grid = new Grid { Name = parent == null ? "DockRoot" : n.Holds(DockLayout.Viewport) ? "Center" : null };
-        for (var i = 0; i < n.Children.Count; i++)
+        var shown = n.Children.Where(c => c.Groups().Any(g => Shown(g).Any())).ToList();
+        for (var i = 0; i < shown.Count; i++)
         {
-            var c = n.Children[i];
+            var c = shown[i];
             var size = c.Size > 0 ? new GridLength(c.Size) : GridLength.Star;
             if (n.IsColumns) grid.ColumnDefinitions.Add(new ColumnDefinition(size) { MinWidth = 80 });
             else grid.RowDefinitions.Add(new RowDefinition(size) { MinHeight = 60 });
-            var child = Build(c, n, i);
+            var child = Build(c, n, n.Children.IndexOf(c));
             if (n.IsColumns) Grid.SetColumn(child, i); else Grid.SetRow(child, i);
             grid.Children.Add(child);
         }
-        for (var i = 1; i < n.Children.Count; i++) grid.Children.Add(Splitter(n, grid, i));
+        for (var i = 1; i < shown.Count; i++) grid.Children.Add(Splitter(n, shown, grid, i));
         return grid;
     }
 
-    GridSplitter Splitter(DockNode n, Grid grid, int i)
+    GridSplitter Splitter(DockNode n, List<DockNode> shown, Grid grid, int i)
     {
         var g = new GridSplitter { Background = Brushes.Transparent };
         if (n.IsColumns) { Grid.SetColumn(g, i); g.Width = 4; g.HorizontalAlignment = HorizontalAlignment.Left; g.ResizeDirection = GridResizeDirection.Columns; }
         else { Grid.SetRow(g, i); g.Height = 4; g.VerticalAlignment = VerticalAlignment.Top; g.ResizeDirection = GridResizeDirection.Rows; }
         g.DragCompleted += (_, _) =>
         {
-            for (var k = 0; k < n.Children.Count; k++)
-                if (n.Children[k].Size > 0)
-                    n.Children[k].Size = n.IsColumns ? grid.ColumnDefinitions[k].ActualWidth : grid.RowDefinitions[k].ActualHeight;
+            for (var k = 0; k < shown.Count; k++)
+                if (shown[k].Size > 0)
+                    shown[k].Size = n.IsColumns ? grid.ColumnDefinitions[k].ActualWidth : grid.RowDefinitions[k].ActualHeight;
             LayoutChanged?.Invoke();
         };
         return g;
@@ -203,7 +216,8 @@ public sealed class DockHost : Panel
         var dock = new DockPanel();
         Control? tabRow = null;
         var content = new ContentControl();
-        var single = g.Panels.Count == 1 ? _defs[g.Panels[0]] : null;
+        var panels = Shown(g).ToList();
+        var single = panels.Count == 1 ? _defs[panels[0]] : null;
         if (single?.Header != null)
         {
             single.Header.Tag = single.Id;
@@ -212,14 +226,14 @@ public sealed class DockHost : Panel
         }
         else
         {
-            var row = new Border { Height = 33, Padding = new Thickness(6, 0), Child = UI.Row(2, g.Panels.Select(Tab).ToArray<Control>()) }.Token(Border.BorderBrushProperty, "border/default");
+            var row = new Border { Height = 33, Padding = new Thickness(6, 0), Child = UI.Row(2, panels.Select(Tab).ToArray<Control>()) }.Token(Border.BorderBrushProperty, "border/default");
             row.BorderThickness = new Thickness(0, 0, 0, 1);
             DockPanel.SetDock(row, Avalonia.Controls.Dock.Top);
             dock.Children.Add(row);
             tabRow = row;
         }
         dock.Children.Add(content);
-        var frame = UI.Frame(dock, "bg/panel", "border/default", Edge(g, parent, index)).Named(_defs[g.Panels[0]].FrameName);
+        var frame = UI.Frame(dock, "bg/panel", "border/default", Edge(g, parent, index)).Named(_defs[panels[0]].FrameName);
         frame.ClipToBounds = true;
         _groups[g] = (frame, tabRow, content);
         ShowActive(g);
@@ -241,10 +255,11 @@ public sealed class DockHost : Panel
     void ShowActive(DockNode g)
     {
         if (!_groups.TryGetValue(g, out var view) || view.Content == null) return;
-        var id = g.Active != null && g.Panels.Contains(g.Active) && _defs[g.Active].ActivateOnly == null
+        var panels = Shown(g).ToList();
+        var id = g.Active != null && panels.Contains(g.Active) && _defs[g.Active].ActivateOnly == null
             ? g.Active
-            : g.Panels.FirstOrDefault(p => _defs[p].ActivateOnly == null);
-        foreach (var p in g.Panels) Tab(p).IsSelected = p == id;
+            : panels.FirstOrDefault(p => _defs[p].ActivateOnly == null);
+        foreach (var p in panels) Tab(p).IsSelected = p == id;
         view.Content.Content = id == null ? null : ContentOf(id);
     }
 

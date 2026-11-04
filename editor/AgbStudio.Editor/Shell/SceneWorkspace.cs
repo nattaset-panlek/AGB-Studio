@@ -13,6 +13,9 @@ namespace AgbStudio.Editor.Shell;
 /// The panels are slots filled by registered windows: "T-P01:Hierarchy", "T-P01:Viewport", "T-P01:Inspector",
 /// "T-P01:Assets", "T-P05" (Console) and "T-P06" (Animation). They live in a <see cref="DockHost"/>: splitters resize,
 /// tabs and headers drag to tab, split or float, and the layout is kept in the preferences.
+/// It stays for the whole session: a Doc Tab changes only the document area (<see cref="ShowDocument"/>), so the panels
+/// keep their place, their selected tab and what they show. The Scene Editor's toolbar, status bar, Hierarchy and
+/// Inspector belong to the scene and step aside for another document, which brings its own.
 /// </summary>
 [EditorWindow("T-P01")]
 public sealed class SceneWorkspace : DockPanel
@@ -21,6 +24,9 @@ public sealed class SceneWorkspace : DockPanel
     readonly IconButton[] _tools;
     readonly DocTabStrip _docTabs;
     readonly PanelTab[] _panelTabs;
+    readonly Border _toolbar, _statusBar, _viewport;
+    readonly Grid _sceneDocument;
+    readonly ContentControl _document = new() { Name = "DocumentArea" };
 
     public SceneWorkspace(WindowContext ctx) : this(ctx.Services, ctx.Args) { }
 
@@ -67,15 +73,15 @@ public sealed class SceneWorkspace : DockPanel
         At(play, 6);
         At(chip, 10);
         At(ToolGroup([undo, redo]), 12);
-        var toolbar = UI.Frame(bar, "bg/panel", "border/default", new Thickness(0, 0, 0, 1), new Thickness(10, 0)).Named("Toolbar");
-        toolbar.Height = 44;
-        SetDock(toolbar, Avalonia.Controls.Dock.Top);
-        Children.Add(toolbar);
+        _toolbar = UI.Frame(bar, "bg/panel", "border/default", new Thickness(0, 0, 0, 1), new Thickness(10, 0)).Named("Toolbar");
+        _toolbar.Height = 44;
+        SetDock(_toolbar, Avalonia.Controls.Dock.Top);
+        Children.Add(_toolbar);
 
         // ---- status bar (26) ----
-        var status = StatusBar(s.Status);
-        SetDock(status, Avalonia.Controls.Dock.Bottom);
-        Children.Add(status);
+        _statusBar = StatusBar(s.Status);
+        SetDock(_statusBar, Avalonia.Controls.Dock.Bottom);
+        Children.Add(_statusBar);
 
         // ---- body ----
         var hierarchyHeader = new PanelHeader { Title = "Hierarchy", Glyph = "layers", ActionGlyph = "plus", Name = "HierarchyHeader" };
@@ -90,28 +96,47 @@ public sealed class SceneWorkspace : DockPanel
 
         var tabs = UI.Frame(_docTabs, "bg/panel", "border/default", new Thickness(0, 0, 0, 1)).Named("DocTabs");
         _docTabs.VerticalAlignment = VerticalAlignment.Stretch;
-        var viewport = UI.Frame(Slot("T-P01:Viewport", args), "bg/canvas").Named("Viewport");
-        var document = new Grid { RowDefinitions = RowDefinitions.Parse("34,*"), Name = "DocumentGroup" };
-        Grid.SetRow(viewport, 1);
-        document.Children.AddRange([tabs, viewport]);
+        _viewport = UI.Frame(Slot("T-P01:Viewport", args), "bg/canvas").Named("Viewport");
+        _sceneDocument = new Grid { RowDefinitions = RowDefinitions.Parse("34,*"), Name = "DocumentGroup" };
+        Grid.SetRow(_viewport, 1);
+        _sceneDocument.Children.AddRange([tabs, _viewport]);
+        _document.Content = _sceneDocument;
 
         DockPanelDef[] panels =
         [
             new() { Id = DockLayout.Hierarchy, Title = "Hierarchy", Glyph = "layers", FrameName = "HierarchyPanel", Header = hierarchyHeader, Keep = true, Content = () => hierarchy },
             new() { Id = DockLayout.Inspector, Title = "Inspector", Glyph = "sliders", FrameName = "InspectorPanel", Header = inspectorHeader, Keep = true, Content = () => Slot("T-P01:Inspector") },
             new() { Id = DockLayout.Viewport, Title = "Viewport", Glyph = "map" },
-            new() { Id = DockLayout.Assets, Title = "Assets", Glyph = "folder", Content = () => s.Windows.CreatePanel(DockLayout.Assets) },
-            new() { Id = DockLayout.Console, Title = "Console", Glyph = "code", Content = () => s.Windows.CreatePanel(DockLayout.Console) },
-            new() { Id = DockLayout.Animation, Title = "Animation", Glyph = "film", Content = () => s.Windows.CreatePanel(DockLayout.Animation) },
+            new() { Id = DockLayout.Assets, Title = "Assets", Glyph = "folder", Keep = true, Content = () => s.Windows.CreatePanel(DockLayout.Assets) },
+            new() { Id = DockLayout.Console, Title = "Console", Glyph = "code", Keep = true, Content = () => s.Windows.CreatePanel(DockLayout.Console) },
+            new() { Id = DockLayout.Animation, Title = "Animation", Glyph = "film", Keep = true, Content = () => s.Windows.CreatePanel(DockLayout.Animation) },
             new() { Id = DockLayout.Database, Title = "Database", Glyph = "db", ActivateOnly = () => _ = s.Windows.Open(DockLayout.Database, source: "DatabaseTab") },
         ];
-        DockArea = new DockHost(DockLayout.FromJson(s.Preferences.Current.SceneLayout, panels.Select(p => p.Id).ToList()), panels, () => document);
+        DockArea = new DockHost(DockLayout.FromJson(s.Preferences.Current.SceneLayout, panels.Select(p => p.Id).ToList()), panels, () => _document);
         _panelTabs = [DockArea.Tab(DockLayout.Assets), DockArea.Tab(DockLayout.Console), DockArea.Tab(DockLayout.Animation), DockArea.Tab(DockLayout.Database)];
         DockArea.LayoutChanged += () => s.Preferences.Update(x => x.SceneLayout = DockArea.Layout.ToJson());
         DockArea.PanelSelected += (id, tab) => { if (id != DockLayout.Assets) s.Windows.Requests.Add((id, tab.Name)); };
         Children.Add(DockArea);
         WorkspaceLayouts.Attach(s, DockArea);
     }
+
+    /// <summary>Shows a document's page in the document area; null is the Scene Editor's own viewport. Nothing else in the workspace is rebuilt.</summary>
+    public void ShowDocument(Control? page)
+    {
+        _document.Content = page ?? _sceneDocument;
+        Children.Remove(_toolbar);
+        Children.Remove(_statusBar);
+        if (page == null)
+        {
+            Children.Insert(0, _toolbar);
+            Children.Insert(1, _statusBar);
+            DockArea.Hide();
+        }
+        else DockArea.Hide(DockLayout.Hierarchy, DockLayout.Inspector);
+    }
+
+    /// <summary>Opens what a link asked for (a .scene path) in this workspace.</summary>
+    public void OpenWith(object args) => _viewport.Child = Slot("T-P01:Viewport", args);
 
     void Tip(Control c, string commandId)
     {

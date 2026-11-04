@@ -170,7 +170,7 @@ public sealed class PlayController : IDisposable
         StartedAs = how;
         if (how != PlayStart.RunBuilt || romPath == null)
         {
-            if (project == null) { Console.Add(ConsoleLevel.Error, "No project is open. Open a project, then press Play."); return Fail(); }
+            if (project == null) { Say(ConsoleLevel.Error, "No project is open. Open a project, then press Play."); return Fail(); }
             if (how == PlayStart.RunBuilt && File.Exists(LastRomOf(project))) romPath = LastRomOf(project);
             else
             {
@@ -179,7 +179,7 @@ public sealed class PlayController : IDisposable
                 BuildResult r;
                 _ownBuild = true;
                 try { r = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
-                catch (Exception e) { Console.Add(ConsoleLevel.Error, e.Message); return Fail(); }
+                catch (Exception e) { Say(ConsoleLevel.Error, e.Message); return Fail(); }
                 finally { _ownBuild = false; }
                 if (start != _starts)
                 {
@@ -247,7 +247,7 @@ public sealed class PlayController : IDisposable
             // G-ERR: a file the core refuses (not a GBA ROM, unreadable) leaves no half-made session behind; asking the
             // core for its save RAM with no game loaded would crash the editor on Stop
             // the core's own text names the ROM and says why and what to do; a file that can't be read gets that here
-            Console.Add(ConsoleLevel.Error, (e is InvalidOperationException)
+            Say(ConsoleLevel.Error, (e is InvalidOperationException)
                 ? e.Message
                 : $"The emulator could not read {Path.GetFileName(romPath)}: {e.Message.TrimEnd('.')}. Build the ROM again, or close programs that use it.");
             _s.Toasts.Show($"Could not run {Path.GetFileName(romPath)}. The Console says why and what to do.", ToastStatus.Error, TimeSpan.FromSeconds(4));
@@ -304,7 +304,7 @@ public sealed class PlayController : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Add(ConsoleLevel.Warning, $"Could not start in scene '{scene}': {ex.Message}");
+            Say(ConsoleLevel.Warning, $"Could not start in scene '{scene}': {ex.Message}");
         }
     }
 
@@ -412,7 +412,7 @@ public sealed class PlayController : IDisposable
                 // one failing frame must not raise the crash notice 120 times a second: the game stops, the crash
                 // guard logs the error once
                 StopTimer();
-                Console.Add(ConsoleLevel.Error, "The game stopped after an editor error (see the crash log). Press Play to start it again.");
+                Say(ConsoleLevel.Error, "The game stopped after an editor error (see the crash log). Press Play to start it again.");
                 throw;
             }
         });
@@ -512,6 +512,13 @@ public sealed class PlayController : IDisposable
 
     // ---- per-frame publishing -------------------------------------------------------------------------
 
+    /// <summary>A line of Play Mode itself, for Play Mode's console and the Console panel (T-P05). Build results reach the panel from BuildService.</summary>
+    void Say(ConsoleLevel level, string text)
+    {
+        var e = Console.Add(level, text);
+        SceneEditor.ConsoleLog.Of(_s).Add(new SceneEditor.ConsoleEntry(e.Time, e.Level, e.Text));
+    }
+
     /// <summary>A line from the game's debug channel (Debug.Log, engine warnings, asserts): Play Mode's console and the Console panel.</summary>
     public void ReceiveGameLine(string line)
     {
@@ -539,7 +546,7 @@ public sealed class PlayController : IDisposable
         if (Session == null) return;
         var (_, bg, _) = Inspector.Display(Session.Core);
         var objs = Inspector.Oam(Session.Core).Count;
-        Console.Add(ConsoleLevel.Info, $"Scene {w.SceneName} loaded (BG {bg.Count(b => b)} · OBJ {objs})");
+        Say(ConsoleLevel.Info, $"Scene {w.SceneName} loaded (BG {bg.Count(b => b)} · OBJ {objs})");
         SceneLoaded?.Invoke(w.SceneName);
     }
 
@@ -616,7 +623,7 @@ public sealed class PlayController : IDisposable
         BuildResult r;
         _ownBuild = true;
         try { r = await _s.Build.BuildAsync(new BuildOptions { Configuration = BuildConfiguration.Debug }); }
-        catch (InvalidOperationException e) { Console.Add(ConsoleLevel.Error, e.Message); return false; }
+        catch (InvalidOperationException e) { Say(ConsoleLevel.Error, e.Message); return false; }
         finally { _ownBuild = false; }
         LastBuild = r;
         if (!r.Success) { ReportBuild(r); return false; }
@@ -645,7 +652,7 @@ public sealed class PlayController : IDisposable
         Elf = ElfSymbols.TryLoad(r.ElfPath) ?? Elf;
         if (_s.Project.Current is { } p) WorldReader = new LiveWorldReader(p, Elf);
         _lastScene = -1;
-        Console.Add(ok ? ConsoleLevel.Success : ConsoleLevel.Warning,
+        Say(ok ? ConsoleLevel.Success : ConsoleLevel.Warning,
             ok ? $"Hot reload: {changed} updated in the running game" : $"Hot reload: {changed} rebuilt; the game restarted");
         Publish();
         Changed?.Invoke();

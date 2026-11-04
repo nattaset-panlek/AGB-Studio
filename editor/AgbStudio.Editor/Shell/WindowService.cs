@@ -146,7 +146,8 @@ public sealed class WindowService : IWindowRouter
         switch (info.Kind)
         {
             case WindowKind.Page:
-                if (!_pages.TryGetValue(id, out var page) || args != null) _pages[id] = page = reg.Factory(ctx);
+                if (_pages.TryGetValue(id, out var page) && args != null && page is SceneWorkspace workspace) workspace.OpenWith(args);
+                else if (page == null || args != null) _pages[id] = page = reg.Factory(ctx);
                 Track(id);
                 Host.ShowPage(id, page);
                 return null;
@@ -158,6 +159,14 @@ public sealed class WindowService : IWindowRouter
                 content = reg.Factory(ctx);
                 return await Host.Overlays.Show(content, info.Kind == WindowKind.Popover ? OverlayPlacement.TopCenter : OverlayPlacement.Center, info.Kind == WindowKind.Popover);
         }
+    }
+
+    /// <summary>The one instance of a page, made when first asked for; null when none is registered.</summary>
+    public Control? PageFor(string id)
+    {
+        if (_pages.TryGetValue(id, out var page)) return page;
+        if (!_windows.TryGetValue(id, out var reg)) return null;
+        return _pages[id] = reg.Factory(new WindowContext { Services = Services, Info = reg.Info });
     }
 
     /// <summary>Creates a panel for a page slot (e.g. "T-P05" Console in the bottom panel); null when none is registered.</summary>

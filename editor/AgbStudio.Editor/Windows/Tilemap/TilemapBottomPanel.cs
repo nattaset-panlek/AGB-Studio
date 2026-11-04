@@ -28,7 +28,6 @@ public sealed class TilemapBottomPanel : DockPanel
     readonly InspectorField _ruleSet;
     readonly Grid _table = new() { Name = "LayersTable", ColumnDefinitions = ColumnDefinitions.Parse("200,110,90,90,260,76") };
     readonly WrapPanel _cards = new() { Name = "RuleCards", ItemSpacing = 8, LineSpacing = 8, Margin = new Thickness(14, 14, 14, 0) };
-    readonly Control? _assets;
 
     public TilemapBottomPanel(WindowContext ctx) : this(MapLibrary.Of(ctx.Services).Current(ctx.Args) ?? throw new InvalidOperationException("No map is open."), ctx.Services, 1) { }
 
@@ -43,7 +42,6 @@ public sealed class TilemapBottomPanel : DockPanel
         [
             new PanelTab { Label = "Layers", Glyph = "layers", Name = "Tab_Layers", Height = 31 },
             new PanelTab { Label = "Auto-tile rules", Glyph = "spark", Name = "Tab_AutoTile", Height = 31 },
-            new PanelTab { Label = "Assets", Glyph = "folder", Name = "Tab_Assets", Height = 31 },
         ];
         for (var i = 0; i < _tabs.Length; i++) { var k = i; _tabs[i].Activated += (_, _) => SelectTab(k); }
         _ruleSet = PageChrome.Field("Rule set", FieldKind.Dropdown, null, "RuleSetField");
@@ -62,7 +60,6 @@ public sealed class TilemapBottomPanel : DockPanel
         _table.Margin = new Thickness(8, 4, 26, 0);
         _table.HorizontalAlignment = HorizontalAlignment.Left;
         _table.VerticalAlignment = VerticalAlignment.Top;
-        _assets = services?.Windows.CreatePanel("T-P01:Assets");
 
         void OnDoc(MapChange _) => Refresh();
         PageChrome.WhileAttached(this, () => { session.Doc.Changed += OnDoc; session.ViewChanged += Refresh; Refresh(); },
@@ -80,9 +77,8 @@ public sealed class TilemapBottomPanel : DockPanel
     {
         for (var k = 0; k < _tabs.Length; k++) _tabs[k].IsSelected = k == i;
         _ruleSet.IsVisible = i == 1;
-        _content.Content = i switch { 0 => _table, 1 => _cards, _ => _assets ?? new Panel { Name = "AssetsSlot" } };
+        _content.Content = i == 0 ? _table : _cards;
         if (i == 1) _services?.Windows.Requests.Add(("T-P26", "Tab_AutoTile"));
-        else if (i == 2) _services?.Windows.Requests.Add(("T-P01:Assets", "Tab_Assets"));
         Refresh();
     }
 

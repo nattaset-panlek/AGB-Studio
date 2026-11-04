@@ -22,7 +22,7 @@ public sealed class EditorHarness : IDisposable
     {
         Root = SkyHopperProject.Open(Fx);
         before?.Invoke(Fx);
-        Win = new MainWindow(Fx.Services) { Width = 1440, Height = 900 };
+        Win = new MainWindow(Fx.Services) { Width = 1440, Height = 1150 };  // 900 + the shared bottom panel, so the page has the room of its Figma frame
         Win.Show();
         Capture.Pump();
     }

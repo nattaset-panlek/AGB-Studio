@@ -134,8 +134,6 @@ public sealed class SpriteEditorPage : DockPanel
         _panelTabs =
         [
             new PanelTab { Label = "Animation", Glyph = "film", Name = "Tab_Animation", Tag = "animation", IsSelected = true },
-            new PanelTab { Label = "Assets", Glyph = "folder", Name = "Tab_Assets", Tag = "T-P01:Assets" },
-            new PanelTab { Label = "Console", Glyph = "code", Name = "Tab_Console", Tag = "T-P05" },
         ];
         _dropZone = BuildDropZone();
         _animationPanel = BuildAnimationPanel();
@@ -295,7 +293,6 @@ public sealed class SpriteEditorPage : DockPanel
         Grid.SetRow(area, 1);
         grid.Children.Add(area);
 
-        foreach (var t in _panelTabs) t.Activated += (_, _) => SelectPanel(t);
         var tabRow = new Border { Height = 32, Padding = new Thickness(6, 0), Child = UI.Row(2, _panelTabs) }.Token(Border.BorderBrushProperty, "border/default");
         tabRow.BorderThickness = new Thickness(0, 0, 0, 1);
         var bottom = new DockPanel();
@@ -917,14 +914,6 @@ public sealed class SpriteEditorPage : DockPanel
             }
         }
         if (last != null) Open(last);
-    }
-
-    void SelectPanel(PanelTab tab)
-    {
-        foreach (var t in _panelTabs) t.IsSelected = t == tab;
-        var id = (string)tab.Tag!;
-        _bottomContent.Content = id == "animation" ? _animationPanel : _s.Windows.CreatePanel(id) ?? new Panel();
-        if (id != "animation") _s.Windows.Requests.Add((id, tab.Name));
     }
 
     // ---- commands ------------------------------------------------------------------------------------------------
