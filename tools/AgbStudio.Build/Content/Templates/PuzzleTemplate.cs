@@ -106,16 +106,14 @@ public static class PuzzleTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#1C1834", "Board", "title_theme"));
         var board = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", true, ("Score", "hud.score", 136, 16, 96), ("Best", "hud.best", 136, 40, 96), ("Next", "hud.next", 136, 72, 96)),
             Name = "Board", Width = 15, Height = 10, Map = "Board", Backdrop = "#1C1834", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "puzzle_theme" },
             Camera = new CameraSettings { Follow = "" },
             Actors =
             {
                 new ActorData { Name = "Board", Kind = ActorKind.Empty, Tag = "Board", Components = { new ComponentData { Type = "Board" } } },
-                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 136, Y = 16, Text = "hud.score", Group = "HUD",
-                    Components = { new ComponentData { Type = "Scoreboard" } } },
-                new ActorData { Name = "HUD Next", Kind = ActorKind.TextLabel, X = 136, Y = 72, Text = "hud.next", Group = "HUD" },
-                new ActorData { Name = "HUD Best", Kind = ActorKind.TextLabel, X = 136, Y = 40, Text = "hud.best", Group = "HUD" },
+                new ActorData { Name = "Scoreboard", Kind = ActorKind.Empty, Group = "HUD", Components = { new ComponentData { Type = "Scoreboard" } } },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Board.scene"), board);
@@ -129,9 +127,7 @@ public static class PuzzleTemplate
         new Dictionary<string, string>
         {
             ["Board"] = "Invisible game logic: the Board script keeps the 6 x 9 grid of gems in an array and draws it by changing tiles of the BG1 Board layer (Scene.SetTile), so the gems are tiles, not sprites.",
-            ["HUD Score"] = "Text label with the score. Its Scoreboard script also writes the best score into HUD Best whenever a number changes.",
-            ["HUD Next"] = "Text label over the preview of the next pair (the two gem tiles under it are drawn by Board).",
-            ["HUD Best"] = "Text label with the best score, kept in the save data.",
+            ["Scoreboard"] = "Writes the score and the best score into the HUD page (ui/Hud.uipage) whenever a number changes.",
         },
         [
             "Select Board and lower `fallFrames` to make the pairs fall faster.",
@@ -370,15 +366,13 @@ public class Scoreboard : Behaviour
         if (Game.score != shownScore)
         {
             shownScore = Game.score;
-            // SetLabelNumber writes a number with leading zeros into this text label.
-            actor.SetLabelNumber(shownScore, digits);
+            // UI.SetNumber writes a number with leading zeros into an element of the HUD page (ui/Hud.uipage).
+            UI.SetNumber("Score", shownScore, digits);
         }
         if (Game.best != shownBest)
         {
             shownBest = Game.best;
-            // Scene.Find looks an actor up by its Hierarchy name.
-            Actor best = Scene.Find("HUD Best");
-            if (best != null) best.SetLabelNumber(shownBest, digits);
+            UI.SetNumber("Best", shownBest, digits);
         }
     }
 }

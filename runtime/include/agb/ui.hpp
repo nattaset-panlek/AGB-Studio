@@ -176,7 +176,7 @@ struct PageSet {
     const u8* richInks = nullptr;        // palette indices of <c1>..<c3>
 };
 
-constexpr int kMaxOpenPages = 3;     // one screen of the stack stays for the scene
+constexpr int kMaxOpenPages = 4;     // one screen of the stack stays for the scene
 constexpr s32 kPageMoved = -2;       // UI.Choose(true): the cursor or a value moved
 constexpr int kMaxPageElements = 64;
 
@@ -208,6 +208,9 @@ void setPageInputChar(int index, int ch);       // ch 0 ends the text
 void beginPageChoice(bool wakeOnMove, bool keepDialogue = false);
 // A page named "Choice" shows Choice in scripts and the Dialogue Editor: false when the game has none.
 bool openChoicePage(const u16* keys, u8 count);
+// A page that stays over the scene while it plays (Scene › Hud): the pause menu opens over it, and it closes with the scene.
+bool openHudPage(const char* name);
+void expectHud(bool expected);  // the scene loading has a HUD: what behaviours set in Start waits for it
 // The page the Options page took the place of comes back when it has closed: true when that happened this frame.
 bool reopenAfterOptions();
 bool pollPageChoice(s32& result);

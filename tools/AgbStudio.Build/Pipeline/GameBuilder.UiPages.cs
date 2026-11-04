@@ -97,7 +97,7 @@ public sealed partial class GameBuilder
         var files = _p.UiPageFiles().ToList();
         var pages = files.Select(f => (File: f, Page: GameProject.Load<UiPageFile>(f))).ToList();
         // A ready-made page goes in when a script names it and the project has no page of that name.
-        var scripts = string.Concat(_p.ScriptFiles().Select(File.ReadAllText)) + string.Concat(_p.SceneFiles().Select(f => '"' + GameProject.Load<SceneFile>(f).Page + '"'));
+        var scripts = string.Concat(_p.ScriptFiles().Select(File.ReadAllText)) + string.Concat(_p.SceneFiles().Select(f => '"' + GameProject.Load<SceneFile>(f).Page + "\" \"" + GameProject.Load<SceneFile>(f).Hud + '"'));
         foreach (var name in UiPresets.Names)
             if (scripts.Contains('"' + name + '"', StringComparison.Ordinal) && !pages.Any(x => (x.Page.Name.Length > 0 ? x.Page.Name : GameProject.AssetName(x.File)) == name))
                 pages.Add((Path.Combine(_p.UiDir, name + ".uipage"), UiPresets.Create(name, _p.Settings.Ui)!));

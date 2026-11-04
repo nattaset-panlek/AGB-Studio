@@ -297,16 +297,20 @@ void TextBox::drawGlyph(const data::Font& font, u16 index, int px, int py) {
     const int gx = px + g.left, gy = py + g.top;
     if (clipped_ && (gx < clip_[0] || gy < clip_[1] || gx + g.width > clip_[2] || gy + g.height > clip_[3])) {
         // Cut by the rectangle: pixel by pixel, away from the fast blit (the common case is a glyph inside it).
+        // Only the rows and columns inside it: a redraw of one band meets every glyph of the labels it touches.
+        const int y0 = clip_[1] > gy ? clip_[1] - gy : 0, y1 = clip_[3] - gy < g.height ? clip_[3] - gy : g.height;
+        const int x0 = clip_[0] > gx ? clip_[0] - gx : 0, x1 = clip_[2] - gx < g.width ? clip_[2] - gx : g.width;
+        if (y0 >= y1 || x0 >= x1) return;
         const int rowBytes = (g.width * font.bpp + 7) >> 3;
         const u8* bits = font.bitmaps + g.offset;
-        for (int y = 0; y < g.height; ++y)
-            for (int x = 0; x < g.width; ++x) {
-                const u8 byte = bits[y * rowBytes + ((x * font.bpp) >> 3)];
-                const int v = font.bpp == 1 ? (byte >> (7 - x)) & 1 : (byte >> (6 - (x % 4) * 2)) & 3;
-                const int dx = gx + x, dy = gy + y;
-                if (!v || dx < clip_[0] || dy < clip_[1] || dx >= clip_[2] || dy >= clip_[3]) continue;
-                setPixel(dx, dy, static_cast<u8>(font.bpp == 1 ? style_.ink : style_.ink + 3 - v));
+        for (int y = y0; y < y1; ++y) {
+            const u8* row = bits + y * rowBytes;
+            for (int x = x0; x < x1; ++x) {
+                const u8 byte = row[(x * font.bpp) >> 3];
+                const int v = font.bpp == 1 ? (byte >> (7 - (x & 7))) & 1 : (byte >> (6 - (x % 4) * 2)) & 3;
+                if (v) setPixel(gx + x, gy + y, static_cast<u8>(font.bpp == 1 ? style_.ink : style_.ink + 3 - v));
             }
+        }
     } else {
         detail::blitGlyph(tiles_, w_, h_, font.bitmaps + g.offset, g.width, g.height, font.bpp, gx, gy, style_.ink, font.shadow ? style_.shadow : 0);
     }

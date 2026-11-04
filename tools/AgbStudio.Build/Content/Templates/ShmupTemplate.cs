@@ -148,6 +148,7 @@ public static class ShmupTemplate
         static ComponentData Projectile(string vx = "0") => new() { Type = "Projectile", Fields = { ["vx"] = vx } };
         var stage = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", true, ("Score", "hud.score", 8, 4, 104), ("Lives", "hud.lives", 176, 4, 56)),
             Name = "Stage_01", Width = StageWidth, Height = 10, Map = "Stage_01", Backdrop = "#0C0C20", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "stage_theme" },
             Camera = new CameraSettings { Follow = "", ClampToMap = true },
@@ -163,8 +164,6 @@ public static class ShmupTemplate
                     Components = { new ComponentData { Type = "SpaceSlime" } } },
                 new ActorData { Name = "Power-up", Kind = ActorKind.Pickup, Sprite = "powerup", X = 0, Y = -64, Tag = "PowerUp", Hidden = true, Group = "Spawn Templates", Priority = 2,
                     Components = { new ComponentData { Type = "PowerUpMarker" } } },
-                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.score", Group = "HUD" },
-                new ActorData { Name = "HUD Lives", Kind = ActorKind.TextLabel, X = 176, Y = 4, Text = "hud.lives", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Stage_01.scene"), stage);
@@ -183,8 +182,6 @@ public static class ShmupTemplate
             ["Enemy Shot"] = "Spawn template of the slimes' bullets: Projectile with Hits player on, so it hurts the ship.",
             ["Slime"] = "Spawn template of the enemy: SpaceSlime flies left on a wave and fires a fan or a ring of Enemy Shots; two hits destroy it.",
             ["Power-up"] = "Spawn template of the pickup: PowerUpMarker drifts it left; ShipController turns on triple shot when it touches it.",
-            ["HUD Score"] = "Text label with the score.",
-            ["HUD Lives"] = "Text label with the lives left.",
         },
         [
             "Select Player and change `speed` or `fireDelay` of ShipController.",
@@ -330,11 +327,9 @@ public class ShipController : Behaviour
 
     public void UpdateHud()
     {
-        // SetLabelNumber writes a number with leading zeros into a text label.
-        Actor score = Scene.Find("HUD Score");
-        if (score != null) score.SetLabelNumber(Game.score, 6);
-        Actor lives = Scene.Find("HUD Lives");
-        if (lives != null) lives.SetLabelNumber(Game.lives, 1);
+        // UI.SetNumber writes a number with leading zeros into an element of the HUD page (ui/Hud.uipage).
+        UI.SetNumber("Score", Game.score, 6);
+        UI.SetNumber("Lives", Game.lives, 1);
     }
 }
 """);

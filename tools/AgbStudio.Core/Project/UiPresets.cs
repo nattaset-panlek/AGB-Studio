@@ -4,7 +4,7 @@ namespace AgbStudio.Core.Project;
 /// Editor copies one into ui/ to change it, and a page of the same name in the project is used instead.</summary>
 public static class UiPresets
 {
-    public static readonly IReadOnlyList<string> Names = ["TextInput", "Confirm", "Message", "Menu", "List", "Title", "Pause", "Options", "Choice"];
+    public static readonly IReadOnlyList<string> Names = ["TextInput", "Confirm", "Message", "Menu", "List", "Title", "Pause", "Options", "Choice", "Hud"];
 
     /// <summary>Makes a ready-made page. <paramref name="firstScene"/>: where a Title page's Start goes. A word uses its string
     /// key when <paramref name="keys"/> has it, else plain English.</summary>
@@ -13,6 +13,7 @@ public static class UiPresets
         "Title" => Title(ui, firstScene, keys),
         "Pause" => Pause(ui, keys),
         "Options" => Options(ui, keys),
+        "Hud" => Hud(ui),
         "Choice" => Choice(ui),
         "TextInput" => TextInput(ui),
         "Confirm" => Confirm(ui),
@@ -138,6 +139,20 @@ public static class UiPresets
             }, hint),
         };
     }
+
+    /// <summary>A page that stays over the scene while it plays: Scene › Hud opens it. Its elements are set by name from scripts
+    /// (UI.SetNumber("Score", score, 4), UI.SetText("Banner", "brawl.go")). Each row is (element, string key, x, y, width).</summary>
+    public static UiPageFile HudPage(string name, string ink, params (string Name, string Text, int X, int Y, int W)[] rows) => new()
+    {
+        Name = name, Cancel = false, ScenePlays = true,
+        Root = new UiElement
+        {
+            Name = "Canvas", Rect = UiRect.Stretch(),
+            Children = rows.Select(r => new UiElement { Name = r.Name, Kind = UiElementKind.Text, Rect = UiRect.TopLeft(r.X, r.Y, r.W, 16), Text = r.Text, TextColor = ink }).ToList(),
+        },
+    };
+
+    static UiPageFile Hud(UiSettings ui) => HudPage("Hud", ui.Ink, ("Score", "Score", 8, 4, 96), ("Lives", "Lives", 168, 4, 64));
 
     // What Choice in a script or the Dialogue Editor shows: Option0 to Option5 get the choices' text, the rest hide. Above the
     // dialogue box of Project Settings.

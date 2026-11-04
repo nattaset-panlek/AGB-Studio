@@ -35,6 +35,15 @@ public static class TemplateKit
         p.SaveSettings();
     }
 
+    /// <summary>The HUD of a scene as a UI page, open to change in the UI Editor: Scene.Hud names it.</summary>
+    public static string HudPage(GameProject p, string name, bool lightText, params (string Name, string Text, int X, int Y, int W)[] rows)
+    {
+        Directory.CreateDirectory(p.UiDir);
+        var ui = p.Settings.Ui;
+        GameProject.Save(Path.Combine(p.UiDir, name + ".uipage"), UiPresets.HudPage(name, lightText ? ui.ScreenInk : ui.Ink, rows));
+        return name;
+    }
+
     /// <summary>The menus of a template as UI pages (ui/*.uipage), open to change in the UI Editor: the title screen, the
     /// pause menu, the Options screen and the choices of the dialogue box.</summary>
     static void AddMenuPages(GameProject p, string firstScene)
@@ -143,6 +152,7 @@ public static class TemplateKit
             }
             if (scene.Music.Track.Length > 0) md.AppendLine($"- Music: {scene.Music.Track}.");
             if (scene.Page.Length > 0) md.AppendLine($"- UI page: {scene.Page} (open it in Tools > UI Editor to change the title and menu).");
+            if (scene.Hud.Length > 0) md.AppendLine($"- HUD: the UI page {scene.Hud} (open it in Tools > UI Editor to move or restyle it; scripts set its elements by name).");
             if (scene.Menu != null) md.AppendLine($"- Menu: {string.Join(", ", scene.Menu.Items.Select(i => i.Command == MenuCommand.LoadScene ? $"{i.Text} loads {i.Scene}" : $"{i.Text} ({i.Command})"))} (Scene Settings > Menu).");
             if (scene.Events.OnEnter.Length > 0) md.AppendLine($"- On enter: `{scene.Events.OnEnter}` (Scene Settings > Events).");
             if (scene.Actors.Count == 0) continue;

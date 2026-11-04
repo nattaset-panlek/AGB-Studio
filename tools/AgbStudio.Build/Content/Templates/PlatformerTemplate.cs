@@ -262,6 +262,7 @@ public static class PlatformerTemplate
         static ComponentData Body() => new() { Type = "PlatformerBody" };
         var level = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", false, ("Score", "hud.score", 8, 4, 88), ("Lives", "hud.lives", 168, 4, 64)),
             Name = "Level_01", Width = LevelWidth, Height = LevelHeight, Map = "Level_01", Backdrop = "#60A8F8", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "level_theme" },
             Camera = new CameraSettings { Follow = "Player", DeadZoneW = 32, DeadZoneH = 24, ClampToMap = true },
@@ -289,8 +290,6 @@ public static class PlatformerTemplate
                 new ActorData { Name = "Checkpoint", Kind = ActorKind.Empty, Sprite = "checkpoint", Animation = "down", X = 520, Y = 128, Tag = "Checkpoint", Priority = 2,
                     Components = { new ComponentData { Type = "Checkpoint" } } },
                 new ActorData { Name = "Goal Flag", Kind = ActorKind.TriggerZone, Sprite = "flag", X = 920, Y = 128, ZoneW = 16, ZoneH = 32, Priority = 2 },
-                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.score", Group = "HUD" },
-                new ActorData { Name = "HUD Lives", Kind = ActorKind.TextLabel, X = 168, Y = 4, Text = "hud.lives", Group = "HUD" },
             },
             Links = { new LinkData { From = "Goal Flag", To = "Title", Transition = Transition.Fade, Duration = 0.5 } },
         };
@@ -311,8 +310,6 @@ public static class PlatformerTemplate
             ["Coin (1)"] = "A second coin on the high platform near the end.",
             ["Checkpoint"] = "Raises its flag on touch; after losing a life the player comes back here, and Continue starts here.",
             ["Goal Flag"] = "Trigger zone with a scene link: touching it fades back to the title screen. Change the link in Link Settings to add a Level_02.",
-            ["HUD Score"] = "Text label pinned to the screen; PlayerController and Coin write the score into it.",
-            ["HUD Lives"] = "Text label with the lives left.",
         },
         [
             "Select Player and drag the **speed** slider of PlayerController, or **Jump force** / **Gravity** of Platformer Body, then press Play.",
@@ -426,11 +423,9 @@ public class PlayerController : Behaviour
 
     public void UpdateHud()
     {
-        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes a number into a text label.
-        Actor score = Scene.Find("HUD Score");
-        if (score != null) score.SetLabelNumber(Game.score, 4);
-        Actor lives = Scene.Find("HUD Lives");
-        if (lives != null) lives.SetLabelNumber(Game.lives, 1);
+        // UI.SetNumber writes a number into an element of the HUD page (ui/Hud.uipage).
+        UI.SetNumber("Score", Game.score, 4);
+        UI.SetNumber("Lives", Game.lives, 1);
     }
 }
 """);
@@ -462,8 +457,7 @@ public class Coin : Behaviour
         Game.score += value;
         Sound.Play("coin");
         actor.Destroy();
-        Actor hud = Scene.Find("HUD Score");
-        if (hud != null) hud.SetLabelNumber(Game.score, 4);
+        UI.SetNumber("Score", Game.score, 4);
     }
 }
 """);

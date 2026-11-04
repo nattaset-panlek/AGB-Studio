@@ -322,7 +322,7 @@ public class NewProjectTests
         Assert.Equal(["PowerUpMarker", "ShipController", "SpaceSlime", "Stage"], Names(p.ScriptFiles()));
         Assert.Equal(["Player", "Enemy", "Shot", "EnemyShot", "PowerUp"], p.Settings.Tags);
         Assert.Equal("Fire", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 4 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 2 BG layers · 6 actors · 4 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "STARPATROL", "STAR");
     }
 
@@ -339,7 +339,7 @@ public class NewProjectTests
         Assert.Equal(["Board"], p.Settings.Tags);
         Assert.Equal(["score", "best"], p.Settings.Save.Fields.Select(f => f.Name));
         Assert.Equal("Turn", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 2 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "GEMDROP", "GEMD");
     }
 
@@ -354,7 +354,7 @@ public class NewProjectTests
         Assert.Equal(["Fighter", "Thug", "Waves"], Names(p.ScriptFiles()));
         Assert.Equal(["Player", "Enemy"], p.Settings.Tags);
         Assert.Equal("Attack", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 0 · 3 BG layers · 7 actors · 3 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 3 BG layers · 3 actors · 3 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "PIERBRAWL", "PIER");
     }
 
@@ -371,7 +371,7 @@ public class NewProjectTests
         Assert.Equal(["Player", "Grass", "Finish", "Check"], p.Settings.Tags);
         Assert.Equal(["best"], p.Settings.Save.Fields.Select(f => f.Name));
         Assert.Equal("Accelerate", p.Settings.Input[0].Action);
-        Assert.Equal("Mode 1 · 2 BG layers · 7 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
+        Assert.Equal("Mode 1 · 2 BG layers · 3 actors · 2 scripts", AgbStudio.Build.Content.Templates.TemplateInfo.Stats(p));
         await BuildsToARom(h, "KARTCUP", "KART");
     }
 

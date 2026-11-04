@@ -229,6 +229,7 @@ public static class RpgTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#60B858", "Meadow", "title_theme"));
         var meadow = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", false, ("Gold", "hud.gold", 8, 4, 104)),
             Name = "Meadow", Width = 20, Height = 14, Map = "Meadow", Backdrop = "#60B858", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "field_theme" },
             Camera = new CameraSettings { Follow = "Player", DeadZoneW = 16, DeadZoneH = 16, ClampToMap = true },
@@ -240,12 +241,12 @@ public static class RpgTemplate
                     Components = { new ComponentData { Type = "TopDownMover", Fields = { ["speed"] = "1.25" } }, new ComponentData { Type = "Explorer" } },
                 },
                 new ActorData { Name = "Shopkeeper", Kind = ActorKind.Empty, Sprite = "shopkeeper", Animation = "idle", X = 72, Y = 56, Tag = "NPC", Components = { new ComponentData { Type = "Shopkeeper" } } },
-                new ActorData { Name = "HUD Gold", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.gold", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Meadow.scene"), meadow);
         var battle = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "BattleHud", true, ("Hero", "hud.hero", 8, 4, 112), ("Mage", "hud.mage", 8, 20, 112), ("Enemy", "hud.enemy", 136, 4, 100)),
             Name = "Battle", Width = 15, Height = 10, Map = "Battle", Backdrop = "#1C1834", MapX = 520, MapY = 60,
             Music = new MusicSettings { Track = "battle_theme" },
             Camera = new CameraSettings { Follow = "" },
@@ -253,9 +254,6 @@ public static class RpgTemplate
             {
                 new ActorData { Name = "Battle", Kind = ActorKind.Empty, X = 120, Y = 8, Components = { new ComponentData { Type = "Battle" } } },
                 new ActorData { Name = "Enemy", Kind = ActorKind.Enemy, Sprite = "battle_slime", Animation = "idle", X = 120, Y = 92, Tag = "Encounter" },
-                new ActorData { Name = "HUD Hero", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.hero", Group = "HUD" },
-                new ActorData { Name = "HUD Mage", Kind = ActorKind.TextLabel, X = 8, Y = 20, Text = "hud.mage", Group = "HUD" },
-                new ActorData { Name = "HUD Enemy", Kind = ActorKind.TextLabel, X = 136, Y = 4, Text = "hud.enemy", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Battle.scene"), battle);
@@ -270,12 +268,8 @@ public static class RpgTemplate
         {
             ["Player"] = "The hero on the map. The built-in Top-down Mover walks it; Explorer sets up the party on the first walk and starts a battle after enough steps in tall grass.",
             ["Shopkeeper"] = "Blocks the way and, when the player presses A next to it, runs a shop cutscene that sells potions (price from the Items table).",
-            ["HUD Gold"] = "Text label with the party's gold.",
             ["Battle"] = "Invisible director of the Battle scene: its Battle script runs the whole fight as one cutscene with menus, using BattleRules for the numbers.",
             ["Enemy"] = "The slime's battle sprite; it disappears when it is beaten.",
-            ["HUD Hero"] = "Text label with the hero's hit points.",
-            ["HUD Mage"] = "Text label with the mage's hit points.",
-            ["HUD Enemy"] = "Text label with the enemy's hit points.",
         },
         [
             "Open the Database and change the Slime's hp, atk, gold or exp, or a hero's stats; build and fight again.",
@@ -311,9 +305,8 @@ public class Explorer : Behaviour
             Game.gold = 40;
             Game.potions = 1;
         }
-        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes into a text label.
-        Actor hud = Scene.Find("HUD Gold");
-        if (hud != null) hud.SetLabelNumber(Game.gold, 1);
+        // UI.SetNumber writes a number into an element of the HUD page (ui/Hud.uipage).
+        UI.SetNumber("Gold", Game.gold, 1);
     }
 
     // Update runs every frame (60 times a second).
@@ -372,8 +365,7 @@ public static class ShopDesk
         if (!Shop.Buy(ItemId.Potion)) return 0;
         Game.potions += 1;
         Sound.Play("coin");
-        Actor hud = Scene.Find("HUD Gold");
-        if (hud != null) hud.SetLabelNumber(Game.gold, 1);
+        UI.SetNumber("Gold", Game.gold, 1);
         return 1;
     }
 }
@@ -534,12 +526,9 @@ public static class BattleRules
     // Writes the hit points into the three HUD text labels.
     static void Show()
     {
-        Actor hero = Scene.Find("HUD Hero");
-        if (hero != null) hero.SetLabelNumber(Game.heroHp, 2);
-        Actor mage = Scene.Find("HUD Mage");
-        if (mage != null) mage.SetLabelNumber(Game.mageHp, 2);
-        Actor foe = Scene.Find("HUD Enemy");
-        if (foe != null) foe.SetLabelNumber(enemyHp < 0 ? 0 : enemyHp, 2);
+        UI.SetNumber("Hero", Game.heroHp, 2);
+        UI.SetNumber("Mage", Game.mageHp, 2);
+        UI.SetNumber("Enemy", enemyHp < 0 ? 0 : enemyHp, 2);
     }
 }
 """);

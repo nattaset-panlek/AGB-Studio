@@ -51,6 +51,10 @@ rows it does not need and keeps its bottom edge), and a scene can open any page 
 Opens in scene: a title screen). Buttons can Load Scene, Open Options, Continue Game (save slot in Data) or Quit To Title. New
 templates are made this way.
 
+A page with **Scene plays** on that a scene opens (Page › Opens in scene) is that scene's **HUD**: it stays over the game while it
+plays and takes no keys, and the pause menu opens over it. Scripts set its elements by name, whichever page is on top:
+`UI.SetNumber("Score", score, 4)`, `UI.SetText("Banner", "brawl.go")`. The Hud preset starts one.
+
 A preset works with no file in the project: name it in a script and the build adds it. A page of the same name in `ui/` is
 used instead. The Input Field takes English letters, digits, space and `. - '`.
 

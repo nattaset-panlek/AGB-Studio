@@ -597,7 +597,7 @@ public sealed class UiEditorPage : DockPanel
     string SceneOpening()
     {
         if (_lib.Project is not { } p) return "";
-        return p.SceneFiles().FirstOrDefault(f => GameProject.Load<SceneFile>(f).Page == _lib.PageName) is { } hit ? GameProject.AssetName(hit) : "";
+        return p.SceneFiles().FirstOrDefault(f => GameProject.Load<SceneFile>(f) is var s && (s.Page == _lib.PageName || s.Hud == _lib.PageName)) is { } hit ? GameProject.AssetName(hit) : "";
     }
 
     void SetSceneOpening(string scene)
@@ -607,9 +607,14 @@ public sealed class UiEditorPage : DockPanel
         {
             var s = GameProject.Load<SceneFile>(f);
             var wanted = GameProject.AssetName(f) == scene;
-            if (wanted && s.Page != _lib.PageName) s.Page = _lib.PageName;
-            else if (!wanted && s.Page == _lib.PageName) s.Page = "";
-            else continue;
+            // A page the scene keeps playing under is its HUD; any other is a screen it opens with, such as a title.
+            var hud = _lib.Page?.ScenePlays == true;
+            var has = s.Page == _lib.PageName || s.Hud == _lib.PageName;
+            if (wanted == has && (!wanted || (hud ? s.Hud : s.Page) == _lib.PageName)) continue;
+            if (s.Page == _lib.PageName) s.Page = "";
+            if (s.Hud == _lib.PageName) s.Hud = "";
+            if (wanted && hud) s.Hud = _lib.PageName;
+            else if (wanted) s.Page = _lib.PageName;
             GameProject.Save(f, s);
         }
         OnChanged();

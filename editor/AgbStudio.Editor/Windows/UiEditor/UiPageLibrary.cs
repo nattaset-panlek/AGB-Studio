@@ -222,6 +222,16 @@ public sealed class UiPageLibrary
             Page.Name = pageName;
             GameProject.Save(from, Page);
             File.Move(from, to);
+            // The scenes that open this page go with it.
+            foreach (var f in Project?.SceneFiles() ?? [])
+            {
+                var s = GameProject.Load<SceneFile>(f);
+                var from1 = pageName == oldName ? name : oldName;
+                var hit = s.Page == from1 || s.Hud == from1;
+                if (s.Page == from1) s.Page = pageName;
+                if (s.Hud == from1) s.Hud = pageName;
+                if (hit) GameProject.Save(f, s);
+            }
             Open(to);
         }
         _s.Undo.Do(new DelegateAction("Rename page", () => Move(newPath, oldPath, oldName), () => Move(oldPath, newPath, name)));

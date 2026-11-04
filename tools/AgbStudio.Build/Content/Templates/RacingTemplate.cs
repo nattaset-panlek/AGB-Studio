@@ -220,6 +220,7 @@ public static class RacingTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#3C78B4", "Circuit", "title_theme"));
         var race = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", false, ("Lap", "hud.lap", 8, 4, 64), ("Time", "hud.time", 160, 4, 72), ("Best", "hud.best", 160, 20, 72), ("Status", "race.ready", 96, 60, 88)),
             Name = "Circuit", Width = Side, Height = Side, Map = "Circuit", Backdrop = "#58A040", VideoMode = 1, MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "race_theme" },
             Camera = new CameraSettings { Follow = "", ClampToMap = false },
@@ -231,10 +232,6 @@ public static class RacingTemplate
                     Components = { new ComponentData { Type = "Rival", Fields = { ["speed"] = "2.6", ["lane"] = "-20", ["start"] = "170" } } } },
                 new ActorData { Name = "Rival 2", Kind = ActorKind.Enemy, Sprite = "rival", Animation = "far", X = 0, Y = -32, Priority = 1, Group = "Rivals",
                     Components = { new ComponentData { Type = "Rival", Fields = { ["speed"] = "2.3", ["lane"] = "20", ["start"] = "200" } } } },
-                new ActorData { Name = "HUD Lap", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.lap", Group = "HUD" },
-                new ActorData { Name = "HUD Time", Kind = ActorKind.TextLabel, X = 160, Y = 4, Text = "hud.time", Group = "HUD" },
-                new ActorData { Name = "HUD Best", Kind = ActorKind.TextLabel, X = 160, Y = 20, Text = "hud.best", Group = "HUD" },
-                new ActorData { Name = "HUD Status", Kind = ActorKind.TextLabel, X = 96, Y = 60, Text = "race.ready", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Circuit.scene"), race);
@@ -250,10 +247,6 @@ public static class RacingTemplate
             ["Player"] = "Your kart. The Kart script keeps its own floor position and heading, drives, counts laps with the Check and Finish tile tags, and moves the Mode 7 camera behind it; the sprite stays at the bottom middle of the screen.",
             ["Rival 1"] = "Computer kart: the Rival script drives it round the centre line at its own speed and lane, and draws it where it shows on the floor (smaller when far away).",
             ["Rival 2"] = "A slower computer kart on the other lane.",
-            ["HUD Lap"] = "Text label with the lap number.",
-            ["HUD Time"] = "Text label with the race time in seconds.",
-            ["HUD Best"] = "Text label with the best time, kept in the save data.",
-            ["HUD Status"] = "Text label in the middle of the screen: Ready, GO! and Finish!",
         },
         [
             "Select Player and change `topSpeed`, `accel` or `grassSpeed` of Kart, or `laps` for a longer race.",
@@ -289,13 +282,11 @@ public class Kart : Behaviour
     int timer;
     int countdown = 120;          // two seconds of "Ready..."
     int finished;
-    Actor status;
 
     // Start runs once, when the scene has loaded the actor.
     void Start()
     {
         // Scene.Find looks an actor up by its Hierarchy name.
-        status = Scene.Find("HUD Status");
         UpdateHud();
         Show();
     }
@@ -309,8 +300,8 @@ public class Kart : Behaviour
             if (countdown == 0)
             {
                 Sound.Play("go");
-                // SetLabelText puts another string key into a text label.
-                if (status != null) status.SetLabelText("race.go");
+                // UI.SetText puts another string key into an element of the HUD page (ui/Hud.uipage).
+                UI.SetText("Status", "race.go");
             }
             Show();
             return;
@@ -326,7 +317,7 @@ public class Kart : Behaviour
             return;
         }
         timer += 1;
-        if (timer == 60) if (status != null) status.SetLabelText("race.empty");
+        if (timer == 60) UI.SetText("Status", "race.empty");
         Drive();
         Move();
         CountLaps();
@@ -379,7 +370,7 @@ public class Kart : Behaviour
         if (lap == laps)
         {
             finished = 1;
-            if (status != null) status.SetLabelText("race.finish");
+            UI.SetText("Status", "race.finish");
             // Game.best is a save field (Project Settings > Save): the best time in frames.
             if (Game.best == 0 || timer < Game.best) Game.best = timer;
             UpdateHud();
@@ -404,13 +395,10 @@ public class Kart : Behaviour
 
     void UpdateHud()
     {
-        // SetLabelNumber writes a number with leading zeros into a text label.
-        Actor lapLabel = Scene.Find("HUD Lap");
-        if (lapLabel != null) lapLabel.SetLabelNumber(lap, 1);
-        Actor time = Scene.Find("HUD Time");
-        if (time != null) time.SetLabelNumber(timer / 60, 3);
-        Actor best = Scene.Find("HUD Best");
-        if (best != null) best.SetLabelNumber(Game.best / 60, 3);
+        // UI.SetNumber writes a number with leading zeros into an element of the HUD page (ui/Hud.uipage).
+        UI.SetNumber("Lap", lap, 1);
+        UI.SetNumber("Time", timer / 60, 3);
+        UI.SetNumber("Best", Game.best / 60, 3);
     }
 }
 """);

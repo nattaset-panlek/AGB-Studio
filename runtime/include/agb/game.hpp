@@ -81,6 +81,7 @@ struct SceneDef {
     const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
     u16 musicVolume = 256;        // World Map inspector music Volume (0..256): the game's music volume for `music`
     const char* page = nullptr;   // a UI page opened when the scene has entered: a title screen (nullptr = none)
+    bool pageIsHud = false;       // that page stays over the scene while it plays, and the game goes on (Scene › Hud)
 };
 
 // A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.
@@ -123,7 +124,7 @@ struct GameDef {
 
 namespace game {
 
-constexpr int kMaxScreens = 4;
+constexpr int kMaxScreens = 5;
 
 // Boots a generated game: system, save, audio, input actions, then the start scene. Never returns.
 [[noreturn]] void run(const GameDef& def);

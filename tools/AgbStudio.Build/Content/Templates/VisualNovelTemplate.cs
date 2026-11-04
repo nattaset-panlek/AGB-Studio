@@ -156,6 +156,7 @@ public static class VisualNovelTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#F89860", "Story", "title_theme"));
         var story = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", false, ("Speaker", "speaker.none", 16, 97, 104)),
             Name = "Story", Width = 15, Height = 10, Map = "Story", Backdrop = "#F89860", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "sunset_theme" },
             Camera = new CameraSettings { Follow = "" },
@@ -164,7 +165,6 @@ public static class VisualNovelTemplate
                 new ActorData { Name = "Story", Kind = ActorKind.Empty, X = 120, Y = 8, Components = { new ComponentData { Type = "Story" } } },
                 new ActorData { Name = "Hopper", Kind = ActorKind.Empty, Sprite = "hopper_portrait", Animation = "neutral", X = 56, Y = 96, Tag = "Portrait", Priority = 1 },
                 new ActorData { Name = "Owl", Kind = ActorKind.Empty, Sprite = "owl_portrait", X = 184, Y = 96, Tag = "Portrait", Priority = 1, Hidden = true },
-                new ActorData { Name = "Speaker Tag", Kind = ActorKind.TextLabel, X = 16, Y = 97, Text = "speaker.none", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Story.scene"), story);
@@ -180,7 +180,6 @@ public static class VisualNovelTemplate
             ["Story"] = "Invisible director: the Story script runs the whole scene as one cutscene (lines, the choice, the ending) when the scene starts.",
             ["Hopper"] = "Portrait sprite with the animations neutral, happy and worried; Stage.Mood picks one between lines.",
             ["Owl"] = "Second portrait, hidden until the owl speaks for the first time (Stage.Speaker shows it).",
-            ["Speaker Tag"] = "Text label above the dialogue box with the name of who is speaking; Stage.Speaker changes its string key.",
         },
         [
             "Add lines: write new keys in Localization, then add `await Say(\"your.key\");` lines in Story.cs.",
@@ -252,15 +251,10 @@ public static class Stage
     [ScriptNative]
     public static void Speaker(int who)
     {
-        // Scene.Find looks an actor up by its Hierarchy name.
-        Actor tag = Scene.Find("Speaker Tag");
-        if (tag != null)
-        {
-            // SetLabelText puts another string key into a text label.
-            if (who == 1) tag.SetLabelText("speaker.hopper");
-            else if (who == 2) tag.SetLabelText("speaker.owl");
-            else tag.SetLabelText("speaker.none");
-        }
+        // UI.SetText puts another string key into an element of the HUD page (ui/Hud.uipage).
+        if (who == 1) UI.SetText("Speaker", "speaker.hopper");
+        else if (who == 2) UI.SetText("Speaker", "speaker.owl");
+        else UI.SetText("Speaker", "speaker.none");
         Actor owl = Scene.Find("Owl");
         if (owl != null && who == 2) owl.visible = true;   // the Owl starts hidden (Inspector: Hidden)
         Sound.Play("blip");

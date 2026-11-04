@@ -329,6 +329,9 @@
     "page": {
       "type": "string"
     },
+    "hud": {
+      "type": "string"
+    },
     "mapX": {
       "type": "integer"
     },

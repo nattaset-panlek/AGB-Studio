@@ -21,6 +21,7 @@ public sealed class SceneFile
     public string Backdrop { get; set; } = "#000000";
     public SceneMenu? Menu { get; set; }    // title screens (Menu / UI kit)
     public string Page { get; set; } = "";  // a UI page (ui/<Name>.uipage) that opens when the scene has entered: a title screen
+    public string Hud { get; set; } = "";   // a UI page that stays over the scene while it plays: scores, lives, a timer
     // World Map card position and the template it started from.
     public int MapX { get; set; }
     public int MapY { get; set; }

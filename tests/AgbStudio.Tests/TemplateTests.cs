@@ -111,7 +111,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void PlatformerPlaysThroughToTheGoal()
     {
         var (p, r) = Build("platformer");
-        Assert.Equal("Mode 0 · 3 BG layers · 9 actors · 4 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 3 BG layers · 7 actors · 4 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -248,6 +248,42 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.Equal("Renamed", UiPageLinks.LoadSceneButtons(p, title).Single().Action.Target);
     }
 
+    // A HUD is a UI page the game goes on under: the scene keeps running, Start opens the pause menu over it, and in Mode 7 it
+    // gives its memory to the Options page and comes back.
+    [Fact]
+    public void RacingHud_StaysWhileTheGamePlays_AndUnderThePauseAndOptionsPages()
+    {
+        var (p, r) = Build("racing");
+        var hud = GameProject.Load<UiPageFile>(Path.Combine(p.UiDir, "Hud.uipage"));
+        Assert.True(hud.ScenePlays);
+        Assert.False(hud.Cancel);
+        Assert.Contains(p.SceneFiles().Select(GameProject.Load<SceneFile>), s => s.Hud == "Hud");
+        Assert.DoesNotContain(p.SceneFiles().Select(GameProject.Load<SceneFile>).SelectMany(s => s.Actors), a => a.Kind == ActorKind.TextLabel);
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 120; i++) s.Step();
+        Press(s, GbaKeys.A);  // Start
+        for (var i = 0; i < 180; i++) s.Step();
+        Assert.Contains("UI page Hud opened", s.Log);
+        Assert.DoesNotContain("UI page Hud closed", s.Log);
+        Press(s, GbaKeys.Start);
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.Contains("UI page Pause opened", s.Log);
+        Press(s, GbaKeys.Down);
+        for (var i = 0; i < 8; i++) s.Step();
+        Press(s, GbaKeys.A);
+        for (var i = 0; i < 60; i++) s.Step();
+        Assert.Contains("UI page Options opened", s.Log);
+        Assert.DoesNotContain(s.Log, l => l.Contains("did not open", StringComparison.Ordinal));
+        Press(s, GbaKeys.B);
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.Equal(2, s.Log.Count(l => l == "UI page Pause opened"));
+        Press(s, GbaKeys.B);
+        for (var i = 0; i < 40; i++) s.Step();
+        Assert.DoesNotContain("UI page Hud closed", s.Log);
+        Assert.DoesNotContain(s.Log, l => l.Contains("took longer than one frame", StringComparison.Ordinal));
+    }
+
     // Mode 7 leaves the least background memory: the Options page takes the place of the page that opened it, which comes
     // back with its cursor when Options closes.
     [Fact]
@@ -335,7 +371,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void VisualNovelTellsTheStoryAndRemembersTheChoice()
     {
         var (p, r) = Build("visualnovel");
-        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 3 actors · 2 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -375,7 +411,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void PuzzleDropsPairsClearsLinesAndEnds()
     {
         var (p, r) = Build("puzzle");
-        Assert.Equal("Mode 0 · 1 BG layers · 4 actors · 2 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 1 BG layers · 2 actors · 2 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -413,7 +449,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void ShootEmUpScrollsFiresAndClearsTheStage()
     {
         var (p, r) = Build("shmup");
-        Assert.Equal("Mode 0 · 2 BG layers · 8 actors · 4 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 2 BG layers · 6 actors · 4 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();
@@ -501,7 +537,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void RacingDrivesTheMode7CircuitAndCountsLaps()
     {
         var (p, r) = Build("racing");
-        Assert.Equal("Mode 1 · 2 BG layers · 7 actors · 2 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 1 · 2 BG layers · 3 actors · 2 scripts", TemplateInfo.Stats(p));
         // The Mode 7 line table (161 lines x PA, PC, X, Y): the floor point under the kart sprite (120, 136) and the
         // heading come from line 136, so the test can steer like a player looking at the screen.
         var table = (uint)BuildReport.Symbols(new Toolchain(), r.ElfPath).Single(x => x.Name == "g_table" && x.Size == 161 * 16).Address;
@@ -574,7 +610,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     public void BeatEmUpFightsThroughTheWavesWithCombos()
     {
         var (p, r) = Build("brawler");
-        Assert.Equal("Mode 0 · 3 BG layers · 7 actors · 3 scripts", TemplateInfo.Stats(p));
+        Assert.Equal("Mode 0 · 3 BG layers · 3 actors · 3 scripts", TemplateInfo.Stats(p));
         var s = new PlaySession(emu.Core);
         s.Start(r.RomPath);
         for (var i = 0; i < 40; i++) s.Step();

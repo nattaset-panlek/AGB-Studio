@@ -1,3 +1,4 @@
+#include "agb/system.hpp"
 #include "agb/ui.hpp"
 
 #include <new>
@@ -391,6 +392,9 @@ private:
     Menu menu_;
 };
 
+void unmapOpenPages();
+void remapOpenPages();
+
 class OptionsScreen final : public Screen {
 public:
     const char* name() const override { return "options"; }
@@ -399,6 +403,7 @@ public:
     void enter() override {
         const Kit& k = *g_kit;
         const int textBg = text::layer();
+        unmapOpenPages();  // a HUD under it would show through
         restore_.take();
         backdrop_ = render::palettes::baseColor(0);
         for (int b = 0; b < 4; ++b) shown_[b] = render::bg::visible(b);
@@ -483,6 +488,7 @@ public:
         render::bg::setObjVisible(objShown_);
         render::palettes::setBackdrop(backdrop_);
         restore_.give();
+        remapOpenPages();
         if (dirty_) saveOptions();
         dirty_ = false;
         debug::log("Options closed");
@@ -595,9 +601,12 @@ AGB_EWRAM_BSS u8 g_pauseStorage[sizeof(PauseScreen)] AGB_ALIGN4;
 AGB_EWRAM_BSS u8 g_optionsStorage[sizeof(OptionsScreen)] AGB_ALIGN4;
 
 bool isPage(const Screen* s);
+bool isHud(const Screen* s);
+void unmapOpenPages();
+void remapOpenPages();
 
 bool isOverlay(const Screen* s) {
-    return s && (isPage(s) || s == reinterpret_cast<const Screen*>(g_pauseStorage) || s == reinterpret_cast<const Screen*>(g_optionsStorage));
+    return s && ((isPage(s) && !isHud(s)) || s == reinterpret_cast<const Screen*>(g_pauseStorage) || s == reinterpret_cast<const Screen*>(g_optionsStorage));
 }
 }  // namespace
 
@@ -708,6 +717,7 @@ const char* const kKeyRowsText[kKeyRows - 1] = {"ABCDEFGHIJKLM", "NOPQRSTUVWXYZ"
 
 class PageScreen;
 bool optionsInsteadOfPage(const PageScreen& from, int focus);
+u32 g_updateStart = 0;  // when this frame's page update began
 
 // The Options page takes the place of the page that opened it, so a game with little background memory (Mode 7) has room
 // for it, and that page comes back when it closes.
@@ -740,6 +750,21 @@ public:
     }
 
     bool isOptions() const { return options_; }
+    bool hud() const { return hud_; }
+    void makeHud() { hud_ = true; focus_ = -1; }
+
+    // A HUD lets the Options page have its background memory, which a Mode 7 game has little of. Everything it shows is
+    // kept here, so it draws again when Options closes.
+    void sleepPanel() {
+        if (!ready_) return;
+        box_.unmap(text::blankEntry());
+        box_.release();
+        screenArena().rewind(restore_.arena);
+        render::bg::rewind(restore_.vram);
+        if (restore_.textBg >= 0) render::bg::configure(restore_.textBg, restore_.textConfig);
+        ready_ = false;
+        asleep_ = true;
+    }
 
     // The page comes back with the cursor where the player left it.
     void restoreFocus(int i) {
@@ -757,7 +782,10 @@ public:
         const int bg = text::layer();
         text::reserveBoxes();  // the dialogue box outlives this page: its memory must not be given back when the page closes
         restore_.take();
-        if (options_) hideScene();
+        if (options_) {
+            unmapOpenPages();  // a HUD under it would show through
+            hideScene();
+        }
         render::palettes::setBank(false, kBank, g_pages->palette);
         debug::logf("UI page %s opened", def_.name);
         drawnLanguage_ = text::language();
@@ -771,6 +799,11 @@ public:
                 if (b != bg) targets = static_cast<u8>(targets | (1u << b));
             render::effects::setBrightness(targets, -static_cast<int>(def_.dim));
         }
+        makePanel();
+    }
+
+    void makePanel() {
+        const int bg = text::layer();
         const u8 charBlock = bg >= 0 ? render::bg::config(bg).charBlock : 0;
         if (bg < 0 || !box_.init(bg, def_.tileX, def_.tileY, def_.widthTiles, def_.heightTiles, kBank, render::TextBox::Style{kInk, 0, 0})) {
             debug::warnOnce(22, "A UI page did not open: there is no background memory left for its panel. Make the page smaller or use fewer map tiles in this scene.");
@@ -784,7 +817,7 @@ public:
         // A control that starts disabled or hidden gives the cursor away; so does a list row out of view.
         if (focus_ >= 0 && !canFocus(focus_)) moveAway();
         if (focus_ >= 0) settleScroll(focus_);
-        drawNext_ = static_cast<s16>(def_.tileY * 8);  // pump() draws it: making the panel is enough for this frame
+        beginPass(0, 0, 240, 160);  // pump() draws it: making the panel is enough for this frame
     }
 
     void update() override {
@@ -797,7 +830,7 @@ public:
             return;
         }
         if (reopenPageAfterOptions()) return;
-        pumpOpenPages();
+        g_updateStart = profile::cyclesNow();
         render::palettes::update();
         const bool wasOpen = text::open();
         if (!text::waiting()) handleInput();
@@ -813,6 +846,7 @@ public:
             if (text::open() && !text::waiting() && !script::cutsceneRunning()) text::close();
         }
         if (wasOpen && !text::open()) remapOpenPages();
+        pumpOpenPages();
     }
 
     void exit() override {
@@ -828,12 +862,18 @@ public:
     }
 
     void resume() override {
+        if (asleep_) {
+            asleep_ = false;
+            shownOnScreen_ = false;
+            passNext_ = -1;
+            makePanel();
+        }
         remapOpenPages();
         if (text::open()) text::box().remap();
         restorePalette();
         if (drawnLanguage_ != text::language()) {  // the Options page over this one changed the language
             drawnLanguage_ = text::language();
-            drawNext_ = static_cast<s16>(def_.tileY * 8);
+            beginPass(0, 0, 240, 160);
         }
     }
 
@@ -879,7 +919,7 @@ public:
         text::setLanguage(static_cast<u8>((text::language() + way + n) % n));
         drawnLanguage_ = text::language();
         optionsDirty_ = true;
-        redraw(0, 0, 240, 160);
+        beginPass(0, 0, 240, 160);
     }
 
     void waitForRemap() {
@@ -904,9 +944,9 @@ public:
     // page that opened in the frame another opened over it still has to arrive.
     void pump() {
         if (!ready_) return;
-        drawBand();
+        drawPending();
         box_.update();
-        if (!shownOnScreen_ && drawNext_ < 0 && !box_.uploading()) {
+        if (!shownOnScreen_ && passNext_ < 0 && !dirty_ && !box_.uploading()) {
             shownOnScreen_ = true;
             remapOpenPages();
             if (text::open()) text::box().remap();
@@ -1078,6 +1118,7 @@ private:
     bool canFocus(int i) const { return shown(i) && enabled(i); }
 
     void handleInput() {
+        if (hud_) return;  // the keys are the game's
         if (remapWait_ >= 0) {
             waitForRemap();
             return;
@@ -1341,15 +1382,7 @@ private:
 
     void redrawScroll(int s) {
         const ElementDef& v = def_.elements[s];
-        // A long list goes a band at a time too: a whole list in one frame is more than a frame's work.
-        if (drawNext_ < 0) {
-            drawNext_ = v.y;
-            drawEnd_ = static_cast<s16>(v.y + v.h);
-            drawBand();
-        } else if (v.y < drawNext_) {
-            drawNext_ = v.y;
-            drawEnd_ = -1;
-        }
+        beginPass(v.x, v.y, v.w, v.h);
         for (int i = 0; i < def_.count; ++i)
             if (def_.elements[i].kind == ElementKind::Scrollbar && def_.elements[i].scrollTarget == s) redrawElement(i);
     }
@@ -1366,12 +1399,25 @@ private:
         if (h > box_.heightPx() - y) h = box_.heightPx() - y;
         if (w <= 0 || h <= 0) return;
         const int rx = x, ry = y, rr = x + w, rb = y + h;
+        box_.fillRect(x, y, w, h, 0);
+        drawElements(rx, ry, rr, rb, 0, 0);
+    }
+
+    // Draws the elements inside a rectangle of the panel, parents first, from `from`. With a budget it stops when that many
+    // cycles have gone and gives the element to go on from; -1 = all of them are drawn.
+    int drawElements(int rx, int ry, int rr, int rb, int from, u32 budget) {
+        const int ox = def_.tileX * 8, oy = def_.tileY * 8;
+        const u32 start = profile::cyclesNow();
         clipX_ = rx;
         clipY_ = ry;
         clipR_ = rr;
         clipB_ = rb;
-        box_.fillRect(x, y, w, h, 0);
-        for (int i = 0; i < def_.count; ++i) {
+        for (int i = from; i < def_.count; ++i) {
+            if (budget && i > from && profile::cyclesNow() - start >= budget) {
+                box_.clearClip();
+                box_.update();
+                return i;
+            }
             const ElementDef& e = def_.elements[i];
             if (!shown(i)) continue;
             const int ex = e.x - ox, ey = e.y - oy + offsetY(i);
@@ -1401,23 +1447,54 @@ private:
         if (inputOpen_ >= 0) drawKeyboard();
         box_.clearClip();
         box_.update();
+        return -1;
     }
 
-    // The first draw goes a band at a time, so a large page opening never takes longer than a frame. It shows when all of
-    // it is drawn and copied. What changes meanwhile is drawn from the same state, so a band draws it right.
-    void drawBand() {
-        if (drawNext_ < 0) return;
-        redraw(0, drawNext_, 240, kDrawBand);
-        drawNext_ = static_cast<s16>(drawNext_ + kDrawBand);
-        if (drawNext_ >= (drawEnd_ >= 0 ? drawEnd_ : (def_.tileY + def_.heightTiles) * 8)) {
-            drawNext_ = -1;
-            drawEnd_ = -1;
+    // A large redraw goes over several frames, element by element: the page's first draw, a language change, a long list. It
+    // shows when all of it is drawn and copied. What changes meanwhile is drawn from the same state, so the pass draws it right.
+    void beginPass(int x, int y, int w, int h) {
+        x -= def_.tileX * 8;
+        y -= def_.tileY * 8;
+        if (x < 0) { w += x; x = 0; }
+        if (y < 0) { h += y; y = 0; }
+        if (w > box_.widthPx() - x) w = box_.widthPx() - x;
+        if (h > box_.heightPx() - y) h = box_.heightPx() - y;
+        if (w <= 0 || h <= 0) return;
+        int r = x + w, b = y + h;
+        if (passNext_ >= 0) {  // one is under way: it starts again over both
+            if (passX_ < x) x = passX_;
+            if (passY_ < y) y = passY_;
+            if (passR_ > r) r = passR_;
+            if (passB_ > b) b = passB_;
         }
+        passX_ = static_cast<s16>(x);
+        passY_ = static_cast<s16>(y);
+        passR_ = static_cast<s16>(r);
+        passB_ = static_cast<s16>(b);
+        passNext_ = 0;
+        box_.fillRect(x, y, r - x, b - y, 0);
     }
 
-    void redrawElement(int i) {
-        const ElementDef& e = def_.elements[i];
-        redraw(e.x, e.y + offsetY(i), e.w, e.h);
+    // Changes wait for pump(), so a script changing many elements in a frame draws each once, as time allows.
+    void redrawElement(int i) { dirty_ |= 1ull << i; }
+
+    // Draws what is waiting for as long as this frame can spare, and the rest next frame. At least one thing goes each frame.
+    void drawPending() {
+        if (passNext_ < 0 && !dirty_) return;
+        // What this frame's scripts and input left of the frame. With nothing left, one element still goes.
+        const u32 start = profile::cyclesNow(), used = start - g_updateStart;
+        const u32 budget = used < kDrawCycles ? kDrawCycles - used : 1;
+        if (passNext_ >= 0) {
+            passNext_ = static_cast<s8>(drawElements(passX_, passY_, passR_, passB_, passNext_, budget));
+            if (passNext_ >= 0) return;
+        }
+        for (int i = 0; i < def_.count && dirty_; ++i) {
+            if (!(dirty_ & (1ull << i))) continue;
+            dirty_ &= ~(1ull << i);
+            const ElementDef& e = def_.elements[i];
+            redraw(e.x, e.y + offsetY(i), e.w, e.h);
+            if (profile::cyclesNow() - start >= budget) return;
+        }
     }
 
     void fill(int x, int y, int w, int h, u8 index) {
@@ -1810,9 +1887,11 @@ private:
     Values values_[kMaxValues] = {};
     s8 scrollElement_[kMaxScrollRects] = {};
     s16 scroll_[kMaxScrollRects] = {};
-    static constexpr int kDrawBand = 32;
-    s16 drawNext_ = -1;  // where the first draw has reached, -1 = done
-    s16 drawEnd_ = -1;   // where it stops, -1 = the page's bottom
+    static constexpr u32 kDrawCycles = profile::kCyclesPerFrame / 4;
+    u64 dirty_ = 0;  // elements waiting to be drawn again
+    s16 passX_ = 0, passY_ = 0, passR_ = 0, passB_ = 0;  // the rectangle a pass is drawing
+    s8 passNext_ = -1;   // the element it goes on from, -1 = none under way
+    bool hud_ = false, asleep_ = false;
     bool options_ = false, optionsDirty_ = false;
     bool sceneShown_[4] = {};
     u16 backdrop_ = 0;
@@ -1829,6 +1908,41 @@ private:
 PageScreen* g_pageStorage = nullptr;
 
 PageScreen* storedPage(int slot) { return g_pageStorage + slot; }
+
+bool isHud(const Screen* s) { return isPage(s) && static_cast<const PageScreen*>(s)->hud(); }
+
+// Behaviours start during the scene's load, and the HUD opens when the load has ended: what they set waits here.
+struct EarlyHudSet {
+    const char* element;
+    s32 a, b;
+    s16 key;
+    s8 count, digits;
+    bool text;
+};
+constexpr int kMaxEarlyHudSets = 16;
+AGB_EWRAM_BSS EarlyHudSet g_earlyHud[kMaxEarlyHudSets];
+u8 g_earlyHudCount = 0;
+bool g_hudExpected = false;
+
+void keepForHud(const EarlyHudSet& set) {
+    for (int i = 0; i < g_earlyHudCount; ++i)
+        if (sameName(g_earlyHud[i].element, set.element) && g_earlyHud[i].text == set.text) {
+            g_earlyHud[i] = set;
+            return;
+        }
+    if (g_earlyHudCount < kMaxEarlyHudSets) g_earlyHud[g_earlyHudCount++] = set;
+}
+
+// Scripts name an element: the top page that has it, so a HUD under a menu keeps up.
+PageScreen* pageHolding(const char* element, int& index) {
+    if (!g_pageStorage) return nullptr;
+    for (int d = game::depth() - 1; d >= 0; --d) {
+        if (!isPage(game::at(d))) continue;
+        PageScreen* p = static_cast<PageScreen*>(game::at(d));
+        if ((index = p->find(element)) >= 0) return p;
+    }
+    return nullptr;
+}
 
 bool isPage(const Screen* s) {
     if (!g_pageStorage) return false;
@@ -1864,7 +1978,9 @@ bool optionsInsteadOfPage(const PageScreen& from, int focus) {
     g_returnData = static_cast<s16>(from.data());
     g_returnFocus = static_cast<s16>(focus);
     game::pop();
+    if (isHud(game::top())) static_cast<PageScreen*>(game::top())->sleepPanel();
     if (!openPage(options, 0)) {
+        if (isHud(game::top())) game::top()->resume();
         openPage(self, g_returnData);
         if (PageScreen* p = topPage()) p->restoreFocus(g_returnFocus);
         return true;
@@ -1913,6 +2029,28 @@ void setPages(const PageSet* pages) { g_pages = pages; }
 void forgetPageMemory() { g_pageStorage = nullptr; }
 
 bool reopenAfterOptions() { return reopenPageAfterOptions(); }
+
+void expectHud(bool expected) {
+    g_hudExpected = expected;
+    g_earlyHudCount = 0;
+}
+
+bool openHudPage(const char* name) {
+    g_hudExpected = false;
+    if (!openPage(name, 0)) return false;
+    PageScreen* p = topPage();
+    if (!p) return false;
+    p->makeHud();
+    for (int k = 0; k < g_earlyHudCount; ++k) {
+        const EarlyHudSet& set = g_earlyHud[k];
+        const int i = p->find(set.element);
+        if (i < 0) continue;
+        if (set.text) p->setText(i, Label{set.key, nullptr});
+        else p->setValues(i, set.a, set.b, set.count, set.digits);
+    }
+    g_earlyHudCount = 0;
+    return true;
+}
 
 bool openPage(int index, int data) {
     if (!g_pages || index < 0 || index >= g_pages->count) {
@@ -2018,18 +2156,19 @@ bool pollPageChoice(s32& result) {
 }
 
 void setPageHidden(const char* element, bool hidden) {
-    if (PageScreen* p = topPage())
-        if (const int i = p->find(element); i >= 0) p->setHidden(i, hidden);
+    int i = -1;
+    if (PageScreen* p = pageHolding(element, i)) p->setHidden(i, hidden);
 }
 
 void setPageAmount(const char* element, int amount) {
-    if (PageScreen* p = topPage())
-        if (const int i = p->find(element); i >= 0) p->setAmount(i, amount);
+    int i = -1;
+    if (PageScreen* p = pageHolding(element, i)) p->setAmount(i, amount);
 }
 
 void setPageText(const char* element, const Label& label) {
-    if (PageScreen* p = topPage())
-        if (const int i = p->find(element); i >= 0) p->setText(i, label);
+    int i = -1;
+    if (PageScreen* p = pageHolding(element, i)) p->setText(i, label);
+    else if (g_hudExpected && label.key >= 0) keepForHud(EarlyHudSet{element, 0, 0, label.key, 0, 0, true});
 }
 
 void setPageOn(const char* element, bool on) {
@@ -2050,8 +2189,9 @@ int pageAmount(const char* element) {
 }
 
 void setPageValues(const char* element, s32 a, s32 b, int count, int digits) {
-    if (PageScreen* p = topPage())
-        if (const int i = p->find(element); i >= 0) p->setValues(i, a, b, count, digits);
+    int i = -1;
+    if (PageScreen* p = pageHolding(element, i)) p->setValues(i, a, b, count, digits);
+    else if (g_hudExpected) keepForHud(EarlyHudSet{element, a, b, -1, static_cast<s8>(count), static_cast<s8>(digits), false});
 }
 
 void setPageFocus(const char* element) {

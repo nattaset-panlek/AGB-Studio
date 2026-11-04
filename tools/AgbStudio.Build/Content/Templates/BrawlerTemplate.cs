@@ -244,6 +244,7 @@ public static class BrawlerTemplate
         GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#402868", "Pier", "title_theme"));
         var pier = new SceneFile
         {
+            Hud = TemplateKit.HudPage(p, "Hud", true, ("HP", "hud.hp", 8, 4, 64), ("Score", "hud.score", 80, 4, 96), ("Lives", "hud.lives", 184, 4, 48), ("Banner", "brawl.empty", 160, 40, 80)),
             Name = "Pier", Width = StageWidth, Height = 10, Map = "Pier", Backdrop = "#402868", MapX = 260, MapY = 60,
             Music = new MusicSettings { Track = "pier_theme" },
             Camera = new CameraSettings { Follow = "", ClampToMap = true },
@@ -254,10 +255,6 @@ public static class BrawlerTemplate
                 new ActorData { Name = "Waves", Kind = ActorKind.Empty, Components = { new ComponentData { Type = "Waves" } } },
                 new ActorData { Name = "Thug", Kind = ActorKind.Enemy, Sprite = "thug", Animation = "walk", X = 0, Y = -64, Tag = "Enemy", Hidden = true, Group = "Spawn Templates", Priority = 1,
                     Components = { new ComponentData { Type = "Thug" } } },
-                new ActorData { Name = "HUD HP", Kind = ActorKind.TextLabel, X = 8, Y = 4, Text = "hud.hp", Group = "HUD" },
-                new ActorData { Name = "HUD Score", Kind = ActorKind.TextLabel, X = 80, Y = 4, Text = "hud.score", Group = "HUD" },
-                new ActorData { Name = "HUD Lives", Kind = ActorKind.TextLabel, X = 184, Y = 4, Text = "hud.lives", Group = "HUD" },
-                new ActorData { Name = "HUD Banner", Kind = ActorKind.TextLabel, X = 176, Y = 40, Text = "brawl.empty", Group = "HUD" },
             },
         };
         GameProject.Save(Path.Combine(p.ScenesDir, "Pier.scene"), pier);
@@ -273,10 +270,6 @@ public static class BrawlerTemplate
             ["Player"] = "The fighter. The Fighter script walks it inside the floor band, runs the combo, opens a short hit window per attack and loses hit points and lives when a thug's strike lands.",
             ["Waves"] = "Invisible director: the Waves script scrolls the camera with the player, stops it at three points, spawns each wave of thugs and shows GO! or Stage clear!",
             ["Thug"] = "Spawn template of the enemy (hidden; Waves copies it with Scene.Spawn). The Thug script walks up beside the player, winds up and strikes, and takes hits from the player's attacks.",
-            ["HUD HP"] = "Text label with the player's hit points.",
-            ["HUD Score"] = "Text label with the score.",
-            ["HUD Lives"] = "Text label with the lives left.",
-            ["HUD Banner"] = "Text label on the right that shows GO! between waves and Stage clear! at the end.",
         },
         [
             "Select Player and change `speed` or `maxHp` of Fighter.",
@@ -415,13 +408,10 @@ public class Fighter : Behaviour
 
     public void UpdateHud()
     {
-        // Scene.Find looks an actor up by its Hierarchy name; SetLabelNumber writes into a text label.
-        Actor hpLabel = Scene.Find("HUD HP");
-        if (hpLabel != null) hpLabel.SetLabelNumber(hp, 2);
-        Actor score = Scene.Find("HUD Score");
-        if (score != null) score.SetLabelNumber(Game.score, 6);
-        Actor lives = Scene.Find("HUD Lives");
-        if (lives != null) lives.SetLabelNumber(Game.lives, 1);
+        // UI.SetNumber writes a number into an element of the HUD page (ui/Hud.uipage).
+        UI.SetNumber("HP", hp, 2);
+        UI.SetNumber("Score", Game.score, 6);
+        UI.SetNumber("Lives", Game.lives, 1);
     }
 }
 """);
@@ -552,12 +542,10 @@ public class Waves : Behaviour
     int goTimer;
     int clearTimer;
     Actor fighter;
-    Actor banner;
 
     void Start()
     {
         fighter = Scene.Find("Player");
-        banner = Scene.Find("HUD Banner");
     }
 
     void Update()
@@ -585,13 +573,13 @@ public class Waves : Behaviour
             if (wave == 3)
             {
                 clearTimer = 1;
-                // SetLabelText puts another string key into a text label.
-                if (banner != null) banner.SetLabelText("brawl.clear");
+                // UI.SetText puts another string key into an element of the HUD page (ui/Hud.uipage).
+                UI.SetText("Banner", "brawl.clear");
             }
             else
             {
                 goTimer = 90;
-                if (banner != null) banner.SetLabelText("brawl.go");
+                UI.SetText("Banner", "brawl.go");
             }
         }
         // The scene camera follows nobody (Main Camera: fixed); this script moves it.
@@ -601,7 +589,7 @@ public class Waves : Behaviour
         if (goTimer > 0)
         {
             goTimer -= 1;
-            if (goTimer == 0 && banner != null) banner.SetLabelText("brawl.empty");
+            if (goTimer == 0) UI.SetText("Banner", "brawl.empty");
         }
         if (clearTimer > 0)
         {
