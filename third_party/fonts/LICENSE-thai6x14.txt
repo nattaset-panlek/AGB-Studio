@@ -1,0 +1,6 @@
+thai6x14.bdf: Manop Thai 6x14, from https://github.com/tlwg/thaixfonts (manop/thai6x14.bdf).
+
+Thai glyphs by Manop Wongsaisuwan; the ASCII part comes from the 6x10 font of X11; charset fixes by Theppitak Karoonboonyanan.
+The font's COPYRIGHT property reads "Public domain font. Share and enjoy."
+The collection's COPYING file says of manop/*: "These are public domain fonts."
+The file is unchanged from the collection.

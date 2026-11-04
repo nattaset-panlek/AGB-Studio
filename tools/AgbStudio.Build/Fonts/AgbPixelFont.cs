@@ -28,7 +28,7 @@ public static partial class AgbPixelFont
     /// <summary>Every glyph of the font, by code point.</summary>
     public static IReadOnlyList<Glyph> Glyphs => s_glyphs ??= Parse(Art);
 
-    /// <summary>The .font settings of a project font made from this BDF (the default game font of new projects and templates).</summary>
+    /// <summary>The .font settings of a project font made from this BDF (ManopThaiFont is the default of new projects and templates).</summary>
     public static FontFile Settings(string name) => new()
     {
         Name = name, SourceKind = FontSourceKind.Bdf, Source = FileName, Size = 8, Variable = true,

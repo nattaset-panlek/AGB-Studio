@@ -562,6 +562,32 @@ public sealed partial class GameBuilder
     public IReadOnlyList<string> StringKeys => _stringKeys;
     public int StringKey(string key) => _stringKeys.IndexOf(key);
 
+    // Text between <b> and </b> uses another font: only the characters used that way go in, on the main font's baseline.
+    void AddEmphasis(string file, Fonts.GameFont font, string name, string allText)
+    {
+        var path = _p.FontFiles().FirstOrDefault(p => GameProject.AssetName(p) == name);
+        if (path == null)
+        {
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Emphasis font '{name}' is not in the fonts folder, so text between <b> and </b> shows in {font.Name}. Add the font, or pick another one."));
+            return;
+        }
+        var ef = GameProject.Load<FontFile>(path);
+        if (ef.Name.Length == 0) ef.Name = name;
+        if (ef.Bpp != font.Bpp)
+        {
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Emphasis font '{name}' is {ef.Bpp}bpp and {font.Name} is {font.Bpp}bpp, so text between <b> and </b> shows in {font.Name}. Give both the same Bits per pixel."));
+            return;
+        }
+        ef.CharacterSets = new List<string>();
+        ef.ExtraCharacters = "";
+        var cps = System.Text.RegularExpressions.Regex.Matches(allText, "<b>(.*?)</b>", System.Text.RegularExpressions.RegexOptions.Singleline)
+            .SelectMany(m => Fonts.ThaiText.CodePoints(m.Groups[1].Value)).Where(c => c >= 0x20).Append(0x20).Distinct().ToList();
+        var bold = Fonts.FontBuilder.Build(ef, _p.FontsDir, cps);
+        var shift = font.Baseline - bold.Baseline;
+        foreach (var g in bold.Glyphs.Values) g.Top += shift;
+        font.Emphasis = bold;  // lines stay the main font's height, so a word in bold does not change how many lines fit
+    }
+
     void ConvertText()
     {
         var tables = _p.StringTables().Select(f => (File: f, Table: GameProject.Load<StringTable>(f))).ToList();
@@ -576,6 +602,7 @@ public sealed partial class GameBuilder
             var ff = GameProject.Load<FontFile>(f);
             if (ff.Name.Length == 0) ff.Name = GameProject.AssetName(f);
             var font = Fonts.FontBuilder.Build(ff, _p.FontsDir, used);
+            if (ff.EmphasisFont.Length > 0) AddEmphasis(f, font, ff.EmphasisFont, allText);
             var fo = new Fonts.TextCodegen.FontOut { Font = font, Symbol = $"agbfont_{Cpp.Ident(ff.Name)}" };
             var cpp = Fonts.TextCodegen.FontCpp(fo);  // also fills the glyph index the strings use
             _fonts[ff.Name] = fo;

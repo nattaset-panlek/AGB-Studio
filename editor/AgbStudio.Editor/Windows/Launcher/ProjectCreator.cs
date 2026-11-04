@@ -235,12 +235,12 @@ public static class ProjectCreator
         });
     }
 
-    /// <summary>AGB Pixel (AGB Studio's own 1bpp Thai and Latin pixel font, written from AgbPixelFont) as the
-    /// variable-width font thai_vwf, made the default font.</summary>
+    /// <summary>Manop Thai 6x14 (the bundled public domain 1bpp Thai and Latin font, ManopThaiFont) as the font thai_vwf, made
+    /// the default font.</summary>
     public static void AddThaiFont(GameProject p)
     {
-        AgbStudio.Build.Fonts.AgbPixelFont.WriteTo(p.FontsDir);
-        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), AgbStudio.Build.Fonts.AgbPixelFont.Settings("thai_vwf"));
+        AgbStudio.Build.Fonts.ManopThaiFont.CopyTo(p.FontsDir);
+        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), AgbStudio.Build.Fonts.ManopThaiFont.Settings("thai_vwf"));
         p.Settings.General.DefaultFont = "thai_vwf";
     }
 

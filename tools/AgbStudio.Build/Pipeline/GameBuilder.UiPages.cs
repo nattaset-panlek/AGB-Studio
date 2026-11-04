@@ -196,10 +196,20 @@ public sealed partial class GameBuilder
                 var h = r.H - e.PaddingTop - e.PaddingBottom;
                 var layout = Fonts.TextLayout.Layout(s, table.Font.Font, table.BoxWidth(t), _p.Settings.Localization.ThaiWrap);
                 var textW = 0;
+                // A value keeps kTextVarReserve pixels in the layout; a short number is what most of them show.
+                var valueLine = -1;
+                var gaps = 0;
                 foreach (var g in layout.Glyphs)
                 {
-                    var adv = Fonts.TextLayout.IsToken(g.CodePoint) ? (Fonts.TextLayout.IsVarToken(g.CodePoint) ? 8 : 0) : table.Font.Font.Get(g.CodePoint)?.Advance ?? 0;
-                    textW = Math.Max(textW, g.X + adv);
+                    if (g.Line != valueLine)
+                    {
+                        valueLine = g.Line;
+                        gaps = 0;
+                    }
+                    var from = g.Bold && table.Font.Font.Emphasis is { } emphasis ? emphasis : table.Font.Font;
+                    var adv = Fonts.TextLayout.IsToken(g.CodePoint) ? (Fonts.TextLayout.IsVarToken(g.CodePoint) ? 8 : 0) : from.Get(g.CodePoint)?.Advance ?? 0;
+                    textW = Math.Max(textW, g.X - gaps + adv);
+                    if (Fonts.TextLayout.IsVarToken(g.CodePoint)) gaps += Fonts.TextLayout.VarReserve - 8;
                 }
                 var textH = layout.Lines * table.Font.Font.LineHeight;
                 if (textW > w || textH > h + 2)

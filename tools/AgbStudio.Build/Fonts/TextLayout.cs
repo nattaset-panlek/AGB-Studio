@@ -4,7 +4,7 @@ namespace AgbStudio.Build.Fonts;
 /// from the dictionary, never inside a word. The runtime only places the glyphs this produces.</summary>
 public static class TextLayout
 {
-    public sealed record Placed(int CodePoint, int X, int Dy, int Line, int Reveal);
+    public sealed record Placed(int CodePoint, int X, int Dy, int Line, int Reveal, bool Bold = false);
 
     public sealed class Result
     {
@@ -16,15 +16,16 @@ public static class TextLayout
         public HashSet<int> Missing { get; } = new();
     }
 
-    sealed record Cluster(List<int> Cps, int Width, bool Space, bool BreakBefore, bool Forced);
+    sealed record Cluster(List<int> Cps, int Width, bool Space, bool BreakBefore, bool Forced, bool Bold = false);
 
     // Tokens in a string, as private-use code points while the text is laid out: {0}..{3} values and <c1>..<c3>, </c> colours.
-    public const int VarToken = 0xF700, ColorToken = 0xF710;
+    public const int VarToken = 0xF700, ColorToken = 0xF710, BoldOnToken = 0xF720, BoldOffToken = 0xF721;
     public const int VarReserve = 56;  // agb::data::kTextVarReserve
 
     public static bool IsVarToken(int cp) => cp is >= VarToken and < VarToken + 4;
     public static bool IsColorToken(int cp) => cp is >= ColorToken and < ColorToken + 4;
-    public static bool IsToken(int cp) => IsVarToken(cp) || IsColorToken(cp);
+    public static bool IsBoldToken(int cp) => cp is BoldOnToken or BoldOffToken;
+    public static bool IsToken(int cp) => IsVarToken(cp) || IsColorToken(cp) || IsBoldToken(cp);
 
     static string EncodeTokens(string text)
     {
@@ -33,6 +34,8 @@ public static class TextLayout
         for (var i = 0; i < 4; i++) sb.Replace("{" + i + "}", char.ConvertFromUtf32(VarToken + i));
         for (var i = 1; i <= 3; i++) sb.Replace("<c" + i + ">", char.ConvertFromUtf32(ColorToken + i));
         sb.Replace("</c>", char.ConvertFromUtf32(ColorToken));
+        sb.Replace("<b>", char.ConvertFromUtf32(BoldOnToken));
+        sb.Replace("</b>", char.ConvertFromUtf32(BoldOffToken));
         return sb.ToString();
     }
 
@@ -75,7 +78,9 @@ public static class TextLayout
                 var idx = clusters.IndexOf(c);
                 var nextIsSaraAm = idx >= 0 && idx + 1 < clusters.Count && clusters[idx + 1].Cps[0] == ThaiText.SaraAm;
                 var baseAt = result.Glyphs.Count;
-                Place(c, font, x, line, step, result, nextIsSaraAm, lastBase is { } lb && lb.Line == line && lb.X + clusters[idx - 1].Width == x ? lb : null);
+                Place(c, c.Bold && font.Emphasis != null ? font.Emphasis : font, x, line, step, result, nextIsSaraAm, lastBase is { } lb && lb.Line == line && lb.X + clusters[idx - 1].Width == x ? lb : null);
+                if (c.Bold)
+                    for (var k = baseAt; k < result.Glyphs.Count; k++) result.Glyphs[k] = result.Glyphs[k] with { Bold = true };
                 lastBase = result.Glyphs.Count > baseAt ? result.Glyphs[baseAt] : null;
                 placedCount++;
                 x += c.Width;
@@ -127,17 +132,21 @@ public static class TextLayout
             }
         }
         var list = new List<Cluster>();
+        var bold = false;
         for (var i = 0; i < clusters.Count; i++)
         {
             var c = clusters[i];
+            if (c[0] == BoldOnToken) bold = true;
+            else if (c[0] == BoldOffToken) bold = false;
+            var measured = bold && font.Emphasis != null ? font.Emphasis : font;
             var forced = c[0] == '\n';
             var space = ThaiText.IsSpace(c[0]);
             var prevIsSpace = i > 0 && ThaiText.IsSpace(clusters[i - 1][0]);
             var prevThai = i > 0 && ThaiText.IsThai(clusters[i - 1][0]);
             var thai = ThaiText.IsThai(c[0]);
             var bb = forced || prevIsSpace || (i > 0 && thai != prevThai && !space) || (thai && thaiStarts.Contains(offsets[i]));
-            var width = forced || IsColorToken(c[0]) ? 0 : IsVarToken(c[0]) ? VarReserve : font.Get(c[0])?.Advance ?? 0;
-            list.Add(new Cluster(c, width, space, bb, forced));
+            var width = forced || IsColorToken(c[0]) || IsBoldToken(c[0]) ? 0 : IsVarToken(c[0]) ? VarReserve : measured.Get(c[0])?.Advance ?? 0;
+            list.Add(new Cluster(c, width, space, bb, forced, bold));
         }
         return list;
     }

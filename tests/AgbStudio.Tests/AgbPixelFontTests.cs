@@ -206,15 +206,18 @@ public sealed class AgbPixelFontTests
     }
 
     [Fact]
-    public void TemplatesAndNewProjectsUseItAsTheDefaultFont()
+    public void TemplatesAndNewProjectsUseManopThaiAsTheDefaultFont()
     {
         var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "agb_pixel_template");
         if (Directory.Exists(dir)) Directory.Delete(dir, true);
         var p = AgbStudio.Build.Content.Templates.TemplateCatalog.Find("rpg")!.Create(dir, "Pixel");
         Assert.Equal("thai_vwf", p.Settings.General.DefaultFont);
         var file = GameProject.Load<FontFile>(Path.Combine(p.FontsDir, "thai_vwf.font"));
-        Assert.Equal((FontSourceKind.Bdf, AgbPixelFont.FileName, 1), (file.SourceKind, file.Source, file.Bpp));
-        Assert.Equal(AgbPixelFont.Bdf(), File.ReadAllText(Path.Combine(p.FontsDir, AgbPixelFont.FileName)));
-        Assert.Empty(FontBuilder.Build(file, p.FontsDir).Missing);
+        Assert.Equal((FontSourceKind.Bdf, ManopThaiFont.FileName, 1), (file.SourceKind, file.Source, file.Bpp));
+        Assert.Equal(File.ReadAllText(ManopThaiFont.BundledPath), File.ReadAllText(Path.Combine(p.FontsDir, ManopThaiFont.FileName)));
+        var font = FontBuilder.Build(file, p.FontsDir);
+        Assert.Empty(font.Missing);
+        Assert.Equal(16, font.LineHeight);  // three lines in a 56 px box with 4 px of padding
+        Assert.Equal(6, font.Get(0x0E01)!.Advance);  // read from TIS-620 numbers
     }
 }

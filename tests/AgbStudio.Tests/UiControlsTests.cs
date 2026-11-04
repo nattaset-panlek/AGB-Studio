@@ -178,6 +178,9 @@ public sealed class UiControlsTests(EmulatorFixture emu)
         Press(s, GbaKeys.A);
         Press(s, GbaKeys.Start);
         Heard(s, "choose 60 focus 60 pick 1 typed 1 65");
+        // Start on the field itself takes the text without opening the keyboard.
+        Press(s, GbaKeys.Start);
+        Assert.Equal(2, s.Log.Count(l => l.Contains("choose 60", StringComparison.Ordinal)));
 
         // B: the cutscene hears -1 and closes the page.
         Press(s, GbaKeys.B);
@@ -222,6 +225,43 @@ public sealed class UiControlsTests(EmulatorFixture emu)
         });
         var r = new GameBuilder(p, new Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build();
         Assert.Contains(r.Diagnostics, d => d.Message.Contains("so it is cut", StringComparison.Ordinal) && d.Message.Contains("T (dlg.forest.hopper_01", StringComparison.Ordinal));
+    }
+
+    const string Bdf1 = "STARTFONT 2.1\nFONT x-tis620-0\nSIZE 8 75 75\nFONTBOUNDINGBOX 6 8 0 0\nSTARTPROPERTIES 1\nCHARSET_REGISTRY \"tis620\"\nENDPROPERTIES\nCHARS 3\n";
+
+    static string BdfGlyph(int code, int advance, string row) =>
+        $"STARTCHAR c{code}\nENCODING {code}\nSWIDTH 0 0\nDWIDTH {advance} 0\nBBX 6 2 0 0\nBITMAP\n{row}\n{row}\nENDCHAR\n";
+
+    [Fact]
+    public void Tis620Bdf_MapsToUnicode_AndBoldUsesTheEmphasisFont()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "ui_bold"));
+        SampleText.AddTo(p, "en");
+        p.Settings.General.BootSplash = false;
+        p.Settings.General.DefaultFont = "plain";
+        p.Settings.Localization.Languages = [new LanguageInfo { Code = "en", Name = "English", Font = "plain" }];
+        p.SaveSettings();
+        File.Delete(Path.Combine(p.TextDir, "strings.th.json"));
+        foreach (var (file, advance, row) in new[] { ("plain", 6, "F8"), ("heavy", 9, "FC") })
+        {
+            File.WriteAllText(Path.Combine(p.FontsDir, file + ".bdf"), Bdf1 + BdfGlyph(32, advance, "00") + BdfGlyph(0xA1, advance, row) + BdfGlyph(0xA2, advance, row) + "ENDFONT\n");
+            GameProject.Save(Path.Combine(p.FontsDir, file + ".font"), new FontFile
+            {
+                Name = file, SourceKind = FontSourceKind.Bdf, Source = file + ".bdf", Size = 8, LineHeight = 16, Baseline = 12, Bpp = 1,
+                CharacterSets = { "Thai" }, EmphasisFont = file == "plain" ? "heavy" : "",
+            });
+        }
+        var table = GameProject.Load<StringTable>(Path.Combine(p.TextDir, "strings.en.json"));
+        table.Strings = new SortedDictionary<string, string>(StringComparer.Ordinal) { ["a"] = "\u0E01<b>\u0E01\u0E02</b>\u0E02", ["hud.score"] = "\u0E01", ["dlg.forest.hopper_01"] = "\u0E01", ["ui.menu.start"] = "\u0E01" };
+        GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), table);
+        var r = new GameBuilder(p, new Toolchain()).Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var strings = File.ReadAllText(Path.Combine(p.BuildDir, "gen", "text", "strings_en.cpp"));
+        // Key "a": plain advance 6, then two heavy glyphs of advance 9 from the glyphs after the plain ones.
+        Assert.Matches(@"\{\d+, 0, 0, 0, 0\},\{\d+, 6, 0, 0, \d+\},\{\d+, 15, 0, 0, \d+\},\{\d+, 24, 0, 0, \d+\}", strings);
+        var fontCpp = File.ReadAllText(Path.Combine(p.BuildDir, "gen", "text", "font_plain.cpp"));
+        Assert.Contains("<b> U+0E01", fontCpp);
+        Assert.Contains("U+0E02", fontCpp);
     }
 
     [Fact]

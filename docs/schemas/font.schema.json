@@ -64,6 +64,9 @@
     "thaiWordWrap": {
       "type": "boolean"
     },
+    "emphasisFont": {
+      "type": "string"
+    },
     "glyphs": {
       "type": "object",
       "additionalProperties": {

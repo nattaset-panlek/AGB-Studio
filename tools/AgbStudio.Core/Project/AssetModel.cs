@@ -137,6 +137,7 @@ public sealed class FontFile
     public bool StackUpperMarks { get; set; } = true;
     public bool PlaceLowerVowels { get; set; } = true;
     public bool ThaiWordWrap { get; set; } = true;
+    public string EmphasisFont { get; set; } = "";   // another .font: text between <b> and </b> is drawn with it
     public Dictionary<string, GlyphOverride> Glyphs { get; set; } = new();  // edited pixels by code point
     /// <summary>Font Manager "Draw to": the BG (0-3) of the text layer; omitted = BG 0.</summary>
     public int? DrawTo { get; set; }

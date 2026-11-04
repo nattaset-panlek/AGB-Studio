@@ -23,20 +23,28 @@ Localization shows missing and too long strings.
 
 - [ ] Open Localization (Tools › Localization)
 
-## The default font: AGB Pixel
+## The default font: Manop Thai 6x14
 
-New projects and templates start with `thai_vwf`, made from AGB Pixel (`fonts/agb_pixel.bdf`): AGB Studio's own 1bpp
-pixel font with printable ASCII, the Thai block (consonants, vowels, tone marks, signs, digits) and a few symbols.
+New projects and templates start with `thai_vwf`, made from Manop Thai 6x14 (`fonts/thai6x14.bdf`): a public domain 1bpp
+font with printable ASCII and the whole Thai block, easy to read at the GBA's resolution.
 
-- Proportional widths: Thai letters are 4 to 7 px wide and Latin 1 to 5 px, so a line holds more text than a fixed
-  8 px cell and narrow letters such as ร, i and l do not leave gaps.
-- Latin capitals are 7 px tall (lower case 5, descenders 2), Thai letters 6 px. The line is 16 px: room for a tone mark
-  over an upper vowel above the letter and a lower vowel under it, with one empty row between marks so they stay
-  apart at one bit per pixel.
-- Tone marks over an upper vowel are lifted above it; marks over ป ฝ ฟ ฬ move left of the tall stem with one empty
-  column; ญ and ฐ lose their tails over a lower vowel; ฎ and ฏ keep short tails that leave the vowel in place.
-- It is AGB Studio's own original font (see `docs/THIRD_PARTY.md`), free to ship in your games like the rest of the
-  engine. It can also be picked under BDF in New Font.
+- Every letter is 6 px wide, so a 224 px dialogue box holds about 37 characters, and the line is 16 px, so three lines fit
+  in a 56 px box with 4 px of padding.
+- The font places its own marks, so its `.font` file turns off Stack upper marks and Place lower vowels.
+- It can be shipped in your games with no notice. It is also listed under BDF in New Font.
+
+## A second font for emphasis
+
+Text between `<b>` and `</b>` in a string is drawn with another font. Set `emphasisFont` in the main `.font` file to the
+name of the other `.font` (both need the same Bits per pixel). Only the characters used this way go into the ROM. Lines
+keep the height of the main font. `<b>` works with `<c1>`..`<c3>` colours and `{0}`..`{3}` values.
+
+`Hello, <b>this part</b> uses the emphasis font.`
+
+## AGB Pixel
+
+AGB Pixel (`agb_pixel.bdf`) is AGB Studio's own proportional 1bpp font: Thai letters 4 to 7 px wide, Latin 1 to 5 px, so a
+line holds more text, at the cost of some Thai letters looking alike. Pick it under BDF in New Font when space matters more.
 
 ## See also
 

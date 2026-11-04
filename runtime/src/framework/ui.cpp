@@ -995,6 +995,12 @@ private:
             activate(focus_);
             return;
         }
+        // Start on an Input Field takes what is typed, without opening the keyboard.
+        if (input::pressed(Key::Start) && focus_ >= 0 && def_.elements[focus_].kind == ElementKind::InputField) {
+            g_pageChosen = def_.elements[focus_].name;
+            if (g_pageWaiting) setPageResult(def_.elements[focus_].data);
+            return;
+        }
         if (input::pressed(Key::B) && def_.cancel) {
             if (g_pageWaiting) setPageResult(-1);
             else game::pop();
@@ -1354,7 +1360,7 @@ private:
         const int lw = labelW + gap + extraW;
         const int lines = r ? r->lines : 1;
         const int lh = font.lineHeight;
-        if ((lw > w || lines * lh > h + 2) && !(warned_ & (1ull << i))) {
+        if (inputOpen_ < 0 && (lw > w || lines * lh > h + 2) && !(warned_ & (1ull << i))) {
             warned_ |= 1ull << i;
             debug::logf("warning: UI page %s: the text of %s is %d x %d px and its space is %d x %d px, so it is cut. Make the text shorter or the element larger.", def_.name, e.name, lw, lines * lh, w, h);
         }

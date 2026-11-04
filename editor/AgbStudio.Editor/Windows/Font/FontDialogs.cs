@@ -112,6 +112,7 @@ public sealed class NewFontDialog : FigmaDialog
         var list = _project is null ? [] : FontManagerPage.SourceFiles(_project).Where(f => FontManagerPage.SourceKindOf(f) == Kind).ToList();
         if (Kind == FontSourceKind.Ttf && !list.Contains(DefaultThaiFont, StringComparer.OrdinalIgnoreCase) && System.IO.File.Exists(BundledThai)) list.Insert(0, DefaultThaiFont);
         if (Kind == FontSourceKind.Bdf && !list.Contains(AgbPixelFont.FileName, StringComparer.OrdinalIgnoreCase) && System.IO.File.Exists(BundledPixel)) list.Insert(0, AgbPixelFont.FileName);
+        if (Kind == FontSourceKind.Bdf && !list.Contains(ManopThaiFont.FileName, StringComparer.OrdinalIgnoreCase) && System.IO.File.Exists(ManopThaiFont.BundledPath)) list.Add(ManopThaiFont.FileName);
         return list;
     }
 
@@ -125,6 +126,7 @@ public sealed class NewFontDialog : FigmaDialog
         var inProject = _project is null ? null : Path.Combine(_project.FontsDir, file);
         if (inProject != null && System.IO.File.Exists(inProject)) return inProject;
         if (file == AgbPixelFont.FileName && System.IO.File.Exists(BundledPixel)) return BundledPixel;
+        if (file == ManopThaiFont.FileName && System.IO.File.Exists(ManopThaiFont.BundledPath)) return ManopThaiFont.BundledPath;
         return file == DefaultThaiFont && System.IO.File.Exists(BundledThai) ? BundledThai : inProject;
     }
 

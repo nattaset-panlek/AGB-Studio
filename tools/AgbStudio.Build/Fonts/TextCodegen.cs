@@ -12,6 +12,7 @@ public static class TextCodegen
         public required GameFont Font { get; init; }
         public required string Symbol { get; init; }
         public Dictionary<int, int> Index { get; } = new();  // code point -> glyph index
+        public Dictionary<int, int> BoldIndex { get; } = new();  // the Emphasis font's glyphs, after the font's own
     }
 
     public static string FontCpp(FontOut f)
@@ -29,11 +30,19 @@ public static class TextCodegen
             glyphs.Append($"    {{{bitmaps.Count}, {g.Width}, {g.Height}, {Clamp8(g.Left)}, {Clamp8(g.Top)}, {Math.Clamp(g.Advance, 0, 255)}}},  // U+{g.CodePoint:X4}\n");
             bitmaps.AddRange(packed);
         }
+        if (font.Emphasis is { } bold)
+            foreach (var g in bold.Glyphs.Values.OrderBy(g => g.CodePoint))
+            {
+                f.BoldIndex[g.CodePoint] = i++;
+                var packed = FontBuilder.Pack(g, font.Bpp);
+                glyphs.Append($"    {{{bitmaps.Count}, {g.Width}, {g.Height}, {Clamp8(g.Left)}, {Clamp8(g.Top)}, {Math.Clamp(g.Advance, 0, 255)}}},  // <b> U+{g.CodePoint:X4}\n");
+                bitmaps.AddRange(packed);
+            }
         Cpp.U16(sb, $"const unsigned char {f.Symbol}_bits", bitmaps.Select(b => (int)b));
         sb.Append($"const agb::data::Glyph {f.Symbol}_glyphs[] = {{\n{glyphs}}};\n");
         Cpp.U16(sb, $"const unsigned short {f.Symbol}_ascii", Enumerable.Range(0, 128).Select(c => f.Index.TryGetValue(c, out var gi) ? gi : 0xFFFF));
         sb.Append("}  // namespace\n");
-        sb.Append($"extern const agb::data::Font {f.Symbol} = {{{Cpp.Str(font.Name)}, {f.Symbol}_glyphs, {f.Symbol}_bits, {font.Glyphs.Count}, ");
+        sb.Append($"extern const agb::data::Font {f.Symbol} = {{{Cpp.Str(font.Name)}, {f.Symbol}_glyphs, {f.Symbol}_bits, {i}, ");
         sb.Append($"{font.Bpp}, {font.LineHeight}, {font.Baseline}, {(font.Shadow ? "true" : "false")}, {f.Symbol}_ascii}};\n");
         return sb.ToString();
     }
@@ -62,7 +71,9 @@ public static class TextCodegen
                 diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]}: '{char.ConvertFromUtf32(m)}' (U+{m:X4}) is not in font {font.Font.Name}, so it is not drawn. Add it in Font Manager · Add characters."));
             if (layout.Lines > maxLines)
                 diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]} ({lang}) needs {layout.Lines} lines, but its text box shows {maxLines}, so the rest does not fit. Shorten the text, or give the key more lines in Localization."));
-            bool Drawn(TextLayout.Placed g) => !TextLayout.IsToken(g.CodePoint) && font.Index.ContainsKey(g.CodePoint) && font.Font.Get(g.CodePoint)!.Width > 0;
+            bool IsBold(TextLayout.Placed g) => g.Bold && font.Font.Emphasis != null;
+            bool Drawn(TextLayout.Placed g) => !TextLayout.IsToken(g.CodePoint) && (IsBold(g) ? font.BoldIndex : font.Index).ContainsKey(g.CodePoint)
+                && (IsBold(g) ? font.Font.Emphasis! : font.Font).Get(g.CodePoint)!.Width > 0;
             var glyphs = layout.Glyphs.Where(Drawn).ToList();
             var marks = new List<string>();
             var kept = 0;
@@ -75,7 +86,7 @@ public static class TextCodegen
             if (marks.Count > 0) sb.Append($"const agb::data::TextMark r{k}m[] = {{{string.Join(", ", marks)}}};\n");
             sb.Append($"const agb::data::PlacedGlyph r{k}g[] = {{");
             foreach (var g in glyphs)
-                sb.Append($"{{{font.Index[g.CodePoint]}, {g.X}, {g.Dy}, {g.Line}, {Math.Min(255, g.Reveal)}}},");
+                sb.Append($"{{{(IsBold(g) ? font.BoldIndex : font.Index)[g.CodePoint]}, {g.X}, {g.Dy}, {g.Line}, {Math.Min(255, g.Reveal)}}},");
             if (glyphs.Count == 0) sb.Append("{0, 0, 0, 0, 0}");
             sb.Append("};\n");
             sb.Append($"const agb::data::TextRun r{k} = {{&{font.Symbol}, r{k}g, {glyphs.Count}, {Math.Max(1, layout.Lines)}, {Math.Min(255, layout.Steps)}{(marks.Count > 0 ? $", r{k}m, {marks.Count}" : "")}}};\n");

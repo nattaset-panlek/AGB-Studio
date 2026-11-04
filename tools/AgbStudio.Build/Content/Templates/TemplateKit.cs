@@ -28,8 +28,8 @@ public static class TemplateKit
     /// font, so every string works in Thai and English.</summary>
     public static void AddThaiFont(GameProject p)
     {
-        AgbPixelFont.WriteTo(p.FontsDir);
-        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), AgbPixelFont.Settings("thai_vwf"));
+        ManopThaiFont.CopyTo(p.FontsDir);
+        GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), ManopThaiFont.Settings("thai_vwf"));
         p.Settings.General.DefaultFont = "thai_vwf";
         p.SaveSettings();
     }

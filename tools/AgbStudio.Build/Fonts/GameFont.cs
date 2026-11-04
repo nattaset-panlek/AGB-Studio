@@ -30,6 +30,9 @@ public sealed class GameFont
 
     public Glyph? Get(int cp) => Glyphs.GetValueOrDefault(cp);
 
+    /// <summary>The font of text between &lt;b&gt; and &lt;/b&gt;; its glyphs go into this font's table in the ROM.</summary>
+    public GameFont? Emphasis { get; set; }
+
     /// <summary>ROM the font takes in a built game (TextCodegen.FontCpp): packed bitmaps, an 8-byte table entry per glyph,
     /// the 128-entry ASCII index, the Font record and its name.</summary>
     public int RomBytes => Glyphs.Values.Sum(g => (g.Width * Bpp + 7) / 8 * g.Height + 8) + 128 * 2 + 24 + System.Text.Encoding.UTF8.GetByteCount(Name) + 1;
@@ -215,6 +218,7 @@ public static class Bdf
         var rows = new List<string>();
         var inBitmap = false;
         int bbw = 0, bbh = 0, bbx = 0, bby = 0;
+        var tis620 = false;  // old Thai BDF fonts number their glyphs in TIS-620
         foreach (var raw in File.ReadLines(path))
         {
             var line = raw.Trim();
@@ -223,7 +227,11 @@ public static class Bdf
             switch (parts[0])
             {
                 case "STARTCHAR": cur = new GameFont.Glyph(); rows.Clear(); break;
-                case "ENCODING" when cur != null: cur.CodePoint = int.Parse(parts[1], CultureInfo.InvariantCulture); break;
+                case "CHARSET_REGISTRY": tis620 = line.Contains("tis620", StringComparison.OrdinalIgnoreCase); break;
+                case "ENCODING" when cur != null:
+                    cur.CodePoint = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                    if (tis620 && cur.CodePoint is >= 0xA1 and <= 0xFB) cur.CodePoint += 0x0E01 - 0xA1;
+                    break;
                 case "DWIDTH" when cur != null: cur.Advance = int.Parse(parts[1], CultureInfo.InvariantCulture); break;
                 case "BBX" when cur != null:
                     bbw = int.Parse(parts[1], CultureInfo.InvariantCulture); bbh = int.Parse(parts[2], CultureInfo.InvariantCulture);
