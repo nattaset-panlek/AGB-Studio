@@ -260,6 +260,62 @@
         },
         "dim": {
           "type": "integer"
+        },
+        "dialogue": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "x": {
+              "type": "integer"
+            },
+            "y": {
+              "type": "integer"
+            },
+            "w": {
+              "type": "integer"
+            },
+            "h": {
+              "type": "integer"
+            },
+            "paddingLeft": {
+              "type": "integer"
+            },
+            "paddingTop": {
+              "type": "integer"
+            },
+            "paddingRight": {
+              "type": "integer"
+            },
+            "paddingBottom": {
+              "type": "integer"
+            },
+            "borderWidth": {
+              "type": "integer"
+            },
+            "paper": {
+              "type": "string"
+            },
+            "ink": {
+              "type": "string"
+            },
+            "border": {
+              "type": "string"
+            },
+            "shadow": {
+              "type": "string"
+            },
+            "textSpeed": {
+              "type": "integer"
+            }
+          }
+        },
+        "richColors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

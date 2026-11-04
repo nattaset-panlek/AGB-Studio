@@ -302,11 +302,14 @@ struct Restore {
         textBg = text::layer();
         if (textBg >= 0) textConfig = render::bg::config(textBg);
     }
-    void give() const {
+    // blend false: leave the blend registers: a page that did not touch them may have opened during a scene's fade in.
+    void give(bool blend = true) const {
         render::palettes::setBank(false, kTextBank, textColors);
-        commit::setReg(commit::BldCnt, bldCnt);
-        commit::setReg(commit::BldY, bldY);
-        commit::setReg(commit::BldAlpha, bldAlpha);
+        if (blend) {
+            commit::setReg(commit::BldCnt, bldCnt);
+            commit::setReg(commit::BldY, bldY);
+            commit::setReg(commit::BldAlpha, bldAlpha);
+        }
         screenArena().rewind(arena);
         render::bg::rewind(vram);
         if (textBg >= 0) render::bg::configure(textBg, textConfig);
@@ -597,6 +600,7 @@ bool isOverlay(const Screen* s) {
 
 void setKit(const Kit* k) {
     g_kit = k;
+    if (k && k->box) text::configureBox(*k->box);
     g_sceneMenu.forget();
 }
 const Kit* kit() { return g_kit; }
@@ -646,7 +650,7 @@ void updateSceneMenu() {
 }
 
 bool pauseRequested() {
-    return g_kit && g_kit->pauseAction >= 0 && !g_sceneMenu.isOpen() && !text::open() && !game::loading() && !script::cutsceneRunning() &&
+    return g_kit && g_kit->pauseAction >= 0 && !overlayOpen() && !g_sceneMenu.isOpen() && !text::open() && !game::loading() && !script::cutsceneRunning() &&
            render::effects::transitionDone() && input::actionPressed(g_kit->pauseAction);
 }
 
@@ -667,6 +671,9 @@ bool overlayOpen() { return game::depth() && isOverlay(game::top()); }
 namespace {
 const PageSet* g_pages = nullptr;
 const char* g_pageChosen = nullptr;
+// What a cutscene waiting in UI.Choose hears.
+bool g_pageWaiting = false, g_pageWakeOnMove = false, g_pageResultReady = false;
+s32 g_pageResult = 0;
 
 bool sameName(const char* a, const char* b) {
     while (*a && *a == *b) {
@@ -676,14 +683,29 @@ bool sameName(const char* a, const char* b) {
     return *a == *b;
 }
 
+void setPageResult(s32 result) {
+    g_pageResult = result;
+    g_pageResultReady = true;
+}
+
+void remapOpenPages();
+void pumpOpenPages();
+
+// The on-screen keyboard of an Input Field. It stays inside the rectangle the build keeps free in the page's panel
+// (GameBuilder.UiPages KeyboardRect).
+constexpr int kKeysX = 8, kKeysY = 56, kKeysW = 224, kKeysH = 96, kKeyW = 16, kKeyH = 14, kKeyCols = 13, kKeyRows = 6;
+const char* const kKeyRowsText[kKeyRows - 1] = {"ABCDEFGHIJKLM", "NOPQRSTUVWXYZ", "abcdefghijklm", "nopqrstuvwxyz", "0123456789.-'"};
+
 class PageScreen final : public Screen {
 public:
     PageScreen(const PageDef& def, int data) : def_(def), data_(data) {
         for (int i = 0; i < def.count && i < kMaxPageElements; ++i) {
             const ElementDef& e = def.elements[i];
-            amount_[i] = e.amount;
+            amount_[i] = e.kind == ElementKind::Dropdown && e.amount >= e.optionCount ? 0 : e.amount;  // a Dropdown keeps its option here
             if (e.hidden) hidden_ |= 1ull << i;
             if (e.on) on_ |= 1ull << i;
+            if (!e.interactable) disabled_ |= 1ull << i;
+            if (e.kind == ElementKind::ScrollRect && scrollCount_ < kMaxScrollRects) scrollElement_[scrollCount_++] = static_cast<s8>(i);
         }
         focus_ = def.firstFocus;
     }
@@ -693,14 +715,29 @@ public:
 
     void enter() override {
         const int bg = text::layer();
+        text::reserveBoxes();  // the dialogue box outlives this page: its memory must not be given back when the page closes
         restore_.take();
         render::palettes::setBank(false, kBank, g_pages->palette);
         debug::logf("UI page %s opened", def_.name);
+        if (def_.dim) {
+            u8 targets = render::effects::kObj | render::effects::kBackdrop;
+            for (int b = 0; b < 4; ++b)
+                if (b != bg) targets = static_cast<u8>(targets | (1u << b));
+            render::effects::setBrightness(targets, -static_cast<int>(def_.dim));
+        }
+        const u8 charBlock = bg >= 0 ? render::bg::config(bg).charBlock : 0;
         if (bg < 0 || !box_.init(bg, def_.tileX, def_.tileY, def_.widthTiles, def_.heightTiles, kBank, render::TextBox::Style{kInk, 0, 0})) {
             debug::warnOnce(22, "A UI page did not open: there is no background memory left for its panel. Make the page smaller or use fewer map tiles in this scene.");
             return;
         }
+        if (render::bg::config(bg).charBlock != charBlock)
+            debug::warnOnce(26, "UI pages open together use more than 1024 tiles of the text layer, so the pages under this one show wrong tiles. Close a large page before opening another.");
+        box_.setRichInks(g_pages->richInks);
+        box_.unmap(text::blankEntry());  // it shows once its tiles are in VRAM (a large panel takes a few frames)
         ready_ = true;
+        // A control that starts disabled or hidden gives the cursor away; so does a list row out of view.
+        if (focus_ >= 0 && !canFocus(focus_)) moveAway();
+        if (focus_ >= 0) settleScroll(focus_);
         redraw(0, 0, 240, 160);
     }
 
@@ -709,43 +746,57 @@ public:
             game::pop();
             return;
         }
-        box_.update();
+        if (game::loading()) {  // Scene.Load from a script: the scene underneath has to run to change
+            game::pop();
+            return;
+        }
+        pumpOpenPages();
         render::palettes::update();
-        const int old = focus_;
-        if (input::repeated(Key::Up)) moveFocus(0);
-        else if (input::repeated(Key::Down)) moveFocus(1);
-        if (focus_ == old && focus_ >= 0 && def_.elements[focus_].kind == ElementKind::Slider) {
-            const int change = (input::repeated(Key::Right) ? 5 : 0) - (input::repeated(Key::Left) ? 5 : 0);
-            if (change) {
-                setAmount(focus_, amount_[focus_] + change);
-                return;
-            }
+        const bool wasOpen = text::open();
+        if (!text::waiting()) handleInput();
+        if (game::top() != this) return;  // the page closed, or opened another
+        if (def_.scenePlays) {
+            game::at(0)->update();
+            if (game::top() != this) return;
+        } else {
+            render::effects::update();  // a fade the scene started goes on under the page
+            script::run();
+            if (game::top() != this) return;
+            text::update();
+            if (text::open() && !text::waiting() && !script::cutsceneRunning()) text::close();
         }
-        if (focus_ == old) {
-            if (input::repeated(Key::Left)) moveFocus(2);
-            else if (input::repeated(Key::Right)) moveFocus(3);
-        }
-        if (focus_ != old) {
-            if (old >= 0) redrawElement(old);
-            if (focus_ >= 0) redrawElement(focus_);
-            return;
-        }
-        if (input::pressed(Key::A) && focus_ >= 0) {
-            activate(focus_);
-            return;
-        }
-        if (input::pressed(Key::B) && def_.cancel) game::pop();
+        if (wasOpen && !text::open()) remapOpenPages();
     }
 
     void exit() override {
         debug::logf("UI page %s closed", def_.name);
         if (ready_) box_.unmap(text::blankEntry());
         box_.release();
-        restore_.give();
+        restore_.give(def_.dim != 0);
         if (g_sceneMenu.isOpen() && g_kit) loadPalette(*g_kit);
     }
 
-    void resume() override { box_.remap(); }
+    void resume() override {
+        remapOpenPages();
+        if (text::open()) text::box().remap();
+        restorePalette();
+    }
+
+    void remapBox() {
+        if (ready_ && shownOnScreen_) box_.remap();
+    }
+
+    // Copies changed tiles to VRAM; a page opening shows once all of them are there. Runs for every open page, because a
+    // page that opened in the frame another opened over it still has to arrive.
+    void pump() {
+        if (!ready_) return;
+        box_.update();
+        if (!shownOnScreen_ && !box_.uploading()) {
+            shownOnScreen_ = true;
+            remapOpenPages();
+            if (text::open()) text::box().remap();
+        }
+    }
 
     int data() const { return data_; }
     int focus() const { return focus_; }
@@ -761,8 +812,36 @@ public:
         const u64 bit = 1ull << i;
         if (((hidden_ & bit) != 0) == hidden) return;
         hidden_ = hidden ? hidden_ | bit : hidden_ & ~bit;
-        if (hidden && focus_ == i) moveAway();
+        if (hidden && focus_ >= 0 && !canFocus(focus_)) moveAway();
+        if (ready_) {
+            const int s = scrollOf(i);
+            if (s >= 0) {
+                clampScroll(s);
+                if (focus_ >= 0) settleScroll(focus_);
+                redrawScroll(s);
+            } else {
+                redrawElement(i);
+            }
+        }
+    }
+
+    void setInteractable(int i, bool on) {
+        const u64 bit = 1ull << i;
+        if (((disabled_ & bit) == 0) == on) return;
+        disabled_ = on ? disabled_ & ~bit : disabled_ | bit;
+        if (!on && focus_ >= 0 && !canFocus(focus_)) moveAway();
         if (ready_) redrawElement(i);
+    }
+
+    void setFocus(int i) {
+        if (i < 0 || i >= def_.count || !canFocus(i) || focus_ == i) return;
+        const int old = focus_;
+        focus_ = static_cast<s8>(i);
+        if (!ready_) return;
+        if (!settleScroll(i)) {
+            if (old >= 0) redrawElement(old);
+            redrawElement(i);
+        }
     }
 
     void setAmount(int i, int amount) {
@@ -776,11 +855,37 @@ public:
         int slot = 0;
         while (slot < kMaxChangedTexts && changedText_[slot] != i + 1 && changedText_[slot]) ++slot;
         if (slot == kMaxChangedTexts) {
-            debug::warnOnce(25, "UI.SetText: a page can change the text of 16 elements while it is open, so this one kept its text.");
+            debug::warnOnce(25, "UI.SetText: a page can change the text of 20 elements while it is open, so this one kept its text.");
             return;
         }
         changedText_[slot] = static_cast<u8>(i + 1);
-        changedLabel_[slot] = label;
+        changedKey_[slot] = label.key;
+        if (ready_) redrawElement(i);
+    }
+
+    void setImage(int i, const ImageDef* image) {
+        int slot = 0;
+        while (slot < kMaxChangedImages && changedImageEl_[slot] != i + 1 && changedImageEl_[slot]) ++slot;
+        if (slot == kMaxChangedImages) {
+            debug::warnOnce(27, "UI.SetImage: a page can change the image of 6 elements while it is open, so this one kept its image.");
+            return;
+        }
+        changedImageEl_[slot] = static_cast<u8>(i + 1);
+        changedImage_[slot] = image;
+        if (ready_) redrawElement(i);
+    }
+
+    // Numbers shown in an element: its text's {0} and {1}, or after its text when it has neither token.
+    void setValues(int i, s32 a, s32 b, int count, int digits) {
+        int slot = 0;
+        while (slot < kMaxValues && values_[slot].element != i + 1 && values_[slot].element) ++slot;
+        if (slot == kMaxValues) {
+            debug::warnOnce(28, "UI.SetNumber: a page can show numbers in 20 elements, so this one kept its text. Split the page.");
+            return;
+        }
+        Values& v = values_[slot];
+        if (v.element == i + 1 && v.a == a && v.b == b && v.count == count && v.digits == digits) return;
+        v = Values{a, b, static_cast<u8>(i + 1), static_cast<s8>(count), static_cast<s8>(digits)};
         if (ready_) redrawElement(i);
     }
 
@@ -806,29 +911,146 @@ public:
         return true;
     }
 
-private:
-    void moveFocus(int way) {
-        if (focus_ < 0) return;
-        const ElementDef& e = def_.elements[focus_];
-        const s8 next = way == 0 ? e.up : way == 1 ? e.down : way == 2 ? e.left : e.right;
-        if (next >= 0 && shown(next)) focus_ = next;
+    int inputLength() const {
+        int n = 0;
+        while (input_[n]) ++n;
+        return n;
+    }
+    int inputChar(int index) const { return index >= 0 && index < inputLength() ? input_[index] : 0; }
+    void setInputChar(int index, int ch) {
+        if (index < 0 || index >= kMaxInput) return;
+        input_[index] = static_cast<char>(ch);
+        input_[index + 1] = 0;
+        if (!ready_) return;
+        for (int i = 0; i < def_.count; ++i)
+            if (def_.elements[i].kind == ElementKind::InputField) redrawElement(i);
     }
 
-    // A hidden control gives the cursor to its nearest neighbour; with none showing, nothing is selected.
-    void moveAway() {
-        const ElementDef& e = def_.elements[focus_];
-        const s8 ways[4] = {e.down, e.up, e.right, e.left};
-        focus_ = -1;
-        for (const s8 n : ways)
-            if (n >= 0 && shown(n)) {
-                focus_ = n;
-                if (ready_) redrawElement(n);
+private:
+    struct Values {
+        s32 a, b;
+        u8 element;  // element index + 1, 0 = free
+        s8 count;
+        s8 digits;
+    };
+    static constexpr int kMaxInput = 12;
+
+    void restorePalette() { render::palettes::setBank(false, kBank, g_pages->palette); }
+
+    bool enabled(int i) const {
+        for (; i >= 0; i = def_.elements[i].parent)
+            if (disabled_ & (1ull << i)) return false;
+        return true;
+    }
+    bool canFocus(int i) const { return shown(i) && enabled(i); }
+
+    void handleInput() {
+        if (inputOpen_ >= 0) {
+            updateKeyboard();
+            return;
+        }
+        if (dropOpen_ >= 0) {
+            updateDropdown();
+            return;
+        }
+        const int old = focus_;
+        if (input::repeated(Key::Up)) moveFocus(0);
+        else if (input::repeated(Key::Down)) moveFocus(1);
+        if (focus_ == old && focus_ >= 0) {
+            const ElementDef& e = def_.elements[focus_];
+            const int way = (input::repeated(Key::Right) ? 1 : 0) - (input::repeated(Key::Left) ? 1 : 0);
+            if (way && e.kind == ElementKind::Slider) {
+                setAmount(focus_, amount_[focus_] + way * 5);
+                setMoved();
                 return;
             }
+            if (way && e.kind == ElementKind::Dropdown && e.optionCount) {
+                setAmount(focus_, (amount_[focus_] + way + e.optionCount) % e.optionCount);
+                setMoved();
+                return;
+            }
+            if (input::repeated(Key::Left)) moveFocus(2);
+            else if (input::repeated(Key::Right)) moveFocus(3);
+        }
+        if (focus_ != old) {
+            if (focus_ < 0 || !settleScroll(focus_)) {
+                if (old >= 0) redrawElement(old);
+                if (focus_ >= 0) redrawElement(focus_);
+            }
+            setMoved();
+            return;
+        }
+        // Nothing to select: the D-pad scrolls the page's first Scroll Rect (a long text).
+        if (focus_ < 0 && scrollCount_) {
+            const int way = (input::repeated(Key::Down) ? 8 : 0) - (input::repeated(Key::Up) ? 8 : 0);
+            if (way) {
+                const int s = scrollElement_[0];
+                scroll_[0] = static_cast<s16>(scroll_[0] + way);
+                clampScroll(s);
+                redrawScroll(s);
+                return;
+            }
+        }
+        if (input::pressed(Key::A) && focus_ >= 0) {
+            activate(focus_);
+            return;
+        }
+        if (input::pressed(Key::B) && def_.cancel) {
+            if (g_pageWaiting) setPageResult(-1);
+            else game::pop();
+        }
+    }
+
+    void setMoved() {
+        if (g_pageWaiting && g_pageWakeOnMove) setPageResult(ui::kPageMoved);
+    }
+
+    // Follows the links that way past hidden and disabled controls.
+    void moveFocus(int way) {
+        if (focus_ < 0) return;
+        int at = focus_;
+        for (int n = 0; n < def_.count; ++n) {
+            const ElementDef& e = def_.elements[at];
+            const s8 next = way == 0 ? e.up : way == 1 ? e.down : way == 2 ? e.left : e.right;
+            if (next < 0 || next == focus_) return;
+            if (canFocus(next)) {
+                focus_ = next;
+                return;
+            }
+            at = next;
+        }
+    }
+
+    // A hidden or disabled control gives the cursor to its nearest neighbour; with none showing, nothing is selected.
+    void moveAway() {
+        const s8 here = focus_;
+        for (int i = 0; i < 4; ++i) {
+            focus_ = here;
+            const s8 before = focus_;
+            moveFocus(i == 0 ? 1 : i == 1 ? 0 : i == 2 ? 3 : 2);
+            if (focus_ != before) {
+                if (ready_) redrawElement(focus_);
+                return;
+            }
+        }
+        focus_ = -1;
     }
 
     void activate(int i) {
         const ElementDef& e = def_.elements[i];
+        if (e.kind == ElementKind::Dropdown && e.optionCount) {
+            dropOpen_ = static_cast<s8>(i);
+            dropCursor_ = amount_[i] < e.optionCount ? amount_[i] : 0;
+            drawDropdown();
+            box_.update();
+            return;
+        }
+        if (e.kind == ElementKind::InputField) {
+            inputOpen_ = static_cast<s8>(i);
+            keyCol_ = keyRow_ = 0;
+            redraw(kKeysX, kKeysY, kKeysW, kKeysH);
+            return;
+        }
         if (e.kind == ElementKind::Toggle) setOn(i, e.group >= 0 ? true : !on(i));
         g_pageChosen = e.name;
         switch (e.action) {
@@ -836,6 +1058,7 @@ private:
                 openPage(static_cast<int>(e.target), e.data);
                 break;
             case ActionKind::ClosePage:
+                if (g_pageWaiting) setPageResult(e.data);
                 game::pop();
                 break;
             case ActionKind::LoadScene: {
@@ -845,10 +1068,98 @@ private:
                 break;
             }
             default:
+                if (g_pageWaiting) setPageResult(e.data);
                 break;
         }
     }
 
+    // ---- Scroll Rect -------------------------------------------------------------------------------------
+    int scrollSlot(int s) const {
+        for (int k = 0; k < scrollCount_; ++k)
+            if (scrollElement_[k] == s) return k;
+        return -1;
+    }
+
+    // The nearest Scroll Rect above an element, -1 = none.
+    int scrollOf(int i) const {
+        if (!scrollCount_) return -1;
+        for (int p = def_.elements[i].parent; p >= 0; p = def_.elements[p].parent)
+            if (def_.elements[p].kind == ElementKind::ScrollRect) return p;
+        return -1;
+    }
+
+    int rowOf(int i, int s) const {
+        while (def_.elements[i].parent != s) i = def_.elements[i].parent;
+        return i;
+    }
+
+    // Space that hidden rows above this row gave back, so a list closes up when a script hides rows.
+    int collapsedAbove(int row, int s) const {
+        const int step = def_.elements[s].data;
+        int gone = 0;
+        for (int k = s + 1; k < row; ++k)
+            if (def_.elements[k].parent == s && (hidden_ & (1ull << k))) gone += def_.elements[k].h + step;
+        return gone;
+    }
+
+    int contentHeight(int s) const {
+        const ElementDef& v = def_.elements[s];
+        int h = v.padT + v.padB, rows = 0;
+        for (int k = s + 1; k < def_.count; ++k)
+            if (def_.elements[k].parent == s && !(hidden_ & (1ull << k))) {
+                h += def_.elements[k].h;
+                ++rows;
+            }
+        return h + (rows > 1 ? (rows - 1) * v.data : 0);
+    }
+
+    int maxScroll(int s) const {
+        const int over = contentHeight(s) - def_.elements[s].h;
+        return over > 0 ? over : 0;
+    }
+
+    int offsetY(int i) const {
+        const int s = scrollOf(i);
+        if (s < 0) return 0;
+        const int k = scrollSlot(s);
+        return -(k >= 0 ? scroll_[k] : 0) - collapsedAbove(rowOf(i, s), s);
+    }
+
+    void clampScroll(int s) {
+        const int k = scrollSlot(s);
+        if (k < 0) return;
+        const int most = maxScroll(s);
+        if (scroll_[k] > most) scroll_[k] = static_cast<s16>(most);
+        if (scroll_[k] < 0) scroll_[k] = 0;
+    }
+
+    // Brings a list row into view; true when the list moved (and was redrawn).
+    bool settleScroll(int i) {
+        const int s = scrollOf(i);
+        if (s < 0) return false;
+        const int k = scrollSlot(s);
+        if (k < 0) return false;
+        const ElementDef& v = def_.elements[s];
+        const int row = rowOf(i, s);
+        const ElementDef& r = def_.elements[row];
+        const int top = r.y - v.y - collapsedAbove(row, s);
+        const int was = scroll_[k];
+        if (top - v.padT < scroll_[k]) scroll_[k] = static_cast<s16>(top - v.padT);
+        if (top + r.h + v.padB > scroll_[k] + v.h) scroll_[k] = static_cast<s16>(top + r.h + v.padB - v.h);
+        clampScroll(s);
+        if (scroll_[k] == was) return false;
+        if (ready_) redrawScroll(s);
+        return true;
+    }
+
+    void redrawScroll(int s) {
+        const ElementDef& v = def_.elements[s];
+        redraw(v.x, v.y, v.w, v.h);
+        for (int i = 0; i < def_.count; ++i)
+            if (def_.elements[i].kind == ElementKind::Scrollbar && def_.elements[i].scrollTarget == s) redrawElement(i);
+    }
+
+    // ---- drawing -----------------------------------------------------------------------------------------
     // Everything under a rectangle again, parents first (the build lists parents before children).
     void redraw(int x, int y, int w, int h) {
         const int ox = def_.tileX * 8, oy = def_.tileY * 8;
@@ -859,22 +1170,47 @@ private:
         if (w > box_.widthPx() - x) w = box_.widthPx() - x;
         if (h > box_.heightPx() - y) h = box_.heightPx() - y;
         if (w <= 0 || h <= 0) return;
-        clipX_ = x;
-        clipY_ = y;
-        clipR_ = x + w;
-        clipB_ = y + h;
+        const int rx = x, ry = y, rr = x + w, rb = y + h;
+        clipX_ = rx;
+        clipY_ = ry;
+        clipR_ = rr;
+        clipB_ = rb;
         box_.fillRect(x, y, w, h, 0);
         for (int i = 0; i < def_.count; ++i) {
             const ElementDef& e = def_.elements[i];
-            if (e.x - ox >= clipR_ || e.y - oy >= clipB_ || e.x - ox + e.w <= clipX_ || e.y - oy + e.h <= clipY_) continue;
-            if (shown(i)) draw(i, e.x - ox, e.y - oy);
+            if (!shown(i)) continue;
+            const int ex = e.x - ox, ey = e.y - oy + offsetY(i);
+            clipX_ = rx;
+            clipY_ = ry;
+            clipR_ = rr;
+            clipB_ = rb;
+            const int s = scrollOf(i);
+            if (s >= 0) {  // Mask: the Scroll Rect shows its content only inside itself, inside its border
+                const ElementDef& v = def_.elements[s];
+                const int b = v.border ? v.borderWidth : 0;
+                const int vx = v.x - ox + b, vy = v.y - oy + b, vr = v.x - ox + v.w - b, vb = v.y - oy + v.h - b;
+                if (vx > clipX_) clipX_ = vx;
+                if (vy > clipY_) clipY_ = vy;
+                if (vr < clipR_) clipR_ = vr;
+                if (vb < clipB_) clipB_ = vb;
+                if (clipX_ >= clipR_ || clipY_ >= clipB_) continue;
+            }
+            if (ex >= clipR_ || ey >= clipB_ || ex + e.w <= clipX_ || ey + e.h <= clipY_) continue;
+            draw(i, ex, ey);
         }
+        clipX_ = rx;
+        clipY_ = ry;
+        clipR_ = rr;
+        clipB_ = rb;
+        if (dropOpen_ >= 0) drawDropdown();
+        if (inputOpen_ >= 0) drawKeyboard();
+        box_.clearClip();
         box_.update();
     }
 
     void redrawElement(int i) {
         const ElementDef& e = def_.elements[i];
-        redraw(e.x, e.y, e.w, e.h);
+        redraw(e.x, e.y + offsetY(i), e.w, e.h);
     }
 
     void fill(int x, int y, int w, int h, u8 index) {
@@ -884,6 +1220,14 @@ private:
         if (w > clipR_ - x) w = clipR_ - x;
         if (h > clipB_ - y) h = clipB_ - y;
         if (w > 0 && h > 0) box_.fillRect(x, y, w, h, index);
+    }
+
+    void frame(int x, int y, int w, int h, int b, u8 color) {
+        if (!color || !b) return;
+        fill(x, y, w, b, color);
+        fill(x, y + h - b, w, b, color);
+        fill(x, y + b, b, h - 2 * b, color);
+        fill(x + w - b, y + b, b, h - 2 * b, color);
     }
 
     void blit(const ImageDef& im, int sx, int sy, int w, int h, int x, int y) {
@@ -902,8 +1246,13 @@ private:
                 blit(im, sx, sy, sw < w - dx ? sw : w - dx, sh < h - dy ? sh : h - dy, x + dx, y + dy);
     }
 
-    void drawImage(const ElementDef& e, int amount, int x, int y) {
-        const ImageDef& im = *e.image;
+    const ImageDef* imageOf(int i) const {
+        for (int slot = 0; slot < kMaxChangedImages && changedImageEl_[slot]; ++slot)
+            if (changedImageEl_[slot] == i + 1) return changedImage_[slot];
+        return def_.elements[i].image;
+    }
+
+    void drawImage(const ElementDef& e, const ImageDef& im, int amount, int x, int y) {
         const int iw = im.width, ih = im.height;
         switch (e.imageMode) {
             case ImageMode::Sliced: {
@@ -940,14 +1289,7 @@ private:
 
     int labelWidth(const Label& l) const {
         if (l.key >= 0) {
-            if (const data::TextRun* r = text::run(static_cast<u16>(l.key))) {
-                int w = 0;
-                for (u16 i = 0; i < r->count; ++i) {
-                    const int e = r->glyphs[i].x + r->font->glyphs[r->glyphs[i].glyph].advance;
-                    if (e > w) w = e;
-                }
-                return w;
-            }
+            if (const data::TextRun* r = text::run(static_cast<u16>(l.key))) return box_.runWidth(*r);
         }
         const data::Font* f = g_kit ? g_kit->font : nullptr;
         if (!l.ascii || !f || !f->ascii) return 0;
@@ -959,120 +1301,349 @@ private:
         return w;
     }
 
-    void drawLabel(const ElementDef& e, const Label& l, u8 ink, int x, int y, int w) {
-        if (!ink || (l.key < 0 && !l.ascii) || !g_kit || !g_kit->font) return;
-        const int lw = labelWidth(l), lh = g_kit->font->lineHeight;
-        const int tx = x + (e.alignX == Align::Center ? (w - lw) / 2 : e.alignX == Align::End ? w - lw : 0);
-        const int ty = y + (e.alignY == Align::Center ? (e.h - lh) / 2 : e.alignY == Align::End ? e.h - lh : 0);
-        box_.setInk(ink);
-        const data::TextRun* r = l.key >= 0 ? text::run(static_cast<u16>(l.key)) : nullptr;
-        if (r) box_.drawRun(*r, tx, ty);
-        else if (l.ascii) box_.drawAscii(*g_kit->font, l.ascii, tx, ty);
-        box_.setInk(kInk);
+    const Values* valuesOf(int i) const {
+        for (int slot = 0; slot < kMaxValues && values_[slot].element; ++slot)
+            if (values_[slot].element == i + 1) return values_[slot].count ? &values_[slot] : nullptr;
+        return nullptr;
     }
 
-    const Label& labelOf(int i) const {
+    // Writes the values as "a" or "a/b" into 26 bytes.
+    static void valuesText(const Values& v, char* out) {
+        render::numberText(v.a, v.digits, out);
+        if (v.count < 2) return;
+        while (*out) ++out;
+        *out++ = '/';
+        render::numberText(v.b, v.digits, out);
+    }
+
+    // The text of an element inside (x, y, w, h), padded; it never leaves the element's rectangle (RectMask2D).
+    void drawLabel(int i, const Label& l, u8 ink, int x, int y, int w, int h, Align alignX, Align alignY, bool useValues) {
+        const ElementDef& e = def_.elements[i];
+        if (!ink || !g_kit || !g_kit->font) return;
+        const data::Font& font = *g_kit->font;
+        const data::TextRun* r = l.key >= 0 ? text::run(static_cast<u16>(l.key)) : nullptr;
+        const bool hasLabel = r || (l.ascii && *l.ascii);
+        const Values* values = useValues ? valuesOf(i) : nullptr;
+        if (!hasLabel && !values) return;
+
+        render::TextVar vars[render::kTextVars];
+        const bool tokens = r && r->markCount;
+        if (tokens) {
+            for (int k = 0; k < render::kTextVars; ++k) vars[k] = render::textVar(k);
+            if (values) {
+                vars[0] = render::TextVar{};
+                vars[0].number = values->a;
+                vars[0].digits = values->digits;
+                if (values->count > 1) {
+                    vars[1] = render::TextVar{};
+                    vars[1].number = values->b;
+                    vars[1].digits = values->digits;
+                }
+            }
+            box_.setVars(vars);
+        }
+        char extra[26];
+        extra[0] = 0;
+        if (values && !tokens) valuesText(*values, extra);
+        int extraW = 0;
+        if (extra[0] && font.ascii)
+            for (const char* p = extra; *p; ++p)
+                if (font.ascii[static_cast<u8>(*p)] != 0xFFFF) extraW += font.glyphs[font.ascii[static_cast<u8>(*p)]].advance;
+        const int labelW = hasLabel ? labelWidth(l) : 0;
+        const int gap = hasLabel && extra[0] ? 4 : 0;
+        const int lw = labelW + gap + extraW;
+        const int lines = r ? r->lines : 1;
+        const int lh = font.lineHeight;
+        if ((lw > w || lines * lh > h + 2) && !(warned_ & (1ull << i))) {
+            warned_ |= 1ull << i;
+            debug::logf("warning: UI page %s: the text of %s is %d x %d px and its space is %d x %d px, so it is cut. Make the text shorter or the element larger.", def_.name, e.name, lw, lines * lh, w, h);
+        }
+        const int tx = x + (alignX == Align::Center ? (w - lw) / 2 : alignX == Align::End ? w - lw : 0);
+        const int ty = y + (alignY == Align::Center ? (h - lines * lh) / 2 : alignY == Align::End ? h - lines * lh : 0);
+        // Mask to the element's own rectangle and to the clip of the redraw.
+        const int cl = x < clipX_ ? clipX_ : x, cr = x + w > clipR_ ? clipR_ : x + w;
+        box_.setClip(cl, clipY_, cr, clipB_);
+        box_.setInk(ink);
+        if (r) box_.drawRun(*r, tx, ty);
+        else if (l.ascii) box_.drawAscii(font, l.ascii, tx, ty);
+        if (extra[0]) box_.drawAscii(font, extra, tx + labelW + gap, ty);
+        box_.setInk(kInk);
+        box_.setVars(nullptr);
+        box_.clearClip();
+    }
+
+    Label labelOf(int i) const {
         for (int slot = 0; slot < kMaxChangedTexts && changedText_[slot]; ++slot)
-            if (changedText_[slot] == i + 1) return changedLabel_[slot];
+            if (changedText_[slot] == i + 1) return Label{changedKey_[slot], nullptr};
         return def_.elements[i].label;
     }
 
     void draw(int i, int x, int y) {
         const ElementDef& e = def_.elements[i];
         const bool focused = i == focus_;
+        const bool off = !enabled(i);
         const u8 fillColor = focused && e.focusFill ? e.focusFill : e.fill;
         const u8 border = focused && e.focusBorder ? e.focusBorder : e.border;
-        const u8 ink = focused && e.focusInk ? e.focusInk : e.ink;
+        const u8 ink = off && e.disabledInk ? e.disabledInk : focused && e.focusInk ? e.focusInk : e.ink;
         fill(x, y, e.w, e.h, fillColor);
-        if (e.image) drawImage(e, amount_[i], x, y);
+        if (const ImageDef* image = imageOf(i)) drawImage(e, *image, amount_[i], x, y);
         if (e.kind == ElementKind::Slider) {
             const int inset = e.border ? e.borderWidth : 0;
             fill(x + inset, y + inset, (e.w - 2 * inset) * amount_[i] / 100, e.h - 2 * inset, e.accent);
         }
-        if (border && e.borderWidth) {
-            const int b = e.borderWidth;
-            fill(x, y, e.w, b, border);
-            fill(x, y + e.h - b, e.w, b, border);
-            fill(x, y + b, b, e.h - 2 * b, border);
-            fill(x + e.w - b, y + b, b, e.h - 2 * b, border);
+        if (e.kind == ElementKind::Scrollbar && e.scrollTarget >= 0) {
+            const int s = e.scrollTarget;
+            const int content = contentHeight(s), view = def_.elements[s].h, most = maxScroll(s);
+            int thumb = most > 0 ? e.h * view / content : e.h;
+            if (thumb < 6) thumb = 6;
+            const int k = scrollSlot(s);
+            const int at = most > 0 && k >= 0 ? (e.h - thumb) * scroll_[k] / most : 0;
+            fill(x, y + at, e.w, thumb, e.accent);
+            return;
         }
-        int textX = x, textW = e.w;
+        frame(x, y, e.w, e.h, e.borderWidth, border);
+        int textX = x + e.padL, textW = e.w - e.padL - e.padR;
+        const int textY = y + e.padT, textH = e.h - e.padT - e.padB;
         if (e.kind == ElementKind::Toggle) {
             const int size = e.h < 10 ? e.h : 10, top = y + (e.h - size) / 2;
-            const u8 frame = ink ? ink : e.accent;
-            fill(x, top, size, 1, frame);
-            fill(x, top + size - 1, size, 1, frame);
-            fill(x, top + 1, 1, size - 2, frame);
-            fill(x + size - 1, top + 1, 1, size - 2, frame);
-            if (on(i)) fill(x + 2, top + 2, size - 4, size - 4, e.accent ? e.accent : ink);
+            const u8 box = ink ? ink : e.accent;
+            frame(textX, top, size, size, 1, box);
+            if (on(i)) fill(textX + 2, top + 2, size - 4, size - 4, e.accent ? e.accent : ink);
             textX += size + 4;
             textW -= size + 4;
         } else if (e.kind == ElementKind::Button && e.cursor) {
             if (focused) {
                 const u8 c = e.accent ? e.accent : ink;
                 const int top = y + e.h / 2 - 3;
-                for (int k = 0; k < 3; ++k) fill(x + 1 + k, top + k, 1, 7 - 2 * k, c);
+                for (int k = 0; k < 3; ++k) fill(textX + 1 + k, top + k, 1, 7 - 2 * k, c);
             }
             textX += 8;
             textW -= 8;
+        } else if (e.kind == ElementKind::Dropdown) {
+            // Label on the left, the chosen option on the right, then a small down arrow.
+            const int arrowX = textX + textW - 5, top = y + e.h / 2 - 1;
+            for (int k = 0; k < 3; ++k) fill(arrowX + k, top + k, 5 - 2 * k, 1, ink);
+            textW -= 8;
+            if (e.optionCount && amount_[i] < e.optionCount) drawLabel(i, e.options[amount_[i]], ink, textX, textY, textW, textH, Align::End, e.alignY, false);
+        } else if (e.kind == ElementKind::InputField) {
+            Label typed{-1, input_};
+            drawLabel(i, typed, ink, textX, textY, textW, textH, Align::Start, e.alignY, false);
+            if (focused && g_kit && g_kit->font) fill(textX + labelWidth(typed) + 1, textY + 2, 1, textH - 4, ink);
+            return;
         }
-        drawLabel(e, labelOf(i), ink, textX, y, textW);
+        drawLabel(i, labelOf(i), ink, textX, textY, textW, textH, e.kind == ElementKind::Dropdown ? Align::Start : e.alignX, e.alignY, true);
     }
 
-    // Three pages' worth of state stays in the Text row of the RAM budget, so only the texts a script changed are kept.
-    static constexpr int kMaxChangedTexts = 16;
+    // ---- Dropdown ----------------------------------------------------------------------------------------
+    // The open list goes below the control, or above it when it would leave the screen.
+    int dropTop(const ElementDef& e) const {
+        const int h = e.optionCount * e.h + 2;
+        const int y = e.y + offsetY(dropOpen_) + e.h;
+        return y + h > 160 ? e.y + offsetY(dropOpen_) - h : y;
+    }
+
+    void drawDropdown() {
+        const ElementDef& e = def_.elements[dropOpen_];
+        const int ox = def_.tileX * 8, oy = def_.tileY * 8;
+        const int x = e.x - ox, y = dropTop(e) - oy, h = e.optionCount * e.h + 2;
+        fill(x, y, e.w, h, e.fill ? e.fill : e.focusFill);
+        frame(x, y, e.w, h, 1, e.border ? e.border : e.ink);
+        for (int k = 0; k < e.optionCount; ++k) {
+            const int ry = y + 1 + k * e.h;
+            const bool at = k == dropCursor_;
+            if (at) fill(x + 1, ry, e.w - 2, e.h, e.focusFill);
+            drawLabel(dropOpen_, e.options[k], at && e.focusInk ? e.focusInk : e.ink, x + 1 + e.padL, ry + e.padT, e.w - 2 - e.padL - e.padR, e.h - e.padT - e.padB, Align::Start, e.alignY, false);
+        }
+    }
+
+    void updateDropdown() {
+        const ElementDef& e = def_.elements[dropOpen_];
+        const int way = (input::repeated(Key::Down) ? 1 : 0) - (input::repeated(Key::Up) ? 1 : 0);
+        if (way) {
+            dropCursor_ = static_cast<u8>((dropCursor_ + way + e.optionCount) % e.optionCount);
+            drawDropdown();
+            box_.update();
+            return;
+        }
+        if (!input::pressed(Key::A) && !input::pressed(Key::B)) return;
+        const int i = dropOpen_;
+        const int top = dropTop(e), h = e.optionCount * e.h + 2;
+        const bool picked = input::pressed(Key::A);
+        dropOpen_ = -1;
+        if (picked) amount_[i] = dropCursor_;
+        redraw(e.x, top, e.w, h);
+        redrawElement(i);
+        if (picked) {
+            g_pageChosen = e.name;
+            if (g_pageWaiting) setPageResult(e.data);
+        }
+    }
+
+    // ---- Input Field: an on-screen keyboard ------------------------------------------------------------
+    static const char* keyLabel(int action) { return action == 0 ? "SPACE" : action == 1 ? "DEL" : "OK"; }
+    static int keyAction(int col) { return col < 5 ? 0 : col < 9 ? 1 : 2; }
+    static int keyActionCol(int action) { return action == 0 ? 0 : action == 1 ? 5 : 9; }
+    static int keyActionCols(int action) { return action == 0 ? 5 : 4; }
+
+    void drawKey(int col, int row) {
+        const ElementDef& e = def_.elements[inputOpen_];
+        const int ox = kKeysX - def_.tileX * 8 + 8, oy = kKeysY - def_.tileY * 8 + 6;
+        const bool bottom = row == kKeyRows - 1;
+        const int start = bottom ? keyActionCol(keyAction(col)) : col;
+        const int cols = bottom ? keyActionCols(keyAction(col)) : 1;
+        const bool at = row == keyRow_ && (bottom ? keyAction(keyCol_) == keyAction(col) : keyCol_ == col);
+        const int x = ox + start * kKeyW, y = oy + row * kKeyH;
+        fill(x, y, cols * kKeyW, kKeyH, at ? e.focusFill : e.fill);
+        char one[2] = {};
+        if (!bottom) one[0] = kKeyRowsText[row][col];
+        Label label{-1, bottom ? keyLabel(keyAction(col)) : one};
+        drawLabel(inputOpen_, label, at && e.focusInk ? e.focusInk : e.ink, x, y, cols * kKeyW, kKeyH, Align::Center, Align::Center, false);
+    }
+
+    void drawKeyboard() {
+        const ElementDef& e = def_.elements[inputOpen_];
+        const int x = kKeysX - def_.tileX * 8, y = kKeysY - def_.tileY * 8;
+        fill(x, y, kKeysW, kKeysH, e.fill);
+        frame(x, y, kKeysW, kKeysH, 1, e.border ? e.border : e.ink);
+        for (int r = 0; r < kKeyRows - 1; ++r)
+            for (int c = 0; c < kKeyCols; ++c) drawKey(c, r);
+        for (int a = 0; a < 3; ++a) drawKey(keyActionCol(a), kKeyRows - 1);
+    }
+
+    void updateKeyboard() {
+        const int oldCol = keyCol_, oldRow = keyRow_;
+        const bool bottom = keyRow_ == kKeyRows - 1;
+        if (input::repeated(Key::Up)) keyRow_ = static_cast<u8>((keyRow_ + kKeyRows - 1) % kKeyRows);
+        else if (input::repeated(Key::Down)) keyRow_ = static_cast<u8>((keyRow_ + 1) % kKeyRows);
+        else if (input::repeated(Key::Left)) keyCol_ = static_cast<u8>(bottom ? keyActionCol((keyAction(keyCol_) + 2) % 3) : (keyCol_ + kKeyCols - 1) % kKeyCols);
+        else if (input::repeated(Key::Right)) keyCol_ = static_cast<u8>(bottom ? keyActionCol((keyAction(keyCol_) + 1) % 3) : (keyCol_ + 1) % kKeyCols);
+        if (oldCol != keyCol_ || oldRow != keyRow_) {
+            clipX_ = 0;
+            clipY_ = 0;
+            clipR_ = box_.widthPx();
+            clipB_ = box_.heightPx();
+            drawKey(oldCol, oldRow);
+            drawKey(keyCol_, keyRow_);
+            box_.update();
+            return;
+        }
+        const ElementDef& e = def_.elements[inputOpen_];
+        int n = inputLength();
+        const int cap = e.maxLength && e.maxLength < kMaxInput ? e.maxLength : kMaxInput;
+        const bool pressA = input::pressed(Key::A);
+        bool done = input::pressed(Key::Start);
+        if (pressA) {
+            if (keyRow_ == kKeyRows - 1) {
+                const int action = keyAction(keyCol_);
+                if (action == 0 && n < cap) input_[n++] = ' ';
+                else if (action == 1 && n > 0) --n;
+                else if (action == 2) done = true;
+            } else if (n < cap) {
+                input_[n++] = kKeyRowsText[keyRow_][keyCol_];
+            }
+            input_[n] = 0;
+            redrawElement(inputOpen_);
+        } else if (input::pressed(Key::B)) {
+            if (n > 0) {
+                input_[n - 1] = 0;
+                redrawElement(inputOpen_);
+            } else {
+                done = true;
+            }
+        }
+        if (done) {
+            const int i = inputOpen_;
+            inputOpen_ = -1;
+            redraw(kKeysX, kKeysY, kKeysW, kKeysH);
+            g_pageChosen = def_.elements[i].name;
+            if (g_pageWaiting) setPageResult(def_.elements[i].data);
+        }
+    }
+
+    // A page keeps only what a script changed.
+    static constexpr int kMaxChangedTexts = 20, kMaxChangedImages = 6, kMaxValues = 20, kMaxScrollRects = 2;
 
     const PageDef& def_;
     int data_;
     Restore restore_;
     render::TextBox box_;
     bool ready_ = false;
+    bool shownOnScreen_ = false;
     s8 focus_ = -1;
+    s8 dropOpen_ = -1, inputOpen_ = -1;
+    u8 dropCursor_ = 0, keyCol_ = 0, keyRow_ = 0;
     int clipX_ = 0, clipY_ = 0, clipR_ = 0, clipB_ = 0;
-    u64 hidden_ = 0, on_ = 0;
+    u64 hidden_ = 0, on_ = 0, disabled_ = 0, warned_ = 0;
     u8 amount_[kMaxPageElements] = {};
     u8 changedText_[kMaxChangedTexts] = {};  // element index + 1, 0 = free
-    Label changedLabel_[kMaxChangedTexts] = {};
+    s16 changedKey_[kMaxChangedTexts] = {};
+    u8 changedImageEl_[kMaxChangedImages] = {};
+    const ImageDef* changedImage_[kMaxChangedImages] = {};
+    Values values_[kMaxValues] = {};
+    s8 scrollElement_[kMaxScrollRects] = {};
+    s16 scroll_[kMaxScrollRects] = {};
+    u8 scrollCount_ = 0;
+    char input_[kMaxInput + 1] = {};
 };
 
-alignas(8) AGB_EWRAM_BSS u8 g_pageStorage[kMaxOpenPages][sizeof(PageScreen)];
+// The pages' state comes from the screen arena when a scene first opens one, so a game without pages pays nothing.
+// The scene load that resets the arena forgets it (forgetPageMemory); pages never outlive their scene.
+PageScreen* g_pageStorage = nullptr;
 
-Screen* storedPage(u8* storage) { return reinterpret_cast<PageScreen*>(storage); }
+PageScreen* storedPage(int slot) { return g_pageStorage + slot; }
 
 bool isPage(const Screen* s) {
-    for (auto& storage : g_pageStorage)
-        if (s == storedPage(storage)) return true;
+    if (!g_pageStorage) return false;
+    for (int k = 0; k < kMaxOpenPages; ++k)
+        if (s == storedPage(k)) return true;
     return false;
 }
 
 PageScreen* topPage() {
-    if (!game::depth()) return nullptr;
+    if (!game::depth() || !g_pageStorage) return nullptr;
     Screen* top = game::top();
-    for (auto& storage : g_pageStorage)
-        if (top == storedPage(storage)) return static_cast<PageScreen*>(top);
-    return nullptr;
+    return isPage(top) ? static_cast<PageScreen*>(top) : nullptr;
+}
+
+// Every open page again, bottom first: a panel that closed over them pointed its map entries at the blank tile.
+void remapOpenPages() {
+    for (int d = 0; d < game::depth(); ++d)
+        if (isPage(game::at(d))) static_cast<PageScreen*>(game::at(d))->remapBox();
+}
+
+void pumpOpenPages() {
+    for (int d = 0; d < game::depth(); ++d)
+        if (isPage(game::at(d))) static_cast<PageScreen*>(game::at(d))->pump();
 }
 
 // A storage in use is one the screen stack holds: a scene load drops open pages without telling this file.
-u8* freePageStorage() {
-    for (auto& storage : g_pageStorage) {
+PageScreen* freePageStorage() {
+    if (!g_pageStorage) {
+        // Before any page takes its Restore mark, so closing a page keeps this.
+        void* memory = screenArena().alloc(sizeof(PageScreen) * kMaxOpenPages + 8);
+        if (!memory) return nullptr;
+        g_pageStorage = reinterpret_cast<PageScreen*>((reinterpret_cast<u32>(memory) + 7) & ~7u);
+    }
+    for (int k = 0; k < kMaxOpenPages; ++k) {
         bool used = false;
         for (int d = 0; d < game::depth(); ++d)
-            if (game::at(d) == storedPage(storage)) used = true;
-        if (!used) return storage;
+            if (game::at(d) == storedPage(k)) used = true;
+        if (!used) return storedPage(k);
     }
     return nullptr;
 }
 }  // namespace
 
 void setPages(const PageSet* pages) { g_pages = pages; }
+void forgetPageMemory() { g_pageStorage = nullptr; }
 
 bool openPage(int index, int data) {
     if (!g_pages || index < 0 || index >= g_pages->count) {
         debug::warnOnce(23, "UI.Open: there is no such UI page. Check the name against the pages in the project's ui folder.");
         return false;
     }
-    u8* storage = freePageStorage();
+    if (topPage()) game::finishLoading();  // a page opened this frame enters before another covers it
+    PageScreen* storage = freePageStorage();
     if (!storage || game::depth() >= game::kMaxScreens) {
         debug::warnOnce(24, "UI.Open: too many UI pages are open at once, so the new one did not open. Close one first.");
         return false;
@@ -1089,13 +1660,14 @@ bool openPage(const char* name, int data) {
 }
 
 void closePage() {
-    if (topPage()) game::pop();
+    if (!topPage()) return;
+    game::finishLoading();
+    game::pop();
 }
 
 bool pageOpen(const char* name) {
     for (int d = 0; d < game::depth(); ++d)
-        for (auto& storage : g_pageStorage)
-            if (game::at(d) == storedPage(storage) && (!name || sameName(reinterpret_cast<PageScreen*>(storage)->def().name, name))) return true;
+        if (isPage(game::at(d)) && (!name || sameName(static_cast<PageScreen*>(game::at(d))->def().name, name))) return true;
     return false;
 }
 
@@ -1113,6 +1685,25 @@ const char* pageChosen() {
     const char* chosen = g_pageChosen;
     g_pageChosen = nullptr;
     return chosen;
+}
+
+void beginPageChoice(bool wakeOnMove) {
+    g_pageWaiting = true;
+    g_pageWakeOnMove = wakeOnMove;
+    g_pageResultReady = false;
+    // A line of dialogue that was read leaves the page.
+    if (text::open() && !text::waiting()) {
+        text::close();
+        remapOpenPages();
+    }
+}
+
+bool pollPageChoice(s32& result) {
+    if (!g_pageResultReady && pageOpen()) return false;
+    result = g_pageResultReady ? g_pageResult : -1;
+    g_pageResultReady = false;
+    g_pageWaiting = false;
+    return true;
 }
 
 void setPageHidden(const char* element, bool hidden) {
@@ -1145,6 +1736,58 @@ int pageAmount(const char* element) {
     const PageScreen* p = topPage();
     const int i = p ? p->find(element) : -1;
     return i >= 0 ? p->amount(i) : 0;
+}
+
+void setPageValues(const char* element, s32 a, s32 b, int count, int digits) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setValues(i, a, b, count, digits);
+}
+
+void setPageFocus(const char* element) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setFocus(i);
+}
+
+bool pageFocused(const char* element) {
+    const PageScreen* p = topPage();
+    const int i = p ? p->find(element) : -1;
+    return i >= 0 && p->focus() == i;
+}
+
+int pageFocusData() {
+    const PageScreen* p = topPage();
+    return p && p->focus() >= 0 ? p->def().elements[p->focus()].data : -1;
+}
+
+void setPageInteractable(const char* element, bool on) {
+    if (PageScreen* p = topPage())
+        if (const int i = p->find(element); i >= 0) p->setInteractable(i, on);
+}
+
+void setPageImage(const char* element, const char* image) {
+    PageScreen* p = topPage();
+    const int i = p ? p->find(element) : -1;
+    if (i < 0 || !g_pages) return;
+    for (int k = 0; k < g_pages->imageCount; ++k)
+        if (sameName(g_pages->images[k].name, image)) {
+            p->setImage(i, g_pages->images[k].image);
+            return;
+        }
+    debug::warnOnce(29, "UI.SetImage: no UI page lists this image. Add it to the element's Image Variants.");
+}
+
+int pageInputLength() {
+    const PageScreen* p = topPage();
+    return p ? p->inputLength() : 0;
+}
+
+int pageInputChar(int index) {
+    const PageScreen* p = topPage();
+    return p ? p->inputChar(index) : 0;
+}
+
+void setPageInputChar(int index, int ch) {
+    if (PageScreen* p = topPage()) p->setInputChar(index, ch);
 }
 
 }  // namespace agb::ui

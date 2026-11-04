@@ -34,7 +34,13 @@ s8 g_chosen = -1;
 bool g_choosing = false;
 
 void loadPalette() {
-    const u16 colors[16] = {0, g_style.ink, g_style.ink2, g_style.ink3, g_style.shadow, g_style.paper, g_style.frame};
+    using render::palettes::blend;
+    u16 colors[16] = {0, g_style.ink, g_style.ink2, g_style.ink3, g_style.shadow, g_style.paper, g_style.frame};
+    for (int i = 0; i < 3; ++i) {  // <c1>..<c3>: three shades each, for 2bpp fonts
+        colors[7 + i * 3] = g_style.rich[i];
+        colors[8 + i * 3] = blend(g_style.rich[i], g_style.paper, 6);
+        colors[9 + i * 3] = blend(g_style.rich[i], g_style.paper, 11);
+    }
     render::palettes::setBank(false, g_style.paletteBank, colors);
 }
 
@@ -126,6 +132,28 @@ const data::TextRun* run(u16 key) {
 }
 
 void configureBox(const BoxStyle& style) { g_style = style; }
+void setSpeed(u8 charsPerFrame) { g_style.charsPerFrame = charsPerFrame; }
+
+void setVarNumber(int index, s32 value, int digits) {
+    render::TextVar& v = render::textVar(index);
+    v.run = nullptr;
+    v.chars[0] = 0;
+    v.number = value;
+    v.digits = static_cast<s8>(digits);
+}
+
+void setVarKey(int index, u16 key) {
+    render::TextVar& v = render::textVar(index);
+    v.chars[0] = 0;
+    v.run = run(key);
+}
+
+void setVarChar(int index, int position, int ch) {
+    render::TextVar& v = render::textVar(index);
+    if (position < 0 || position >= static_cast<int>(sizeof v.chars) - 1) return;
+    v.chars[position] = static_cast<char>(ch);
+    v.chars[position + 1] = 0;
+}
 
 bool open() { return g_open; }
 
@@ -179,7 +207,8 @@ bool ensureLayer() {
     if (g_layerReady) return true;
     const int sb = render::bg::allocScreenBlocks(render::bg::Size::S32x32);
     if (sb < 0) return false;
-    const auto blank = render::bg::reserveTiles(1);
+    // A char block of its own start: panels of the text layer can then use all 1024 tiles its map entries reach.
+    const auto blank = render::bg::reserveFreshBlock(1);
     if (!blank.valid()) return false;
     // The layer may be made during play (the first dialogue or pause menu): its blank tile and map go through the
     // commit queue like the panels drawn on it.
@@ -340,20 +369,31 @@ void remapPanels() {
     if (g_menuOpen) g_menuBox.remap();
 }
 
-static bool ensureOpen() {
-    if (g_open) return true;
+static bool prepareBox() {
+    if (g_boxReady) return true;
     if (!ensureLayer()) return false;
-    if (g_boxReady) {
-        g_box.remap();
-        g_box.clear();
-        g_open = true;
-        return true;
-    }
     if (!g_box.init(g_bg, g_style.tileX, g_style.tileY, g_style.widthTiles, g_style.heightTiles, g_style.paletteBank,
                     render::TextBox::Style{1, 4, 5}))
         return false;
-    g_open = true;
+    g_box.setPadding(render::TextBox::Padding{g_style.padLeft, g_style.padTop, g_style.padRight, g_style.padBottom});
+    g_box.setFrame(g_style.frameWidth ? 6 : 0, g_style.frameWidth);
     g_boxReady = true;
+    return true;
+}
+
+void reserveBoxes() {
+    if (!g_boxReady && prepareBox()) g_box.unmap(g_blank);
+}
+
+static bool ensureOpen() {
+    if (g_open) return true;
+    if (!g_boxReady) {
+        if (!prepareBox()) return false;
+    } else {
+        g_box.remap();
+    }
+    g_box.clear();
+    g_open = true;
     return true;
 }
 

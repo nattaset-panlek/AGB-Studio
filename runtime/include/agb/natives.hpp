@@ -34,7 +34,8 @@ namespace agb::script::natives {
     X(Random, false, "lo, hi: random number, both included")                                    \
     X(SaveWrite, false, "slot: returns 1 when written")                                         \
     X(SaveRead, false, "slot: returns 1 when read")                                             \
-    X(SaveCheckpoint, false, "remembers the scene and the player position, writes slot 0")
+    X(SaveCheckpoint, false, "remembers the scene and the player position, writes slot 0")   \
+    X(UiChoose, true, "wake on move (0 or 1): waits for the top UI page, returns the Data of the control chosen, -1 for B, -2 when the cursor moved")
 
 #define AGB_NATIVE_DECLARE(name, waits, note) s32 name(Context& ctx, const s32* args, int argc);
 AGB_BUILTIN_NATIVES(AGB_NATIVE_DECLARE)

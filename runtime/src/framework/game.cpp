@@ -184,6 +184,7 @@ public:
                 render::palettes::reset();
                 render::effects::reset();
                 ui::closeSceneMenu();
+                ui::forgetPageMemory();
                 text::clearLabels();
                 task::destroyAll();
                 script::resetContexts();
@@ -598,6 +599,12 @@ void push(Screen* screen) {
     }
     g_stack[g_depth++] = screen;
     beginLoad(screen);
+}
+
+void finishLoading() {
+    if (g_loadStep < 0 || !g_depth) return;
+    g_loadStep = -1;
+    g_stack[g_depth - 1]->enter();
 }
 
 void pop() {

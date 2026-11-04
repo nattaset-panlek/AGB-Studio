@@ -53,6 +53,27 @@ public sealed class UiSettings
     public string BarTrack { get; set; } = "#3A3F4E";
     public string BarFill { get; set; } = "#3B4FD8";
     public int Dim { get; set; } = 9;                 // pause overlay: darkens the scene by Dim/16
+    public DialogueBoxSettings? Dialogue { get; set; } // null = the default box
+    public List<string> RichColors { get; set; } = new() { "#C83030", "#3050C8", "#208838" };  // <c1>..<c3> in strings
+}
+
+// Project Settings · Dialogue box: the Say box. X, Y, W and H snap to whole tiles.
+public sealed class DialogueBoxSettings
+{
+    public int X { get; set; } = 8;
+    public int Y { get; set; } = 112;
+    public int W { get; set; } = 224;
+    public int H { get; set; } = 40;
+    public int PaddingLeft { get; set; } = 8;
+    public int PaddingTop { get; set; } = 4;
+    public int PaddingRight { get; set; } = 8;
+    public int PaddingBottom { get; set; } = 4;
+    public int BorderWidth { get; set; } = 1;
+    public string Paper { get; set; } = "#F8F4E8";
+    public string Ink { get; set; } = "#1E1A28";
+    public string Border { get; set; } = "#1E1A28";
+    public string Shadow { get; set; } = "#C8C4B8";
+    public int TextSpeed { get; set; } = 2;           // characters a frame
 }
 
 // Project Settings · Input: GBA button -> action name -> keyboard / gamepad in the emulator.

@@ -125,9 +125,17 @@ void rewind(const Mark& m) {
     g_unitUsed = m.units;
 }
 
-TilesetPlacement reserveTiles(u16 tiles, bool bpp8) {
+TilesetPlacement reserveTiles(u16 tiles, bool bpp8) { return reserveTilesFrom(tiles, 0, bpp8); }
+
+TilesetPlacement reserveFreshBlock(u16 tiles) {
+    for (int cb = 1; cb < 4; ++cb)
+        if (g_tilesInBlock[cb] == 0 && unitsFree(cb * 8, 1)) return reserveTilesFrom(tiles, cb, false);
+    return reserveTilesFrom(tiles, 0, false);
+}
+
+TilesetPlacement reserveTilesFrom(u16 tiles, int firstBlock, bool bpp8) {
     const u32 bytes = static_cast<u32>(tiles) * (bpp8 ? 64 : 32);
-    for (int cb = 0; cb < 4; ++cb) {
+    for (int cb = firstBlock; cb < 4; ++cb) {
         const u32 startByte = static_cast<u32>(g_tilesInBlock[cb]) * 32;
         const u32 endByte = startByte + bytes;
         if (startByte / 32 + tiles > 1024) continue;

@@ -29,9 +29,20 @@ struct BoxStyle {
     u8 paletteBank = 15;
     u8 charsPerFrame = 2;  // Dialogue Editor "Text speed · 2 ch/frame"
     u16 paper = 0x7BDE, ink = 0x0C63, ink2 = 0x294A, ink3 = 0x4E73, shadow = 0x6318, frame = 0x0C63;
+    // Project Settings · Dialogue box: space inside the box, its border (0 = none), and the <c1>..<c3> colours.
+    u8 padLeft = 0, padTop = 0, padRight = 0, padBottom = 0;
+    u8 frameWidth = 0;
+    u16 rich[3] = {0x001F, 0x7C00, 0x03E0};
 };
 
 void configureBox(const BoxStyle& style);
+void setSpeed(u8 charsPerFrame);  // typing speed of the dialogue box (a Text Speed option)
+// Values of {0}..{3} in strings (C# Text.SetVar): a number, the text of a string key, or typed characters.
+void setVarNumber(int index, s32 value, int digits = 0);
+void setVarKey(int index, u16 key);
+void setVarChar(int index, int position, int ch);  // ch 0 ends the text
+// Takes the dialogue box's memory now: a UI page opened over a scene gives back what was reserved after it opened.
+void reserveBoxes();
 // Opens the box (if needed) and starts typing `key`; returns false if the key is missing.
 // `speed` overrides BoxStyle::charsPerFrame for this line (Dialogue Editor line "Text speed"), -1 = default.
 bool say(u16 key, void (*blip)() = nullptr, s8 speed = -1);

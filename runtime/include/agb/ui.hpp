@@ -4,6 +4,7 @@
 #pragma once
 #include "agb/data.hpp"
 #include "agb/render/text.hpp"
+#include "agb/text.hpp"
 
 namespace agb::ui {
 
@@ -51,6 +52,7 @@ struct Kit {
     const Label* actionNames;    // one per input action (Project Settings · Input)
     u8 actionCount;
     bool remap;            // Project Settings · Input "Let players remap buttons"
+    const text::BoxStyle* box = nullptr;  // Project Settings · Dialogue box, nullptr = the default box
 };
 
 // Boot splash (Project Settings · General · Boot splash): a full-screen image shown before the start scene.
@@ -105,7 +107,7 @@ private:
 // A page is made once and opened by a script or a button. The build works out every rectangle, the layout groups and
 // the D-pad neighbours, so the game only draws. All of a page is drawn into one panel on the text layer, in the colours
 // of the project's UI palette (palette bank 14 while a page is open). The scene waits underneath.
-enum class ElementKind : u8 { Panel, Image, Text, Button, Toggle, Slider };
+enum class ElementKind : u8 { Panel, Image, Text, Button, Toggle, Slider, ScrollRect, Scrollbar, Dropdown, InputField };
 enum class ImageMode : u8 { Simple, Sliced, Tiled, FilledHorizontal, FilledVertical };
 enum class Align : u8 { Start, Center, End };
 enum class ActionKind : u8 { None, OpenPage, ClosePage, LoadScene };
@@ -133,7 +135,14 @@ struct ElementDef {
     s8 up, down, left, right;        // D-pad neighbours, -1 = none
     ActionKind action;
     s16 target;                      // page or scene index
-    s16 data;
+    s16 data;                        // what UI.Choose returns; a Scroll Rect keeps the space between its rows here
+    u8 padL, padT, padR, padB;       // space between the rectangle and the text
+    u8 disabledInk;                  // text colour when disabled, 0 = the normal one
+    bool interactable;               // false: skipped by the cursor (with all its children, like a Canvas Group)
+    s8 scrollTarget;                 // Scrollbar: its Scroll Rect
+    const Label* options;            // Dropdown
+    u8 optionCount;
+    u8 maxLength;                    // Input Field
 };
 
 struct PageDef {
@@ -143,18 +152,30 @@ struct PageDef {
     u8 tileX, tileY, widthTiles, heightTiles;  // the panel holding the whole page
     s8 firstFocus;                             // -1 = nothing to select
     bool cancel;                               // B closes
+    bool scenePlays;                           // the scene keeps running under the page (a HUD); else it waits
+    u8 dim;                                    // darkens the scene under the page by dim/16
+};
+
+struct NamedImage {
+    const char* name;
+    const ImageDef* image;
 };
 
 struct PageSet {
     const PageDef* pages;
     u16 count;
     const u16* palette;  // 16 colours
+    const NamedImage* images = nullptr;  // what UI.SetImage can show
+    u16 imageCount = 0;
+    const u8* richInks = nullptr;        // palette indices of <c1>..<c3>
 };
 
 constexpr int kMaxOpenPages = 3;     // one screen of the stack stays for the scene
+constexpr s32 kPageMoved = -2;       // UI.Choose(true): the cursor or a value moved
 constexpr int kMaxPageElements = 64;
 
 void setPages(const PageSet* pages);
+void forgetPageMemory();                        // the scene's arena was reset
 bool openPage(const char* name, int data = 0);  // false (with a warning) when there is no such page or no room
 bool openPage(int index, int data = 0);
 void closePage();                               // the top page
@@ -168,6 +189,18 @@ void setPageText(const char* element, const Label& label);
 void setPageOn(const char* element, bool on);
 bool pageOn(const char* element);
 int pageAmount(const char* element);
+void setPageValues(const char* element, s32 a, s32 b, int count, int digits);
+void setPageFocus(const char* element);
+bool pageFocused(const char* element);
+int pageFocusData();                            // Data of the control under the cursor, -1 = none
+void setPageInteractable(const char* element, bool on);
+void setPageImage(const char* element, const char* image);
+int pageInputLength();
+int pageInputChar(int index);
+void setPageInputChar(int index, int ch);       // ch 0 ends the text
+// A cutscene waiting for the player (C# await UI.Choose): the Data of the control chosen, -1 for B, kPageMoved when asked.
+void beginPageChoice(bool wakeOnMove);
+bool pollPageChoice(s32& result);
 
 // ---- game integration (called by the game framework) -----------------------------------------------
 void setKit(const Kit* kit);

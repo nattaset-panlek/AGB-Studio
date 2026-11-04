@@ -136,12 +136,26 @@ struct PlacedGlyph {
     u8 reveal;       // character step at which the glyph appears (typewriter); marks share their base
 };
 
+// Text tokens in a string: {0}..{3} show a value set at run time, <c1>..<c3> and </c> change the text colour. The build
+// keeps kTextVarReserve pixels for a value when it breaks lines, and the runtime closes the gap on that line.
+constexpr int kTextVarReserve = 56;
+enum class TextMarkKind : u8 { Var, Color };
+struct TextMark {
+    u16 glyph;         // applies before this glyph of the run (count = after the last one)
+    s16 x;             // pen x of a Var
+    u8 line;
+    TextMarkKind kind;
+    u8 arg;            // Var: value index · Color: 0 the normal ink, 1..3 the project's rich text colours
+};
+
 struct TextRun {
     const Font* font;
     const PlacedGlyph* glyphs;
     u16 count;
     u8 lines;
     u8 steps;        // number of reveal steps
+    const TextMark* marks = nullptr;
+    u16 markCount = 0;
 };
 
 }  // namespace agb::data

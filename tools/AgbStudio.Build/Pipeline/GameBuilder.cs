@@ -542,6 +542,19 @@ public sealed partial class GameBuilder
 
     readonly Dictionary<string, Fonts.TextCodegen.FontOut> _fonts = new(StringComparer.Ordinal);
     // Each built language's strings (fallbacks filled in) with its font and box widths, for the text layer budget.
+    // A string on the default width follows Project Settings · Dialogue box: inside its padding, as many lines as fit.
+    int TextBoxWidth(int width)
+    {
+        if (width != 224 || _p.Settings.Ui.Dialogue is not { } d) return width;
+        return Math.Clamp(d.W / 8 * 8 - d.PaddingLeft - d.PaddingRight, 8, 224);
+    }
+
+    int TextBoxLines(int lines, int lineHeight)
+    {
+        if (lines != 3 || _p.Settings.Ui.Dialogue is not { } d || lineHeight <= 0) return lines;
+        return Math.Max(1, (d.H / 8 * 8 - d.PaddingTop - d.PaddingBottom) / lineHeight);
+    }
+
     sealed record TextTable(string Language, Dictionary<string, string> Strings, Fonts.TextCodegen.FontOut Font, Func<string, int> BoxWidth);
     readonly List<TextTable> _texts = new();
     readonly List<string> _stringKeys = new();
@@ -616,12 +629,12 @@ public sealed partial class GameBuilder
             var cpp = Fonts.TextCodegen.StringsCpp(lang, _stringKeys, strings, font, k =>
             {
                 var m = meta.Keys.GetValueOrDefault(k);
-                return (m?.BoxWidth ?? 224, m?.MaxLines ?? 3);
+                return (TextBoxWidth(m?.BoxWidth ?? 224), TextBoxLines(m?.MaxLines ?? 3, font.Font.LineHeight));
             }, loc.ThaiWrap, diags, file);
             foreach (var d in diags) Add(d);
             Write(Path.Combine(GenDir, "text", $"strings_{Cpp.Ident(lang)}.cpp"), cpp);
             _languages.Add(lang);
-            _texts.Add(new TextTable(lang, strings, font, k => meta.Keys.GetValueOrDefault(k)?.BoxWidth ?? 224));
+            _texts.Add(new TextTable(lang, strings, font, k => TextBoxWidth(meta.Keys.GetValueOrDefault(k)?.BoxWidth ?? 224)));
         }
     }
 
@@ -716,7 +729,7 @@ public sealed partial class GameBuilder
     public const int ObjVramBytes = 32 * 1024;        // OBJ tiles in the tile modes 0-2
     public const int ObjVramBitmapBytes = 16 * 1024;  // modes 3-5: the bitmap takes the lower half of OBJ VRAM
     public const int ObjBanks = 16;
-    public const int DialogueBoxBytes = 28 * 5 * 32;  // text::BoxStyle default: 28 x 5 tiles
+    public const int DialogueBoxBytes = 28 * 5 * 32;  // text::BoxStyle default: 28 x 5 tiles (Project Settings · Dialogue box may differ a little)
     /// <summary>A regular (tile or image) layer: 64 x 32 screen entries (bg::Size::S64x32, two screen blocks) in BG VRAM,
     /// and the same bytes again for its map shadow in the screen arena (EWRAM).</summary>
     public const int LayerMapBytes = 64 * 32 * 2;
@@ -948,13 +961,30 @@ public sealed partial class GameBuilder
         sb.Append("};\nconst agb::ui::Label kLanguages[] = {");
         sb.Append(_languages.Count == 0 ? "{-1, nullptr}" : string.Join(", ", _languages.Select(l => Label(LanguageKey(l), l))));
         sb.Append("};\n}  // namespace\n");
+        if (u.Dialogue is { } dlg)
+        {
+            static string Mix(ushort a, ushort b, int t)
+            {
+                int M(int shift)
+                {
+                    int x = a >> shift & 31, y = b >> shift & 31;
+                    return x + (y - x) * t / 16;
+                }
+                return (M(0) | M(5) << 5 | M(10) << 10).ToString(CultureInfo.InvariantCulture);
+            }
+            var rich = u.RichColors.Concat(["#C83030", "#3050C8", "#208838"]).Take(3).Select(C).ToList();
+            sb.Append("#include \"agb/text.hpp\"\nstatic const agb::text::BoxStyle kBox = {");
+            sb.Append($"0, {dlg.X / 8}, {dlg.Y / 8}, {Math.Clamp(dlg.W / 8, 1, 30)}, {Math.Clamp(dlg.H / 8, 1, 20)}, 15, {Math.Clamp(dlg.TextSpeed, 0, 255)}, ");
+            sb.Append($"{C(dlg.Paper)}, {C(dlg.Ink)}, {Mix(C(dlg.Ink), C(dlg.Paper), 6)}, {Mix(C(dlg.Ink), C(dlg.Paper), 11)}, {C(dlg.Shadow)}, {C(dlg.Border)}, ");
+            sb.Append($"{dlg.PaddingLeft}, {dlg.PaddingTop}, {dlg.PaddingRight}, {dlg.PaddingBottom}, {dlg.BorderWidth}, {{{rich[0]}, {rich[1]}, {rich[2]}}}}};\n");
+        }
         sb.Append("extern const agb::ui::Kit agb_ui = {\n");
         sb.Append($"    &{font.Symbol}, {C(u.Ink)}, {C(u.Muted)}, {C(u.Paper)}, {C(u.Ink)}, {C(u.Screen)}, {C(u.ScreenInk)}, {C(u.BarTrack)}, {C(u.BarFill)}, {Math.Clamp(u.Dim, 0, 16)},\n");
         sb.Append($"    {pause}, {title},\n");
         sb.Append($"    {Label("ui.pause.title", "Paused")}, {Label("ui.pause.resume", "Resume")}, {Label("ui.pause.options", "Options")}, {Label("ui.pause.quit", "Quit to title")},\n");
         sb.Append($"    {Label("ui.options.title", "Options")}, {Label("ui.options.music", "Music")}, {Label("ui.options.effects", "Sound effects")}, {Label("ui.options.language", "Language")},\n");
         sb.Append($"    {Label("ui.options.controls", "Controls")}, {Label("ui.options.hint", "A: change   B: back")}, {Label("ui.options.press", "press a button")},\n");
-        sb.Append($"    kLanguages, kActions, {actions.Count}, {(s.AllowRemap ? "true" : "false")}}};\n");
+        sb.Append($"    kLanguages, kActions, {actions.Count}, {(s.AllowRemap ? "true" : "false")}, {(u.Dialogue != null ? "&kBox" : "nullptr")}}};\n");
         Write(Path.Combine(GenDir, "ui.cpp"), sb.ToString());
         return true;
     }

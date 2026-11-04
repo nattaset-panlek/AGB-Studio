@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace AgbStudio.Core.Project;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum UiElementKind { Panel, Image, Text, Button, Toggle, Slider }
+public enum UiElementKind { Panel, Image, Text, Button, Toggle, Slider, ScrollRect, Scrollbar, Dropdown, InputField }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum UiImageMode { Simple, Sliced, Tiled, FilledHorizontal, FilledVertical }
@@ -27,6 +27,8 @@ public sealed class UiPageFile
     public bool Cancel { get; set; } = true;       // B closes the page
     public bool WrapFocus { get; set; } = true;    // the D-pad wraps from the last control to the first
     public string FirstFocus { get; set; } = "";   // element name, empty = the first control
+    public bool ScenePlays { get; set; }           // the scene keeps running under the page (a HUD); else it waits
+    public int Dim { get; set; }                   // darkens the scene under the page by Dim/16
     public UiElement Root { get; set; } = new() { Name = "Canvas", Rect = UiRect.Stretch() };
 }
 
@@ -96,6 +98,13 @@ public sealed class UiElement
     public string FocusBorder { get; set; } = "";
     public string TextColor { get; set; } = "";
     public string FocusTextColor { get; set; } = "";
+    public string DisabledTextColor { get; set; } = "";
+
+    // Space between the rectangle and the text.
+    public int PaddingLeft { get; set; }
+    public int PaddingTop { get; set; }
+    public int PaddingRight { get; set; }
+    public int PaddingBottom { get; set; }
 
     public string Text { get; set; } = "";         // string key in the Localization tables, or plain ASCII text
     public UiAlign TextAlignX { get; set; }
@@ -114,6 +123,10 @@ public sealed class UiElement
     public bool Interactable { get; set; } = true; // a Slider that is only a bar (HP) turns this off
     public bool Cursor { get; set; }               // Button: the triangle cursor when focused
     public UiAction Action { get; set; } = new();
+    public List<string> Options { get; set; } = new();  // Dropdown: string keys
+    public int MaxLength { get; set; } = 12;       // Input Field: at most 12
+    public string ScrollTarget { get; set; } = ""; // Scrollbar: the Scroll Rect it follows
+    public List<string> ImageVariants { get; set; } = new();  // images UI.SetImage can show here
     // Explicit navigation by element name; empty = the nearest control that way.
     public string NavUp { get; set; } = "";
     public string NavDown { get; set; } = "";
@@ -123,7 +136,7 @@ public sealed class UiElement
     public List<UiElement> Children { get; set; } = new();
 
     [JsonIgnore]
-    public bool IsSelectable => !Hidden && Interactable && Kind is UiElementKind.Button or UiElementKind.Toggle or UiElementKind.Slider;
+    public bool IsSelectable => !Hidden && Interactable && Kind is UiElementKind.Button or UiElementKind.Toggle or UiElementKind.Slider or UiElementKind.Dropdown or UiElementKind.InputField;
 
     public IEnumerable<UiElement> Walk()
     {

@@ -98,6 +98,13 @@ public static class Scene
     [ScriptOp("native:GoToScene")]
     public static void Load([Asset(AssetKind.Scene)] string name) { }
 
+    /// <summary>Loads a scene by index and puts the player at a world position (the way back from a battle).</summary>
+    /// <param name="index">Scene index.</param>
+    /// <param name="x">World x in pixels.</param>
+    /// <param name="y">World y in pixels.</param>
+    [Cpp("agb::api::Scene::LoadAt(static_cast<agb::u16>({0}), {1}, {2})")]
+    public static void LoadAt(int index, int x, int y) { }
+
     /// <summary>Loads a scene by index (for example <c>Save.scene</c>).</summary>
     /// <param name="index">Scene index.</param>
     [Cpp("agb::api::Scene::Load(static_cast<agb::u16>({0}))")]
@@ -215,6 +222,30 @@ public static class Save
     [ScriptOp("native:SaveCheckpoint")]
     public static void Checkpoint() { }
 
+    /// <summary>Remembers the current scene and the player's position, then writes a slot.</summary>
+    /// <param name="slot">Slot index.</param>
+    [Cpp("agb::api::Save::Checkpoint({0})")]
+    public static void Checkpoint(int slot) { }
+
+    /// <summary>Reads a slot and goes to the scene and player position it holds; false when it is empty or damaged.</summary>
+    /// <param name="slot">Slot index.</param>
+    [Cpp("agb::api::Save::Continue({0})")]
+    public static bool Continue(int slot) => false;
+
+    /// <summary>Shows a slot in the Game fields without losing the game in progress, for a save list. Call EndPreview in the
+    /// same frame. False when the slot is empty or damaged.</summary>
+    /// <param name="slot">Slot index.</param>
+    [Cpp("agb::api::Save::BeginPreview({0})")]
+    public static bool BeginPreview(int slot) => false;
+
+    /// <summary>Puts back the game in progress after BeginPreview.</summary>
+    [Cpp("agb::api::Save::EndPreview()")]
+    public static void EndPreview() { }
+
+    /// <summary>Sets every Game field and saved flag back to zero for a new game. Nothing is written to the cartridge.</summary>
+    [Cpp("agb::api::Save::NewGame()")]
+    public static void NewGame() { }
+
     /// <summary>Scene index stored by the last checkpoint or read.</summary>
     [Cpp("agb::api::Save::scene()")]
     public static int scene => 0;
@@ -229,6 +260,30 @@ public static class Text
     [Cpp("agb::script::natives::showText({0})")]
     [ScriptOp("native:ShowText")]
     public static void Show([Asset(AssetKind.Text)] string key) { }
+
+    /// <summary>Typing speed of the dialogue box in characters a frame (a Text Speed option); 0 shows a line at once.</summary>
+    /// <param name="charsPerFrame">Characters a frame.</param>
+    [Cpp("agb::api::Text::SetSpeed({0})")]
+    public static void SetSpeed(int charsPerFrame) { }
+
+    /// <summary>Sets the value of {0}..{3} in strings to a number.</summary>
+    /// <param name="index">0 to 3.</param>
+    /// <param name="value">The number.</param>
+    /// <param name="digits">Pads with zeros to this many digits (0 = no padding).</param>
+    [Cpp("agb::api::Text::SetVar({0}, {1}, {2})")]
+    public static void SetVar(int index, int value, int digits = 0) { }
+
+    /// <summary>Sets the value of {0}..{3} in strings to the text of a string key.</summary>
+    [Cpp("agb::api::Text::SetVarText({0}, {1})")]
+    public static void SetVarText(int index, [Asset(AssetKind.Text)] string key) { }
+
+    /// <summary>Sets the value of {0}..{3} in strings to a string id from a database row.</summary>
+    [Cpp("agb::api::Text::SetVarText({0}, {1})")]
+    public static void SetVarText(int index, int textId) { }
+
+    /// <summary>Sets one character of a typed value of {0}..{3} (a player name); 0 ends the text there.</summary>
+    [Cpp("agb::api::Text::SetVarChar({0}, {1}, {2})")]
+    public static void SetVarChar(int index, int position, int ch) { }
 }
 
 /// <summary>Messages to the editor Console (removed from Release builds when "Strip debug log" is on).</summary>

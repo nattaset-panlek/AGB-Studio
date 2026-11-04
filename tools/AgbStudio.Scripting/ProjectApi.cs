@@ -157,6 +157,7 @@ public static class ProjectApi
         var open = t.IndexOf('[');
         if (open > 0)
         {
+            if (t[..open].Trim() == "short") return ("ShortList", false);
             var table = ctx.Tables.FirstOrDefault(x => x.Name == t[..open].Trim());
             return (table != null ? DatabaseCodegen.IdEnum(table.Name) + "List" : null, false);
         }

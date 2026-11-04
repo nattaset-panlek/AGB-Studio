@@ -1,5 +1,15 @@
 namespace GBA;
 
+/// <summary>A row of numbers from 0 to 65535: the type of <c>short[N]</c> fields in Project Settings · Save data.</summary>
+[Cpp("unsigned short*")]
+public struct ShortList
+{
+    /// <summary>Gets or sets the number at a position.</summary>
+    /// <param name="index">Position from 0.</param>
+    [Cpp("static_cast<int>({this}[{0}])", Set = "{this}[{0}] = static_cast<unsigned short>({value})")]
+    public int this[int index] { get => 0; set { } }
+}
+
 /// <summary>A row of on / off values: the type of <c>bitset N</c> fields in Project Settings · Save data.</summary>
 [Cpp("unsigned char*")]
 public struct Bitset

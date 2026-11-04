@@ -18,9 +18,27 @@ public static class TextLayout
 
     sealed record Cluster(List<int> Cps, int Width, bool Space, bool BreakBefore, bool Forced);
 
+    // Tokens in a string, as private-use code points while the text is laid out: {0}..{3} values and <c1>..<c3>, </c> colours.
+    public const int VarToken = 0xF700, ColorToken = 0xF710;
+    public const int VarReserve = 56;  // agb::data::kTextVarReserve
+
+    public static bool IsVarToken(int cp) => cp is >= VarToken and < VarToken + 4;
+    public static bool IsColorToken(int cp) => cp is >= ColorToken and < ColorToken + 4;
+    public static bool IsToken(int cp) => IsVarToken(cp) || IsColorToken(cp);
+
+    static string EncodeTokens(string text)
+    {
+        if (text.IndexOf('{') < 0 && text.IndexOf('<') < 0) return text;
+        var sb = new System.Text.StringBuilder(text);
+        for (var i = 0; i < 4; i++) sb.Replace("{" + i + "}", char.ConvertFromUtf32(VarToken + i));
+        for (var i = 1; i <= 3; i++) sb.Replace("<c" + i + ">", char.ConvertFromUtf32(ColorToken + i));
+        sb.Replace("</c>", char.ConvertFromUtf32(ColorToken));
+        return sb.ToString();
+    }
+
     public static Result Layout(string text, GameFont font, int maxWidth, bool thaiWrap = true)
     {
-        var clusters = Measure(text, font, thaiWrap);
+        var clusters = Measure(EncodeTokens(text), font, thaiWrap);
         var result = new Result();
         // Greedy fill by words: a word = clusters from one break opportunity to the next.
         var words = new List<List<Cluster>>();
@@ -118,7 +136,7 @@ public static class TextLayout
             var prevThai = i > 0 && ThaiText.IsThai(clusters[i - 1][0]);
             var thai = ThaiText.IsThai(c[0]);
             var bb = forced || prevIsSpace || (i > 0 && thai != prevThai && !space) || (thai && thaiStarts.Contains(offsets[i]));
-            var width = forced ? 0 : font.Get(c[0])?.Advance ?? 0;
+            var width = forced || IsColorToken(c[0]) ? 0 : IsVarToken(c[0]) ? VarReserve : font.Get(c[0])?.Advance ?? 0;
             list.Add(new Cluster(c, width, space, bb, forced));
         }
         return list;
@@ -128,6 +146,11 @@ public static class TextLayout
     static void Place(Cluster c, GameFont font, int x, int line, int step, Result r, bool nextIsSaraAm, Placed? before)
     {
         var baseCp = c.Cps[0];
+        if (IsToken(baseCp))
+        {
+            r.Glyphs.Add(new Placed(baseCp, x, 0, line, step));
+            return;
+        }
         // Sara am after ป ฝ ฟ ฬ: its nikhahit would run into the tall stem, so it is drawn as a nikhahit moved left of
         // the stem (like any upper mark) followed by sara aa.
         if (baseCp == ThaiText.SaraAm && c.Cps.Count == 1 && font.Settings.StackUpperMarks && before != null && ThaiText.IsAscender(before.CodePoint)

@@ -62,13 +62,23 @@ public static class TextCodegen
                 diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]}: '{char.ConvertFromUtf32(m)}' (U+{m:X4}) is not in font {font.Font.Name}, so it is not drawn. Add it in Font Manager · Add characters."));
             if (layout.Lines > maxLines)
                 diags.Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{keys[k]} ({lang}) needs {layout.Lines} lines, but its text box shows {maxLines}, so the rest does not fit. Shorten the text, or give the key more lines in Localization."));
-            var glyphs = layout.Glyphs.Where(g => font.Index.ContainsKey(g.CodePoint) && font.Font.Get(g.CodePoint)!.Width > 0).ToList();
+            bool Drawn(TextLayout.Placed g) => !TextLayout.IsToken(g.CodePoint) && font.Index.ContainsKey(g.CodePoint) && font.Font.Get(g.CodePoint)!.Width > 0;
+            var glyphs = layout.Glyphs.Where(Drawn).ToList();
+            var marks = new List<string>();
+            var kept = 0;
+            foreach (var g in layout.Glyphs)
+            {
+                if (TextLayout.IsVarToken(g.CodePoint)) marks.Add($"{{{kept}, {g.X}, {g.Line}, agb::data::TextMarkKind::Var, {g.CodePoint - TextLayout.VarToken}}}");
+                else if (TextLayout.IsColorToken(g.CodePoint)) marks.Add($"{{{kept}, {g.X}, {g.Line}, agb::data::TextMarkKind::Color, {g.CodePoint - TextLayout.ColorToken}}}");
+                else if (Drawn(g)) kept++;
+            }
+            if (marks.Count > 0) sb.Append($"const agb::data::TextMark r{k}m[] = {{{string.Join(", ", marks)}}};\n");
             sb.Append($"const agb::data::PlacedGlyph r{k}g[] = {{");
             foreach (var g in glyphs)
                 sb.Append($"{{{font.Index[g.CodePoint]}, {g.X}, {g.Dy}, {g.Line}, {Math.Min(255, g.Reveal)}}},");
             if (glyphs.Count == 0) sb.Append("{0, 0, 0, 0, 0}");
             sb.Append("};\n");
-            sb.Append($"const agb::data::TextRun r{k} = {{&{font.Symbol}, r{k}g, {glyphs.Count}, {Math.Max(1, layout.Lines)}, {Math.Min(255, layout.Steps)}}};\n");
+            sb.Append($"const agb::data::TextRun r{k} = {{&{font.Symbol}, r{k}g, {glyphs.Count}, {Math.Max(1, layout.Lines)}, {Math.Min(255, layout.Steps)}{(marks.Count > 0 ? $", r{k}m, {marks.Count}" : "")}}};\n");
             runs.Add($"&r{k}");
         }
         sb.Append($"const agb::data::TextRun* const runs[] = {{{(runs.Count == 0 ? "nullptr" : string.Join(", ", runs))}}};\n}}  // namespace\n");

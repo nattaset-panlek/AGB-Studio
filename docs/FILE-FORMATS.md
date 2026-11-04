@@ -63,7 +63,7 @@ MyGame/
 | `scripting` | analyzer severities (`GAE001`..`GAE006`), shop currency field and other script options |
 | `localization` | source language, languages (code, name, font, fallback), Thai word wrap, show missing keys, fail on missing |
 | `audio` | Maxmod channels (`channels`, 1 to 16) and mixing rate (`mixKHz`: 8, 10, 13, 16, 18, 21, 27 or 31; the runtime mixes at it) |
-| `ui` | Menu / UI kit: `pauseMenu` (on or off), `titleScene` (for Quit to title), `font`, seven colours (`ink`, `muted`, `paper`, `screen`, `screenInk`, `barTrack`, `barFill`) and `dim` (pause overlay); no layout (a title screen's menu layout is the scene's `menu`) |
+| `ui` | Menu / UI kit: `pauseMenu` (on or off), `titleScene` (for Quit to title), `font`, seven colours (`ink`, `muted`, `paper`, `screen`, `screenInk`, `barTrack`, `barFill`) and `dim` (pause overlay); no layout (a title screen's menu layout is the scene's `menu`); `dialogue` (the Say box: `x`, `y`, `w`, `h` snapped to tiles, `paddingLeft`..`paddingBottom`, `borderWidth`, `paper`, `ink`, `border`, `shadow`, `textSpeed`; null = the default box) and `richColors` (three colours for `<c1>`..`<c3>` in strings) |
 
 ## `scenes/<Name>.scene` (SceneFile)
 

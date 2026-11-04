@@ -168,6 +168,21 @@ s32 Choice(Context& ctx, const s32* args, int argc) {
     }
 }
 
+namespace {
+bool uiChooseDone(Context& c) {
+    s32 result = 0;
+    if (!ui::pollPageChoice(result)) return false;
+    c.waitResult = result;
+    return true;
+}
+}  // namespace
+
+s32 UiChoose(Context& ctx, const s32* args, int argc) {
+    ui::beginPageChoice(arg(args, argc, 0, 0) != 0);
+    ctx.wait = uiChooseDone;
+    return 0;
+}
+
 s32 Move(Context& ctx, const s32* args, int argc) {
     Actor* a = actorArg(arg(args, argc, 0, kNoActor));
     const s32 path = arg(args, argc, 1, -1);

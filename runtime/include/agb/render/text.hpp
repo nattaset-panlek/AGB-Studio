@@ -6,6 +6,17 @@
 
 namespace agb::render {
 
+// A value for a {0}..{3} token: a run (a localized name), or a number when run is null. chars overrides both.
+struct TextVar {
+    const data::TextRun* run = nullptr;
+    s32 number = 0;
+    s8 digits = 0;            // pads with zeros
+    char chars[13] = {};      // typed text (a player name), used when not empty
+};
+constexpr int kTextVars = 4;
+void numberText(s32 value, int digits, char* out);  // decimal with zero padding, into 12 bytes
+TextVar& textVar(int index);  // the game-wide values (C# Text.SetVar), used unless a box has its own
+
 class TextBox {
 public:
     struct Style {
@@ -21,8 +32,20 @@ public:
         u8 bottom = 2;
     };
 
+    // Space between the box's edge and text shown with show(); 0 by default. The continue marker stays inside it.
     Padding padding() const { return padding_; }
     void setPadding(Padding p) { padding_ = p; }
+    // A border of this palette index drawn by show() and clear() (0 = none).
+    void setFrame(u8 index, u8 width) { frame_ = index; frameWidth_ = width; }
+    // Glyphs only touch this pixel rectangle (RectMask2D); clearClip goes back to the whole box.
+    void setClip(int x, int y, int right, int bottom) { clip_[0] = x; clip_[1] = y; clip_[2] = right; clip_[3] = bottom; clipped_ = true; }
+    void clearClip() { clipped_ = false; }
+    // Values for {0}..{3} tokens (nullptr = the game-wide ones) and the inks of <c1>..<c3>.
+    void setVars(const TextVar* vars) { vars_ = vars; }
+    void setRichInks(const u8* inks) { richInks_ = inks; }
+    // Widest line of a run with its tokens filled in.
+    int runWidth(const data::TextRun& run) const;
+    int varWidth(const data::Font& font, const TextVar& v) const;
     void drawPanelFrame(Style style);
     void drawPanelFrame() { drawPanelFrame(style_); }
 
@@ -52,6 +75,7 @@ public:
     // Draws every glyph of a run now with its top-left at (x, y) (menus and titles).
     void drawRun(const data::TextRun& run, int x, int y);
     void setInk(u8 ink) { style_.ink = ink; }
+    bool uploading() const { return dirtyHi_ != 0xFFFF; }  // tiles changed here are not all in VRAM yet
     // Points the box's map entries at `blank` (closing a menu); the tiles stay reserved. Both map writes are queued
     // for the next VBlank (commit::queueFill / queueSequence).
     void unmap(u16 blank = 0);
@@ -66,6 +90,16 @@ public:
     u16 maxTiles() const { return maxTiles_; }
 
 private:
+    struct Pen {
+        u16 mark = 0;
+        s16 shift = 0;
+        u8 line = 0;
+        u8 ink = 1;
+    };
+    void applyMarks(const data::TextRun& run, u16 glyph, int x, int y, u8 firstLine, Pen& pen);
+    void placeGlyph(const data::TextRun& run, u16 glyph, int x, int y, u8 firstLine, Pen& pen);
+    void drawVar(const data::Font& font, const TextVar& v, int x, int y);
+    void drawFrame();
     void setPixel(int x, int y, u8 index);
     void markDirty(int y0, int y1);  // pixel rows
     void commitTiles();
@@ -86,7 +120,13 @@ private:
     u16 dirtyLo_ = 0xFFFF, dirtyHi_ = 0xFFFF;  // changed tiles not yet copied to VRAM (inclusive)
     bool marker_ = false;
     void (*blip_)() = nullptr;
-    Padding padding_{4, 2, 4, 2};
+    Padding padding_{0, 0, 0, 0};
+    Pen pen_;
+    u8 frame_ = 0, frameWidth_ = 0;
+    bool clipped_ = false;
+    int clip_[4] = {};
+    const TextVar* vars_ = nullptr;
+    const u8* richInks_ = nullptr;
 };
 
 }  // namespace agb::render

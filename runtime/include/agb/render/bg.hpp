@@ -46,6 +46,9 @@ TilesetPlacement loadTileset(const data::Tileset* tileset);
 TilesetPlacement loadTiles(const data::TileGfx& gfx, int charBlock = -1);
 // Reserves `tiles` empty tiles (text windows); returns the placement of the first.
 TilesetPlacement reserveTiles(u16 tiles, bool bpp8 = false);
+// From this char block on (the text layer: its map entries reach 1024 tiles from its own block).
+TilesetPlacement reserveTilesFrom(u16 tiles, int firstBlock, bool bpp8 = false);
+TilesetPlacement reserveFreshBlock(u16 tiles);  // the start of a block nothing else uses, else anywhere
 // Tile allocation mark: overlays (pause, options) reserve tiles on top of the scene and give them back.
 struct Mark {
     u16 tilesInBlock[4];

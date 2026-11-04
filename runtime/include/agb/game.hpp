@@ -132,6 +132,7 @@ void boot(const GameDef& def);
 
 void push(Screen* screen);  // overlay or sub-screen; the screen must live in persistent storage
 void pop();
+void finishLoading();  // the screen on top enters now, if it has not yet: a page opened and another opened over it in one frame
 void replace(Screen* screen);
 Screen* top();
 Screen* at(int depth);  // 0 = the bottom of the stack

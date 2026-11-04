@@ -223,6 +223,74 @@ public static class UI
     [Cpp("agb::api::UI::SetText({0}, {1})")]
     public static void SetText(string element, [Asset(AssetKind.Text)] string textKey) { }
 
+    /// <summary>Changes the text of an element on the top page to a string id from a database row (<c>Items.Get(id).name</c>).</summary>
+    [Cpp("agb::api::UI::SetText({0}, static_cast<agb::u16>({1}))")]
+    public static void SetText(string element, int textId) { }
+
+    /// <summary>Shows a number in an element on the top page: the {0} of its text, or after its text when it has no {0}.</summary>
+    /// <param name="element">Element name.</param>
+    /// <param name="value">The number.</param>
+    /// <param name="digits">Pads with zeros to this many digits (0 = no padding).</param>
+    [Cpp("agb::api::UI::SetNumber({0}, {1}, {2})")]
+    public static void SetNumber(string element, int value, int digits = 0) { }
+
+    /// <summary>Shows two numbers in an element on the top page: the {0} and {1} of its text, or "a/b" after its text.</summary>
+    [Cpp("agb::api::UI::SetFraction({0}, {1}, {2})")]
+    public static void SetFraction(string element, int a, int b) { }
+
+    /// <summary>Takes away the numbers set with SetNumber or SetFraction.</summary>
+    [Cpp("agb::api::UI::ClearNumber({0})")]
+    public static void ClearNumber(string element) { }
+
+    /// <summary>Moves the cursor to a control on the top page, and scrolls its list to show it.</summary>
+    [Cpp("agb::api::UI::SetFocus({0})")]
+    public static void SetFocus(string element) { }
+
+    /// <summary>True when the cursor is on this control of the top page.</summary>
+    [Cpp("agb::api::UI::IsFocused({0})")]
+    public static bool IsFocused(string element) => false;
+
+    /// <summary>The Data of the control under the cursor on the top page, -1 when nothing is selected.</summary>
+    [Cpp("agb::api::UI::FocusData()")]
+    public static int FocusData => -1;
+
+    /// <summary>Lets the cursor reach a control, or skips it and shows its Disabled Text Color. On a panel it covers
+    /// everything inside, like a Canvas Group.</summary>
+    [Cpp("agb::api::UI::SetInteractable({0}, {1})")]
+    public static void SetInteractable(string element, bool on) { }
+
+    /// <summary>Shows another image in an element on the top page; the image must be in an Image Variants list of a page.</summary>
+    [Cpp("agb::api::UI::SetImage({0}, {1})")]
+    public static void SetImage(string element, string image) { }
+
+    /// <summary>Number of characters typed in the top page's Input Field.</summary>
+    [Cpp("agb::api::UI::InputLength()")]
+    public static int InputLength => 0;
+
+    /// <summary>A character typed in the top page's Input Field, 0 past the end.</summary>
+    [Cpp("agb::api::UI::InputChar({0})")]
+    public static int InputChar(int index) => 0;
+
+    /// <summary>Sets a character of the top page's Input Field; 0 ends the text there.</summary>
+    [Cpp("agb::api::UI::SetInputChar({0}, {1})")]
+    public static void SetInputChar(int index, int ch) { }
+
+    /// <summary>The name of an element in a list row by number: <c>UI.Name("Row", 3, "Name")</c> is "Row3Name". Use the text at
+    /// once: the next call replaces it.</summary>
+    [Cpp("agb::api::UI::Name({0}, {1}, {2})")]
+    public static string Name(string prefix, int index, string suffix = "") => null;
+
+    /// <summary>Opens the built-in Options screen (volumes, language, button remap) over the scene.</summary>
+    [Cpp("agb::api::UI::OpenOptions()")]
+    public static void OpenOptions() { }
+
+    /// <summary>In a cutscene: waits for the player on the top page and gives the Data of the control pressed with A.
+    /// B gives -1. With <paramref name="wakeOnMove"/> 1 it also gives -2 when the cursor or a value moved. The page stays
+    /// open, so the cutscene can change it, open a page over it, Say a line over it, and call this again.</summary>
+    /// <param name="wakeOnMove">1 to wake when the cursor moves, else 0.</param>
+    [ScriptOp("native:UiChoose")]
+    public static System.Threading.Tasks.Task<int> Choose(int wakeOnMove = 0) => System.Threading.Tasks.Task.FromResult(0);
+
     /// <summary>Hides or shows an element, and its children, on the top page.</summary>
     [Cpp("agb::api::UI::SetHidden({0}, {1})")]
     public static void SetHidden(string element, bool hidden) { }
