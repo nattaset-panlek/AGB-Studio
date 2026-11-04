@@ -95,10 +95,16 @@ public sealed partial class GameBuilder
     void GenerateUiPages(List<string> sceneNames)
     {
         var files = _p.UiPageFiles().ToList();
-        _hasPages = files.Count > 0;
+        var pages = files.Select(f => (File: f, Page: GameProject.Load<UiPageFile>(f))).ToList();
+        // A ready-made page goes in when a script names it and the project has no page of that name.
+        var scripts = string.Concat(_p.ScriptFiles().Select(File.ReadAllText));
+        foreach (var name in UiPresets.Names)
+            if (scripts.Contains('"' + name + '"', StringComparison.Ordinal) && !pages.Any(x => (x.Page.Name.Length > 0 ? x.Page.Name : GameProject.AssetName(x.File)) == name))
+                pages.Add((Path.Combine(_p.UiDir, name + ".uipage"), UiPresets.Create(name, _p.Settings.Ui)!));
+        _hasPages = pages.Count > 0;
         _largestPageBytes = 0;
         if (!_hasPages) return;
-        var pages = files.Select(f => (File: f, Page: GameProject.Load<UiPageFile>(f))).ToList();
+        if (files.Count == 0) files.Add(pages[0].File);
         var pageNames = pages.Select(x => x.Page.Name.Length > 0 ? x.Page.Name : GameProject.AssetName(x.File)).ToList();
         var font = UiFont();
         var paper = UiColor(_p.Settings.Ui.Paper) ?? (ushort)0x7FFF;
@@ -112,7 +118,7 @@ public sealed partial class GameBuilder
         foreach (var (_, page) in pages) CollectInks(page.Root, null, palette);
         foreach (var (_, page) in pages)
             foreach (var e in page.Root.Walk())
-                foreach (var c in new[] { e.Fill, e.Border, e.Accent, e.FocusFill, e.FocusBorder, e.DisabledTextColor })
+                foreach (var c in new[] { e.Fill, e.Border, e.Accent, e.FocusFill, e.FocusBorder, e.DisabledTextColor, e.Keyboard?.Fill ?? "", e.Keyboard?.Border ?? "", e.Keyboard?.FocusFill ?? "" })
                     if (UiColor(c) is { } color) palette.Color(color);
 
         var images = new Dictionary<string, (string Symbol, int W, int H)>(StringComparer.Ordinal);
@@ -145,6 +151,12 @@ public sealed partial class GameBuilder
     void CollectInks(UiElement e, ushort? back, UiPalette palette)
     {
         var behind = UiColor(e.Fill) ?? back;
+        if (e.Keyboard is { } kb)
+        {
+            var keyBack = UiColor(kb.Fill) ?? behind;
+            if (UiColor(kb.TextColor.Length > 0 ? kb.TextColor : e.TextColor) is { } keyInk) palette.Ink(keyInk, keyBack);
+            if (UiColor(kb.FocusTextColor) is { } keyFocus) palette.Ink(keyFocus, UiColor(kb.FocusFill) ?? keyBack);
+        }
         if (e.Text.Length > 0)
         {
             if (UiColor(e.TextColor) is { } ink) palette.Ink(ink, behind);
@@ -173,8 +185,6 @@ public sealed partial class GameBuilder
         images[name] = made;
         return made;
     }
-
-    static readonly UiPixelRect KeyboardRect = new(8, 56, 224, 96);  // ui.cpp kKeysX..kKeysH
 
     // Text that does not fit its element is cut by the runtime, so it is a warning at build time, in every language.
     void CheckTextFits(string file, string pageName, UiElement e, UiPixelRect r)
@@ -294,7 +304,21 @@ public sealed partial class GameBuilder
             sb.Append($"agb::ui::ActionKind::{e.Action.Kind}, {Math.Max(0, target)}, {Math.Clamp(data, short.MinValue, short.MaxValue)}, ");
             sb.Append($"{Math.Clamp(e.PaddingLeft, 0, 255)}, {Math.Clamp(padT, 0, 255)}, {Math.Clamp(e.PaddingRight, 0, 255)}, {Math.Clamp(padB, 0, 255)}, ");
             sb.Append($"{(UiColor(e.DisabledTextColor) is { } dc ? palette.Ink(dc, back) : 0)}, {(e.Interactable ? "true" : "false")}, {scrollTarget}, ");
-            sb.Append($"{optionsSymbol}, {e.Options.Count}, {Math.Clamp(e.MaxLength, 0, 12)}}},\n");
+            var keyboardSymbol = "nullptr";
+            if (e.Kind == UiElementKind.InputField)
+            {
+                var kb = e.Keyboard ?? new UiKeyboard();
+                keyboardSymbol = $"&kKeyboard{id}_{list.IndexOf(e)}";
+                var keyBack = UiColor(kb.Fill) ?? UiColor(e.Fill) ?? back;
+                var keyInk = UiColor(kb.TextColor) ?? UiColor(e.TextColor);
+                var keyFocus = UiColor(kb.FocusTextColor) ?? UiColor(e.FocusTextColor);
+                var keyFocusFill = kb.FocusFill.Length > 0 ? kb.FocusFill : e.FocusFill;
+                optionTables.Append($"const agb::ui::KeyboardDef kKeyboard{id}_{list.IndexOf(e)} = {{{kb.X}, {kb.Y}, {kb.W}, {kb.H}, {C(kb.Fill.Length > 0 ? kb.Fill : e.Fill)}, {C(kb.Border.Length > 0 ? kb.Border : e.Border)}, ");
+                optionTables.Append($"{(keyInk is { } ki ? palette.Ink(ki, keyBack) : 0)}, {C(keyFocusFill)}, {(keyFocus is { } kf ? palette.Ink(kf, UiColor(keyFocusFill) ?? keyBack) : 0)}}};\n");
+                if ((kb.W - 8) / 13 < 8 || (kb.H - 6) / 6 < 8)
+                    Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"{e.Name}: the keyboard is {kb.W} x {kb.H} px, too small for its keys. Make it at least 112 x 54 px."));
+            }
+            sb.Append($"{optionsSymbol}, {e.Options.Count}, {Math.Clamp(e.MaxLength, 0, 12)}, {keyboardSymbol}}},\n");
             CheckTextFits(file, pageNames[pageIndex], e, r);
         }
         sb.Append("};\n");
@@ -310,7 +334,11 @@ public sealed partial class GameBuilder
             var h = e.Options.Count * r.H + 2;
             drawn.Add(r.Bottom + h > UiLayoutEngine.ScreenH ? new UiPixelRect(r.X, r.Y - h, r.W, h) : new UiPixelRect(r.X, r.Bottom, r.W, h));
         }
-        if (list.Any(e => e.Kind == UiElementKind.InputField)) drawn.Add(KeyboardRect);
+        foreach (var e in list.Where(e => e.Kind == UiElementKind.InputField))
+        {
+            var kb = e.Keyboard ?? new UiKeyboard();
+            drawn.Add(new UiPixelRect(kb.X, kb.Y, kb.W, kb.H));
+        }
         if (list.Count(e => e.Kind == UiElementKind.InputField) > 1)
             Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"UI page {pageNames[pageIndex]} has more than one Input Field; a page keeps one typed text. Use one Input Field a page."));
         if (list.Count(e => e.Kind == UiElementKind.ScrollRect) > 2)

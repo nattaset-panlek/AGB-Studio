@@ -108,6 +108,7 @@ public sealed class MenuActionTests : IDisposable
         // T-M06 Tools
         ["tools.paletteManager"] = new Opens("T-P10", "11.F Palette Manager"),
         ["tools.fontManager"] = new Opens("T-P09", "11.G Font Manager"),
+        ["tools.uiEditor"] = new Opens("T-P27", "UI Editor"),
         ["tools.database"] = new Opens("T-P07", "11.H Database"),
         ["tools.localization"] = new Opens("T-P14", "11.I Localization"),
         ["tools.audio"] = new Opens("T-P15", "11.J Audio"),

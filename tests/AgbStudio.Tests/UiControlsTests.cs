@@ -265,6 +265,81 @@ public sealed class UiControlsTests(EmulatorFixture emu)
     }
 
     [Fact]
+    public void ReadyMadePage_OpensByName_WithNoFileInTheProject()
+    {
+        var p = SampleProjects.CreatePlatformerMini(Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "ui_preset"));
+        SampleText.AddTo(p, "en");
+        p.Settings.General.BootSplash = false;
+        p.Settings.Ui.PauseMenu = false;
+        p.SaveSettings();
+        Assert.Empty(p.UiPageFiles());
+        File.WriteAllText(Path.Combine(p.ScriptsDir, "Asker.cs"), """
+            using GBA;
+            using System.Threading.Tasks;
+
+            public class Asker : Behaviour
+            {
+                void Update()
+                {
+                    if (Input.Pressed(Key.Select)) Run();
+                }
+
+                [Cutscene]
+                static async Task Run()
+                {
+                    Pages.Open();
+                    int r = await UI.Choose(0);
+                    Pages.Report(r);
+                }
+            }
+
+            public static class Pages
+            {
+                [ScriptNative] public static void Open() => UI.Open("TextInput");
+                [ScriptNative]
+                public static void Report(int r)
+                {
+                    Debug.Log($"typed {r} {UI.InputLength} {UI.InputChar(0)}");
+                    UI.Close();
+                }
+            }
+            """);
+        var scene = Path.Combine(p.ScenesDir, "Forest_01.scene");
+        var s0 = GameProject.Load<SceneFile>(scene);
+        s0.Actors.First(a => a.Name == "Player").Components.Add(new ComponentData { Type = "Asker" });
+        GameProject.Save(scene, s0);
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 90; i++) s.Step();
+        Press(s, GbaKeys.Select);
+        for (var i = 0; i < 6; i++) s.Step();
+        Heard(s, "UI page TextInput opened");
+        Press(s, GbaKeys.A);   // opens the keyboard
+        Press(s, GbaKeys.A);   // types A
+        Press(s, GbaKeys.Start);
+        Heard(s, "typed 1 1 65");
+    }
+
+    [Fact]
+    public void EveryPreset_BuildsAsAPage_AndIsSelfConsistent()
+    {
+        foreach (var name in UiPresets.Names)
+        {
+            var page = UiPresets.Create(name, new UiSettings())!;
+            Assert.Equal(name, page.Name);
+            var rects = UiLayoutEngine.Resolve(page);
+            foreach (var e in page.Root.Walk())
+            {
+                var r = rects[e];
+                Assert.True(r.X >= 0 && r.Y >= 0 && r.Right <= 240 && r.Bottom <= 160, $"{name}.{e.Name} leaves the screen: {r}");
+            }
+            Assert.Equal(page.Root.Walk().Count(), page.Root.Walk().Select(e => e.Name).Distinct().Count());
+        }
+    }
+
+    [Fact]
     public void NewControls_RoundTrip_ThroughTheFile()
     {
         var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "ui_page_json");

@@ -80,7 +80,7 @@ public sealed class AssetActions
             AssetCategory.Fonts => p.FontFiles().ToList(),
             AssetCategory.Audio => p.MusicFiles().Concat(p.SoundFiles()).ToList(),
             AssetCategory.Scripts => p.ScriptFiles().Concat(p.GraphFiles()).Concat(p.DialogueFiles()).ToList(),
-            AssetCategory.Data => p.TableFiles().ToList(),
+            AssetCategory.Data => p.TableFiles().Concat(p.UiPageFiles()).ToList(),
             _ => [],
         };
     }
@@ -111,6 +111,7 @@ public sealed class AssetActions
         {
             ".map" => "T-P03",
             ".font" or ".ttf" => "T-P09",
+            ".uipage" => "T-P27",
             ".db" => "T-P07",
             ".dlg" => "T-P16",
             ".graph" => "T-P17",

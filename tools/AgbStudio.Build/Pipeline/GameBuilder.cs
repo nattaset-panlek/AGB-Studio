@@ -1011,7 +1011,7 @@ public sealed partial class GameBuilder
         sb.Append($"    {Label("ui.pause.title", "Paused")}, {Label("ui.pause.resume", "Resume")}, {Label("ui.pause.options", "Options")}, {Label("ui.pause.quit", "Quit to title")},\n");
         sb.Append($"    {Label("ui.options.title", "Options")}, {Label("ui.options.music", "Music")}, {Label("ui.options.effects", "Sound effects")}, {Label("ui.options.language", "Language")},\n");
         sb.Append($"    {Label("ui.options.controls", "Controls")}, {Label("ui.options.hint", "A: change   B: back")}, {Label("ui.options.press", "press a button")},\n");
-        sb.Append($"    kLanguages, kActions, {actions.Count}, {(s.AllowRemap ? "true" : "false")}, {(u.Dialogue != null ? "&kBox" : "nullptr")}}};\n");
+        sb.Append($"    kLanguages, kActions, {actions.Count}, {(s.AllowRemap ? "true" : "false")}{(u.Dialogue != null ? ", &kBox" : "")}}};\n");
         Write(Path.Combine(GenDir, "ui.cpp"), sb.ToString());
         return true;
     }

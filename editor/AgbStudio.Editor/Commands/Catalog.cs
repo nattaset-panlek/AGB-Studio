@@ -88,6 +88,7 @@ public static class Catalog
         // T-M06 Tools
         C("tools.paletteManager", "Palette Manager", "Tools", "sliders", window: "T-P10"),
         C("tools.fontManager", "Font Manager", "Tools", "type", window: "T-P09"),
+        C("tools.uiEditor", "UI Editor", "Tools", "layers", window: "T-P27"),
         C("tools.database", "Database", "Tools", "db", window: "T-P07"),
         C("tools.localization", "Localization", "Tools", "globe", window: "T-P14"),
         C("tools.audio", "Audio", "Tools", "music", window: "T-P15"),

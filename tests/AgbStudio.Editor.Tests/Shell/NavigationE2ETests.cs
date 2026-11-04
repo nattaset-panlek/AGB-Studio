@@ -29,7 +29,7 @@ public sealed class NavigationE2ETests : EditorDriver
     /// <summary>Every top-level page and the command a user reaches it with (null: a Doc Tab or a link inside a page).</summary>
     static readonly (string Id, string? Command)[] Pages =
     [
-        ("T-P03", null), ("T-P04", null), ("T-P07", "tools.database"), ("T-P08", null), ("T-P09", "tools.fontManager"),
+        ("T-P03", null), ("T-P04", null), ("T-P07", "tools.database"), ("T-P08", null), ("T-P09", "tools.fontManager"), ("T-P27", "tools.uiEditor"),
         ("T-P10", "tools.paletteManager"), ("T-P11", "build.report"), ("T-P13", "scene.worldMap"), ("T-P14", "tools.localization"),
         ("T-P15", "tools.audio"), ("T-P16", "tools.dialogueEditor"), ("T-P17", "tools.logicGraph"), ("T-P18", "help.scriptingApi"),
         ("T-P19", "tools.debugger"), ("T-P23", null), ("T-P24", null), ("T-P25", null), ("T-P12", "help.gettingStarted"),

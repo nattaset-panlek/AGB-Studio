@@ -117,6 +117,11 @@ struct ImageDef {
     u16 width, height;
 };
 
+struct KeyboardDef {
+    s16 x, y, w, h;
+    u8 fill, border, ink, focusFill, focusInk;
+};
+
 struct ElementDef {
     const char* name;
     ElementKind kind;
@@ -143,6 +148,7 @@ struct ElementDef {
     const Label* options;            // Dropdown
     u8 optionCount;
     u8 maxLength;                    // Input Field
+    const KeyboardDef* keyboard;     // Input Field
 };
 
 struct PageDef {

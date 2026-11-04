@@ -70,6 +70,20 @@ public sealed class UiLayoutGroup
     public bool FitH { get; set; }
 }
 
+// The on-screen keyboard of an Input Field: where it opens and its colours. Empty colours follow the field's.
+public sealed class UiKeyboard
+{
+    public int X { get; set; } = 8;
+    public int Y { get; set; } = 56;
+    public int W { get; set; } = 224;
+    public int H { get; set; } = 96;
+    public string Fill { get; set; } = "";
+    public string Border { get; set; } = "";
+    public string TextColor { get; set; } = "";
+    public string FocusFill { get; set; } = "";
+    public string FocusTextColor { get; set; } = "";
+}
+
 public sealed class UiAction
 {
     public UiActionKind Kind { get; set; }
@@ -125,6 +139,7 @@ public sealed class UiElement
     public UiAction Action { get; set; } = new();
     public List<string> Options { get; set; } = new();  // Dropdown: string keys
     public int MaxLength { get; set; } = 12;       // Input Field: at most 12
+    public UiKeyboard? Keyboard { get; set; }      // Input Field: null = the default place and the field's colours
     public string ScrollTarget { get; set; } = ""; // Scrollbar: the Scroll Rect it follows
     public List<string> ImageVariants { get; set; } = new();  // images UI.SetImage can show here
     // Explicit navigation by element name; empty = the nearest control that way.

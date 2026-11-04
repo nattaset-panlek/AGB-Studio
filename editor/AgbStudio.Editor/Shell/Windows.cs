@@ -96,7 +96,7 @@ public static class WindowCatalog
         P("T-P13", "World Map"), P("T-P14", "Localization"), P("T-P15", "Audio"), P("T-P16", "Dialogue Editor"),
         P("T-P17", "Logic Graph"), P("T-P18", "Scripting API"), P("T-P19", "Debugger"), P("T-P20", "Launcher · Templates"),
         P("T-P21", "Launcher · Learn"), P("T-P22", "Scene Editor · Empty project"), P("T-P23", "Debugger · Memory"),
-        P("T-P24", "Debugger · Palettes"), P("T-P25", "SFX Designer"), N("T-P26", "Auto-tile Rules panel"),
+        P("T-P24", "Debugger · Palettes"), P("T-P25", "SFX Designer"), N("T-P26", "Auto-tile Rules panel"), P("T-P27", "UI Editor"),
         D("T-D01", "New Project", 1180, 668), D("T-D02", "New Scene", 520, 470), D("T-D03", "Scene Settings", 600, 646),
         D("T-D04", "Import Asset", 900, 460), D("T-D05", "Export ROM", 560, 488), D("T-D06", "Build ROM", 600, 440),
         D("T-D07", "Flash to Cartridge", 560, 368), D("T-D08", "Project Settings", 900, 620), D("T-D09", "Preferences", 900, 620),

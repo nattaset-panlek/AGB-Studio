@@ -53,7 +53,7 @@ public static class GbaScreenRenderer
     static string LabelPreview(ActorData a) =>
         a.Components.Select(c => c.Fields.GetValueOrDefault("previewNumber")).FirstOrDefault(v => !string.IsNullOrEmpty(v)) is { } n ? " " + n : "";
 
-    static readonly ushort[] TextColors = [0, 0x0C63, 0x294A, 0x4E73, 0x6318, 0x7BDE, 0x0C63, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    static readonly ushort[] TextColors = [0, 0x0C63, 0x294A, 0x4E73, 0x6318, 0x7BDE, 0x0C63, 0x001F, 0x2D7F, 0x529F, 0x7C00, 0x7D6B, 0x7E94, 0x03E0, 0x2FEB, 0x53F4];  // 7..15: <c1>..<c3> and their shades
     const int TextBg = 0, TextBank = 15, MaxLabels = 6, MaxActors = 64, MaxSprites = 128;
 
     /// <summary>The camera the game starts with: the follow actor centred (120, 80), then one dead-zone step, clamped to the map.</summary>

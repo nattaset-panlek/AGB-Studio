@@ -25,7 +25,7 @@ public static partial class MenuActions
         "scene.addActor.empty", "scene.addActor.player", "scene.addActor.enemy", "scene.addActor.pickup", "scene.addActor.trigger",
         "scene.addActor.camera", "scene.addActor.text",
         "build.play", "build.playFromHere", "build.buildRom", "build.buildAndRun", "build.flash", "build.report", "build.clean",
-        "tools.paletteManager", "tools.fontManager", "tools.database", "tools.localization", "tools.audio", "tools.dialogueEditor",
+        "tools.paletteManager", "tools.fontManager", "tools.uiEditor", "tools.database", "tools.localization", "tools.audio", "tools.dialogueEditor",
         "tools.logicGraph", "tools.debugger",
     ];
 

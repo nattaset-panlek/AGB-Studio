@@ -691,9 +691,8 @@ void setPageResult(s32 result) {
 void remapOpenPages();
 void pumpOpenPages();
 
-// The on-screen keyboard of an Input Field. It stays inside the rectangle the build keeps free in the page's panel
-// (GameBuilder.UiPages KeyboardRect).
-constexpr int kKeysX = 8, kKeysY = 56, kKeysW = 224, kKeysH = 96, kKeyW = 16, kKeyH = 14, kKeyCols = 13, kKeyRows = 6;
+// The on-screen keyboard of an Input Field, in the rectangle its KeyboardDef gives (the build keeps it in the page's panel).
+constexpr int kKeyCols = 13, kKeyRows = 6;
 const char* const kKeyRowsText[kKeyRows - 1] = {"ABCDEFGHIJKLM", "NOPQRSTUVWXYZ", "abcdefghijklm", "nopqrstuvwxyz", "0123456789.-'"};
 
 class PageScreen final : public Screen {
@@ -1054,7 +1053,7 @@ private:
         if (e.kind == ElementKind::InputField) {
             inputOpen_ = static_cast<s8>(i);
             keyCol_ = keyRow_ = 0;
-            redraw(kKeysX, kKeysY, kKeysW, kKeysH);
+            redraw(e.keyboard->x, e.keyboard->y, e.keyboard->w, e.keyboard->h);
             return;
         }
         if (e.kind == ElementKind::Toggle) setOn(i, e.group >= 0 ? true : !on(i));
@@ -1492,25 +1491,26 @@ private:
     static int keyActionCols(int action) { return action == 0 ? 5 : 4; }
 
     void drawKey(int col, int row) {
-        const ElementDef& e = def_.elements[inputOpen_];
-        const int ox = kKeysX - def_.tileX * 8 + 8, oy = kKeysY - def_.tileY * 8 + 6;
+        const KeyboardDef& k = *def_.elements[inputOpen_].keyboard;
+        const int kKeyW = (k.w - 8) / kKeyCols, kKeyH = (k.h - 6) / kKeyRows;
+        const int ox = k.x - def_.tileX * 8 + (k.w - kKeyW * kKeyCols) / 2, oy = k.y - def_.tileY * 8 + (k.h - kKeyH * kKeyRows) / 2;
         const bool bottom = row == kKeyRows - 1;
         const int start = bottom ? keyActionCol(keyAction(col)) : col;
         const int cols = bottom ? keyActionCols(keyAction(col)) : 1;
         const bool at = row == keyRow_ && (bottom ? keyAction(keyCol_) == keyAction(col) : keyCol_ == col);
         const int x = ox + start * kKeyW, y = oy + row * kKeyH;
-        fill(x, y, cols * kKeyW, kKeyH, at ? e.focusFill : e.fill);
+        fill(x, y, cols * kKeyW, kKeyH, at ? k.focusFill : k.fill);
         char one[2] = {};
         if (!bottom) one[0] = kKeyRowsText[row][col];
         Label label{-1, bottom ? keyLabel(keyAction(col)) : one};
-        drawLabel(inputOpen_, label, at && e.focusInk ? e.focusInk : e.ink, x, y, cols * kKeyW, kKeyH, Align::Center, Align::Center, false);
+        drawLabel(inputOpen_, label, at && k.focusInk ? k.focusInk : k.ink, x, y, cols * kKeyW, kKeyH, Align::Center, Align::Center, false);
     }
 
     void drawKeyboard() {
-        const ElementDef& e = def_.elements[inputOpen_];
-        const int x = kKeysX - def_.tileX * 8, y = kKeysY - def_.tileY * 8;
-        fill(x, y, kKeysW, kKeysH, e.fill);
-        frame(x, y, kKeysW, kKeysH, 1, e.border ? e.border : e.ink);
+        const KeyboardDef& k = *def_.elements[inputOpen_].keyboard;
+        const int x = k.x - def_.tileX * 8, y = k.y - def_.tileY * 8;
+        fill(x, y, k.w, k.h, k.fill);
+        frame(x, y, k.w, k.h, 1, k.border ? k.border : k.ink);
         for (int r = 0; r < kKeyRows - 1; ++r)
             for (int c = 0; c < kKeyCols; ++c) drawKey(c, r);
         for (int a = 0; a < 3; ++a) drawKey(keyActionCol(a), kKeyRows - 1);
@@ -1560,7 +1560,7 @@ private:
         if (done) {
             const int i = inputOpen_;
             inputOpen_ = -1;
-            redraw(kKeysX, kKeysY, kKeysW, kKeysH);
+            redraw(e.keyboard->x, e.keyboard->y, e.keyboard->w, e.keyboard->h);
             g_pageChosen = def_.elements[i].name;
             if (g_pageWaiting) setPageResult(def_.elements[i].data);
         }

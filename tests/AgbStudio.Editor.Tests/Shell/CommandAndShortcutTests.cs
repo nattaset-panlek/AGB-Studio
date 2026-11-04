@@ -39,6 +39,8 @@ public class CommandAndShortcutTests
         var app = Entries(id);
         // Tools › Workspace Layout is ahead of Figma (scope log 2026-11-03)
         if (id == "T-M06") app = app.Take(app.Count - 2).ToList();
+        // Tools › UI Editor too (scope log 2026-11-04)
+        if (id == "T-M06") app = app.Where(e => e is not CommandEntry { CommandId: "tools.uiEditor" }).ToList();
         Assert.Equal(fig.Count, app.Count);
         for (var i = 0; i < fig.Count; i++)
         {

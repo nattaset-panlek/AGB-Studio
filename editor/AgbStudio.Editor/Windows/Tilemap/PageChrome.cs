@@ -88,6 +88,7 @@ public static class PageChrome
         if (n.EndsWith(".map", StringComparison.OrdinalIgnoreCase)) return "T-P03";
         if (n.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) return "T-P04";
         if (n.EndsWith(".font", StringComparison.OrdinalIgnoreCase)) return "T-P09";
+        if (d.Name == "UI Editor" || n.EndsWith(".uipage", StringComparison.OrdinalIgnoreCase)) return "T-P27";
         if (n.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".aseprite", StringComparison.OrdinalIgnoreCase)) return "T-P08";
         // the other editors' documents: a tab of theirs used to make the document active without showing its page
         if (d.Name == "Database" || n.EndsWith(".db", StringComparison.OrdinalIgnoreCase)) return "T-P07";
