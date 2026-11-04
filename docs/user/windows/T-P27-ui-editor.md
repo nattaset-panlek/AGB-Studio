@@ -22,8 +22,8 @@ Every change is saved to the page's file and can be undone. The next build has i
 - **The row of kinds above the screen**: one click adds that element inside the selection.
 - **The screen**: the page as the game draws it, with the same layout and font. The selected control shows in its focus
   colours, and a selected Input Field shows its keyboard. Arrow keys move the selection by a pixel, Delete removes it. An
-  element inside a layout group has no handles, because the group places it: change its size in the Inspector, or turn on
-  Ignore layout.
+  element inside a layout group has no handles, because the group places it: dragging it moves the group, and its size is
+  in the Inspector. Turn on Ignore layout to place it by itself.
 - **Inspector**: what the selected element has: position and size, anchors, layout group, colours, text, image, control
   settings and the page's own settings.
 - **Status bar**: the selected element's place on the screen, how many of the 15 UI colours are in use, and a warning when
@@ -42,6 +42,14 @@ static async Task AskName()
     Pages.Keep();          // read the text with UI.InputLength and UI.InputChar, then UI.Close()
 }
 ```
+
+Four page names mean something to the engine, with no script: **Pause** is the pause menu (Project Settings › Pause menu on),
+**Options** is what Open Options shows (the scene hides under it; its Sliders and Buttons work by the Actions Music Volume, Effects
+Volume, Change Language and Remap Key, whose Data is the action's number),
+**Choice** shows every `Choice` from scripts and the Dialogue Editor (the window around Option0 to Option5 closes up over the
+rows it does not need and keeps its bottom edge), and a scene can open any page when it starts (Page ›
+Opens in scene: a title screen). Buttons can Load Scene, Open Options, Continue Game (save slot in Data) or Quit To Title. New
+templates are made this way.
 
 A preset works with no file in the project: name it in a script and the build adds it. A page of the same name in `ui/` is
 used instead. The Input Field takes English letters, digits, space and `. - '`.

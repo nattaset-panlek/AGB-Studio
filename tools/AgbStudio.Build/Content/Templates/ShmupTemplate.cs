@@ -143,7 +143,7 @@ public static class ShmupTemplate
         };
         GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), Space("Title", 15));
         GameProject.Save(Path.Combine(p.MapsDir, "Stage_01.map"), Space("Stage_01", StageWidth));
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#0C0C20", "Stage_01", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#0C0C20", "Stage_01", "title_theme"));
         // Spawn templates (Shot, Enemy Shot, Slime, Power-up) wait hidden above the screen; Scene.Spawn copies them.
         static ComponentData Projectile(string vx = "0") => new() { Type = "Projectile", Fields = { ["vx"] = vx } };
         var stage = new SceneFile
@@ -177,7 +177,6 @@ public static class ShmupTemplate
         ["D-pad: fly", "A (hold): fire", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "The ship. ShipController keeps it inside the screen while the camera scrolls, spawns Shot copies when A is held and loses a life when hit.",
             ["Stage"] = "Invisible director: the Stage script moves the camera one pixel a frame and spawns a wave of three slimes every 160 pixels, plus two power-ups.",
             ["Shot"] = "Spawn template of the ship's bullet: the built-in Projectile moves it and removes it after its lifetime. Scene.Spawn(\"Shot\", x, y) makes a copy.",

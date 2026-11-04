@@ -52,6 +52,7 @@ struct SceneState {
     data::MapLayer ramLayers[kMaxLayers];  // layers edited at run time (cells in the screen arena)
     bool edited[kMaxLayers] = {};
     s16 zone = -1;  // Camera Zone actor the followed actor is in
+    bool pagePending = false;
 };
 SceneState g_scene;
 void publishGameInfo();
@@ -261,15 +262,21 @@ public:
                 g_scene.lastLoadFrames = system::frame() - g_scene.loadStartFrame;
                 g_scene.loaded = true;
                 // Autosave: gameplay scenes only (a scene with a menu is a title or menu screen).
-                if (g_def->autosave && !d->menu && g_def->state) api::Save::Checkpoint(save::lastSlot());
+                if (g_def->autosave && !d->menu && !d->page && g_def->state) api::Save::Checkpoint(save::lastSlot());
                 if (d->onEnter) d->onEnter();
                 if (d->menu) ui::openSceneMenu(*d->menu);
+                g_scene.pagePending = d->page != nullptr;  // next frame: a screen pushed during a load would not enter
                 return true;
         }
     }
 
     void update() override {
         const SceneDef* d = g_scene.def;
+        if (ui::reopenAfterOptions()) return;
+        if (g_scene.pagePending) {
+            g_scene.pagePending = false;
+            if (d->page) ui::openPage(d->page);
+        }
         if (g_scene.changePending) {
             if (render::effects::transitionDone() && render::effects::transitionLevel() >= 16) game::replace(this);
             render::effects::update();

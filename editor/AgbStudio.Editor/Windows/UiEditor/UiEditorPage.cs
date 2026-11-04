@@ -161,7 +161,7 @@ public sealed class UiEditorPage : DockPanel
         var top = new DockPanel();
         DockPanel.SetDock(row, Dock.Top);
         top.Children.Add(row);
-        top.Children.Add(new ScrollViewer { Content = _pages, MaxHeight = 220 });
+        top.Children.Add(new ScrollViewer { Content = _pages, MaxHeight = 132 });
         var dock = new DockPanel();
         var upper = UI.Column(0, pagesHeader, top, elementsHeader);
         DockPanel.SetDock(upper, Dock.Top);
@@ -589,7 +589,30 @@ public sealed class UiEditorPage : DockPanel
             BoolRow("Wrap cursor", () => P().WrapFocus, v => _lib.Edit("Wrap cursor", p => p.WrapFocus = v)),
             ChoiceRow("First focus", () => P().FirstFocus, () => ["", .. P().Root.Walk().Where(x => x.IsSelectable).Select(x => x.Name)], v => _lib.Edit("First focus", p => p.FirstFocus = v)),
             BoolRow("Scene plays", () => P().ScenePlays, v => _lib.Edit("Scene plays", p => p.ScenePlays = v)),
-            IntRow("Dim scene", () => P().Dim, v => _lib.Edit("Dim scene", p => p.Dim = v), 0, 16));
+            IntRow("Dim scene", () => P().Dim, v => _lib.Edit("Dim scene", p => p.Dim = v), 0, 16),
+            ChoiceRow("Opens in scene", SceneOpening, () => ["", .. _lib.Project?.SceneFiles().Select(GameProject.AssetName) ?? []], SetSceneOpening));
+    }
+
+    // The scene that opens this page when it starts (a title screen).
+    string SceneOpening()
+    {
+        if (_lib.Project is not { } p) return "";
+        return p.SceneFiles().FirstOrDefault(f => GameProject.Load<SceneFile>(f).Page == _lib.PageName) is { } hit ? GameProject.AssetName(hit) : "";
+    }
+
+    void SetSceneOpening(string scene)
+    {
+        if (_lib.Project is not { } p) return;
+        foreach (var f in p.SceneFiles())
+        {
+            var s = GameProject.Load<SceneFile>(f);
+            var wanted = GameProject.AssetName(f) == scene;
+            if (wanted && s.Page != _lib.PageName) s.Page = _lib.PageName;
+            else if (!wanted && s.Page == _lib.PageName) s.Page = "";
+            else continue;
+            GameProject.Save(f, s);
+        }
+        OnChanged();
     }
 
     InspectorField DoubleAspect()

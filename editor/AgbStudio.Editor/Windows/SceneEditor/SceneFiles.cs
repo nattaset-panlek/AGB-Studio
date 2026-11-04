@@ -210,6 +210,7 @@ public static class SceneFiles
                 foreach (var it in other.Menu?.Items ?? []) if (it.Scene == oldName) { it.Scene = name; changed = true; }
                 if (changed) changes.Write(f, other);
             }
+            UiPageLinks.RenameScene(p, oldName, name);
             if (settings.LastScene == oldName) { settings.LastScene = name; projectChanged = true; }
             if (settings.Ui.TitleScene == oldName) { settings.Ui.TitleScene = name; projectChanged = true; }
         }

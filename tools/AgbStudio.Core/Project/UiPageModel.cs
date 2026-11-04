@@ -15,7 +15,7 @@ public enum UiAlign { Start, Center, End }
 public enum UiLayoutKind { None, Horizontal, Vertical, Grid }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum UiActionKind { None, OpenPage, ClosePage, LoadScene }
+public enum UiActionKind { None, OpenPage, ClosePage, LoadScene, OpenOptions, ContinueGame, QuitToTitle, MusicVolume, EffectsVolume, ChangeLanguage, RemapKey }
 
 // ui/<Name>.uipage: a screen of UI made once and opened by scripts or buttons (UI.Open("Bag", data)). It is apart from
 // the scene: a page is drawn on the text layer over whatever scene is showing, and the scene waits while it is open.
@@ -89,6 +89,30 @@ public sealed class UiAction
     public UiActionKind Kind { get; set; }
     public string Target { get; set; } = "";       // page or scene name
     public int Data { get; set; }                  // OpenPage: the data the page opens with
+}
+
+/// <summary>The scenes a project's UI pages lead to, for the World Map and for renaming a scene.</summary>
+public static class UiPageLinks
+{
+    /// <summary>The Load Scene buttons of the page a scene opens with.</summary>
+    public static IEnumerable<UiElement> LoadSceneButtons(GameProject p, SceneFile scene)
+    {
+        var path = Path.Combine(p.UiDir, scene.Page + ".uipage");
+        if (scene.Page.Length == 0 || !File.Exists(path)) return [];
+        return GameProject.Load<UiPageFile>(path).Root.Walk().Where(e => e.Action.Kind == UiActionKind.LoadScene).ToList();
+    }
+
+    /// <summary>Points every Load Scene button of the project at a scene's new name.</summary>
+    public static void RenameScene(GameProject p, string oldName, string newName)
+    {
+        foreach (var file in p.UiPageFiles())
+        {
+            var page = GameProject.Load<UiPageFile>(file);
+            var hits = page.Root.Walk().Where(e => e.Action.Kind == UiActionKind.LoadScene && e.Action.Target == oldName).ToList();
+            foreach (var e in hits) e.Action.Target = newName;
+            if (hits.Count > 0) GameProject.Save(file, page);
+        }
+    }
 }
 
 public sealed class UiElement

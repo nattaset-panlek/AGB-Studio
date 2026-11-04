@@ -241,7 +241,7 @@ public static class BrawlerTemplate
         }
         GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), Pier("Title", 15));
         GameProject.Save(Path.Combine(p.MapsDir, "Pier.map"), Pier("Pier", StageWidth));
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#402868", "Pier", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#402868", "Pier", "title_theme"));
         var pier = new SceneFile
         {
             Name = "Pier", Width = StageWidth, Height = 10, Map = "Pier", Backdrop = "#402868", MapX = 260, MapY = 60,
@@ -270,7 +270,6 @@ public static class BrawlerTemplate
         ["D-pad: walk (up and down move along the depth of the pier)", "A: punch; three presses in a row: combo with a kick", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "The fighter. The Fighter script walks it inside the floor band, runs the combo, opens a short hit window per attack and loses hit points and lives when a thug's strike lands.",
             ["Waves"] = "Invisible director: the Waves script scrolls the camera with the player, stops it at three points, spawns each wave of thugs and shows GO! or Stage clear!",
             ["Thug"] = "Spawn template of the enemy (hidden; Waves copies it with Scene.Spawn). The Thug script walks up beside the player, winds up and strikes, and takes hits from the player's attacks.",

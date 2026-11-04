@@ -153,7 +153,7 @@ public static class VisualNovelTemplate
         };
         GameProject.Save(Path.Combine(p.MapsDir, "Title.map"), Backdrop("Title"));
         GameProject.Save(Path.Combine(p.MapsDir, "Story.map"), Backdrop("Story"));
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#F89860", "Story", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#F89860", "Story", "title_theme"));
         var story = new SceneFile
         {
             Name = "Story", Width = 15, Height = 10, Map = "Story", Backdrop = "#F89860", MapX = 260, MapY = 60,
@@ -177,7 +177,6 @@ public static class VisualNovelTemplate
         ["A: next line", "D-pad up / down: pick a choice, A: confirm", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Story"] = "Invisible director: the Story script runs the whole scene as one cutscene (lines, the choice, the ending) when the scene starts.",
             ["Hopper"] = "Portrait sprite with the animations neutral, happy and worried; Stage.Mood picks one between lines.",
             ["Owl"] = "Second portrait, hidden until the owl speaks for the first time (Stage.Speaker shows it).",

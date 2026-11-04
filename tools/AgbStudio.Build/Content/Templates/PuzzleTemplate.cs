@@ -103,7 +103,7 @@ public static class PuzzleTemplate
 
     static void WriteScenes(GameProject p)
     {
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#1C1834", "Board", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#1C1834", "Board", "title_theme"));
         var board = new SceneFile
         {
             Name = "Board", Width = 15, Height = 10, Map = "Board", Backdrop = "#1C1834", MapX = 260, MapY = 60,
@@ -128,7 +128,6 @@ public static class PuzzleTemplate
         ["D-pad left / right: move the pair", "A: turn the pair", "D-pad down: drop faster", "A after game over: back to the title", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Board"] = "Invisible game logic: the Board script keeps the 6 x 9 grid of gems in an array and draws it by changing tiles of the BG1 Board layer (Scene.SetTile), so the gems are tiles, not sprites.",
             ["HUD Score"] = "Text label with the score. Its Scoreboard script also writes the best score into HUD Best whenever a number changes.",
             ["HUD Next"] = "Text label over the preview of the next pair (the two gem tiles under it are drawn by Board).",

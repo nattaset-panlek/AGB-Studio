@@ -80,6 +80,7 @@ struct SceneDef {
     bool alphaBlend, mosaic;
     const ui::MenuDef* menu;      // title screens: menu opened when the scene has entered (nullptr = none)
     u16 musicVolume = 256;        // World Map inspector music Volume (0..256): the game's music volume for `music`
+    const char* page = nullptr;   // a UI page opened when the scene has entered: a title screen (nullptr = none)
 };
 
 // A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.

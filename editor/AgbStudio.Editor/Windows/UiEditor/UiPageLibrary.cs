@@ -192,7 +192,10 @@ public sealed class UiPageLibrary
     /// <summary>Copies a ready-made page into the project, where it can be changed.</summary>
     public void AddPreset(string preset)
     {
-        if (Project is null || UiPresets.Create(preset, Project.Settings.Ui) is not { } page) return;
+        if (Project is null) return;
+        var keys = Project.StringTables().SelectMany(f => GameProject.Load<StringTable>(f).Strings.Keys).ToHashSet();
+        var first = Project.SceneFiles().Select(GameProject.AssetName).FirstOrDefault(n => n != Project.Settings.General.StartScene) ?? "";
+        if (UiPresets.Create(preset, Project.Settings.Ui, first, keys) is not { } page) return;
         page.Name = UniquePageName(preset);
         CreateFile(page);
     }

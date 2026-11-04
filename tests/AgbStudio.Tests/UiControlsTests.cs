@@ -330,7 +330,9 @@ public sealed class UiControlsTests(EmulatorFixture emu)
             var page = UiPresets.Create(name, new UiSettings())!;
             Assert.Equal(name, page.Name);
             var rects = UiLayoutEngine.Resolve(page);
-            foreach (var e in page.Root.Walk())
+            // The rows of a Scroll Rect may run past it: the game shows them by scrolling.
+            var scrolled = page.Root.Walk().Where(e => e.Kind == UiElementKind.ScrollRect).SelectMany(e => e.Children).ToHashSet();
+            foreach (var e in page.Root.Walk().Where(e => !scrolled.Contains(e)))
             {
                 var r = rects[e];
                 Assert.True(r.X >= 0 && r.Y >= 0 && r.Right <= 240 && r.Bottom <= 160, $"{name}.{e.Name} leaves the screen: {r}");

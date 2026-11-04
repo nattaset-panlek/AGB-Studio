@@ -64,6 +64,17 @@ bool textChoiceDone(Context& c) {
     return true;
 }
 
+// The page named Choice: B takes the last option, as the choice box does.
+bool pageChoiceDone(Context& c) {
+    s32 picked = 0;
+    if (!ui::pollPageChoice(picked)) return false;
+    if (picked < 0 || picked >= c.userData[2]) picked = c.userData[2] - 1;
+    ui::closePage();
+    const u32 map = static_cast<u32>(c.userData[picked >> 2]);
+    c.waitResult = static_cast<s32>((map >> ((picked & 3) * 8)) & 0xFF);
+    return true;
+}
+
 bool framesDone(Context& c) { return --c.userData[0] <= 0; }
 
 bool resumed(Context& c) {
@@ -153,6 +164,12 @@ s32 Choice(Context& ctx, const s32* args, int argc) {
             if (options[i] < 0) continue;
             ctx.userData[count >> 2] = static_cast<s32>(static_cast<u32>(ctx.userData[count >> 2]) | (static_cast<u32>(i) << ((count & 3) * 8)));
             s_choiceKeys[count++] = static_cast<u16>(options[i]);
+        }
+        if (ui::openChoicePage(s_choiceKeys, count)) {
+            ui::beginPageChoice(false, true);
+            ctx.userData[2] = count;
+            ctx.wait = pageChoiceDone;
+            return 0;
         }
         text::choose(s_choiceKeys, count);
         ctx.wait = textChoiceDone;

@@ -25,6 +25,7 @@ public sealed class UiCanvas : Control
     UiPixelRect _startRect;
     int _startX, _startY, _startW, _startH;
     bool _moved;
+    UiElement? _mover;  // what a drag moves, when that is not the element clicked (it sits in a layout group)
 
     public UiPageRenderer? Renderer { get; set; }
     public int Scale { get; private set; } = 3;
@@ -125,13 +126,18 @@ public sealed class UiCanvas : Control
             if (hit is null) return;
             _grip = Grip.Move;
         }
-        if (_lib.Selected is not { } sel || !rects.TryGetValue(sel, out var sr)) return;
+        if (_lib.Selected is not { } clicked) return;
+        // An element a layout group places moves with its group: the first ancestor that can be placed.
+        var sel = clicked;
+        while (!CanPlace(sel) && _lib.ParentOf(sel) is { } up && !ReferenceEquals(up, page.Root)) sel = up;
+        if (!rects.TryGetValue(sel, out var sr)) return;
         if (!CanPlace(sel))
         {
             _grip = Grip.None;
             PlacedByLayout?.Invoke();
             return;
         }
+        _mover = ReferenceEquals(sel, clicked) ? null : sel;
         _start = p;
         _startRect = sr;
         (_startX, _startY, _startW, _startH) = (sel.Rect.X, sel.Rect.Y, sel.Rect.W, sel.Rect.H);
@@ -148,6 +154,7 @@ public sealed class UiCanvas : Control
         var dx = (int)Math.Round(d.X / Scale);
         var dy = (int)Math.Round(d.Y / Scale);
         if (dx == 0 && dy == 0 && !_moved) return;
+        if (!_moved && _mover != null) _lib.Select(_mover);
         _moved = true;
         var g = _grip;
         // How far each edge moved. The Rect Transform's X and W then follow from the pivot, for any anchors.

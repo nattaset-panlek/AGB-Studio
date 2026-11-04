@@ -217,7 +217,7 @@ public static class RacingTemplate
 
     static void WriteScenes(GameProject p)
     {
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#3C78B4", "Circuit", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#3C78B4", "Circuit", "title_theme"));
         var race = new SceneFile
         {
             Name = "Circuit", Width = Side, Height = Side, Map = "Circuit", Backdrop = "#58A040", VideoMode = 1, MapX = 260, MapY = 60,
@@ -247,7 +247,6 @@ public static class RacingTemplate
         ["Up or A: accelerate", "B: brake", "D-pad left / right: steer", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "Your kart. The Kart script keeps its own floor position and heading, drives, counts laps with the Check and Finish tile tags, and moves the Mode 7 camera behind it; the sprite stays at the bottom middle of the screen.",
             ["Rival 1"] = "Computer kart: the Rival script drives it round the centre line at its own speed and lane, and draws it where it shows on the floor (smaller when far away).",
             ["Rival 2"] = "A slower computer kart on the other lane.",

@@ -61,6 +61,7 @@ public sealed class SceneSwitcher : ScenePopover
         {
             var sc = scenes[queue.Dequeue()];
             foreach (var item in sc.Menu?.Items ?? []) if (item.Command == MenuCommand.LoadScene) Visit(item.Scene);
+            foreach (var b in UiPageLinks.LoadSceneButtons(p, sc)) Visit(b.Action.Target);
             foreach (var l in sc.Links) Visit(l.To);
         }
         foreach (var n in scenes.Keys.Order(StringComparer.Ordinal)) if (!order.Contains(n)) order.Add(n);
@@ -87,7 +88,7 @@ public sealed class SceneSwitcher : ScenePopover
     {
         var map = _m.Assets?.Map(scene);
         var thumb = new Border { Width = 48, Height = 32, CornerRadius = new CornerRadius(4), ClipToBounds = true, Child = PixelArt.View(Preview(scene, map), 48, 32) };
-        var meta = UI.Text(scene.Menu != null ? "menu" : WorldMap.WorldMapModel.IsBossScene(scene) ? "boss" : $"{map?.Width ?? scene.Width}×{map?.Height ?? scene.Height}",
+        var meta = UI.Text(scene.Menu != null || scene.Page.Length > 0 ? "menu" : WorldMap.WorldMapModel.IsBossScene(scene) ? "boss" : $"{map?.Width ?? scene.Width}×{map?.Height ?? scene.Height}",
             "Mono/10", current ? "text/on-selected" : "text/muted");
         meta.Name = "SceneMeta_" + name;
         // Figma: the current scene's name stays text/primary; only its size turns text/on-selected

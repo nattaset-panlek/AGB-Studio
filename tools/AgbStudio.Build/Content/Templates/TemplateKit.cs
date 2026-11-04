@@ -24,14 +24,25 @@ public static class TemplateKit
         return GameProject.Create(dir, name, s);
     }
 
-    /// <summary>AGB Pixel (AgbPixelFont: AGB Studio's own 1bpp pixel font for Thai and Latin, drop shadow) as the default
-    /// font, so every string works in Thai and English.</summary>
+    /// <summary>Manop Thai 6x14 as the default font, so every string works in Thai and English, and the dialogue box of
+    /// Project Settings with room for three lines.</summary>
     public static void AddThaiFont(GameProject p)
     {
         ManopThaiFont.CopyTo(p.FontsDir);
         GameProject.Save(Path.Combine(p.FontsDir, "thai_vwf.font"), ManopThaiFont.Settings("thai_vwf"));
         p.Settings.General.DefaultFont = "thai_vwf";
+        p.Settings.Ui.Dialogue = new DialogueBoxSettings { Paper = p.Settings.Ui.Paper, Ink = p.Settings.Ui.Ink, Border = p.Settings.Ui.Ink };
         p.SaveSettings();
+    }
+
+    /// <summary>The menus of a template as UI pages (ui/*.uipage), open to change in the UI Editor: the title screen, the
+    /// pause menu, the Options screen and the choices of the dialogue box.</summary>
+    static void AddMenuPages(GameProject p, string firstScene)
+    {
+        Directory.CreateDirectory(p.UiDir);
+        string[] keys = ["ui.title", "ui.menu.start", "ui.menu.continue", "ui.menu.options", "ui.pause.title", "ui.pause.resume", "ui.pause.options", "ui.pause.quit", "ui.options.title", "ui.options.music", "ui.options.effects", "ui.options.language", "ui.options.controls", "ui.options.hint"];
+        foreach (var name in new[] { "Title", "Pause", "Options", "Choice" })
+            GameProject.Save(Path.Combine(p.UiDir, name + ".uipage"), UiPresets.Create(name, p.Settings.Ui, firstScene, keys)!);
     }
 
     /// <summary>English and Thai string tables (key -> English, Thai) with groups for Localization.</summary>
@@ -75,24 +86,19 @@ public static class TemplateKit
         ("ui.options.press", "press a button", "กดปุ่มที่ต้องการ", "UI & menus"),
     ];
 
-    /// <summary>A title scene: the title label and the Start / Continue / Options menu (Figma "In-game · Title screen").</summary>
-    public static SceneFile TitleScene(string map, string backdrop, string firstScene, string music = "") => new()
+    /// <summary>A title scene: it opens the Title UI page (the title and the Start / Continue / Options menu), and the pages
+    /// of the game's menus are written with it.</summary>
+    public static SceneFile TitleScene(GameProject p, string map, string backdrop, string firstScene, string music = "")
     {
-        Name = "Title", Width = 15, Height = 10, Map = map, Backdrop = backdrop, MapX = 40, MapY = 60,
-        Music = new MusicSettings { Track = music },
-        Camera = new CameraSettings { Follow = "" },
-        Actors = { new ActorData { Name = "Title", Kind = ActorKind.TextLabel, X = 88, Y = 40, Text = "ui.title" } },
-        Menu = new SceneMenu
+        AddMenuPages(p, firstScene);
+        return new SceneFile
         {
-            X = 88, Y = 72, Width = 96, Height = 48, Spacing = 14,
-            Items =
-            {
-                new SceneMenuItem { Text = "ui.menu.start", Command = MenuCommand.LoadScene, Scene = firstScene },
-                new SceneMenuItem { Text = "ui.menu.continue", Command = MenuCommand.Continue },
-                new SceneMenuItem { Text = "ui.menu.options", Command = MenuCommand.Options },
-            },
-        },
-    };
+            Name = "Title", Width = 15, Height = 10, Map = map, Backdrop = backdrop, MapX = 40, MapY = 60,
+            Music = new MusicSettings { Track = music },
+            Camera = new CameraSettings { Follow = "" },
+            Page = "Title",
+        };
+    }
 
     /// <summary>
     /// README.md in the project folder: what the template is, the controls, every scene with its camera, background
@@ -136,6 +142,7 @@ public static class TemplateKit
                         + (map.Layers.IndexOf(l) == map.CollisionLayer ? ", the collision layer (solid tiles stop actors)" : "") + ".");
             }
             if (scene.Music.Track.Length > 0) md.AppendLine($"- Music: {scene.Music.Track}.");
+            if (scene.Page.Length > 0) md.AppendLine($"- UI page: {scene.Page} (open it in Tools > UI Editor to change the title and menu).");
             if (scene.Menu != null) md.AppendLine($"- Menu: {string.Join(", ", scene.Menu.Items.Select(i => i.Command == MenuCommand.LoadScene ? $"{i.Text} loads {i.Scene}" : $"{i.Text} ({i.Command})"))} (Scene Settings > Menu).");
             if (scene.Events.OnEnter.Length > 0) md.AppendLine($"- On enter: `{scene.Events.OnEnter}` (Scene Settings > Events).");
             if (scene.Actors.Count == 0) continue;
@@ -182,7 +189,9 @@ public static class TemplateKit
     {
         var start = p.Settings.General.StartScene;
         var scenes = p.SceneFiles().Select(GameProject.Load<SceneFile>).ToList();
-        return scenes.FirstOrDefault(s => s.Name == start)?.Menu?.Items.FirstOrDefault(i => i.Command == MenuCommand.LoadScene)?.Scene;
+        var first = scenes.FirstOrDefault(s => s.Name == start);
+        if (first is null) return null;
+        return first.Menu?.Items.FirstOrDefault(i => i.Command == MenuCommand.LoadScene)?.Scene ?? UiPageLinks.LoadSceneButtons(p, first).FirstOrDefault()?.Action.Target;
     }
 
     /// <summary>The editor opens the template's main scene (not the title screen, which has no objects to learn from);
@@ -194,27 +203,6 @@ public static class TemplateKit
             p.Settings.LastScene = main;
             p.SaveSettings();
         }
-        CenterTitle(p);
-    }
-
-    /// <summary>Centres the title label (measured with the project's default font, English text) and the menu of the
-    /// title screen on the 240 px screen.</summary>
-    static void CenterTitle(GameProject p)
-    {
-        var path = Path.Combine(p.ScenesDir, p.Settings.General.StartScene + ".scene");
-        if (!File.Exists(path)) return;
-        var scene = GameProject.Load<SceneFile>(path);
-        var fontPath = Path.Combine(p.FontsDir, p.Settings.General.DefaultFont + ".font");
-        var en = Path.Combine(p.TextDir, "strings.en.json");
-        if (scene.Menu is { } menu) menu.X = (240 - menu.Width) / 2 / 8 * 8;
-        if (scene.Actors.FirstOrDefault(a => a.Kind == ActorKind.TextLabel) is { } title && File.Exists(fontPath) && File.Exists(en)
-            && GameProject.Load<StringTable>(en).Strings.TryGetValue(title.Text, out var text))
-        {
-            var font = Fonts.FontBuilder.Build(GameProject.Load<FontFile>(fontPath), p.FontsDir);
-            var width = Fonts.TextLayout.Layout(text, font, 240).MaxWidth;
-            title.X = Math.Max(0, (240 - width) / 2);
-        }
-        GameProject.Save(path, scene);
     }
 
     public static void Sprite(GameProject p, string name, Canvas art, SpriteMeta meta)

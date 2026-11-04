@@ -110,7 +110,7 @@ private:
 enum class ElementKind : u8 { Panel, Image, Text, Button, Toggle, Slider, ScrollRect, Scrollbar, Dropdown, InputField };
 enum class ImageMode : u8 { Simple, Sliced, Tiled, FilledHorizontal, FilledVertical };
 enum class Align : u8 { Start, Center, End };
-enum class ActionKind : u8 { None, OpenPage, ClosePage, LoadScene };
+enum class ActionKind : u8 { None, OpenPage, ClosePage, LoadScene, OpenOptions, ContinueGame, QuitToTitle, MusicVolume, EffectsVolume, ChangeLanguage, RemapKey };
 
 struct ImageDef {
     const u8* pixels;  // one palette index a pixel, 0 = see-through
@@ -205,7 +205,11 @@ int pageInputLength();
 int pageInputChar(int index);
 void setPageInputChar(int index, int ch);       // ch 0 ends the text
 // A cutscene waiting for the player (C# await UI.Choose): the Data of the control chosen, -1 for B, kPageMoved when asked.
-void beginPageChoice(bool wakeOnMove);
+void beginPageChoice(bool wakeOnMove, bool keepDialogue = false);
+// A page named "Choice" shows Choice in scripts and the Dialogue Editor: false when the game has none.
+bool openChoicePage(const u16* keys, u8 count);
+// The page the Options page took the place of comes back when it has closed: true when that happened this frame.
+bool reopenAfterOptions();
 bool pollPageChoice(s32& result);
 
 // ---- game integration (called by the game framework) -----------------------------------------------

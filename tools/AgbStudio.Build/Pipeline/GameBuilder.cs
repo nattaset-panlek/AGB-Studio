@@ -1081,7 +1081,9 @@ public sealed partial class GameBuilder
         var hooks = ScriptsCompiled ? $"agb_scene_{id}_onLoad, agb_scene_{id}_onEnter, agb_scene_{id}_onExit" : "nullptr, nullptr, nullptr";
         sb.Append($"    {hooks}, {backdrop}, {(scene.AlphaBlending ? "true" : "false")}, {(scene.Mosaic ? "true" : "false")},\n");
         // World Map inspector music Volume: the game's music volume while the scene's own track plays (0..256).
-        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}, {SceneMusicVolume(scene)}}};\n");
+        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}, {SceneMusicVolume(scene)}{(scene.Page.Length > 0 ? ", " + Cpp.Str(scene.Page) : "")}}};\n");
+        if (scene.Page.Length > 0 && !File.Exists(Path.Combine(_p.UiDir, scene.Page + ".uipage")) && !UiPresets.Names.Contains(scene.Page))
+            Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} opens the UI page '{scene.Page}', which is not in the ui folder. Make it in the UI Editor, or pick another page."));
         // Asset declarations go after the includes (first line block of sb).
         var text = sb.ToString();
         var cut = text.IndexOf("namespace {", StringComparison.Ordinal);

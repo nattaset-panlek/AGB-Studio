@@ -4,10 +4,16 @@ namespace AgbStudio.Core.Project;
 /// Editor copies one into ui/ to change it, and a page of the same name in the project is used instead.</summary>
 public static class UiPresets
 {
-    public static readonly IReadOnlyList<string> Names = ["TextInput", "Confirm", "Message", "Menu", "List"];
+    public static readonly IReadOnlyList<string> Names = ["TextInput", "Confirm", "Message", "Menu", "List", "Title", "Pause", "Options", "Choice"];
 
-    public static UiPageFile? Create(string name, UiSettings ui) => name switch
+    /// <summary>Makes a ready-made page. <paramref name="firstScene"/>: where a Title page's Start goes. A word uses its string
+    /// key when <paramref name="keys"/> has it, else plain English.</summary>
+    public static UiPageFile? Create(string name, UiSettings ui, string firstScene = "", IReadOnlyCollection<string>? keys = null) => name switch
     {
+        "Title" => Title(ui, firstScene, keys),
+        "Pause" => Pause(ui, keys),
+        "Options" => Options(ui, keys),
+        "Choice" => Choice(ui),
         "TextInput" => TextInput(ui),
         "Confirm" => Confirm(ui),
         "Message" => Message(ui),
@@ -43,6 +49,108 @@ public static class UiPresets
         Name = name, Kind = UiElementKind.Button, Rect = rect, Text = text, TextColor = ui.Ink, Cursor = true, Accent = ui.Ink, DisabledTextColor = ui.Muted,
         FocusFill = ui.BarTrack, FocusTextColor = ui.ScreenInk, PaddingLeft = 2, PaddingRight = 2, Action = new UiAction { Data = data },
     };
+
+    static string Word(IReadOnlyCollection<string>? keys, string key, string plain) => keys?.Contains(key) == true ? key : plain;
+
+    // A title screen: the scene's UI Page. Start goes to a scene, Continue reads save slot 0 (off when it is empty), Options
+    // opens the Options screen. No script is needed.
+    static UiPageFile Title(UiSettings ui, string firstScene, IReadOnlyCollection<string>? keys)
+    {
+        UiElement Row(string name, string key, string plain, UiAction action)
+        {
+            var b = Button(name, Word(keys, key, plain), 0, Size(0, 16), ui);
+            b.Action = action;
+            return b;
+        }
+        return new UiPageFile
+        {
+            Name = "Title", Cancel = false,
+            Root = Canvas(
+                Window("Heading", At(0.5, 0, 0, 24, 208, 0), ui, Stack(), Text("GameTitle", Word(keys, "ui.title", "Game Title"), Size(192, 16), ui, UiAlign.Center)),
+                Window("Menu", At(0.5, 1, 0, -16, 112, 0), ui, Stack(),
+                    Row("Start", "ui.menu.start", "Start", firstScene.Length > 0 ? new UiAction { Kind = UiActionKind.LoadScene, Target = firstScene } : new UiAction()),
+                    Row("Continue", "ui.menu.continue", "Continue", new UiAction { Kind = UiActionKind.ContinueGame, Data = 0 }),
+                    Row("Options", "ui.menu.options", "Options", new UiAction { Kind = UiActionKind.OpenOptions }))),
+        };
+    }
+
+    // The pause menu: the Pause action opens a page of this name in any scene, and closes it again.
+    static UiPageFile Pause(UiSettings ui, IReadOnlyCollection<string>? keys)
+    {
+        UiElement Row(string name, string key, string plain, UiActionKind kind)
+        {
+            var b = Button(name, Word(keys, key, plain), 0, Size(0, 16), ui);
+            b.Action = new UiAction { Kind = kind };
+            return b;
+        }
+        return new UiPageFile
+        {
+            Name = "Pause", Dim = ui.Dim,
+            Root = Canvas(Window("Window", At(0.5, 0.5, 0, 0, 128, 0), ui, Stack(),
+                Text("Heading", Word(keys, "ui.pause.title", "Paused"), Size(116, 16), ui, UiAlign.Center),
+                Row("Resume", "ui.pause.resume", "Resume", UiActionKind.ClosePage),
+                Row("Options", "ui.pause.options", "Options", UiActionKind.OpenOptions),
+                Row("Quit", "ui.pause.quit", "Quit to title", UiActionKind.QuitToTitle))),
+        };
+    }
+
+    // The Options screen: Open Options goes to a page of this name. Each row works by its Action: nothing here is hard-wired
+    // to a name but the page's own. A Language row hides in a one-language game, key rows past the game's actions hide.
+    static UiPageFile Options(UiSettings ui, IReadOnlyCollection<string>? keys)
+    {
+        UiElement Volume(string name, string key, string plain, UiActionKind kind) => new()
+        {
+            Name = name, Kind = UiElementKind.Slider, Rect = Size(0, 16), Text = Word(keys, key, plain), TextColor = ui.ScreenInk, Amount = 100,
+            Accent = ui.BarFill, DisabledTextColor = ui.Muted, FocusFill = ui.BarTrack, FocusTextColor = ui.ScreenInk, PaddingLeft = 10,
+            Action = new UiAction { Kind = kind },
+        };
+        UiElement Row(string name, string text, UiActionKind kind, int data)
+        {
+            var b = Button(name, text, data, Size(0, 16), ui);
+            b.TextColor = ui.ScreenInk;
+            b.Accent = ui.ScreenInk;
+            b.Action.Kind = kind;
+            return b;
+        }
+        var heading = Text("Controls", Word(keys, "ui.options.controls", "Controls"), Size(0, 16), ui);
+        heading.TextColor = ui.ScreenInk;
+        heading.PaddingLeft = 10;
+        var rows = new List<UiElement>
+        {
+            Volume("Music", "ui.options.music", "Music", UiActionKind.MusicVolume),
+            Volume("Effects", "ui.options.effects", "Sound effects", UiActionKind.EffectsVolume),
+            Row("Language", Word(keys, "ui.options.language", "Language"), UiActionKind.ChangeLanguage, 0),
+            heading,
+        };
+        rows.AddRange(Enumerable.Range(0, 8).Select(i => Row("Key" + i, "", UiActionKind.RemapKey, i)));
+        var title = Text("Heading", Word(keys, "ui.options.title", "Options"), UiRect.TopLeft(16, 8, 208, 16), ui, UiAlign.Center);
+        title.TextColor = ui.ScreenInk;
+        var hint = Text("Hint", Word(keys, "ui.options.hint", "A: change   B: back"), UiRect.TopLeft(16, 140, 208, 16), ui, UiAlign.Center);
+        hint.TextColor = ui.Muted;
+        return new UiPageFile
+        {
+            Name = "Options", FirstFocus = "Music",
+            Root = Canvas(title, new UiElement
+            {
+                Name = "Rows", Kind = UiElementKind.ScrollRect, Rect = UiRect.TopLeft(16, 26, 208, 112),
+                Layout = new UiLayoutGroup { Kind = UiLayoutKind.Vertical, StretchCross = true },
+                Children = rows,
+            }, hint),
+        };
+    }
+
+    // What Choice in a script or the Dialogue Editor shows: Option0 to Option5 get the choices' text, the rest hide. Above the
+    // dialogue box of Project Settings.
+    static UiPageFile Choice(UiSettings ui)
+    {
+        var above = ui.Dialogue is { } d ? 160 - d.Y / 8 * 8 + 2 : 50;
+        return new UiPageFile
+        {
+            Name = "Choice", FirstFocus = "Option0",
+            Root = Canvas(Window("Window", At(1, 1, -8, -above, 136, 0), ui, Stack(),
+                Enumerable.Range(0, 6).Select(i => Button("Option" + i, "Option " + (i + 1), i, Size(0, 16), ui)).ToArray())),
+        };
+    }
 
     // Asks for a line of text (English letters, digits and a few signs). UI.Choose gives 1 when it is done; read it with
     // UI.InputLength and UI.InputChar. Set the question with UI.SetText("Prompt", key).

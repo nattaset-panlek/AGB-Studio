@@ -236,7 +236,7 @@ public static class TopDownTemplate
 
     static void WriteScenes(GameProject p)
     {
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#60B858", "Village", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#60B858", "Village", "title_theme"));
         var village = new SceneFile
         {
             Name = "Village", Width = VillageW, Height = VillageH, Map = "Village", Backdrop = "#60B858", MapX = 260, MapY = 60,
@@ -284,7 +284,6 @@ public static class TopDownTemplate
         ["D-pad: walk in 8 directions", "A: talk (stand next to someone)", "Walk into the crate or the door to push or open it", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "The hero. The built-in Top-down Mover reads the D-pad, moves in 8 directions and stops at solid tiles and blocking actors; the camera follows it.",
             ["Elder"] = "Villager. The Npc script makes it block the way and starts a dialogue cutscene when the player presses A next to it.",
             ["Crate"] = "The PushBlock script moves it one tile when the player keeps walking into it; it never moves into walls or water.",

@@ -35,6 +35,28 @@ public sealed class UiEditorTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void OpensInScene_MakesThePageThatScenesStart_AndTheBuildHasIt()
+    {
+        var page = Open();
+        page.Library.AddPreset("Title");
+        _h.Pump();
+        var p = _h.S.Project.Current!;
+        Assert.Contains(page.Library.Page!.Root.Walk(), e => e.Name == "Continue" && e.Action.Kind == UiActionKind.ContinueGame);
+        Assert.Contains(page.Library.Page!.Root.Walk(), e => e.Name == "Options" && e.Action.Kind == UiActionKind.OpenOptions);
+        var scene = p.SceneFiles().Select(GameProject.AssetName).First();
+        _h.All<SectionHeader>().First(x => x.Title == "Page").IsOpen = true;
+        _h.Pump();
+        var opens = _h.All<InspectorField>().First(f => f.Label == "Opens in scene");
+        opens.BringIntoView();
+        _h.Pump();
+        _h.Choose(opens, scene);
+        _h.Pump();
+        Assert.Equal("Title", GameProject.Load<SceneFile>(Path.Combine(p.ScenesDir, scene + ".scene")).Page);
+        var built = new AgbStudio.Build.Pipeline.GameBuilder(p, new AgbStudio.Build.Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build();
+        Assert.True(built.Success, string.Join('\n', built.Diagnostics));
+    }
+
+    [AvaloniaFact]
     public void Preset_CopiesAReadyMadePage_IntoTheProject_AndUndoRemovesIt()
     {
         var page = Open();
@@ -188,40 +210,24 @@ public sealed class UiEditorTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Window_OnWildkin_Shot()
+    public void DraggingATextInAGroup_MovesTheGroup_AndTheNextBuildHasIt()
     {
-        var game = @"D:\devkitPro\PokeEmerald";
-        if (!Directory.Exists(game)) return;
-        var copy = Path.Combine(_h.Fx.Folder, "Wildkin");
-        foreach (var f in Directory.EnumerateFiles(game, "*", SearchOption.AllDirectories))
-        {
-            var rel = Path.GetRelativePath(game, f);
-            if (rel.StartsWith("build", StringComparison.Ordinal) || rel.StartsWith("shots", StringComparison.Ordinal)) continue;
-            var to = Path.Combine(copy, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(to)!);
-            File.Copy(f, to);
-        }
-        _h.S.Project.Open(copy);
         var page = Open();
-        var dir = Path.Combine(Path.GetTempPath(), "agb-ui-editor-shots");
-        Directory.CreateDirectory(dir);
-        foreach (var name in new[] { "Team", "Bag", "BattleMenu", "Card" })
-        {
-            page.Library.Open(Path.Combine(copy, "ui", name + ".uipage"));
-            _h.Pump();
-            page.Library.Select(page.Library.Page!.Root.Children[^1]);
-            _h.Pump();
-            Capture.Save(Capture.Frame(_h.Win), Path.Combine(dir, "wildkin-" + name + ".png"));
-        }
-        // What the editor changes is what the next build uses.
-        page.Library.Open(Path.Combine(copy, "ui", "Card.uipage"));
-        page.Library.Select(page.Library.Page!.Root.Children[0]);
-        page.Library.EditSelected("Move", e => e.Rect.Y += 3);
+        page.Library.AddPreset("Message");
         _h.Pump();
+        var c = page.Canvas;
+        var scale = c.Scale;
+        var origin = c.TranslatePoint(new Point((c.Bounds.Width - 240 * scale) / 2, (c.Bounds.Height - 160 * scale) / 2), _h.Win)!.Value;
+        Point At(int x, int y) => new(origin.X + x * scale, origin.Y + y * scale);
+        var window = page.Library.Page!.Root.Children.Single(e => e.Name == "Window");
+        var before = UiLayoutEngine.Resolve(page.Library.Page!)[window];
+        _h.Drag(At(before.X + 40, before.Y + 16), At(before.X + 44, before.Y + 10));
+        Assert.Equal("Window", page.Library.Selected!.Name);
+        var after = UiLayoutEngine.Resolve(page.Library.Page!)[page.Library.Selected!];
+        Assert.Equal((before.X + 4, before.Y - 6), (after.X, after.Y));
         var built = new AgbStudio.Build.Pipeline.GameBuilder(_h.S.Project.Current!, new AgbStudio.Build.Toolchain()) { Scripts = new AgbStudio.Scripting.ScriptBackend() }.Build();
         Assert.True(built.Success, string.Join('\n', built.Diagnostics));
-        var generated = File.ReadAllText(Path.Combine(copy, "build", "gen", "ui_pages.cpp"));
-        var y = UiLayoutEngine.Resolve(page.Library.Page!)[page.Library.Selected!].Y;
-        Assert.Contains($"\"Window\", agb::ui::ElementKind::Panel, 0, 12, {y},", generated);
+        var generated = File.ReadAllText(Path.Combine(_h.S.Project.Current!.BuildDir, "gen", "ui_pages.cpp"));
+        Assert.Contains($"\"Window\", agb::ui::ElementKind::Panel, 0, {after.X}, {after.Y},", generated);
     }
 }

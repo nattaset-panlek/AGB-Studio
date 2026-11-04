@@ -72,7 +72,7 @@ public sealed partial class WorldMapModel
     /// <summary>Scene Card art by the scene's role: title menus at dusk, caves, boss scenes in the snow, levels by day.</summary>
     public static string Art(MapScene s)
     {
-        if (s.Data.Menu != null) return "art/scene/dusk";
+        if (s.Data.Menu != null || s.Data.Page.Length > 0) return "art/scene/dusk";
         if ((s.Map?.Tileset ?? "").Contains("cave", StringComparison.OrdinalIgnoreCase) || s.Name.Contains("Cave", StringComparison.OrdinalIgnoreCase)) return "art/scene/cave";
         if (IsBoss(s)) return "art/scene/snow";
         return "art/scene/day";
@@ -84,7 +84,7 @@ public sealed partial class WorldMapModel
     public static bool IsBossScene(SceneFile s) => s.Actors.Any(a => a.Kind == ActorKind.Enemy && a.Components.Any(c => c.Type == "Health"));
 
     /// <summary>Card / list meta: "menu", "boss" or the size in tiles ("30×20").</summary>
-    public static string Meta(MapScene s) => s.Data.Menu != null ? "menu" : IsBoss(s) ? "boss" : $"{s.Data.Width}×{s.Data.Height}";
+    public static string Meta(MapScene s) => s.Data.Menu != null || s.Data.Page.Length > 0 ? "menu" : IsBoss(s) ? "boss" : $"{s.Data.Width}×{s.Data.Height}";
 
     /// <summary>Inspector meta: the template the scene started from ("Platformer level" -> "Platformer").</summary>
     public static string TemplateMeta(MapScene s) => s.Data.Template.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
@@ -123,6 +123,9 @@ public sealed partial class WorldMapModel
             foreach (var item in s.Data.Menu?.Items ?? [])
                 if (item.Command == MenuCommand.LoadScene && Find(item.Scene) is { } target && target != s && pairs.Add(Key(s.Name, target.Name)))
                     list.Add((s, target, MenuLabel(item.Text), "play", true, null));
+            foreach (var button in UiPageLinks.LoadSceneButtons(Project!, s.Data))
+                if (Find(button.Action.Target) is { } target && target != s && pairs.Add(Key(s.Name, target.Name)))
+                    list.Add((s, target, MenuLabel(button.Text), "play", true, null));
             for (var i = 0; i < s.Data.Links.Count; i++)
             {
                 var l = s.Data.Links[i];
@@ -196,6 +199,7 @@ public sealed partial class WorldMapModel
                 var changed = false;
                 foreach (var l in other.Data.Links.Where(l => l.To == old)) { l.To = newName; changed = true; }
                 foreach (var m in other.Data.Menu?.Items ?? []) if (m.Scene == old) { m.Scene = newName; changed = true; }
+                UiPageLinks.RenameScene(Project!, old, newName);
                 if (changed && other != s) Save(other);
             }
             s.Data.Name = newName;

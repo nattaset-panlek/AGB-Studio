@@ -19,7 +19,7 @@ public sealed record TemplateInfo(string Id, string Name, string Genre, string S
         var start = p.Settings.General.StartScene;
         var scenes = p.SceneFiles().Select(GameProject.Load<SceneFile>).ToList();
         // The scene the title menu starts (the first playable scene) is the one the template is about.
-        var first = scenes.FirstOrDefault(s => s.Name == start)?.Menu?.Items.FirstOrDefault(i => i.Command == MenuCommand.LoadScene)?.Scene;
+        var first = TemplateKit.MainScene(p);
         var main = scenes.FirstOrDefault(s => s.Name == first) ?? scenes.FirstOrDefault(s => s.Name != start && s.Menu == null) ?? scenes.FirstOrDefault();
         var layers = 0;
         if (main != null && main.Map.Length > 0)

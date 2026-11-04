@@ -226,7 +226,7 @@ public static class RpgTemplate
 
     static void WriteScenes(GameProject p)
     {
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#60B858", "Meadow", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#60B858", "Meadow", "title_theme"));
         var meadow = new SceneFile
         {
             Name = "Meadow", Width = 20, Height = 14, Map = "Meadow", Backdrop = "#60B858", MapX = 260, MapY = 60,
@@ -268,7 +268,6 @@ public static class RpgTemplate
         ["D-pad: walk", "A: talk, pick a command, next line", "D-pad up / down: choose", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "The hero on the map. The built-in Top-down Mover walks it; Explorer sets up the party on the first walk and starts a battle after enough steps in tall grass.",
             ["Shopkeeper"] = "Blocks the way and, when the player presses A next to it, runs a shop cutscene that sells potions (price from the Items table).",
             ["HUD Gold"] = "Text label with the party's gold.",

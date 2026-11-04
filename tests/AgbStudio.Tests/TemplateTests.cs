@@ -219,6 +219,58 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         return ((int)(c >> 16) & 255, (int)(c >> 8) & 255, (int)c & 255);
     }
 
+    // Every template's menus are UI pages, open to change in the UI Editor: nothing about them is drawn in code.
+    [Theory]
+    [InlineData("platformer")]
+    [InlineData("topdown")]
+    [InlineData("visualnovel")]
+    [InlineData("puzzle")]
+    [InlineData("shmup")]
+    [InlineData("rpg")]
+    [InlineData("racing")]
+    [InlineData("brawler")]
+    public void TemplateMenusAreUiPages(string id)
+    {
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "template_pages_" + id);
+        if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        var t = TemplateCatalog.Find(id)!;
+        var p = t.Create(dir, t.Name);
+        foreach (var page in new[] { "Title", "Pause", "Options", "Choice" })
+            Assert.True(File.Exists(Path.Combine(p.UiDir, page + ".uipage")), page);
+        var title = GameProject.Load<SceneFile>(Path.Combine(p.ScenesDir, "Title.scene"));
+        Assert.Equal("Title", title.Page);
+        Assert.Null(title.Menu);
+        Assert.DoesNotContain(title.Actors, a => a.IsUi);
+        var start = Assert.Single(UiPageLinks.LoadSceneButtons(p, title));
+        Assert.Equal(TemplateKit.MainScene(p), start.Action.Target);
+        Assert.True(File.Exists(Path.Combine(p.ScenesDir, start.Action.Target + ".scene")), start.Action.Target);
+        UiPageLinks.RenameScene(p, start.Action.Target, "Renamed");
+        Assert.Equal("Renamed", UiPageLinks.LoadSceneButtons(p, title).Single().Action.Target);
+    }
+
+    // Mode 7 leaves the least background memory: the Options page takes the place of the page that opened it, which comes
+    // back with its cursor when Options closes.
+    [Fact]
+    public void RacingOpensTheOptionsPage_FromTheTitle_AndComesBack()
+    {
+        var (_, r) = Build("racing");
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 120; i++) s.Step();
+        Press(s, GbaKeys.Down);  // Continue is off without a save: the cursor goes to Options
+        for (var i = 0; i < 8; i++) s.Step();
+        Press(s, GbaKeys.A);
+        for (var i = 0; i < 60; i++) s.Step();
+        Assert.Contains("UI page Options opened", s.Log);
+        Assert.DoesNotContain(s.Log, l => l.Contains("did not open", StringComparison.Ordinal));
+        Press(s, GbaKeys.B);
+        for (var i = 0; i < 60; i++) s.Step();
+        Assert.Equal(2, s.Log.Count(l => l == "UI page Title opened"));
+        Press(s, GbaKeys.A);  // the cursor is still on Options
+        for (var i = 0; i < 60; i++) s.Step();
+        Assert.Equal(2, s.Log.Count(l => l == "UI page Options opened"));
+    }
+
     [Fact]
     public void TopDownAdventureTalksPushesUnlocksAndEnters()
     {
@@ -245,7 +297,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
             if (pr != null && pr.Overruns != before) Overruns.Add($"talk frame +{i} logic {pr.Logic} render {pr.Render} audio {pr.Audio}");
         }
         var box = Pixel(s, 120, 140);
-        Assert.True(box.R > 230 && box.G > 230 && box.B > 230, $"dialogue box paper {box}");
+        Assert.True(box.R >= 230 && box.G >= 230 && box.B >= 230, $"dialogue box paper {box}");
         CloseDialogue(s);
 
         // Push the crate (72, 112) one tile left, out of the opening of the fenced corner.
@@ -294,7 +346,7 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         var story = SceneIndex();
         Assert.Equal(1u, State(8));  // chapter 1 started
         var box = Pixel(s, 120, 140);
-        Assert.True(box.R > 230 && box.G > 230 && box.B > 230, $"dialogue box paper {box}");
+        Assert.True(box.R >= 230 && box.G >= 230 && box.B >= 230, $"dialogue box paper {box}");
         AgbStudio.Core.Png.WriteArgb(Path.Combine(p.BuildDir, "story.png"), (uint[])s.Core.Frame.Clone(), 240, 160);
         Assert.False(s.Actors().Single(a => a.Name == "Owl").Visible);
         // Three lines, then the choice: Down picks "Wait for morning".

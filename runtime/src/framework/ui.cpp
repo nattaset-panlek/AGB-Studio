@@ -513,13 +513,17 @@ private:
     // Remap: the next face, shoulder, Start or Select key becomes the action's button; an action that had
     // that key gets this action's old key (swap). Up / Down cancel.
     void waitForKey() {
-        const int item = waiting_;
-        const int action = items_[item].arg;
-        if (input::pressed(Key::Up) || input::pressed(Key::Down)) {
-            waiting_ = -1;
-            menu_.setWaiting(-1);
-            return;
-        }
+        const int read = readRemap(items_[waiting_].arg);
+        if (!read) return;
+        if (read > 0) dirty_ = true;
+        waiting_ = -1;
+        menu_.setWaiting(-1);
+    }
+
+public:
+    // 0: no key yet, -1: Up or Down cancelled, 1: the action has its new key.
+    static int readRemap(int action) {
+        if (input::pressed(Key::Up) || input::pressed(Key::Down)) return -1;
         constexpr u16 kBindable = static_cast<u16>(Key::A) | static_cast<u16>(Key::B) | static_cast<u16>(Key::L) | static_cast<u16>(Key::R) |
                                   static_cast<u16>(Key::Start) | static_cast<u16>(Key::Select);
         u16 key = 0;
@@ -527,15 +531,13 @@ private:
             const u16 bit = static_cast<u16>(1u << b);
             if ((kBindable & bit) && input::pressed(static_cast<Key>(bit))) key = bit;
         }
-        if (!key) return;
+        if (!key) return 0;
         const u16 old = input::actionKeys(action);
         for (int a = 0; a < input::actionCount(); ++a)
             if (a != action && (input::actionKeys(a) & key)) input::remapAction(a, static_cast<u16>((input::actionKeys(a) & ~key) | old));
         input::remapAction(action, key);
         debug::logf("Remapped action %d to %s", action, keyName(key));
-        dirty_ = true;
-        waiting_ = -1;
-        menu_.setWaiting(-1);
+        return 1;
     }
 
     // Writes the options block to the save chip (volumes, language, one nibble per action for the remap).
@@ -558,6 +560,7 @@ private:
                                          static_cast<u16>(Key::Start), static_cast<u16>(Key::R), static_cast<u16>(Key::L)};
     friend void agb::ui::loadOptions();
 
+private:
     bool dirty_ = false;
     Restore restore_;
     Kit kit_{};
@@ -654,13 +657,19 @@ bool pauseRequested() {
            render::effects::transitionDone() && input::actionPressed(g_kit->pauseAction);
 }
 
+bool openPausePage();
+
 void openPause() {
     if (!g_kit) return;
+    if (openPausePage()) return;  // a page named Pause is this game's pause menu, made in the UI Editor
     game::push(new (g_pauseStorage) PauseScreen());
 }
 
+bool openOptionsPage();
+
 void openOptions() {
     if (!g_kit) return;
+    if (openOptionsPage()) return;  // a page named Options is this game's Options screen, made in the UI Editor
     game::push(new (g_optionsStorage) OptionsScreen());
 }
 
@@ -690,10 +699,21 @@ void setPageResult(s32 result) {
 
 void remapOpenPages();
 void pumpOpenPages();
+void unmapOpenPages();
+bool reopenPageAfterOptions();
 
 // The on-screen keyboard of an Input Field, in the rectangle its KeyboardDef gives (the build keeps it in the page's panel).
 constexpr int kKeyCols = 13, kKeyRows = 6;
 const char* const kKeyRowsText[kKeyRows - 1] = {"ABCDEFGHIJKLM", "NOPQRSTUVWXYZ", "abcdefghijklm", "nopqrstuvwxyz", "0123456789.-'"};
+
+class PageScreen;
+bool optionsInsteadOfPage(const PageScreen& from, int focus);
+
+// The Options page takes the place of the page that opened it, so a game with little background memory (Mode 7) has room
+// for it, and that page comes back when it closes.
+constexpr u8 kReturnNone = 0, kReturnArmed = 1, kReturnDue = 2;
+u8 g_returnWaits = kReturnNone;
+s16 g_returnPage = -1, g_returnData = 0, g_returnFocus = -1;
 
 class PageScreen final : public Screen {
 public:
@@ -704,9 +724,30 @@ public:
             if (e.hidden) hidden_ |= 1ull << i;
             if (e.on) on_ |= 1ull << i;
             if (!e.interactable) disabled_ |= 1ull << i;
+            if (e.action == ActionKind::ContinueGame && !(game::state() && save::exists(e.data))) disabled_ |= 1ull << i;
+            if (g_kit) {
+                // Rows for what this game does not have leave the page.
+                if ((e.action == ActionKind::RemapKey && e.data >= g_kit->actionCount) || (e.action == ActionKind::ChangeLanguage && !(text::languageCount() > 1 && g_kit->languageNames)))
+                    hidden_ |= 1ull << i;
+                if (e.action == ActionKind::RemapKey && !g_kit->remap) disabled_ |= 1ull << i;
+            }
             if (e.kind == ElementKind::ScrollRect && scrollCount_ < kMaxScrollRects) scrollElement_[scrollCount_++] = static_cast<s8>(i);
         }
+        options_ = sameName(def.name, "Options");
+        if (options_ && g_kit && !g_kit->actionCount)
+            if (const int controls = find("Controls"); controls >= 0) hidden_ |= 1ull << controls;
         focus_ = def.firstFocus;
+    }
+
+    bool isOptions() const { return options_; }
+
+    // The page comes back with the cursor where the player left it.
+    void restoreFocus(int i) {
+        if (i < 0 || i >= def_.count || !canFocus(i)) return;
+        const int old = focus_;
+        focus_ = static_cast<s8>(i);
+        if (ready_ && old >= 0) redrawElement(old);
+        if (ready_) redrawElement(i);
     }
 
     const char* name() const override { return def_.name; }
@@ -716,8 +757,14 @@ public:
         const int bg = text::layer();
         text::reserveBoxes();  // the dialogue box outlives this page: its memory must not be given back when the page closes
         restore_.take();
+        if (options_) hideScene();
         render::palettes::setBank(false, kBank, g_pages->palette);
         debug::logf("UI page %s opened", def_.name);
+        drawnLanguage_ = text::language();
+        for (int i = 0; i < def_.count && i < kMaxPageElements; ++i) {
+            if (def_.elements[i].action == ActionKind::MusicVolume) amount_[i] = static_cast<u8>((audio::musicVolume() * 10).round() * 10);
+            if (def_.elements[i].action == ActionKind::EffectsVolume) amount_[i] = static_cast<u8>(OptionsScreen::g_effects * 10);
+        }
         if (def_.dim) {
             u8 targets = render::effects::kObj | render::effects::kBackdrop;
             for (int b = 0; b < 4; ++b)
@@ -737,7 +784,7 @@ public:
         // A control that starts disabled or hidden gives the cursor away; so does a list row out of view.
         if (focus_ >= 0 && !canFocus(focus_)) moveAway();
         if (focus_ >= 0) settleScroll(focus_);
-        redraw(0, 0, 240, 160);
+        drawNext_ = static_cast<s16>(def_.tileY * 8);  // pump() draws it: making the panel is enough for this frame
     }
 
     void update() override {
@@ -749,6 +796,7 @@ public:
             game::pop();
             return;
         }
+        if (reopenPageAfterOptions()) return;
         pumpOpenPages();
         render::palettes::update();
         const bool wasOpen = text::open();
@@ -771,7 +819,11 @@ public:
         debug::logf("UI page %s closed", def_.name);
         if (ready_) box_.unmap(text::blankEntry());
         box_.release();
-        restore_.give(def_.dim != 0);
+        if (optionsDirty_) OptionsScreen::saveOptions();
+        optionsDirty_ = false;
+        if (options_ && g_returnWaits == kReturnArmed) g_returnWaits = kReturnDue;
+        if (options_) showScene();
+        restore_.give(def_.dim != 0 || options_);
         if (g_sceneMenu.isOpen() && g_kit) loadPalette(*g_kit);
     }
 
@@ -779,18 +831,82 @@ public:
         remapOpenPages();
         if (text::open()) text::box().remap();
         restorePalette();
+        if (drawnLanguage_ != text::language()) {  // the Options page over this one changed the language
+            drawnLanguage_ = text::language();
+            drawNext_ = static_cast<s16>(def_.tileY * 8);
+        }
+    }
+
+    // The Options page stands alone: the scene goes, as under the engine's own Options screen.
+    void hideScene() {
+        const int textBg = text::layer();
+        backdrop_ = render::palettes::baseColor(0);
+        for (int b = 0; b < 4; ++b) {
+            sceneShown_[b] = render::bg::visible(b);
+            if (b != textBg) render::bg::setVisible(b, false);
+        }
+        render::bg::setObjVisible(false);
+        commit::setReg(commit::BldCnt, 0);
+        const u16 screen = g_kit ? g_kit->screen : 0;
+        render::palettes::setBackdrop(screen);
+        // Labels and the dialogue box share the text layer: paint them in the screen colour to hide them.
+        u16 hidden[16];
+        for (int i = 0; i < 16; ++i) hidden[i] = screen;
+        render::palettes::setBank(false, kTextBank, hidden);
+    }
+
+    void showScene() {
+        for (int b = 0; b < 4; ++b) render::bg::setVisible(b, sceneShown_[b]);
+        render::bg::setObjVisible(true);
+        render::palettes::setBackdrop(backdrop_);
+    }
+
+    static bool isVolume(const ElementDef& e) { return e.action == ActionKind::MusicVolume || e.action == ActionKind::EffectsVolume; }
+
+    void applyVolume(int i) {
+        const int level = amount_[i] / 10;
+        if (def_.elements[i].action == ActionKind::MusicVolume) {
+            audio::setMusicVolume(fixed(level) / 10);
+        } else {
+            OptionsScreen::g_effects = static_cast<u8>(level);
+            audio::setEffectsVolume(fixed(level) / 10);
+        }
+        optionsDirty_ = true;
+    }
+
+    void changeLanguage(int way) {
+        const int n = text::languageCount();
+        text::setLanguage(static_cast<u8>((text::language() + way + n) % n));
+        drawnLanguage_ = text::language();
+        optionsDirty_ = true;
+        redraw(0, 0, 240, 160);
+    }
+
+    void waitForRemap() {
+        const int read = OptionsScreen::readRemap(def_.elements[remapWait_].data);
+        if (!read) return;
+        if (read > 0) optionsDirty_ = true;
+        remapWait_ = -1;
+        // A swap changes another row too.
+        for (int i = 0; i < def_.count; ++i)
+            if (def_.elements[i].action == ActionKind::RemapKey && shown(i)) redrawElement(i);
     }
 
     void remapBox() {
         if (ready_ && shownOnScreen_) box_.remap();
     }
 
+    void unmapBox() {
+        if (ready_) box_.unmap(text::blankEntry());
+    }
+
     // Copies changed tiles to VRAM; a page opening shows once all of them are there. Runs for every open page, because a
     // page that opened in the frame another opened over it still has to arrive.
     void pump() {
         if (!ready_) return;
+        drawBand();
         box_.update();
-        if (!shownOnScreen_ && !box_.uploading()) {
+        if (!shownOnScreen_ && drawNext_ < 0 && !box_.uploading()) {
             shownOnScreen_ = true;
             remapOpenPages();
             if (text::open()) text::box().remap();
@@ -805,6 +921,24 @@ public:
         for (int i = 0; i < def_.count; ++i)
             if (sameName(def_.elements[i].name, element)) return i;
         return -1;
+    }
+
+    // The Choice page: the window that holds the rows closes up over its hidden rows and keeps its bottom edge.
+    void fitWindowToRows(int firstRow) {
+        const int window = def_.elements[firstRow].parent;
+        if (window < 0) return;
+        int bottom = 0, shownBottom = 0;
+        for (int k = window + 1; k < def_.count; ++k) {
+            const ElementDef& e = def_.elements[k];
+            if (e.parent != window) continue;
+            const int b = e.y + e.h;
+            if (b > bottom) bottom = b;
+            if (!(hidden_ & (1ull << k)) && b > shownBottom) shownBottom = b;
+        }
+        fitWindow_ = static_cast<s8>(window);
+        fitCut_ = static_cast<s16>(bottom - shownBottom);
+        const ElementDef& w = def_.elements[window];
+        if (ready_) redraw(w.x, w.y, w.w, w.h);
     }
 
     void setHidden(int i, bool hidden) {
@@ -944,6 +1078,10 @@ private:
     bool canFocus(int i) const { return shown(i) && enabled(i); }
 
     void handleInput() {
+        if (remapWait_ >= 0) {
+            waitForRemap();
+            return;
+        }
         if (inputOpen_ >= 0) {
             updateKeyboard();
             return;
@@ -959,7 +1097,13 @@ private:
             const ElementDef& e = def_.elements[focus_];
             const int way = (input::repeated(Key::Right) ? 1 : 0) - (input::repeated(Key::Left) ? 1 : 0);
             if (way && e.kind == ElementKind::Slider) {
-                setAmount(focus_, amount_[focus_] + way * 5);
+                setAmount(focus_, amount_[focus_] + way * (isVolume(e) ? 10 : 5));
+                if (isVolume(e)) applyVolume(focus_);
+                setMoved();
+                return;
+            }
+            if (way && e.action == ActionKind::ChangeLanguage) {
+                changeLanguage(way);
                 setMoved();
                 return;
             }
@@ -1003,7 +1147,10 @@ private:
         if (input::pressed(Key::B) && def_.cancel) {
             if (g_pageWaiting) setPageResult(-1);
             else game::pop();
+            return;
         }
+        // The Pause action closes the pause page it opened.
+        if (g_kit && g_kit->pauseAction >= 0 && input::actionPressed(g_kit->pauseAction) && sameName(def_.name, "Pause")) game::pop();
     }
 
     void setMoved() {
@@ -1072,6 +1219,34 @@ private:
                 game::loadScene(scene);
                 break;
             }
+            case ActionKind::MusicVolume:
+            case ActionKind::EffectsVolume:
+                break;
+            case ActionKind::ChangeLanguage:
+                changeLanguage(1);
+                break;
+            case ActionKind::RemapKey:
+                remapWait_ = static_cast<s8>(i);
+                redrawElement(i);
+                break;
+            case ActionKind::OpenOptions:
+                if (!g_pageWaiting && optionsInsteadOfPage(*this, i)) break;
+                unmapOpenPages();  // the Options screen shares the text layer and covers everything; resume() maps them again
+                openOptions();
+                break;
+            case ActionKind::ContinueGame: {
+                const int slot = e.data;
+                while (overlayOpen()) game::pop();
+                if (api::Save::Read(slot)) {
+                    const SaveHeader& h = api::Save::header();
+                    game::loadScene(h.scene, h.x, h.y);
+                }
+                break;
+            }
+            case ActionKind::QuitToTitle:
+                while (overlayOpen()) game::pop();
+                if (g_kit) game::loadScene(g_kit->titleScene);
+                break;
             default:
                 if (g_pageWaiting) setPageResult(e.data);
                 break;
@@ -1123,9 +1298,16 @@ private:
         return over > 0 ? over : 0;
     }
 
+    int fitShift(int i) const {
+        if (fitWindow_ < 0) return 0;
+        for (int k = i; k >= 0; k = def_.elements[k].parent)
+            if (k == fitWindow_) return fitCut_;
+        return 0;
+    }
+
     int offsetY(int i) const {
         const int s = scrollOf(i);
-        if (s < 0) return 0;
+        if (s < 0) return fitShift(i);
         const int k = scrollSlot(s);
         return -(k >= 0 ? scroll_[k] : 0) - collapsedAbove(rowOf(i, s), s);
     }
@@ -1159,7 +1341,15 @@ private:
 
     void redrawScroll(int s) {
         const ElementDef& v = def_.elements[s];
-        redraw(v.x, v.y, v.w, v.h);
+        // A long list goes a band at a time too: a whole list in one frame is more than a frame's work.
+        if (drawNext_ < 0) {
+            drawNext_ = v.y;
+            drawEnd_ = static_cast<s16>(v.y + v.h);
+            drawBand();
+        } else if (v.y < drawNext_) {
+            drawNext_ = v.y;
+            drawEnd_ = -1;
+        }
         for (int i = 0; i < def_.count; ++i)
             if (def_.elements[i].kind == ElementKind::Scrollbar && def_.elements[i].scrollTarget == s) redrawElement(i);
     }
@@ -1211,6 +1401,18 @@ private:
         if (inputOpen_ >= 0) drawKeyboard();
         box_.clearClip();
         box_.update();
+    }
+
+    // The first draw goes a band at a time, so a large page opening never takes longer than a frame. It shows when all of
+    // it is drawn and copied. What changes meanwhile is drawn from the same state, so a band draws it right.
+    void drawBand() {
+        if (drawNext_ < 0) return;
+        redraw(0, drawNext_, 240, kDrawBand);
+        drawNext_ = static_cast<s16>(drawNext_ + kDrawBand);
+        if (drawNext_ >= (drawEnd_ >= 0 ? drawEnd_ : (def_.tileY + def_.heightTiles) * 8)) {
+            drawNext_ = -1;
+            drawEnd_ = -1;
+        }
     }
 
     void redrawElement(int i) {
@@ -1380,11 +1582,20 @@ private:
     Label labelOf(int i) const {
         for (int slot = 0; slot < kMaxChangedTexts && changedText_[slot]; ++slot)
             if (changedText_[slot] == i + 1) return Label{changedKey_[slot], nullptr};
-        return def_.elements[i].label;
+        const ElementDef& e = def_.elements[i];
+        // A key's row with no text of its own has the action's name from Project Settings > Input.
+        if (e.action == ActionKind::RemapKey && e.label.key < 0 && !(e.label.ascii && *e.label.ascii) && g_kit && g_kit->actionNames && e.data < g_kit->actionCount)
+            return g_kit->actionNames[e.data];
+        return e.label;
     }
 
     void draw(int i, int x, int y) {
-        const ElementDef& e = def_.elements[i];
+        ElementDef fitted;
+        if (i == fitWindow_) {
+            fitted = def_.elements[i];
+            fitted.h = static_cast<s16>(fitted.h - fitCut_);
+        }
+        const ElementDef& e = i == fitWindow_ ? fitted : def_.elements[i];
         const bool focused = i == focus_;
         const bool off = !enabled(i);
         const u8 fillColor = focused && e.focusFill ? e.focusFill : e.fill;
@@ -1392,7 +1603,11 @@ private:
         const u8 ink = off && e.disabledInk ? e.disabledInk : focused && e.focusInk ? e.focusInk : e.ink;
         fill(x, y, e.w, e.h, fillColor);
         if (const ImageDef* image = imageOf(i)) drawImage(e, *image, amount_[i], x, y);
-        if (e.kind == ElementKind::Slider) {
+        if (isVolume(e)) {  // its label on the left, the bar on the right
+            const int barX = x + e.w / 2, barW = e.w / 2 - 6, barY = y + e.h / 2 - 2;
+            fill(barX, barY, barW, 4, e.disabledInk ? e.disabledInk : e.border);
+            fill(barX, barY, barW * amount_[i] / 100, 4, e.accent);
+        } else if (e.kind == ElementKind::Slider) {
             const int inset = e.border ? e.borderWidth : 0;
             fill(x + inset, y + inset, (e.w - 2 * inset) * amount_[i] / 100, e.h - 2 * inset, e.accent);
         }
@@ -1435,6 +1650,13 @@ private:
             drawLabel(i, typed, ink, textX, textY, textW, textH, Align::Start, e.alignY, false);
             if (focused && g_kit && g_kit->font) fill(textX + labelWidth(typed) + 1, textY + 2, 1, textH - 4, ink);
             return;
+        }
+        if (g_kit && e.action == ActionKind::RemapKey) {  // the row's value on the right
+            const Label press = g_kit->pressKey.key >= 0 || g_kit->pressKey.ascii ? g_kit->pressKey : Label{-1, "..."};
+            const Label key = i == remapWait_ ? press : Label{-1, keyName(input::actionKeys(e.data))};
+            drawLabel(i, key, ink, textX, textY, textW - 4, textH, Align::End, e.alignY, false);
+        } else if (g_kit && g_kit->languageNames && e.action == ActionKind::ChangeLanguage) {
+            drawLabel(i, g_kit->languageNames[text::language()], ink, textX, textY, textW - 4, textH, Align::End, e.alignY, false);
         }
         drawLabel(i, labelOf(i), ink, textX, textY, textW, textH, e.kind == ElementKind::Dropdown ? Align::Start : e.alignX, e.alignY, true);
     }
@@ -1588,6 +1810,16 @@ private:
     Values values_[kMaxValues] = {};
     s8 scrollElement_[kMaxScrollRects] = {};
     s16 scroll_[kMaxScrollRects] = {};
+    static constexpr int kDrawBand = 32;
+    s16 drawNext_ = -1;  // where the first draw has reached, -1 = done
+    s16 drawEnd_ = -1;   // where it stops, -1 = the page's bottom
+    bool options_ = false, optionsDirty_ = false;
+    bool sceneShown_[4] = {};
+    u16 backdrop_ = 0;
+    s8 remapWait_ = -1;   // the key's row waiting for a key
+    u8 drawnLanguage_ = 0;
+    s16 fitCut_ = 0;
+    s8 fitWindow_ = -1;
     u8 scrollCount_ = 0;
     char input_[kMaxInput + 1] = {};
 };
@@ -1613,8 +1845,45 @@ PageScreen* topPage() {
 
 // Every open page again, bottom first: a panel that closed over them pointed its map entries at the blank tile.
 void remapOpenPages() {
+    int from = 0;  // pages under an Options page stay off the screen until it closes
     for (int d = 0; d < game::depth(); ++d)
+        if (isPage(game::at(d)) && static_cast<PageScreen*>(game::at(d))->isOptions()) from = d;
+    for (int d = from; d < game::depth(); ++d)
         if (isPage(game::at(d))) static_cast<PageScreen*>(game::at(d))->remapBox();
+}
+
+bool optionsInsteadOfPage(const PageScreen& from, int focus) {
+    if (!g_pages) return false;
+    int options = -1, self = -1;
+    for (int i = 0; i < g_pages->count; ++i) {
+        if (sameName(g_pages->pages[i].name, "Options")) options = i;
+        if (&g_pages->pages[i] == &from.def()) self = i;
+    }
+    if (options < 0 || self < 0 || self == options) return false;
+    g_returnPage = static_cast<s16>(self);
+    g_returnData = static_cast<s16>(from.data());
+    g_returnFocus = static_cast<s16>(focus);
+    game::pop();
+    if (!openPage(options, 0)) {
+        openPage(self, g_returnData);
+        if (PageScreen* p = topPage()) p->restoreFocus(g_returnFocus);
+        return true;
+    }
+    g_returnWaits = kReturnArmed;
+    return true;
+}
+
+bool reopenPageAfterOptions() {
+    if (g_returnWaits != kReturnDue) return false;
+    g_returnWaits = kReturnNone;
+    if (game::loading() || !openPage(g_returnPage, g_returnData)) return false;
+    if (PageScreen* p = topPage()) p->restoreFocus(g_returnFocus);
+    return true;
+}
+
+void unmapOpenPages() {
+    for (int d = 0; d < game::depth(); ++d)
+        if (isPage(game::at(d))) static_cast<PageScreen*>(game::at(d))->unmapBox();
 }
 
 void pumpOpenPages() {
@@ -1642,6 +1911,8 @@ PageScreen* freePageStorage() {
 
 void setPages(const PageSet* pages) { g_pages = pages; }
 void forgetPageMemory() { g_pageStorage = nullptr; }
+
+bool reopenAfterOptions() { return reopenPageAfterOptions(); }
 
 bool openPage(int index, int data) {
     if (!g_pages || index < 0 || index >= g_pages->count) {
@@ -1693,12 +1964,46 @@ const char* pageChosen() {
     return chosen;
 }
 
-void beginPageChoice(bool wakeOnMove) {
+bool openOptionsPage() {
+    if (!g_pages) return false;
+    for (int i = 0; i < g_pages->count; ++i)
+        if (sameName(g_pages->pages[i].name, "Options")) return openPage(i, 0);
+    return false;
+}
+
+bool openPausePage() {
+    if (!g_pages) return false;
+    for (int i = 0; i < g_pages->count; ++i)
+        if (sameName(g_pages->pages[i].name, "Pause")) return openPage(i, 0);
+    return false;
+}
+
+bool openChoicePage(const u16* keys, u8 count) {
+    if (!g_pages) return false;
+    for (int i = 0; i < g_pages->count; ++i)
+        if (sameName(g_pages->pages[i].name, "Choice")) {
+            if (!openPage(i, 0)) return false;
+            for (int k = 0; k < 8; ++k) {
+                const char* name = api::UI::Name("Option", k);
+                if (k < count) {
+                    setPageText(name, Label{static_cast<s16>(keys[k]), nullptr});
+                } else {
+                    setPageHidden(name, true);
+                }
+            }
+            if (PageScreen* p = topPage())
+                if (const int first = p->find("Option0"); first >= 0) p->fitWindowToRows(first);
+            return true;
+        }
+    return false;
+}
+
+void beginPageChoice(bool wakeOnMove, bool keepDialogue) {
     g_pageWaiting = true;
     g_pageWakeOnMove = wakeOnMove;
     g_pageResultReady = false;
     // A line of dialogue that was read leaves the page.
-    if (text::open() && !text::waiting()) {
+    if (!keepDialogue && text::open() && !text::waiting()) {
         text::close();
         remapOpenPages();
     }

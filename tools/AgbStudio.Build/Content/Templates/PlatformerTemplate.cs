@@ -7,7 +7,7 @@ namespace AgbStudio.Build.Content.Templates;
 /// Platformer template (Launcher · Templates, P15.01): run, jump with coyote time and a jump buffer, stomp patrolling
 /// slimes, collect coins for the score HUD, touch a checkpoint, lose lives in pits or to enemies, reach the goal.
 /// Mode 0 with three BG layers (sky, hills with parallax, ground with slopes and one-way platforms), nine actors in
-/// the level and four C# scripts; the title screen and pause menu come from the Menu / UI kit.
+/// the level and four C# scripts; the title screen and pause menu are UI pages.
 /// </summary>
 public static class PlatformerTemplate
 {
@@ -258,7 +258,7 @@ public static class PlatformerTemplate
 
     static void WriteScenes(GameProject p)
     {
-        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene("Title", "#78BEFA", "Level_01", "title_theme"));
+        GameProject.Save(Path.Combine(p.ScenesDir, "Title.scene"), TemplateKit.TitleScene(p, "Title", "#78BEFA", "Level_01", "title_theme"));
         static ComponentData Body() => new() { Type = "PlatformerBody" };
         var level = new SceneFile
         {
@@ -304,7 +304,6 @@ public static class PlatformerTemplate
         ["D-pad left / right: run", "A: jump (hold for a higher jump)", "Start: pause menu"],
         new Dictionary<string, string>
         {
-            ["Title/Title"] = "The game title (string key ui.title). The Start / Continue / Options menu under it is the scene's Menu.",
             ["Player"] = "The hero. Platformer Body does gravity, slopes and one-way platforms; PlayerController reads the D-pad, jumps, stomps slimes and handles lives.",
             ["Slime"] = "Enemy. Patrol walks it and turns at ledges, Platformer Body keeps it on the ground, Slime holds its points. Land on it to stomp it; touch it from the side to lose a life.",
             ["Slime (1)"] = "A second slime on the far hill: copy an enemy with Ctrl+D to make more.",
