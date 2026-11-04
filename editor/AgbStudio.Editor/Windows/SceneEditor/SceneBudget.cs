@@ -61,7 +61,16 @@ public sealed class SceneBudget
             bgBanks.Add(15);
             foreach (var a in labels) bgBytes += (240 - a.X + 7) / 8 * 2 * 32L;
         }
-        meters.Add(new BudgetMeter("VRAM BG", bgBytes, 64 * 1024, $"{Kb(bgBytes)} / 64 KB"));
+        if (scene.VideoMode >= 3)
+        {
+            // Modes 3-5: the frame buffers are all there is (layers and text do not load): one page in Mode 3, two in 4 and 5.
+            var (pw, ph) = AgbStudio.Build.Graphics.BitmapConverter.PictureSize(scene.VideoMode);
+            long frame = scene.VideoMode == 3 ? pw * ph * 2L : scene.VideoMode == 4 ? pw * ph * 2L : pw * ph * 4L;
+            bgBanks.Clear();
+            if (scene.VideoMode == 4) for (var b = 0; b < 16; b++) bgBanks.Add(b);
+            meters.Add(new BudgetMeter("VRAM bitmap", frame, 80 * 1024, $"{Kb(frame)} / 80 KB"));
+        }
+        else meters.Add(new BudgetMeter("VRAM BG", bgBytes, 64 * 1024, $"{Kb(bgBytes)} / 64 KB"));
 
         // OBJ: all frames of every sprite in the scene, its palette bank and colours
         var sprites = scene.Actors.Where(a => a.Sprite.Length > 0).Select(a => a.Sprite).Distinct()

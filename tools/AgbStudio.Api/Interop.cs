@@ -48,6 +48,8 @@ public enum AssetKind
     Path,
     /// <summary>Actor name in the current scene.</summary>
     ActorName,
+    /// <summary>Picture name: an image in assets/images (Bitmap.Show).</summary>
+    Picture,
 }
 
 /// <summary>The string argument or property value is a project name resolved to an id at build time.</summary>

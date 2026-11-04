@@ -4,7 +4,9 @@ using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Services;
 using AgbStudio.Editor.Shell;
+using AgbStudio.Editor.Windows.SceneEditor;
 using AgbStudio.Editor.Windows.Scripts;
+using AgbStudio.Editor.Windows.UiEditor;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -163,7 +165,7 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
             if (WorldMapModel.ParseSize(v) is { } wh && (wh.W != d.Width || wh.H != d.Height)) Model.Edit("Scene size", () => { d.Width = wh.W; d.Height = wh.H; Model.Save(sc); });
             else size.Value = WorldMapModel.SizeText(d);
         });
-        var mode = PageChrome.Field("Video mode", FieldKind.Dropdown, WorldMapModel.VideoModes[Math.Clamp(d.VideoMode, 0, 3)], "VideoMode")
+        var mode = PageChrome.Field("Video mode", FieldKind.Dropdown, WorldMapModel.VideoModes[Math.Clamp(d.VideoMode, 0, WorldMapModel.VideoModes.Length - 1)], "VideoMode")
             .Choices(() => WorldMapModel.VideoModes, v => { var m = Array.IndexOf(WorldMapModel.VideoModes, v); if (m >= 0 && m != d.VideoMode) Model.Edit("Video mode", () => { d.VideoMode = m; Model.Save(sc); }); });
         var start = PageChrome.Toggle(new InspectorField { Label = "Start scene", Name = "StartScene" }, Model.StartScene == sc.Name,
             on => { if (!_loading && on && Model.StartScene != sc.Name) Model.SetStart(sc.Name); });
@@ -310,6 +312,8 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
     readonly Lines _lines;
     readonly Grid _grid;
     readonly Dictionary<string, SceneCard> _cards = [];
+    readonly Dictionary<string, ((long, long) Stamp, IImage? Image)> _thumbs = [];
+    (GameProject Project, SceneAssets Assets)? _assets;
     readonly List<(Rect Rect, LinkRef? Link, string To)> _chips = [];
     double _zoom = 1;
     Vector _pan;
@@ -380,6 +384,56 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
     /// <summary>Link chips in map coordinates (clicks open Link Settings).</summary>
     public IReadOnlyList<(Rect Rect, LinkRef? Link, string To)> Chips => _chips;
 
+    /// <summary>The picture of a card: the scene at its start camera, with its menu on top (its UI page, else its Menu items).</summary>
+    public static uint[] ThumbnailPixels(GameProject p, SceneAssets assets, MapScene s)
+    {
+        var (x, y) = GbaScreenRenderer.StartCamera(s.Data, s.Map);
+        var scene = GbaScreenRenderer.Render(assets, s.Data, s.Map, x, y).ToArgb();
+        var page = MenuPage(p, s.Data);
+        if (page == null) return scene;
+        if (page.Dim > 0)
+            for (var i = 0; i < scene.Length; i++)
+            {
+                var c = scene[i];
+                uint Dark(int shift) => ((c >> shift) & 0xFF) * (uint)(16 - page.Dim) / 16 << shift;
+                scene[i] = 0xFF000000u | Dark(16) | Dark(8) | Dark(0);
+            }
+        var selectable = page.Root.Walk().Where(e => e.IsSelectable).ToList();
+        var focus = selectable.FirstOrDefault(e => e.Name == page.FirstFocus) ?? selectable.FirstOrDefault();
+        return new UiPageRenderer(p).Render(page, focus, scene);
+    }
+
+    static UiPageFile? MenuPage(GameProject p, SceneFile scene)
+    {
+        var path = System.IO.Path.Combine(p.UiDir, scene.Page + ".uipage");
+        if (scene.Page.Length > 0 && File.Exists(path)) return GameProject.Load<UiPageFile>(path);
+        if (scene.Menu is not { } menu) return null;
+        var page = new UiPageFile();
+        for (var i = 0; i < menu.Items.Count; i++)
+            page.Root.Children.Add(new UiElement { Kind = UiElementKind.Text, Name = "Item" + i, Text = menu.Items[i].Text, TextColor = UiPresets.MenuInk, Rect = UiRect.TopLeft(menu.X, menu.Y + i * menu.Spacing, menu.Width, menu.Spacing) });
+        return page;
+    }
+
+    /// <summary>The scene as the ROM draws it at its start camera; redrawn only when its scene or map file changed. Null when it cannot be drawn.</summary>
+    IImage? Thumbnail(MapScene s)
+    {
+        if (Model.Project is not { } p) return null;
+        var mapPath = System.IO.Path.Combine(p.MapsDir, (s.Data.Map.Length > 0 ? s.Data.Map : s.Name) + ".map");
+        var pagePath = System.IO.Path.Combine(p.UiDir, s.Data.Page + ".uipage");
+        var stamp = (File.GetLastWriteTimeUtc(s.Path).Ticks, File.GetLastWriteTimeUtc(mapPath).Ticks ^ File.GetLastWriteTimeUtc(pagePath).Ticks);
+        if (_thumbs.TryGetValue(s.Path, out var hit) && hit.Stamp == stamp) return hit.Image;
+        IImage? image = null;
+        try
+        {
+            var assets = _assets is { Project: var owner } && owner == p ? _assets.Value.Assets : new SceneAssets(p);
+            _assets = (p, assets);
+            image = PixelArt.Bitmap(ThumbnailPixels(p, assets, s), ScreenFrame.Width, ScreenFrame.Height);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException) { }
+        _thumbs[s.Path] = (stamp, image);
+        return image;
+    }
+
     public void Rebuild()
     {
         _world.Children.Clear();
@@ -395,7 +449,7 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
         _world.Children.Add(placeholder);
         foreach (var s in Model.Scenes)
         {
-            var card = new SceneCard { NameText = s.Name, Meta = WorldMapModel.Meta(s), Preview = WorldMapModel.Art(s), IsSelected = s.Name == _page.Selected, Name = "Card_" + s.Name };
+            var card = new SceneCard { NameText = s.Name, Meta = WorldMapModel.Meta(s), Preview = null, PreviewImage = Thumbnail(s), IsSelected = s.Name == _page.Selected, Name = "Card_" + s.Name };
             Avalonia.Controls.Canvas.SetLeft(card, s.Data.MapX);
             Avalonia.Controls.Canvas.SetTop(card, s.Data.MapY);
             _world.Children.Add(card);

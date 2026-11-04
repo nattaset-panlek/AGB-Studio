@@ -2,6 +2,7 @@
      outside the Theme folder holds a colour literal (T-L04 scan). They are the same in Dark and Light, as in Figma. -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- Chip tint fills: Style colour at 16 % -->
+  <SolidColorBrush x:Key="lit/smart-guide" Color="#C24DFF" />
   <SolidColorBrush x:Key="lit/chip-accent" Color="#294C8DFF" />
   <SolidColorBrush x:Key="lit/chip-success" Color="#293ECF8E" />
   <SolidColorBrush x:Key="lit/chip-warning" Color="#29FFB020" />

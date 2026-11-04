@@ -29,6 +29,7 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 
 ### Engine
 - Tile, image and rotate / scale layers, including the Mode 7 floor of the Racing template; maps stream as the camera moves.
+- Bitmap video modes 3, 4 and 5: a scene shows a full-screen picture, and C# scripts draw on it (Bitmap: clear, set pixel, filled rectangle, show a picture, page flip in Modes 4 and 5).
 - Slopes, one-way platforms, ladders, hazards and water tiles; built-in behaviours from the Component Picker.
 - Up to 64 actors with up to 6 behaviours each, spawning and touches; up to 128 sprites with animation and 32 affine matrices.
 - Event Script VM for cutscenes and dialogue: waits, choices, commands and saved flags.
@@ -53,6 +54,5 @@ The first release: a Windows editor and toolchain for making Game Boy Advance ga
 - Builds are not code-signed (D-19): Windows SmartScreen may ask before the first start.
 - Check for Updates and Report a Bug use the addresses in editor.json; with none set they say so (D-13).
 - Writing to a GBxCart RW cartridge is turned off until it has been verified on hardware.
-- Video Mode 3 sets the display mode (with sprites, blending and mosaic); scenes and C# scripts cannot draw a bitmap picture
-  in it yet.
+- Scenes in Video Modes 3, 4 and 5 show a picture and sprites only: the frame buffers fill the memory for map layers, text and menus, so the build warns and those do not show. Use Mode 0, 1 or 2 for a scene with text.
 - OpenType variable fonts (CFF2 outlines), font collections (.ttc) and web fonts (.woff) are refused: use a static .otf or .ttf, BDF or an image sheet.

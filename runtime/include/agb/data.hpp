@@ -20,6 +20,16 @@ struct Palette {
     u8 banks;           // number of 16-colour banks
 };
 
+// A full-screen picture for the bitmap video modes (Scene › Picture, Bitmap.Show). A picture holds the forms the build
+// found a use for: BGR555 pixels for Modes 3 and 5; for Mode 4, one index per pixel and the colours of indices 1...
+struct Picture {
+    const u16* bgr;      // width x height BGR555, row-major, word aligned; nullptr = none
+    const u8* indices;   // width x height palette indices, row-major, word aligned (0 = see-through); nullptr = none
+    const u16* palette;  // `colors` entries for palette indices 1...
+    u16 colors;
+    u16 width, height;
+};
+
 // Screen-entry bits (same as the GBA BG map format): tile index 0..1023, flips, palette bank.
 constexpr u16 kSeHFlip = 1 << 10;
 constexpr u16 kSeVFlip = 1 << 11;

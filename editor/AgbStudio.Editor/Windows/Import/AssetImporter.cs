@@ -87,7 +87,7 @@ public sealed class ImportItem
 /// </summary>
 public static class AssetImporter
 {
-    static readonly string[] OtherAudio = [".mp3", ".ogg", ".flac", ".m4a", ".aac", ".wma", ".it", ".s3m", ".mid", ".midi", ".opus"];
+    static readonly string[] OtherAudio = [".flac", ".m4a", ".aac", ".wma", ".opus"];
 
     public static ImportItem Inspect(string file, GameProject? project)
     {
@@ -107,7 +107,30 @@ public static class AssetImporter
                     item.Ready = $"Ready · resampled to 11 kHz mono 8-bit ({Math.Max(1, (int)Math.Round(bytes / 1024.0))} KB).";
                     item.Detail = $"{w.Seconds.ToString("0.00", CultureInfo.InvariantCulture)} s";
                     break;
-                case ".mod" or ".xm":
+                case ".mp3" or ".ogg":
+                    item.Kind = ImportKind.Music;
+                    try
+                    {
+                        var seconds = AgbStudio.Build.Audio.AudioConverter.StreamSeconds(file);
+                        var romKb = Math.Max(1, (int)Math.Round(AgbStudio.Build.Audio.AudioConverter.StreamRomBytes(seconds) / 1024.0));
+                        item.Ready = $"Ready · {AgbStudio.Build.Audio.AudioConverter.FormatLength(seconds)}, converted to an XM song at 16.7 kHz mono 8-bit ({romKb} KB in the ROM).";
+                        item.Detail = AgbStudio.Build.Audio.AudioConverter.FormatLength(seconds);
+                    }
+                    catch (InvalidDataException e)
+                    {
+                        item.Error = $"{item.FileName} can't be read: {e.Message}";
+                        item.Fixes = ["How to convert"];
+                    }
+                    break;
+                case ".mid" or ".midi":
+                    item.Kind = ImportKind.Music;
+                    var midi = AgbStudio.Build.Audio.AudioConverter.MidiToXm(File.ReadAllBytes(file), item.Name);
+                    item.Ready = "Ready · notes converted to an XM song played with simple waveforms"
+                        + (midi.DroppedNotes > 0 ? $"; {midi.DroppedNotes} notes left out (more than 8 at once)." : ".")
+                        + (midi.Truncated ? " The end is cut: a module holds 256 patterns." : "");
+                    item.Detail = "MIDI";
+                    break;
+                case ".mod" or ".xm" or ".s3m" or ".it":
                     item.Kind = ImportKind.Music;
                     var m = TrackerModule.Load(file);
                     item.Ready = $"Ready · {m.Format}, {m.Channels} channels, {m.Order.Distinct().Count()} patterns.";
@@ -131,7 +154,7 @@ public static class AssetImporter
                     if (OtherAudio.Contains(ext))
                     {
                         item.Kind = ImportKind.Music;
-                        item.Error = $"{ext[1..].ToUpperInvariant()} is not supported on GBA. Use .wav for sound effects or .mod / .xm for music.";
+                        item.Error = $"{ext[1..].ToUpperInvariant()} is not supported on GBA. Use .wav for sound effects, or .mod, .xm, .s3m, .it, .mp3, .ogg or .mid for music.";
                         item.Fixes = ["How to convert"];
                     }
                     else
@@ -369,7 +392,24 @@ public static class AssetImporter
                 Save(GameProject.MetaPath(sfx), new SoundMeta());
                 break;
             case ImportKind.Music:
-                Save(GameProject.MetaPath(Copy(Path.Combine(p.AssetsDir, "audio", "music"))), new MusicMeta());
+                var ext = Path.GetExtension(item.Source);
+                var musicDir = Path.Combine(p.AssetsDir, "audio", "music");
+                if (AgbStudio.Build.Audio.AudioConverter.IsStream(ext) || AgbStudio.Build.Audio.AudioConverter.IsMidi(ext))
+                {
+                    // The GBA plays modules: the project keeps the XM made from the file.
+                    var song = AgbStudio.Build.Audio.AudioConverter.IsStream(ext)
+                        ? AgbStudio.Build.Audio.AudioConverter.StreamToXm(item.Source)
+                        : AgbStudio.Build.Audio.AudioConverter.MidiToXm(File.ReadAllBytes(item.Source), item.Name);
+                    var xm = Path.Combine(musicDir, item.Name + ".xm");
+                    Will(xm);
+                    File.WriteAllBytes(xm, song.Xm);
+                    written.Add(xm);
+                    Save(GameProject.MetaPath(xm), new MusicMeta());
+                }
+                else
+                {
+                    Save(GameProject.MetaPath(Copy(musicDir)), new MusicMeta());
+                }
                 break;
             case ImportKind.Palette: Copy(p.PalettesDir); break;
             case ImportKind.Font:

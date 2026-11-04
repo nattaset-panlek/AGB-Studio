@@ -43,9 +43,23 @@ public sealed class WorldMapTests : IDisposable
         // the Scenes list: start scene first, meta "menu" / size / "boss"
         var list = _h.Find<StackPanel>("SceneList").Children.OfType<TreeItem>().Select(t => (t.Label, t.Meta)).ToList();
         Assert.Equal([("Title", "menu"), ("Forest_01", "30×20"), ("Forest_02", "32×20"), ("Cave_01", "24×40"), ("Summit", "boss")], list);
-        // cards at their map positions with art by role
+        // cards at their map positions, showing the real scene and no sample art
         var card = page.Canvas.CardOf("Cave_01")!;
-        Assert.Equal("art/scene/cave", card.Preview);
+        Assert.Null(card.Preview);
+        Assert.NotNull(card.PreviewImage);
+        Assert.NotSame(card.PreviewImage, page.Canvas.CardOf("Summit")!.PreviewImage);
+        // a menu scene's card shows its menu over the scene; a level's shows the scene alone
+        var project = _h.S.Project.Current!;
+        var assets = new AgbStudio.Editor.Windows.SceneEditor.SceneAssets(project);
+        uint[] Plain(MapScene s)
+        {
+            var (x, y) = AgbStudio.Editor.Windows.SceneEditor.GbaScreenRenderer.StartCamera(s.Data, s.Map);
+            return AgbStudio.Editor.Windows.SceneEditor.GbaScreenRenderer.Render(assets, s.Data, s.Map, x, y).ToArgb();
+        }
+        var title = page.Model.Find("Title")!;
+        var forest = page.Model.Find("Forest_01")!;
+        Assert.NotEqual(Plain(title), WorldMapCanvas.ThumbnailPixels(project, assets, title));
+        Assert.Equal(Plain(forest), WorldMapCanvas.ThumbnailPixels(project, assets, forest));
         Assert.Equal((620.0, 330.0), (Avalonia.Controls.Canvas.GetLeft(card), Avalonia.Controls.Canvas.GetTop(card)));
         // link chips: the title menu start, trigger links and a condition-only link
         foreach (var chip in new[] { "Chip_Start", "Chip_Goal_Flag", "Chip_Exit_trigger", "Chip_3_stars" }) Assert.NotNull(_h.TryFind<Chip>(chip));
@@ -59,6 +73,7 @@ public sealed class WorldMapTests : IDisposable
             _h.Find<StackPanel>("LinkList").Children.OfType<TreeItem>().Select(t => t.Label));
         Assert.Equal("30 × 20 tiles", _h.Find<InspectorField>("SceneSize").Value);
         Assert.Equal("Mode 0 · 4 BG", _h.Find<InspectorField>("VideoMode").Value);
+        Assert.Equal(["Mode 0 · 4 BG", "Mode 1 · 3 BG", "Mode 2 · 2 BG", "Mode 3 · bitmap", "Mode 4 · bitmap 255", "Mode 5 · bitmap small"], WorldMapModel.VideoModes);
         Assert.False(_h.Find<InspectorField>("StartScene").IsOn);
         Assert.Equal(["0.2", "0.5", "1.0"], _h.Find<StackPanel>("Section_Backgrounds").GetVisualDescendants().OfType<InspectorField>().Select(f => f.Value));
         Assert.Equal("bgm_forest.xm", _h.Find<InspectorField>("MusicTrack").Value);

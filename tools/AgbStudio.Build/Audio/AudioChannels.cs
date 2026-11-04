@@ -21,9 +21,47 @@ public static class AudioChannels
         $"The project mixes audio at {khz} kHz (audio.mixKHz in the project file); Maxmod mixes at {string.Join(", ", MixRates[..^1])} or {MixRates[^1]} kHz. " +
         $"Choose one of them ({NearestMixRate(khz)} kHz is the nearest).";
 
-    /// <summary>Pattern channels of a MOD or XM file, or null when the format is not recognised.</summary>
+    /// <summary>The channels an IT song's patterns write to: its header always lists 64. Notes ringing on past their channel (new note actions) are not counted.</summary>
+    static int? ItChannels(ReadOnlySpan<byte> f)
+    {
+        if (f.Length < 0xC0 || !f[..4].SequenceEqual("IMPM"u8)) return null;
+        int U16(ReadOnlySpan<byte> s, int o) => s[o] | s[o + 1] << 8;
+        int orders = U16(f, 0x20), instruments = U16(f, 0x22), samples = U16(f, 0x24), patterns = U16(f, 0x26);
+        var table = 0xC0 + orders + (instruments + samples) * 4;
+        var used = new bool[64];
+        Span<byte> masks = stackalloc byte[64];
+        for (var i = 0; i < patterns && table + i * 4 + 4 <= f.Length; i++)
+        {
+            var at = f[table + i * 4] | f[table + i * 4 + 1] << 8 | f[table + i * 4 + 2] << 16 | f[table + i * 4 + 3] << 24;
+            if (at <= 0 || at + 8 > f.Length) continue;
+            int p = at + 8, end = Math.Min(f.Length, p + U16(f, at));
+            masks.Clear();
+            while (p < end)
+            {
+                var what = f[p++];
+                if (what == 0) continue;
+                var ch = (what - 1) & 63;
+                used[ch] = true;
+                if ((what & 128) != 0 && p < end) masks[ch] = f[p++];
+                var m = masks[ch];
+                p += ((m & 1) != 0 ? 1 : 0) + ((m & 2) != 0 ? 1 : 0) + ((m & 4) != 0 ? 1 : 0) + ((m & 8) != 0 ? 2 : 0);
+            }
+        }
+        return used.Count(u => u);
+    }
+
+    /// <summary>Pattern channels of a MOD, XM, S3M or IT file, or null when the format is not recognised.</summary>
     public static int? ModuleChannels(ReadOnlySpan<byte> file, string extension)
     {
+        if (extension.Equals(".s3m", StringComparison.OrdinalIgnoreCase))
+        {
+            // "SCRM" at offset 44; 32 channel settings at offset 64, below 16 when the channel is on.
+            if (file.Length < 96 || !file.Slice(44, 4).SequenceEqual("SCRM"u8)) return null;
+            var on = 0;
+            foreach (var c in file.Slice(64, 32)) if (c < 16) on++;
+            return on;
+        }
+        if (extension.Equals(".it", StringComparison.OrdinalIgnoreCase)) return ItChannels(file);
         if (extension.Equals(".xm", StringComparison.OrdinalIgnoreCase))
         {
             // "Extended Module: " header; the channel count is a 16-bit value at offset 68.

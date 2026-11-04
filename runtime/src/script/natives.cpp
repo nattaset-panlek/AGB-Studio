@@ -171,9 +171,12 @@ s32 Choice(Context& ctx, const s32* args, int argc) {
             ctx.wait = pageChoiceDone;
             return 0;
         }
-        text::choose(s_choiceKeys, count);
-        ctx.wait = textChoiceDone;
-        return 0;
+        // No text layer (Modes 3, 4, 5): nothing could show the choice, so the first option is taken below.
+        if (text::layer() >= 0) {
+            text::choose(s_choiceKeys, count);
+            ctx.wait = textChoiceDone;
+            return 0;
+        }
     }
     {
         s8 pick = g_autoChoice;
@@ -263,6 +266,49 @@ s32 StopMusic(Context& ctx, const s32* args, int argc) {
 s32 ShakeCamera(Context& ctx, const s32* args, int argc) {
     AGB_UNUSED(ctx);
     scene::shake(static_cast<u8>(arg(args, argc, 0, 2)), static_cast<u16>(arg(args, argc, 1, 20)));
+    return 0;
+}
+
+s32 BitmapClear(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    api::Bitmap::Clear(arg(args, argc, 0, 0));
+    return 0;
+}
+
+s32 BitmapSetPixel(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    api::Bitmap::SetPixel(arg(args, argc, 0, 0), arg(args, argc, 1, 0), arg(args, argc, 2, 0));
+    return 0;
+}
+
+s32 BitmapFillRect(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    api::Bitmap::FillRect(arg(args, argc, 0, 0), arg(args, argc, 1, 0), arg(args, argc, 2, 0), arg(args, argc, 3, 0), arg(args, argc, 4, 0));
+    return 0;
+}
+
+s32 BitmapShow(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    api::Bitmap::Show(arg(args, argc, 0, -1));
+    return 0;
+}
+
+s32 BitmapFlip(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    AGB_UNUSED(args);
+    AGB_UNUSED(argc);
+    api::Bitmap::Flip();
+    return 0;
+}
+
+s32 BitmapRgb(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    return api::Bitmap::Rgb(arg(args, argc, 0, 0), arg(args, argc, 1, 0), arg(args, argc, 2, 0));
+}
+
+s32 BitmapSetPaletteColor(Context& ctx, const s32* args, int argc) {
+    AGB_UNUSED(ctx);
+    api::Bitmap::SetPaletteColor(arg(args, argc, 0, 0), arg(args, argc, 1, 0));
     return 0;
 }
 

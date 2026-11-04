@@ -35,7 +35,7 @@ public sealed partial class WorldMapModel
 
     public List<MapScene> Scenes { get; } = [];
     public event Action? Changed;
-    GameProject? Project => _s.Project.Current;
+    public GameProject? Project => _s.Project.Current;
 
     public void Reload()
     {
@@ -68,15 +68,6 @@ public sealed partial class WorldMapModel
     public string Summary => $"{Scenes.Count} scene{(Scenes.Count == 1 ? "" : "s")} · {LinkCount} link{(LinkCount == 1 ? "" : "s")}";
 
     // ---- presentation ------------------------------------------------------------------------------------------
-
-    /// <summary>Scene Card art by the scene's role: title menus at dusk, caves, boss scenes in the snow, levels by day.</summary>
-    public static string Art(MapScene s)
-    {
-        if (s.Data.Menu != null || s.Data.Page.Length > 0) return "art/scene/dusk";
-        if ((s.Map?.Tileset ?? "").Contains("cave", StringComparison.OrdinalIgnoreCase) || s.Name.Contains("Cave", StringComparison.OrdinalIgnoreCase)) return "art/scene/cave";
-        if (IsBoss(s)) return "art/scene/snow";
-        return "art/scene/day";
-    }
 
     static bool IsBoss(MapScene s) => IsBossScene(s.Data);
 
@@ -276,7 +267,7 @@ public sealed partial class WorldMapModel
         return m.Success && int.TryParse(m.Groups[1].Value, out var w) && int.TryParse(m.Groups[2].Value, out var h) && w is >= 15 and <= 256 && h is >= 10 and <= 256 ? (w, h) : null;
     }
 
-    public static readonly string[] VideoModes = ["Mode 0 · 4 BG", "Mode 1 · 3 BG", "Mode 2 · 2 BG", "Mode 3 · bitmap"];
+    public static readonly string[] VideoModes = ["Mode 0 · 4 BG", "Mode 1 · 3 BG", "Mode 2 · 2 BG", "Mode 3 · bitmap", "Mode 4 · bitmap 255", "Mode 5 · bitmap small"];
 
     public static string Num(double v) => v.ToString("0.0", CultureInfo.InvariantCulture);
 

@@ -44,13 +44,150 @@ public sealed class PopoverAndMenuTests : IDisposable
         _ => "-",
     }).ToList();
 
+    // A PNG in assets/images of the open project.
+    void AddImage(string name, int width, int height, uint argb = 0xFF102040u)
+    {
+        var dir = Path.Combine(M.Project!.AssetsDir, "images");
+        Directory.CreateDirectory(dir);
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(dir, name + ".png"), Enumerable.Repeat(argb, width * height).ToArray(), width, height);
+    }
+
+    [AvaloniaFact]
+    public void VideoMode_OffersModes4And5AndFitsTheSmallestWindow()
+    {
+        _w.Click(_w.Find<Chip>("VideoModeChip"));
+        var p = Assert.IsType<VideoModePopover>(_w.Win.Overlays.Open.Single());
+        Assert.Contains(VideoModePopover.Modes, m => m.Title == "Mode 4" && m.Description.Contains("255 colours"));
+        Assert.Contains(VideoModePopover.Modes, m => m.Title == "Mode 5" && m.Description.Contains("160×128"));
+        // Mode 4 is a click on its card, like the others, and its chip says what it shows.
+        _w.Click(_w.Find<Button>("Mode_4"));
+        Assert.Equal(4, OnDisk.VideoMode);
+        _w.Click(_w.Find<Button>("Mode_5"));
+        Assert.Equal(5, OnDisk.VideoMode);
+        Assert.Equal("GBA · Mode 5 · 160×128", _w.Find<Chip>("VideoModeChip").Content);
+        // With the picture row showing (the tallest it gets), it stays under MainWindow.MinHeight (600).
+        Assert.True(p.PictureField.IsVisible);
+        p.Measure(new Avalonia.Size(380, double.PositiveInfinity));
+        Assert.InRange(p.DesiredSize.Height, 300, 560);
+    }
+
+    [AvaloniaFact]
+    public void VideoMode_PicksThePictureAndSaysWhatIsWrongWithIt()
+    {
+        AddImage("poster", 240, 160);
+        AddImage("small", 160, 128);
+        _w.Click(_w.Find<Chip>("VideoModeChip"));
+        var p = Assert.IsType<VideoModePopover>(_w.Win.Overlays.Open.Single());
+        // Tile modes have no picture row.
+        Assert.False(p.PictureField.IsVisible);
+        p.Choose(3);
+        Assert.True(p.PictureField.IsVisible);
+        Assert.Equal(VideoModePopover.NoPicture, p.PictureField.Selected);
+        Assert.Contains("poster", p.PictureField.Options!);
+        Assert.Contains("small", p.PictureField.Options!);
+        // Picked like a menu click would: the scene file holds the name, and undo takes it back.
+        p.PictureField.Selected = "poster";
+        Assert.Equal("poster", OnDisk.Picture);
+        Assert.Equal("", p.PictureProblem);
+        _w.S.Commands.Execute("edit.undo");
+        Assert.Equal("", OnDisk.Picture);
+        p.ChoosePicture("small");
+        Assert.Equal("small", OnDisk.Picture);
+        Assert.Equal("small is 160×128; Mode 3 shows 240×160. Resize it, or pick another picture.", p.PictureProblem);
+        Assert.Equal(p.PictureProblem, p.PictureField.Help);
+        p.Choose(5);
+        Assert.Equal("", p.PictureProblem);
+        p.ChoosePicture("gone");
+        Assert.Equal("gone is not in assets/images. Import it, or pick another picture.", p.PictureProblem);
+        p.PictureField.Selected = VideoModePopover.NoPicture;
+        Assert.Equal("", OnDisk.Picture);
+    }
+
+    [AvaloniaFact]
+    public void BudgetCountsTheFrameBuffersInBitmapModes()
+    {
+        _w.Click(_w.Find<Chip>("VideoModeChip"));
+        var p = Assert.IsType<VideoModePopover>(_w.Win.Overlays.Open.Single());
+        Assert.Equal("64 KB", SceneBudget.For(M)["VRAM BG"].Text.Split(" / ")[1]);
+        foreach (var (mode, kb) in new[] { (3, 75), (4, 75), (5, 80) })
+        {
+            p.Choose(mode);
+            var b = SceneBudget.For(M);
+            Assert.Equal($"{kb} KB".Replace(" KB", "") + " / 80 KB", b["VRAM bitmap"].Text);
+            Assert.DoesNotContain(b.Meters, m => m.Label == "VRAM BG");
+            Assert.EndsWith("/ 16 KB", b["VRAM OBJ"].Text);
+        }
+    }
+
+    [AvaloniaFact]
+    public void Renderer_DrawsThePictureTheWayTheHardwareDoes()
+    {
+        const uint color = 0xFF204080u;  // 15-bit: r 4, g 8, b 16
+        var bgr = AgbStudio.Build.Graphics.Gba.ToBgr555(color);
+        AddImage("poster", 240, 160, color);
+        AddImage("small", 160, 128, color);
+        var scene = new SceneFile { Name = "Pic", Backdrop = "#400080", Actors = { } };
+        var backdrop = GbaScreenRenderer.ParseBackdrop(scene.Backdrop);
+        var a = M.Assets!;
+        // Modes 3 and 4 fill the screen.
+        foreach (var mode in new[] { 3, 4 })
+        {
+            scene.VideoMode = mode;
+            scene.Picture = "poster";
+            var f = GbaScreenRenderer.Render(a, scene, null, 0, 0);
+            Assert.All(f.Bgr, c => Assert.Equal(bgr, c));
+            Assert.Equal(2, f.Source[0]);
+        }
+        // Mode 5 is 160 x 128 at the top-left corner with the backdrop around it, not scaled.
+        scene.VideoMode = 5;
+        scene.Picture = "small";
+        var m5 = GbaScreenRenderer.Render(a, scene, null, 0, 0);
+        Assert.Equal(bgr, m5.Bgr[0]);
+        Assert.Equal(bgr, m5.Bgr[127 * 240 + 159]);
+        Assert.Equal(backdrop, m5.Bgr[127 * 240 + 160]);
+        Assert.Equal(backdrop, m5.Bgr[128 * 240 + 159]);
+        Assert.Equal(backdrop, m5.Bgr[159 * 240 + 239]);
+        Assert.Equal(ScreenFrame.FromBackdrop, m5.Source[159 * 240 + 239]);
+        // A picture of the wrong size or none: the backdrop, as the ROM shows when there is no picture.
+        scene.Picture = "poster";
+        Assert.All(GbaScreenRenderer.Render(a, scene, null, 0, 0).Bgr, c => Assert.Equal(backdrop, c));
+        scene.Picture = "";
+        Assert.All(GbaScreenRenderer.Render(a, scene, null, 0, 0).Bgr, c => Assert.Equal(backdrop, c));
+        // Mode 4: see-through pixels show the backdrop.
+        var px = Enumerable.Repeat(color, 240 * 160).ToArray();
+        px[5] = 0;
+        AgbStudio.Core.Png.WriteArgb(Path.Combine(M.Project!.AssetsDir, "images", "holes.png"), px, 240, 160);
+        scene.VideoMode = 4;
+        scene.Picture = "holes";
+        var m4 = GbaScreenRenderer.Render(a, scene, null, 0, 0);
+        Assert.Equal(backdrop, m4.Bgr[5]);
+        Assert.Equal(bgr, m4.Bgr[6]);
+        // The scene's own map layers do not show in a bitmap mode, and a sprite does show over the picture.
+        var open = M.Scene!;
+        var withLayers = GbaScreenRenderer.Render(a, open, M.Map, 0, 0);
+        var bitmapScene = System.Text.Json.JsonSerializer.Deserialize<SceneFile>(System.Text.Json.JsonSerializer.Serialize(open, GameProject.Json), GameProject.Json)!;
+        bitmapScene.VideoMode = 3;
+        bitmapScene.Picture = "poster";
+        var (cx, cy) = GbaScreenRenderer.StartCamera(bitmapScene, M.Map);
+        var over = GbaScreenRenderer.Render(a, bitmapScene, M.Map, cx, cy);
+        Assert.NotEqual(withLayers.Bgr, over.Bgr);
+        Assert.DoesNotContain((byte)0, over.Source);
+        Assert.DoesNotContain((byte)1, over.Source);
+        Assert.DoesNotContain((byte)3, over.Source);
+        Assert.Contains(ScreenFrame.FromObj, over.Source);
+        Assert.Contains((byte)2, over.Source);
+        Assert.Equal(-1, over.TextLayer);
+    }
+
     [AvaloniaFact]
     public void VideoMode_ModesAlphaAndMosaic()
     {
         _w.Click(_w.Find<Chip>("VideoModeChip"));
         var p = Assert.IsType<VideoModePopover>(_w.Win.Overlays.Open.Single());
-        Assert.Equal(4, VideoModePopover.Modes.Count);
+        // Modes 4 and 5 are new (scope log 2026-11-05): six cards, each with a real effect.
+        Assert.Equal(6, VideoModePopover.Modes.Count);
         p.Choose(3);
+        Capture.Pump();  // the picture row appeared: the switches moved
         Assert.Equal(3, OnDisk.VideoMode);
         _w.Click(p.Alpha);
         Assert.True(OnDisk.AlphaBlending);

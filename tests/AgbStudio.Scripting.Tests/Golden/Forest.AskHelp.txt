@@ -12,12 +12,12 @@
 0018: Line 22
 001B: PushI8 0
 001D: PushI8 0
-001F: Native #21 argc 1
+001F: Native #28 argc 1
 0023: PushI8 5
 0025: LoadLocal 0
 0027: Mul
 0028: Add
-0029: Native #22 argc 2
+0029: Native #29 argc 2
 002D: Pop
 002E: Line 23
 0031: PushI8 30

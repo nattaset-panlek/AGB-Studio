@@ -38,7 +38,7 @@ public static class PageChrome
             new PlayControl { Kind = PlayKind.Play, Command = s.Commands.Get("build.play"), Name = "PlayButton" },
             PlayButtons.Pause(s), PlayButtons.Step(s));
         Tip(s, play.Children[0], "build.play");
-        var chip = new Chip { Content = $"GBA · Mode {videoMode} · 240×160", Glyph = "chip", Name = "VideoModeChip" };
+        var chip = new Chip { Content = SceneEditor.ViewportPanel.VideoModeText(videoMode), Glyph = "chip", Name = "VideoModeChip" };
         chip.Click += (_, _) => _ = s.Windows.Open("T-O02", anchor: chip, source: "VideoModeChip");
         var undo = new IconButton { Glyph = "undo", Command = s.Commands.Get("edit.undo"), Name = "UndoButton" };
         var redo = new IconButton { Glyph = "redo", Command = s.Commands.Get("edit.redo"), Name = "RedoButton" };

@@ -35,6 +35,7 @@ public sealed class ScriptBackend : IScriptBackend
         SaveTypeIndices(input.OutputDir, r.TypeIndices);
         output.FlagIds = new Dictionary<string, int>(r.FlagIds);
         output.Sources.AddRange(r.Sources);
+        output.Pictures.AddRange(ctx.UsedPictures);
         output.IncludeDirs.Add(r.IncludeDir);
         output.FactoryCall = r.FactoryCall;
         output.RegistryHeader = ScriptCompileResult.RegistryHeader;
@@ -74,6 +75,7 @@ public sealed class ScriptBackend : IScriptBackend
         // Sound and music names are the file names; the build keys its ids by the soundbank symbol (JUMP).
         ctx.Sounds = Named(project.SoundFiles(), input.Sounds);
         ctx.Music = Named(project.MusicFiles(), input.Music);
+        ctx.Pictures = ScriptCompileContext.Indexed(project.PictureNames());
         // String ids: every key of the Localization tables, sorted (same order as the build's agb_text ids).
         var keys = project.StringTables().Select(GameProject.Load<StringTable>).SelectMany(t => t.Strings.Keys).Distinct().OrderBy(k => k, StringComparer.Ordinal);
         ctx.Strings = ScriptCompileContext.Indexed(keys);

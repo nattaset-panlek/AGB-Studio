@@ -40,6 +40,8 @@ public static class ScriptingApi
             "void Update()\n{\n    if (Input.Pressed(Key.Start))\n        Scene.Pause();\n    if (Game.coins >= 10)\n        Scene.Load(\"Forest_02\");\n}", ["Camera", "Save"]),
         new("Camera", "camera", ["Camera"], "The view of the scene: follows an actor inside the dead zone, or moves and shakes on request.",
             "void Start()\n{\n    Camera.Follow(actor);\n}\n\nvoid OnTouch(Actor other)\n{\n    Camera.Shake(2, 20);\n}", ["Scene", "Actor"]),
+        new("Bitmap", "image", ["Bitmap"], "Draws on the picture of a scene in Mode 3, 4 or 5. A colour is Bitmap.Rgb in Modes 3 and 5 and a palette index in Mode 4. In Modes 4 and 5 drawing goes to a hidden page, and Flip shows it.",
+            "void Start()\n{\n    Bitmap.Clear(Bitmap.Rgb(0, 0, 8));\n    Bitmap.FillRect(40, 30, 16, 16, Bitmap.Rgb(31, 16, 0));\n    Bitmap.SetPixel(120, 80, Bitmap.Rgb(31, 31, 31));\n    Bitmap.Flip();\n}", ["Camera", "Scene"]),
         new("Save", "save", ["Save", "Game"], "Writes and reads the game state (the Game fields of Project Settings · Save data) in the cartridge save slots.",
             "void OnTouch(Actor other)\n{\n    if (other.tag == \"Goal\")\n    {\n        Save.Checkpoint();\n        Save.Write(0);\n    }\n}", ["Scene"]),
         new("Text & Dialogue", "type", ["Text"], "Shows localized strings from the Localization tables in the dialogue box.",

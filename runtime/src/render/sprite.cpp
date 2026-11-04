@@ -66,7 +66,7 @@ void markTiles(int first, int count, bool used) {
 int allocTiles(int count) {
     // Sizes are powers of two in practice; align so large frames do not fragment small ones.
     const int align = count >= 8 ? 8 : count >= 4 ? 4 : 1;
-    // In Mode 3 the bitmap covers OBJ tiles 0..511 (render/bitmap.hpp).
+    // In Modes 3, 4 and 5 the bitmap covers OBJ tiles 0..511 (render/bitmap.hpp).
     for (int t = bg::videoMode() >= 3 ? 512 : 0; t + count <= 1024; t += align)
         if (tilesFree(t, count)) {
             markTiles(t, count, true);

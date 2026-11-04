@@ -35,7 +35,7 @@ public static class RuntimeTests
         if (Directory.Exists(audioDir))
         {
             var gen = Path.Combine(BuildDir, "gen", name);
-            var inputs = Directory.EnumerateFiles(audioDir).Where(f => f.EndsWith(".mod") || f.EndsWith(".xm") || f.EndsWith(".wav")).Order().ToList();
+            var inputs = Directory.EnumerateFiles(audioDir).Where(f => f.EndsWith(".mod") || f.EndsWith(".xm") || f.EndsWith(".s3m") || f.EndsWith(".it") || f.EndsWith(".wav")).Order().ToList();
             var sb = Audio.SoundbankBuilder.Build(new Toolchain(), inputs, gen);
             if (!sb.Success)
                 throw new InvalidOperationException($"mmutil could not make the soundbank of runtime test '{name}' from {audioDir}: " +

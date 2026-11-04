@@ -59,7 +59,7 @@ public sealed class Toolchain
         return list;
     }
 
-    public bool IsComplete => Check().All(t => t.Found);
+    public bool IsComplete => Check().All(t => t.Found || t.Name == "ninja");  // optional: without it the build runs the same graph itself
 
     /// <summary>Runs a tool for its version (exe, arguments); tests replace it so no process starts.</summary>
     public Func<string, string, ProcResult> RunTool { get; init; } = (exe, args) => Proc.Run(exe, args, null, TimeSpan.FromSeconds(20));

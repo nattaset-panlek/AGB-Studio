@@ -67,8 +67,13 @@ MyGame/
 
 ## `scenes/<Name>.scene` (SceneFile)
 
-`name`, `width` and `height` in 16 px tiles, `videoMode` (0-3; the runtime draws tile layers in modes 0-2, mode 3
-only sets the display mode), `map` (a map name), `camera` (`follow` actor, `deadZoneW` / `deadZoneH`, `clampToMap`),
+`name`, `width` and `height` in 16 px tiles, `videoMode` (0-5; the runtime draws tile layers in modes 0-2 and a
+frame buffer on BG2 in modes 3-5, with no map layers, text or menus), `picture` (optional, default empty: the name of an image in
+`assets/images` without its extension that a scene in mode 3, 4 or 5 shows: 240 x 160 in modes 3 and 4, 160 x 128 in mode 5 at the top-left corner of
+the screen with the backdrop around it; empty = the backdrop colour; a missing image or another size stops the build; mode 4 stores palette
+indices with index 0 the backdrop, so transparent pixels show the backdrop, and reduces an image with more than 255 colours by median cut with a
+build warning; modes 3 and 5 store 15-bit colours, with transparent pixels black; the build writes `build/gen/pictures/picture_<name>.cpp`), `map` (a map name, whose layers
+still give the collision in modes 3-5), `camera` (`follow` actor, `deadZoneW` / `deadZoneH`, `clampToMap`),
 `music` (`track`, `volume`: the game's music volume while this scene's own track plays, built as
 `SceneDef::musicVolume` 0..256; `fadeOnSceneChange`), `events` (`onLoad` / `onEnter` / `onExit` C# statements), `actors`,
 `links`, `alphaBlending`, `mosaic`, `backdrop` (#RRGGBB), an optional title `menu`, the World Map card position

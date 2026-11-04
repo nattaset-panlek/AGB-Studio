@@ -41,7 +41,7 @@ public class WindowServiceTests
     [Fact]
     public void Catalog_KnowsEveryFigmaWindow()
     {
-        Assert.Equal(26 + 24 + 9 + 13 + 24 + 1, WindowCatalog.All.Count);  // + T-P27 UI Editor, ahead of Figma (scope log 2026-11-04)
+        Assert.Equal(26 + 24 + 9 + 13 + 24 + 1 + 1, WindowCatalog.All.Count);  // + T-S10 Preferences · MCP, T-P27 UI Editor, ahead of Figma (scope log 2026-11-04)
         Assert.Equal(WindowKind.Popover, WindowCatalog.Find("T-O07")!.Kind);
         Assert.Equal((760, 390), (WindowCatalog.Find("T-D10")!.Width, WindowCatalog.Find("T-D10")!.Height));
     }

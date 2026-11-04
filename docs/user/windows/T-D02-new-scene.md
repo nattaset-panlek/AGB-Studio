@@ -20,7 +20,7 @@ Create a new scene from a ready-made template or as an empty scene.
 - **Start from**: Platformer level, Top-down room or Empty scene.
 - **Width (tiles)** and **Height (tiles)**: start at the size of the open scene. Width is 15 to 256 tiles, height is
   10 to 256 tiles (one GBA screen is 30×20 tiles).
-- **Video mode**: Mode 0 to Mode 3. Starts at the mode of the open scene.
+- **Video mode**: Mode 0 to Mode 5. Starts at the mode of the open scene.
 - **Copy backgrounds from** (the open scene): copies its image background layers. It is only available when the open
   scene has image layers.
 - **Add a camera that follows the player**: on by default.

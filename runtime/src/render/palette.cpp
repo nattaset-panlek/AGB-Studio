@@ -2,6 +2,7 @@
 
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"
+#include "agb/render/bg.hpp"
 
 namespace agb::render::palettes {
 
@@ -113,6 +114,8 @@ void release(const data::Palette* palette, bool obj) {
 }
 
 void setBank(bool obj, int bank, const u16* colors16) {
+    // Mode 4: the picture owns the whole background palette, and no tile layer or text panel can show there anyway.
+    if (!obj && bg::videoMode() == 4) return;
     u16* dst = g_base + (obj ? 256 : 0) + bank * 16;
     // Index 0 is transparent in every bank; BG bank 0 index 0 is the backdrop, set by setBackdrop().
     for (int i = (!obj && bank == 0) ? 1 : 0; i < 16; ++i) dst[i] = colors16[i];

@@ -5,4 +5,8 @@
   <ItemGroup>
     <ProjectReference Include="..\AgbStudio.Core\AgbStudio.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NLayer" Version="3.0.0" />
+    <PackageReference Include="NVorbis" Version="0.10.5" />
+  </ItemGroup>
 </Project>

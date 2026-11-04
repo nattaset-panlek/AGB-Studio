@@ -205,6 +205,11 @@ int pickBg() {
 
 bool ensureLayer() {
     if (g_layerReady) return true;
+    // The frame buffers of Modes 3, 4 and 5 fill the memory a text layer needs.
+    if (render::bg::videoMode() >= 3) {
+        debug::warnOnce(44, "this scene uses a bitmap video mode (3, 4 or 5), which has no tile layer for text, so the text is not shown. Use Mode 0, 1 or 2 for scenes with text.");
+        return false;
+    }
     const int sb = render::bg::allocScreenBlocks(render::bg::Size::S32x32);
     if (sb < 0) return false;
     // A char block of its own start: panels of the text layer can then use all 1024 tiles its map entries reach.

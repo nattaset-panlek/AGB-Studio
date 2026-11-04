@@ -35,6 +35,7 @@ public static class Program
         }
 
         using var server = new McpServer(context);
+        server.Registry.RemoveDisabled(McpSettings.Load());
         using var cts = new CancellationTokenSource();
 
         Console.CancelKeyPress += (_, e) =>

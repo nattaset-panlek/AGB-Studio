@@ -9,7 +9,7 @@ namespace AgbStudio.Editor.Services;
 public sealed class ToolchainStatusService(Func<string?> devkitPro)
 {
     public IReadOnlyList<ToolStatus> Tools { get; private set; } = [];
-    public bool IsComplete => Tools.Count > 0 && Tools.All(t => t.Found);
+    public bool IsComplete => Tools.Count > 0 && Tools.All(t => t.Found || t.Name == "ninja");  // optional: without it the build runs the same graph itself
     public event Action? Changed;
 
     public ToolchainStatusService() : this(() => null) { }

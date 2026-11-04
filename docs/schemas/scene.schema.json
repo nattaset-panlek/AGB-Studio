@@ -332,6 +332,9 @@
     "hud": {
       "type": "string"
     },
+    "picture": {
+      "type": "string"
+    },
     "mapX": {
       "type": "integer"
     },

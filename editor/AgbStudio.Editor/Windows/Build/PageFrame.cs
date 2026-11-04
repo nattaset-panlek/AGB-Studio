@@ -56,7 +56,7 @@ public static class PageFrame
             try { if (File.Exists(file)) mode = GameProject.Load<SceneFile>(file).VideoMode; }
             catch (Exception e) when (e is IOException or System.Text.Json.JsonException or InvalidDataException) { }
         }
-        return $"GBA · Mode {mode} · 240×160";
+        return SceneEditor.ViewportPanel.VideoModeText(mode);
     }
 
     public static Border ToolGroup(params Control[] items) =>

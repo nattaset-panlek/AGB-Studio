@@ -43,7 +43,7 @@ public sealed class ProjectFileIndex(string? root)
         {
             ".cs" => "code",
             ".png" or ".bmp" or ".gif" => "image",
-            ".wav" or ".mod" or ".xm" => "music",
+            ".wav" or ".mod" or ".xm" or ".s3m" or ".it" => "music",
             ".sfx" => "sound",
             ".font" or ".ttf" => "type",
             ".db" or ".csv" => "table",

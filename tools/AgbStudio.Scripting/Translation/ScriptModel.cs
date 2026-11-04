@@ -5,7 +5,7 @@ using BuildCpp = AgbStudio.Build.Pipeline.Cpp;
 namespace AgbStudio.Scripting.Translation;
 
 /// <summary>Kinds of names resolved at build time (mirror of GBA.AssetKind).</summary>
-internal enum AssetKind { Sound, Music, Scene, Tag, Text, Speaker, Portrait, Path, ActorName }
+internal enum AssetKind { Sound, Music, Scene, Tag, Text, Speaker, Portrait, Path, ActorName, Picture }
 
 /// <summary>A [Cpp] mapping read from the API or the generated project API.</summary>
 internal sealed record CppMap(string Template, string? Set, int Prec);
@@ -277,6 +277,7 @@ internal sealed class ScriptModel
         AssetKind.Text => Ctx.Strings,
         AssetKind.Speaker => Ctx.Speakers,
         AssetKind.Portrait => Ctx.Portraits,
+        AssetKind.Picture => Ctx.Pictures,
         AssetKind.Path => Ctx.Paths.Select((p, i) => (p.Name, i)).GroupBy(x => x.Name).ToDictionary(g => g.Key, g => g.First().i),
         _ => new Dictionary<string, int>(),
     };
@@ -291,6 +292,7 @@ internal sealed class ScriptModel
         AssetKind.Speaker => "Speaker",
         AssetKind.Portrait => "Portrait",
         AssetKind.Path => "Path",
+        AssetKind.Picture => "Picture",
         _ => "Actor",
     };
 
@@ -304,6 +306,7 @@ internal sealed class ScriptModel
         AssetKind.Speaker => "Speakers are created in the Dialogue Editor",
         AssetKind.Portrait => "Portraits are added to speakers in the Dialogue Editor",
         AssetKind.Path => "Paths are drawn in the Scene Editor",
+        AssetKind.Picture => "Picture names are the images in assets/images without the extension",
         _ => "",
     };
 
@@ -320,6 +323,7 @@ internal sealed class ScriptModel
             return null;
         }
         var id = table[key];
+        if (kind == AssetKind.Picture) lock (Ctx.UsedPictures) Ctx.UsedPictures.Add(key);
         var ident = BuildCpp.Ident(Names.StripExtension(key));
         var cpp = kind switch
         {

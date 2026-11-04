@@ -58,14 +58,14 @@ public sealed class TrackerPattern(int rows, int channels)
 /// instruments, initial speed and BPM. Pattern edits from the tracker view are written back with <see cref="Encode"/>,
 /// which keeps every other byte of the original file.
 /// </summary>
-public sealed class TrackerModule
+public sealed partial class TrackerModule
 {
     byte[] _raw = [];
     int _modPatternBase;                 // MOD: offset of pattern 0
     int _xmPatternsStart, _xmPatternsEnd; // XM: byte range of the pattern block
 
     public bool IsXm { get; private set; }
-    public string Format => IsXm ? "XM" : "MOD";
+    public string Format => _readOnlyFormat ?? (IsXm ? "XM" : "MOD");
     public string Title { get; private set; } = "";
     public int Channels { get; private set; }
     public int InitialSpeed { get; private set; } = 6;
@@ -81,9 +81,11 @@ public sealed class TrackerModule
     public static TrackerModule Parse(byte[] data)
     {
         var m = new TrackerModule { _raw = data };
-        if (data.Length > 60 && Encoding.ASCII.GetString(data, 0, 17) == "Extended Module: ") m.ParseXm();
+        if (IsIt(data)) m.ParseIt();
+        else if (IsS3m(data)) m.ParseS3m();
+        else if (data.Length > 60 && Encoding.ASCII.GetString(data, 0, 17) == "Extended Module: ") m.ParseXm();
         else if (data.Length >= 1084) m.ParseMod();
-        else throw new InvalidDataException("It is not a MOD or XM song inside (too short for one). Save it again from your tracker as .mod or .xm.");
+        else throw new InvalidDataException("It is not a tracker song inside (too short for one). Save it again from your tracker as .mod, .xm, .s3m or .it.");
         return m;
     }
 
@@ -321,6 +323,7 @@ public sealed class TrackerModule
     /// <summary>The module file with the current pattern data (tracker edits); everything else is kept byte for byte.</summary>
     public byte[] Encode()
     {
+        if (!CanEdit) return _raw;
         if (!IsXm)
         {
             var d = (byte[])_raw.Clone();

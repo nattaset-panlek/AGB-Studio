@@ -45,6 +45,12 @@ public sealed class ScriptCompileContext
     /// </summary>
     public Dictionary<string, int> Strings { get; set; } = new();
 
+    /// <summary>Image name to picture id (Bitmap.Show): the place in GameProject.PictureNames.</summary>
+    public Dictionary<string, int> Pictures { get; set; } = new();
+
+    /// <summary>The pictures the compiled scripts name; the build puts these in ROM.</summary>
+    public HashSet<string> UsedPictures { get; } = new(StringComparer.Ordinal);
+
     /// <summary>Dialogue speaker name to speaker id.</summary>
     public Dictionary<string, int> Speakers { get; set; } = new();
 

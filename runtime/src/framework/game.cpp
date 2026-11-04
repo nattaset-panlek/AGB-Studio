@@ -9,6 +9,7 @@
 #include "agb/natives.hpp"
 #include "agb/render/affine.hpp"
 #include "agb/render/bg.hpp"
+#include "agb/render/bitmap.hpp"
 #include "agb/render/palette.hpp"
 #include "agb/rng.hpp"
 #include "agb/script.hpp"
@@ -139,13 +140,26 @@ void makeLabels(const SceneDef* d) {
 // targets, 8/16 over the layers behind, the sprites and the backdrop; semi-transparent sprites (shadows) blend over the
 // layers. The gameplay layer and the layers behind it stay solid, and the text layer (HUD, dialogue) is never blended.
 // "Mosaic effect": the scene's layers and sprites take part in the mosaic; the scene's transitions grow the blocks.
+// Modes 3, 4 and 5 show the scene's picture on BG2 and no map layers: their memory holds the frame buffers. The layers
+// stay in ROM for collision.
+bool isBitmapScene(const SceneDef* d) { return d->videoMode >= 3; }
+int shownLayers(const SceneDef* d) { return isBitmapScene(d) ? 0 : d->layerCount; }
+
 void applyVideoEffects(const SceneDef* d) {
     namespace fx = render::effects;
     const data::MapLayer* ground = nullptr;
     if (d->collisionLayer >= 0 && d->collisionLayer < d->layerCount && d->layers[d->collisionLayer].type != data::LayerType::CollisionOnly)
         ground = &d->layers[d->collisionLayer];
     u8 front = 0, behind = fx::kObj | fx::kBackdrop;
-    for (int i = 0; i < d->layerCount && i < kMaxLayers; ++i) {
+    if (isBitmapScene(d)) {
+        behind |= fx::kBg2;
+        if (d->mosaic) {
+            render::bg::Config c = render::bg::config(2);
+            c.mosaic = true;
+            render::bg::configure(2, c);
+        }
+    }
+    for (int i = 0; i < shownLayers(d) && i < kMaxLayers; ++i) {
         const data::MapLayer& l = d->layers[i];
         if (l.type == data::LayerType::CollisionOnly) continue;
         const u8 bit = static_cast<u8>(1u << (l.bg & 3));
@@ -179,6 +193,8 @@ public:
                 g_scene.zone = -1;
                 g_paused = false;
                 for (bool& e : g_scene.edited) e = false;
+                // Drawing a bitmap scene left in the queue must not land on the next scene's tiles.
+                if (render::bg::videoMode() >= 3) commit::dropQueued();
                 actors::reset();
                 render::sprites::reset();
                 render::bg::reset();
@@ -192,9 +208,20 @@ public:
                 screenArena().reset();
                 render::bg::setVideoMode(d->videoMode);
                 render::palettes::setBackdrop(d->backdrop);
+                commit::setDmaBudget(isBitmapScene(d) ? commit::kBitmapDmaBudget : commit::kDefaultDmaBudget);
+                if (isBitmapScene(d)) render::bitmap::begin(d->videoMode);
                 return false;
             case 2:  // 3 tiles -> VRAM (tileset loads happen in init)
             case 3: {  // 4 map + palette
+                if (isBitmapScene(d)) {
+                    // One page per step. Both pages get the picture, so a script that draws on it and flips keeps it.
+                    const int page = step - 2;
+                    if (page < render::bitmap::pageCount() && !(d->picture && render::bitmap::showNow(*d->picture, page))) {
+                        if (d->picture) debug::logf("warning: the picture of %s does not fit its video mode, so it is not shown. Rebuild the game.", d->name);
+                        render::bitmap::clearNow(render::bg::videoMode() == 4 ? 0 : d->backdrop, page);
+                    }
+                    return false;
+                }
                 // Two layers per step; after a heavy layer (a 128 x 128 affine map, a large image) the next one waits
                 // for the next frame.
                 const int first = step == 2 ? 0 : 2;
@@ -231,7 +258,7 @@ public:
                 }
                 confineToZone();
                 // Each layer draws its whole window (about 25k cycles) and copies its map to VRAM: one layer per frame.
-                if (d->layerCount > 0) {
+                if (shownLayers(d) > 0) {
                     g_scene.drawnLayers = 0;
                     holdLoadStep();
                 }
@@ -340,7 +367,7 @@ public:
         // goes first: after a big camera move (respawn, Camera.SetPosition) the views redraw at most two whole windows
         // a frame, so the gameplay layer moves with the sprites and a background layer may follow a frame later.
         debug::tracePhase(debug::Phase::Tilemaps);
-        const int layers = d->layerCount < kMaxLayers ? d->layerCount : kMaxLayers;
+        const int layers = shownLayers(d) < kMaxLayers ? shownLayers(d) : kMaxLayers;
         const int ground = d->collisionLayer >= 0 && d->collisionLayer < layers ? d->collisionLayer : 0;
         for (int k = 0; k < layers; ++k) {
             const int i = k == 0 ? ground : k <= ground ? k - 1 : k;
@@ -768,10 +795,10 @@ void setTile(int layer, int tx, int ty, u16 metatile) {
         g_scene.ramLayers[layer] = src;
         g_scene.ramLayers[layer].cells = ram;
         g_scene.edited[layer] = true;
-        g_scene.views[layer].retarget(&g_scene.ramLayers[layer]);
+        if (!isBitmapScene(d)) g_scene.views[layer].retarget(&g_scene.ramLayers[layer]);
     }
     const_cast<u16*>(g_scene.ramLayers[layer].cells)[ty * src.width + tx] = metatile;
-    g_scene.views[layer].redrawMetatile(tx, ty);
+    if (!isBitmapScene(d)) g_scene.views[layer].redrawMetatile(tx, ty);
 }
 
 void mode7(fixed x, fixed y, int angle, int height, int horizon) {
@@ -820,7 +847,9 @@ int tile(int layer, int tx, int ty) {
     return l.cells[ty * l.width + tx];
 }
 
-render::MapLayerView* layerView(int index) { return index >= 0 && index < kMaxLayers ? &g_scene.views[index] : nullptr; }
+render::MapLayerView* layerView(int index) { return index >= 0 && index < kMaxLayers && !(g_scene.def && isBitmapScene(g_scene.def)) ? &g_scene.views[index] : nullptr; }
+
+const data::Picture* picture(int id) { return g_def && g_def->pictures && id >= 0 && id < g_def->pictureCount ? g_def->pictures[id] : nullptr; }
 int widthPx() { return g_scene.def ? g_scene.def->widthTiles * 16 : 0; }
 int heightPx() { return g_scene.def ? g_scene.def->heightTiles * 16 : 0; }
 const char* loadStepName(int step) { return step >= 0 && step < 7 ? kLoadSteps[step] : ""; }

@@ -107,7 +107,7 @@ public sealed class PreferencesTests : IDisposable
         var win = Shell();
         var d = Open(win);
         Assert.Equal("T-D09", d.SelectedTab);
-        Assert.Equal(["Appearance", "Editor", "Paths", "Emulator", "Shortcuts"], d.NavItems.Select(n => n.Label));
+        Assert.Equal(["Appearance", "Editor", "Paths", "Emulator", "Shortcuts", "MCP"], d.NavItems.Select(n => n.Label));
         win.Key(PhysicalKey.Escape);
         win.Key(PhysicalKey.Comma, RawInputModifiers.Control);
         Assert.Equal("T-D09", Assert.IsType<PreferencesDialog>(win.Overlays.Open.Single()).SelectedTab);

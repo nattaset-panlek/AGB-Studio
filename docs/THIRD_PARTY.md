@@ -9,6 +9,8 @@
 | Roslyn (Microsoft.CodeAnalysis 4.14, incl. its localized resource folders `cs` ... `zh-Hant`) | MIT | parses, analyses and translates C# scripts | editor |
 | System.Composition 9.0 | MIT | dependency of Roslyn Workspaces | editor |
 | Humanizer (Humanizer.Core 2.14.1) | MIT | dependency of Roslyn Workspaces | editor |
+| NLayer 3.0.0 | MIT | decodes MP3 files when they are imported (`AudioConverter`) | editor |
+| NVorbis 0.10.5 | MIT | decodes OGG files when they are imported (`AudioConverter`) | editor |
 | Avalonia 11.3 (incl. Avalonia.DesignerSupport) | MIT | editor UI | editor |
 | MicroCom.Runtime 0.11 | MIT | COM interop used by Avalonia on Windows | editor |
 | ANGLE (`av_libglesv2.dll`, package Avalonia.Angle.Windows.Natives) | BSD 3-clause (licence file in the package) | OpenGL ES on Direct3D for Avalonia rendering | editor |

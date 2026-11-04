@@ -231,8 +231,11 @@
         <Border Background="{DynamicResource bg/raised}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="8">
           <!-- Figma: a 150 px column at border + padding (the stroke takes layout space), running into the right padding -->
           <StackPanel Width="150" HorizontalAlignment="Left">
-            <Border Width="150" Height="100" CornerRadius="8" ClipToBounds="True">
-              <g:ArtImage Source="{TemplateBinding Preview}" Width="150" Height="100" />
+            <Border Width="150" Height="100" CornerRadius="8" ClipToBounds="True" Background="{DynamicResource border/default}">
+              <Panel>
+                <g:ArtImage Source="{TemplateBinding Preview}" Width="150" Height="100" />
+                <Image Source="{TemplateBinding PreviewImage}" Width="150" Height="100" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality" />
+              </Panel>
             </Border>
             <DockPanel Height="30" HorizontalSpacing="8">
               <TextBlock DockPanel.Dock="Right" Text="{TemplateBinding Meta}" t:Fig.Style="Label/11" Foreground="{DynamicResource text/muted}" VerticalAlignment="Center" />

@@ -39,7 +39,7 @@ public class AssetImporterTests
         var problems = GroupFixture.ProblemFiles(fx, p).Select(f => AssetImporter.Inspect(f, p)).ToList();
         Assert.Equal("Uses 48 colours. A GBA sprite palette holds 16, so it needs reducing or splitting.", problems[0].Warning);
         Assert.Equal(["Reduce to 16", "Split into 4 palettes"], problems[0].Fixes);
-        Assert.Equal("MP3 is not supported on GBA. Use .wav for sound effects or .mod / .xm for music.", problems[1].Error);
+        Assert.StartsWith("theme.mp3 can't be read:", problems[1].Error);
         Assert.Equal(["How to convert"], problems[1].Fixes);
         Assert.True(problems[2].IsReady);
         var junk = Path.Combine(fx.Folder, "notes.xyz");

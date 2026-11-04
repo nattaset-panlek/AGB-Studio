@@ -39,7 +39,8 @@ bool unitsFree(int first, int count) {
 }
 
 void writeDispCnt() {
-    u16 v = static_cast<u16>(g_mode) | DCNT_OBJ_1D | (g_objVisible ? DCNT_OBJ : 0);
+    // The bitmap page keeps showing: a queued flip sets that bit in the shadow when the queue reaches it.
+    u16 v = static_cast<u16>(g_mode) | DCNT_OBJ_1D | (g_objVisible ? DCNT_OBJ : 0) | (commit::reg(commit::DispCnt) & DCNT_PAGE);
     for (int i = 0; i < 4; ++i)
         if (g_visible[i]) v |= static_cast<u16>(DCNT_BG0 << i);
     commit::setReg(commit::DispCnt, v);
@@ -75,11 +76,12 @@ void reset() {
     g_unitUsed = 0;
     g_loadedCount = 0;
     g_objVisible = true;
+    commit::setReg(commit::DispCnt, static_cast<u16>(commit::reg(commit::DispCnt) & ~DCNT_PAGE));
     writeDispCnt();
 }
 
 void setVideoMode(int mode) {
-    g_mode = mode < 0 ? 0 : mode > 3 ? 3 : mode;
+    g_mode = mode < 0 ? 0 : mode > 5 ? 5 : mode;
     writeDispCnt();
     for (int i = 0; i < 4; ++i) writeControl(i);
 }

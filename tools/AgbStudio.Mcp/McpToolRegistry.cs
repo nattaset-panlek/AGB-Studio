@@ -27,6 +27,12 @@ public sealed class McpToolRegistry
         _tools[handler.Name] = handler;
     }
 
+    /// <summary>Takes out the tools Preferences · MCP turned off: clients neither see nor can call them.</summary>
+    public void RemoveDisabled(McpSettings settings)
+    {
+        foreach (var name in settings.DisabledTools) _tools.Remove(name);
+    }
+
     public List<McpTool> GetToolDefinitions()
     {
         return _tools.Values.Select(t => new McpTool

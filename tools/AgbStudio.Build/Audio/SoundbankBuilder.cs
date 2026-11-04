@@ -17,11 +17,11 @@ public sealed record SoundbankResult(bool Success, string CppPath, string Header
 /// </summary>
 public sealed record BuiltMusic(string File, int Orders, int Volume, int LoopStart, bool FadeOnSceneChange);
 
-/// <summary>Converts MOD / XM / WAV files to a maxmod soundbank with mmutil and embeds it as C++.</summary>
+/// <summary>Converts MOD / XM / S3M / IT / WAV files to a maxmod soundbank with mmutil and embeds it as C++.</summary>
 public static class SoundbankBuilder
 {
     /// <summary>
-    /// Runs mmutil over <paramref name="inputs"/>. Each MOD / XM's <c>&lt;file&gt;.meta.json</c> (MusicMeta, defaults when
+    /// Runs mmutil over <paramref name="inputs"/>. Each module's <c>&lt;file&gt;.meta.json</c> (MusicMeta, defaults when
     /// absent) goes into the ROM: the loop start becomes the module's restart order (maxmod continues there when a
     /// looping song ends), and volume and fade on scene change go into the table <c>&lt;symbol&gt;_music</c>
     /// (agb::audio::MusicInfo by module id).
@@ -62,7 +62,7 @@ public static class SoundbankBuilder
         return new SoundbankResult(true, cpp, hpp, ids, r.Output) { Music = music };
     }
 
-    static bool IsModule(string f) => f.EndsWith(".mod", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".xm", StringComparison.OrdinalIgnoreCase);
+    static bool IsModule(string f) => GameProject.MusicExtensions.Contains(Path.GetExtension(f).ToLowerInvariant());
 
     /// <summary>The meta files the soundbank reads (part of its cache key).</summary>
     public static IEnumerable<string> MetaFiles(IEnumerable<string> inputs) => inputs.Where(IsModule).Select(GameProject.MetaPath).Where(File.Exists);

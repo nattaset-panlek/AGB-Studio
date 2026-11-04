@@ -7,7 +7,7 @@ namespace {
 const agb::u8 kScript0[] = {
     38, 19, 0, 2, 2, 2, 1, 35, 1, 0, 2, 8, 1, 38, 20, 0, 
     7, 1, 2, 0, 21, 31, 31, 0, 38, 22, 0, 2, 0, 2, 0, 35, 
-    21, 0, 1, 2, 5, 7, 0, 15, 13, 35, 22, 0, 2, 5, 38, 23, 
+    28, 0, 1, 2, 5, 7, 0, 15, 13, 35, 29, 0, 2, 5, 38, 23, 
     0, 2, 30, 36, 30, 13, 0, 38, 27, 0, 2, 1, 3, 128, 0, 35, 
     7, 0, 2, 5, 38, 29, 0, 7, 1, 34
 };
@@ -108,7 +108,7 @@ agb::Behaviour* agb_make_with(agb::BehaviourCreate create, agb::Arena& arena, co
     return b;
 }
 void agb_scripts_init() {
-    agb::script::setTables(kScripts, 2, kNatives, 25);
+    agb::script::setTables(kScripts, 2, kNatives, 32);
     agb::script::setPersistentStore(agb_state.scriptStore.flags, 1, agb_state.scriptStore.vars, 3);
     agb::script::natives::setPaths(kPaths, 1);
     agb::dbg::setNames(kDebugFiles, kDebugMethods);

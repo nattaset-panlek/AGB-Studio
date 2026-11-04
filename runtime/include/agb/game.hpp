@@ -82,6 +82,7 @@ struct SceneDef {
     u16 musicVolume = 256;        // World Map inspector music Volume (0..256): the game's music volume for `music`
     const char* page = nullptr;   // a UI page opened when the scene has entered: a title screen (nullptr = none)
     bool pageIsHud = false;       // that page stays over the scene while it plays, and the game goes on (Scene › Hud)
+    const data::Picture* picture = nullptr;  // Modes 3, 4, 5: the picture the scene shows (nullptr = the backdrop colour)
 };
 
 // A prefab (Make Prefab, prefabs/<Name>.prefab): a const actor template in ROM that Scene.Spawn copies in any scene.
@@ -120,6 +121,8 @@ struct GameDef {
     const void* music;         // agb::audio::MusicInfo by module id: MusicMeta volume, loop start, fade (nullptr = none)
     u16 musicCount;
     const ui::PageSet* pages = nullptr;  // UI pages (ui/*.uipage), nullptr = none
+    const data::Picture* const* pictures = nullptr;  // Bitmap.Show by picture id, nullptr entries for images no script shows
+    u16 pictureCount = 0;
 };
 
 namespace game {
@@ -186,6 +189,7 @@ int cameraZone();
 void mode7(fixed x, fixed y, int angle, int height, int horizon);
 void stopMode7();
 render::MapLayerView* layerView(int index);
+const data::Picture* picture(int id);  // Bitmap.Show: a picture by id, nullptr when none
 int widthPx();
 int heightPx();
 // Staged load step names (Profiler "On scene load" and over-budget warnings).

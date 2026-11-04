@@ -88,6 +88,68 @@ public static class Camera
     public static void Shake(int amplitude, int frames) { }
 }
 
+/// <summary>Draws on the picture of a scene in a bitmap video mode: Mode 3 (240 x 160), Mode 4 (240 x 160, palette) or
+/// Mode 5 (160 x 128). A colour is <see cref="Rgb"/> in Modes 3 and 5 and a palette index in Mode 4. In Modes 4 and 5
+/// drawing goes to a hidden page, and <see cref="Flip"/> shows it. Drawing happens in VBlank, in order. In Modes 0, 1 and
+/// 2 these calls do nothing.</summary>
+[Cpp("agb::api::Bitmap")]
+public static class Bitmap
+{
+    /// <summary>Fills the whole page with a colour.</summary>
+    /// <param name="color">The colour.</param>
+    [Cpp("agb::api::Bitmap::Clear({0})")]
+    [ScriptOp("native:BitmapClear")]
+    public static void Clear(int color) { }
+
+    /// <summary>Sets one pixel. Up to 512 pixels a frame: draw larger areas with <see cref="FillRect"/>.</summary>
+    /// <param name="x">Left to right, from 0.</param>
+    /// <param name="y">Top to bottom, from 0.</param>
+    /// <param name="color">The colour.</param>
+    [Cpp("agb::api::Bitmap::SetPixel({0}, {1}, {2})")]
+    [ScriptOp("native:BitmapSetPixel")]
+    public static void SetPixel(int x, int y, int color) { }
+
+    /// <summary>Draws a filled rectangle, clipped to the picture.</summary>
+    /// <param name="x">Left edge.</param>
+    /// <param name="y">Top edge.</param>
+    /// <param name="width">Width in pixels.</param>
+    /// <param name="height">Height in pixels.</param>
+    /// <param name="color">The colour.</param>
+    [Cpp("agb::api::Bitmap::FillRect({0}, {1}, {2}, {3}, {4})")]
+    [ScriptOp("native:BitmapFillRect")]
+    public static void FillRect(int x, int y, int width, int height, int color) { }
+
+    /// <summary>Draws a picture from assets/images over the page: 240 x 160 in Modes 3 and 4, 160 x 128 in Mode 5. It takes
+    /// a few frames. In Mode 4 its colours replace the palette at once, so show it under a fade or use pictures that share
+    /// colours.</summary>
+    /// <param name="name">Image name without the extension, for example <c>"title"</c>.</param>
+    [Cpp("agb::api::Bitmap::Show({0})")]
+    [ScriptOp("native:BitmapShow")]
+    public static void Show([Asset(AssetKind.Picture)] string name) { }
+
+    /// <summary>Modes 4 and 5: shows the page just drawn, once everything drawn so far is on it. Drawing then goes to the
+    /// other page. Nothing happens in Mode 3, which has one page.</summary>
+    [Cpp("agb::api::Bitmap::Flip()")]
+    [ScriptOp("native:BitmapFlip")]
+    public static void Flip() { }
+
+    /// <summary>A colour for Modes 3 and 5, and for <see cref="SetPaletteColor"/>.</summary>
+    /// <param name="r">Red, 0 to 31.</param>
+    /// <param name="g">Green, 0 to 31.</param>
+    /// <param name="b">Blue, 0 to 31.</param>
+    /// <returns>The 15-bit colour.</returns>
+    [Cpp("agb::api::Bitmap::Rgb({0}, {1}, {2})")]
+    [ScriptOp("native:BitmapRgb")]
+    public static int Rgb(int r, int g, int b) => 0;
+
+    /// <summary>Mode 4: sets a colour of the palette. Index 0 is see-through: the backdrop shows there.</summary>
+    /// <param name="index">Palette index, 1 to 255.</param>
+    /// <param name="color">The colour, from <see cref="Rgb"/>.</param>
+    [Cpp("agb::api::Bitmap::SetPaletteColor({0}, {1})")]
+    [ScriptOp("native:BitmapSetPaletteColor")]
+    public static void SetPaletteColor(int index, int color) { }
+}
+
 /// <summary>Scenes: loading, pausing and finding actors.</summary>
 [Cpp("agb::api::Scene")]
 public static class Scene

@@ -6,7 +6,9 @@
 #include "agb/assert.hpp"
 #include "agb/behaviours.hpp"
 #include "agb/game.hpp"
+#include "agb/debug.hpp"
 #include "agb/input.hpp"
+#include "agb/render/bitmap.hpp"
 #include "agb/rng.hpp"
 #include "agb/script.hpp"
 #include "agb/text.hpp"
@@ -57,6 +59,20 @@ struct Camera {
     static void SetPosition(int x, int y) { scene::setCamera(x, y); }
     static void Follow(Actor* a) { scene::follow(a); }
     static void Shake(int amplitude, int frames) { scene::shake(static_cast<u8>(amplitude), static_cast<u16>(frames)); }
+};
+
+// Drawing in the bitmap video modes (Bitmap in C#). Colours are BGR555 in Modes 3 and 5, palette indices in Mode 4.
+struct Bitmap {
+    static void Clear(int color) { render::bitmap::clear(static_cast<u16>(color)); }
+    static void SetPixel(int x, int y, int color) { render::bitmap::setPixel(x, y, static_cast<u16>(color)); }
+    static void FillRect(int x, int y, int width, int height, int color) { render::bitmap::fill(x, y, width, height, static_cast<u16>(color)); }
+    static void Show(int picture) {
+        if (const data::Picture* p = scene::picture(picture)) render::bitmap::queuePicture(*p);
+        else debug::warnOnce(46, "Bitmap.Show: this picture was not built into the game. Check its name against assets/images.");
+    }
+    static void Flip() { render::bitmap::flip(); }
+    static int Rgb(int r, int g, int b) { return (r & 31) | ((g & 31) << 5) | ((b & 31) << 10); }
+    static void SetPaletteColor(int index, int color) { render::bitmap::setPaletteColor(index, static_cast<u16>(color)); }
 };
 
 struct Scene {

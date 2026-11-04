@@ -96,6 +96,7 @@ public static class GbaScreenRenderer
         public int Priority;
         public int ScrollX, ScrollY;
         public Func<int, int, (byte Index, int Bank)>? Sample;  // BG pixel (scrolled) -> palette index and bank
+        public Func<int, int, ushort?>? Direct;                 // bitmap modes 3 and 5: the screen pixel's colour, null outside the picture
     }
 
     sealed class PaletteBanks
@@ -152,7 +153,23 @@ public static class GbaScreenRenderer
         // load steps 2-3: map layers (tileset tiles and palettes in layer order, one BG config per layer)
         var layerViews = new List<(MapLayerData Layer, int Bg)>();
         var loaded = new Dictionary<object, int>();
-        if (map != null)
+        // Modes 3, 4 and 5: BG2 shows the scene's picture at priority 3 (render/bitmap.cpp) and no map layer or text loads.
+        var bitmap = scene.VideoMode >= 3;
+        if (bitmap && assets.Picture(scene.Picture, scene.VideoMode) is { } picture)
+        {
+            if (picture.Indexed is { } indexed)
+            {
+                Array.Copy(indexed.Palette, 0, bgPal.Colors, 1, indexed.Palette.Length);
+                bgs[2] = new Bg { Priority = 3, Sample = (x, y) => x is >= 0 and < 240 && y is >= 0 and < 160 ? (indexed.Indices[y * 240 + x], 0) : ((byte)0, 0) };
+            }
+            else
+            {
+                var bgr = picture.Bgr!;
+                // Mode 5: 160 x 128 from the top-left corner, no scaling; the backdrop shows around it, as on the hardware.
+                bgs[2] = new Bg { Priority = 3, Direct = (x, y) => x < picture.Width && y < picture.Height ? bgr[y * picture.Width + x] : null };
+            }
+        }
+        if (map != null && !bitmap)
         {
             var tileset = assets.Tileset(map.Tileset);
             for (var i = 0; i < map.Layers.Count && i < 4; i++)
@@ -203,7 +220,7 @@ public static class GbaScreenRenderer
                 var f = a.Animation.Length > 0 ? FrameAt(sheet, meta, a.Animation, tick) : 0;
                 if (!a.Hidden) sprites.Add((i, sheet, meta, bank < 0 ? 0 : bank, f));
             }
-            if (a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && labels.Count < MaxLabels && assets.Text.HasKey(a.Text) && assets.Text.Run(a.Text, LabelPreview(a)) is { } run)
+            if (!bitmap && a.Kind == ActorKind.TextLabel && a.Text.Length > 0 && labels.Count < MaxLabels && assets.Text.HasKey(a.Text) && assets.Text.Run(a.Text, LabelPreview(a)) is { } run)
             {
                 if (frame.TextLayer < 0)
                 {
@@ -256,6 +273,16 @@ public static class GbaScreenRenderer
                 for (var b = 0; b < 4; b++)
                 {
                     var bg = bgs[b];
+                    if (bg?.Direct != null)
+                    {
+                        if ((show & (ScreenLayers)(1 << b)) != 0 && bg.Priority < bestPrio && bg.Direct(x, y) is { } direct)
+                        {
+                            bestPrio = bg.Priority;
+                            src = (byte)b;
+                            color = direct;
+                        }
+                        continue;
+                    }
                     if (bg?.Sample == null || ((show & (ScreenLayers)(1 << b)) == 0 && b != frame.TextLayer) || bg.Priority >= bestPrio) continue;
                     var (idx, bank) = bg.Sample(bg.ScrollX + x, bg.ScrollY + y);
                     if (idx == 0) continue;

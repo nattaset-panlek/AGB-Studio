@@ -57,6 +57,74 @@ public sealed class VideoModeTests(EmulatorFixture emu)
         }
     }
 
+    // Modes 3, 4 and 5 of the render_bitmap ROM: pictures with queued rectangles and pixels, page flips, the hardware's
+    // Mode 5 size with the backdrop around it, and a white 16 x 16 sprite at (100, 60) over each.
+    static readonly string[] BitmapShots = ["bitmap3", "bitmap4", "bitmap4_hidden", "bitmap4_flipped", "bitmap5", "bitmap5_flipped"];
+
+    [Fact]
+    public void BitmapModesMatchReferenceImages()
+    {
+        var build = RuntimeTests.BuildAll(["render_bitmap"]);
+        Assert.True(build.Success, build.Log);
+        var (status, log, shots) = Run(RuntimeTests.RomPath("render_bitmap"));
+        Assert.True(status == TestStatus.Pass, string.Join('\n', log));
+        Assert.Equal(BitmapShots, shots.Keys);
+        var dir = Path.Combine(RuntimeTests.BuildDir, "bitmap");
+        Directory.CreateDirectory(dir);
+        var report = new List<string>();
+        foreach (var (name, frame) in shots)
+        {
+            var reference = new ushort[240 * 160];
+            for (var y = 0; y < 160; y++)
+                for (var x = 0; x < 240; x++) reference[y * 240 + x] = BitmapReference(name, x, y);
+            Png.WriteArgb(Path.Combine(dir, name + ".png"), frame, LibretroCore.Width, LibretroCore.Height);
+            Png.WriteArgb(Path.Combine(dir, name + "-reference.png"), reference.Select(ToArgb).ToArray(), LibretroCore.Width, LibretroCore.Height);
+            var wrong = 0;
+            string? first = null;
+            for (var i = 0; i < reference.Length; i++)
+            {
+                if (Close(frame[i], reference[i])) continue;
+                if (wrong++ == 0) first = $"({i % 240},{i / 240}) captured {frame[i] & 0xFFFFFF:X6}, reference {ToArgb(reference[i]) & 0xFFFFFF:X6}";
+            }
+            if (wrong > 0) report.Add($"{name}: {wrong} pixels differ, first at {first}");
+        }
+        Assert.True(report.Count == 0, string.Join('\n', report));
+    }
+
+    // ---- the content of runtime/tests/render_bitmap/main.cpp ---------------------------------------------------------
+    const ushort BitmapBackdrop = 0x4010;
+    static ushort BgrPixel(int x, int y) => (ushort)((x >> 3) | ((y >> 3) << 5) | (((x ^ y) >> 4 & 31) << 10));
+    static int IndexPixel(int x, int y) => x is >= 8 and < 24 && y is >= 8 and < 24 ? 0 : 1 + ((x >> 2) & 7) + ((y >> 2) & 7) * 8;
+    static ushort PaletteColor(int index) => (ushort)(((index & 7) * 4) | ((((index >> 3) & 7) * 4) << 5) | (20 << 10));
+
+    static ushort BitmapReference(string shot, int x, int y)
+    {
+        if (x is >= 100 and < 116 && y is >= 60 and < 76) return 0x7FFF;  // the sprite, in front in every picture
+        switch (shot)
+        {
+            case "bitmap3":
+                if (x is >= 10 and < 40 && y is >= 20 and < 25) return 0x001F;
+                if (y == 50 && x == 50) return 0x03E0;
+                if (y == 50 && x == 51) return 0x7C00;
+                return BgrPixel(x, y);
+            case "bitmap4_flipped":
+                if (x is >= 60 and < 91 && y is >= 40 and < 61) return 0x03FF;
+                if (x == 120 && y == 100) return 0x03FF;
+                goto case "bitmap4";
+            case "bitmap4":
+            case "bitmap4_hidden":
+                var index = IndexPixel(x, y);
+                return index == 0 ? BitmapBackdrop : PaletteColor(index);
+            case "bitmap5_flipped":
+                if (x is >= 150 and < 160 && y is >= 120 and < 128) return 0x001F;
+                goto case "bitmap5";
+            case "bitmap5":
+                return x < 160 && y < 128 ? BgrPixel(x, y) : BitmapBackdrop;
+            default:
+                throw new ArgumentException(shot);
+        }
+    }
+
     // Runs the ROM and keeps the frame after each "shot <name>" line (the ROM holds the picture for four frames).
     (TestStatus, List<string>, Dictionary<string, uint[]>) Run(string rom)
     {

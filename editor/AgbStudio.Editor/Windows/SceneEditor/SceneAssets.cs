@@ -16,6 +16,8 @@ public sealed class SceneAssets(GameProject project)
     readonly Dictionary<string, Entry<ConvertedSprite?>> _sprites = new(StringComparer.Ordinal);
     readonly Dictionary<string, Entry<ConvertedTileset?>> _tilesets = new(StringComparer.Ordinal);
     readonly Dictionary<string, Entry<ImageLayer?>> _images = new(StringComparer.Ordinal);
+    readonly Dictionary<(string, bool), Entry<BitmapPicture?>> _pictures = new();
+    readonly Dictionary<string, Entry<ColorImage?>> _pictureImages = new(StringComparer.Ordinal);
 
     /// <summary>Files that could not be converted (not a PNG, unreadable), with the reason.</summary>
     public Dictionary<string, string> Errors { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -91,6 +93,36 @@ public sealed class SceneAssets(GameProject project)
             return new ImageLayer(t, cells, w, h);
         });
         _images[name] = new(stamp, img);
+        return img;
+    }
+
+    /// <summary>The pixels of a picture in a bitmap mode, from the build's conversion: 15-bit colours in Modes 3 and 5; in
+    /// Mode 4 palette indices and the colours of indices 1, 2, ...</summary>
+    public sealed record BitmapPicture(int Width, int Height, ushort[]? Bgr, IndexedPicture? Indexed);
+
+    /// <summary>An image's size in pixels, or null when it is not in assets/images.</summary>
+    public (int Width, int Height)? PictureSize(string name) => PictureImage(name) is { } img ? (img.Width, img.Height) : null;
+
+    /// <summary>A picture as the mode shows it, or null: no such image, or another size than the mode shows (the build
+    /// stops with an error then, and the editor shows the backdrop).</summary>
+    public BitmapPicture? Picture(string name, int mode)
+    {
+        if (PictureImage(name) is not { } img || (img.Width, img.Height) != BitmapConverter.PictureSize(mode)) return null;
+        var key = (name, mode == 4);
+        var stamp = Stamp(ImagePath(name)!);
+        if (_pictures.TryGetValue(key, out var e) && e.Stamp == stamp) return e.Value;
+        var picture = mode == 4 ? new BitmapPicture(img.Width, img.Height, null, BitmapConverter.ToIndexed(img)) : new BitmapPicture(img.Width, img.Height, BitmapConverter.ToBgr(img), null);
+        _pictures[key] = new(stamp, picture);
+        return picture;
+    }
+
+    ColorImage? PictureImage(string name)
+    {
+        if (name.Length == 0 || ImagePath(name) is not { } path) return null;
+        var stamp = Stamp(path);
+        if (_pictureImages.TryGetValue(name, out var e) && e.Stamp == stamp) return e.Value;
+        var img = Safe(path, () => ColorImage.Load(path));
+        _pictureImages[name] = new(stamp, img);
         return img;
     }
 

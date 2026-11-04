@@ -108,7 +108,7 @@ public static class WindowCatalog
         D("T-S01", "Project Settings · General", 900, 620), D("T-S02", "Project Settings · Save data", 900, 620),
         D("T-S03", "Project Settings · Build", 900, 620), D("T-S04", "Project Settings · Scripting", 900, 620),
         D("T-S05", "Project Settings · Localization", 900, 620), D("T-S06", "Preferences · Appearance", 900, 620),
-        D("T-S07", "Preferences · Editor", 900, 620), D("T-S08", "Preferences · Paths", 900, 620), D("T-S09", "Preferences · Shortcuts", 900, 620),
+        D("T-S07", "Preferences · Editor", 900, 620), D("T-S08", "Preferences · Paths", 900, 620), D("T-S09", "Preferences · Shortcuts", 900, 620), D("T-S10", "Preferences · MCP", 900, 620),
         O("T-O01", "Scene Switcher", 320, 356), O("T-O02", "Video Mode", 380, 400), O("T-O03", "Grid & Snap", 300, 328),
         O("T-O04", "Asset Picker", 440, 368), O("T-O05", "Component Picker", 400, 464), O("T-O06", "Budget Details", 420, 398),
         O("T-O07", "Command Palette", 640, 325), O("T-O08", "Add Node", 380, 269), O("T-O09", "Link Settings", 360, 330),

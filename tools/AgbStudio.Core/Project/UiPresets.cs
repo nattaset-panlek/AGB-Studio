@@ -4,6 +4,9 @@ namespace AgbStudio.Core.Project;
 /// Editor copies one into ui/ to change it, and a page of the same name in the project is used instead.</summary>
 public static class UiPresets
 {
+    /// <summary>Dark text for menu items drawn straight over a scene.</summary>
+    public const string MenuInk = "#1C2430";
+
     public static readonly IReadOnlyList<string> Names = ["TextInput", "Confirm", "Message", "Menu", "List", "Title", "Pause", "Options", "Choice", "Hud"];
 
     /// <summary>Makes a ready-made page. <paramref name="firstScene"/>: where a Title page's Start goes. A word uses its string

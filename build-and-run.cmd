@@ -4,9 +4,11 @@ rem   build-and-run.cmd          build the editor and start it
 rem   build-and-run.cmd package  also write the portable zip to build\package
 setlocal
 cd /d "%~dp0"
-if not exist "D:\agb-studio-tmp" mkdir "D:\agb-studio-tmp"
-set "TEMP=D:\agb-studio-tmp"
-set "TMP=D:\agb-studio-tmp"
+if exist "D:\" (
+  if not exist "D:\agb-studio-tmp" mkdir "D:\agb-studio-tmp"
+  set "TEMP=D:\agb-studio-tmp"
+  set "TMP=D:\agb-studio-tmp"
+)
 set "MSBUILDDISABLENODEREUSE=1"
 
 echo [1/2] Building AGB Studio (Release)...

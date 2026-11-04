@@ -63,6 +63,7 @@ public sealed class AssetActions
             {
                 var scene = GameProject.Load<SceneFile>(Path.Combine(p.ScenesDir, name + ".scene"));
                 used.AddRange(scene.Actors.Select(a => a.Sprite));
+                used.Add(scene.Picture);
                 if (_m.Assets?.Map(scene) is { } map) used.AddRange(map.Layers.Select(l => l.Image).Prepend(map.Tileset));
             }
         int Rank(string f) => used.IndexOf(GameProject.AssetName(f)) is var i and >= 0 ? i : int.MaxValue;
@@ -116,7 +117,7 @@ public sealed class AssetActions
             ".dlg" => "T-P16",
             ".graph" => "T-P17",
             ".cs" => "T-P04",
-            ".wav" or ".mod" or ".xm" or ".sfx" => "T-P15",
+            ".wav" or ".mod" or ".xm" or ".s3m" or ".it" or ".sfx" => "T-P15",
             _ => c == AssetCategory.Tilesets ? "T-P03" : "T-P08",
         };
     }
@@ -293,6 +294,7 @@ public sealed class AssetActions
             foreach (var actor in scene.Actors.Where(x => x.Sprite == old && a.Category == AssetCategory.Sprites)) { actor.Sprite = newStem; changed = true; }
             if (a.Category == AssetCategory.Audio && scene.Music.Track == old) { scene.Music.Track = newStem; changed = true; }
             if (a.Category == AssetCategory.Maps && Path.GetFileNameWithoutExtension(scene.Map) == old) { scene.Map = newStem; changed = true; }
+            if (a.Category == AssetCategory.Tilesets && scene.Picture == old) { scene.Picture = newStem; changed = true; }
             if (changed) yield return (f, System.Text.Json.JsonSerializer.Serialize(scene, GameProject.Json) + "\n");
         }
         if (a.Category != AssetCategory.Tilesets) yield break;
@@ -403,6 +405,7 @@ public sealed class AssetActions
             }
             if (a.Category == AssetCategory.Audio && scene.Music.Track == a.Stem) list.Add($"{name} › music");
             if (a.Category == AssetCategory.Maps && Path.GetFileNameWithoutExtension(scene.Map) == a.Stem) list.Add($"{name} › map");
+            if (a.Category == AssetCategory.Tilesets && scene.Picture == a.Stem) list.Add($"{name} › picture");
         }
         if (a.Category == AssetCategory.Tilesets)
             foreach (var f in p.MapFiles())

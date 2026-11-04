@@ -43,7 +43,7 @@ public sealed class NewSceneDialog : FigmaDialog
         CopyBackgrounds.IsChecked = _m.Map?.Layers.Any(l => l.Type == LayerType.Image) == true;
         CopyBackgrounds.IsEnabled = CopyBackgrounds.IsChecked == true;
         var group = "video-mode-" + Guid.NewGuid().ToString("N");
-        _modes = Enumerable.Range(0, 4).Select(i => new Segment { Content = $"Mode {i}", GroupName = group, IsChecked = i == (_m.Scene?.VideoMode ?? 0), Name = "Mode_" + i }).ToArray();
+        _modes = Enumerable.Range(0, VideoModePopover.Modes.Count).Select(i => new Segment { Content = $"Mode {i}", GroupName = group, IsChecked = i == (_m.Scene?.VideoMode ?? 0), Name = "Mode_" + i }).ToArray();
         var modes = UI.Frame(UI.Row(2, _modes), "bg/base", "border/default", null, new Thickness(2), 7);
         modes.HorizontalAlignment = HorizontalAlignment.Left;
         var sizeRow = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,10,*") };

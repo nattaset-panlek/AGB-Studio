@@ -122,7 +122,8 @@ public sealed class SceneSwitcher : ScenePopover
     }
 }
 
-/// <summary>Video Mode (T-O02, 380 x 400; #12 video mode chip): Mode 0-3 of the open scene, alpha blending and mosaic.</summary>
+/// <summary>Video Mode (T-O02, #12 video mode chip): Mode 0-5 of the open scene, its picture in the bitmap modes, alpha
+/// blending and mosaic. Modes 4 and 5 and the picture go beyond the Figma frame (380 x 400; scope log 2026-11-05), so the/// cards are 40 px, not 54 px, the two switches share a row, and the popover stays under the editor's smallest window height with all six.</summary>
 [EditorWindow("T-O02")]
 public sealed class VideoModePopover : ScenePopover
 {
@@ -130,12 +131,18 @@ public sealed class VideoModePopover : ScenePopover
     [
         ("Mode 0", "4 tile layers · scroll · best for platformers & RPGs"), ("Mode 1", "2 tile + 1 rotate/scale layer"),
         ("Mode 2", "2 rotate/scale layers · Mode-7 racing"), ("Mode 3", "1 bitmap 240×160 · 16-bit colour"),
+        ("Mode 4", "2 bitmap pages 240×160 · 255 colours"), ("Mode 5", "2 bitmap pages 160×128 · 16-bit colour"),
     ];
 
+    /// <summary>The choice that means the scene shows no picture, only its backdrop colour.</summary>
+    public const string NoPicture = "None";
+
     readonly SceneEditorModel _m;
-    readonly StackPanel _cards = new() { Spacing = 14, Name = "ModeCards" };
+    readonly StackPanel _cards = new() { Spacing = 6, Name = "ModeCards" };
     public CheckBox Alpha { get; } = new() { Content = "Alpha blending (fog, shadows)", Name = "AlphaBlending" };
     public CheckBox Mosaic { get; } = new() { Content = "Mosaic effect", Name = "Mosaic" };
+    /// <summary>The image a bitmap mode shows; only there in Modes 3, 4 and 5.</summary>
+    public SelectField PictureField { get; } = new() { Label = "Picture", Name = "ScenePicture" };
 
     public VideoModePopover(WindowContext ctx) : this(ctx.Services) { }
 
@@ -143,15 +150,42 @@ public sealed class VideoModePopover : ScenePopover
     {
         _m = SceneEditorModel.Of(s);
         Name = "VideoModePopover";
-        var content = UI.Column(14, _cards, UI.Column(14, Alpha, Mosaic));
+        var content = UI.Column(14, _cards, PictureField, UI.Row(16, Alpha, Mosaic));
         content.Margin = new Thickness(20, 20, 20, 14);
         Build("Video Mode", content, 380);
+        SelectFieldMenu.Hook(PictureField);
+        PictureField.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == SelectField.SelectedProperty && !_filling && PictureField.Selected is { } v) ChoosePicture(v == NoPicture ? "" : v);
+        };
         Alpha.IsCheckedChanged += (_, _) => { if (_m.Scene != null && Alpha.IsChecked != _m.Scene.AlphaBlending) _m.EditScene("Alpha Blending", (sc, _) => sc.AlphaBlending = Alpha.IsChecked == true); };
         Mosaic.IsCheckedChanged += (_, _) => { if (_m.Scene != null && Mosaic.IsChecked != _m.Scene.Mosaic) _m.EditScene("Mosaic", (sc, _) => sc.Mosaic = Mosaic.IsChecked == true); };
         Fill();
     }
 
+    bool _filling;
+
     public int Selected => _m.Scene?.VideoMode ?? 0;
+
+    /// <summary>The scene shows this image from assets/images ("" = none).</summary>
+    public void ChoosePicture(string name)
+    {
+        if (_m.Scene == null || name == _m.Scene.Picture) return;
+        _m.EditScene("Change Picture", (sc, _) => sc.Picture = name);
+        Fill();
+    }
+
+    /// <summary>What is wrong with the picture in the scene's mode, as the build says it ("" = nothing).</summary>
+    public string PictureProblem
+    {
+        get
+        {
+            if (_m.Scene is not { } sc || sc.Picture.Length == 0 || !AgbStudio.Build.Graphics.BitmapConverter.IsBitmapMode(sc.VideoMode)) return "";
+            if (_m.Assets?.PictureSize(sc.Picture) is not { } have) return $"{sc.Picture} is not in assets/images. Import it, or pick another picture.";
+            var want = AgbStudio.Build.Graphics.BitmapConverter.PictureSize(sc.VideoMode);
+            return have == want ? "" : $"{sc.Picture} is {have.Width}×{have.Height}; Mode {sc.VideoMode} shows {want.Width}×{want.Height}. Resize it, or pick another picture.";
+        }
+    }
 
     public void Choose(int mode)
     {
@@ -165,6 +199,16 @@ public sealed class VideoModePopover : ScenePopover
         _cards.Children.Clear();
         Alpha.IsChecked = _m.Scene?.AlphaBlending ?? false;
         Mosaic.IsChecked = _m.Scene?.Mosaic ?? false;
+        _filling = true;
+        var pictures = new List<string> { NoPicture };
+        if (_m.Project is { } project) pictures.AddRange(project.PictureNames());
+        var current = _m.Scene?.Picture ?? "";
+        if (current.Length > 0 && !pictures.Contains(current)) pictures.Add(current);
+        PictureField.Options = pictures;
+        PictureField.Selected = current.Length > 0 ? current : NoPicture;
+        PictureField.Help = PictureProblem;
+        PictureField.IsVisible = AgbStudio.Build.Graphics.BitmapConverter.IsBitmapMode(Selected);
+        _filling = false;
         for (var i = 0; i < Modes.Count; i++)
         {
             var sel = i == Selected;
@@ -175,7 +219,7 @@ public sealed class VideoModePopover : ScenePopover
             var row = UI.Row(10, icon, text);
             var card = new Button
             {
-                Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareButton"), Height = 54, Padding = new Thickness(13, 0),
+                Theme = (Avalonia.Styling.ControlTheme?)Application.Current?.FindResource("BareButton"), Height = 40, Padding = new Thickness(13, 0),
                 HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Center,
                 Content = row, Name = "Mode_" + i, CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
             };

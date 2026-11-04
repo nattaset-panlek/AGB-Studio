@@ -19,6 +19,14 @@ Choose the GBA video mode for this scene. Each mode has a different number of la
   - **Mode 1**: 2 tile layers and 1 rotate / scale layer.
   - **Mode 2**: 2 rotate / scale layers, for Mode-7 style racing.
   - **Mode 3**: 1 bitmap of 240×160 pixels in 16-bit colour.
+  - **Mode 4**: 2 bitmap pages of 240×160 pixels with a palette of 255 colours.
+  - **Mode 5**: 2 bitmap pages of 160×128 pixels in 16-bit colour, in the top-left corner of the screen; the backdrop
+    colour shows around it.
+- **Picture** (Modes 3, 4 and 5): the image from `assets/images` the scene shows; 240×160 in Modes 3 and 4, 160×128 in
+  Mode 5. It says when the image is another size. In Mode 4 an image with more than 255 colours is reduced when the game
+  is built, and the build warns about it; transparent pixels show the backdrop there, and are black in Modes 3 and 5. The
+  Scene Editor and the World Map show the picture. A scene in these modes shows no map layers, text or menus: scripts draw
+  on the picture with `Bitmap`, and the map's collision still works.
 - **Alpha blending (fog, shadows)**: turns see-through blending on or off for this scene. In the game, the map layers
   in front of the collision layer (fog, clouds, haze) are drawn half see-through over everything behind them, and
   semi-transparent sprites (shadows) blend over the layers. The collision layer and the layers behind it stay solid, and

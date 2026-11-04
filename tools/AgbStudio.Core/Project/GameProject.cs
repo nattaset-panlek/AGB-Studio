@@ -119,7 +119,10 @@ public sealed class GameProject
     public IEnumerable<string> SpriteFiles() => Images(Path.Combine(AssetsDir, "sprites"));
     public IEnumerable<string> TilesetFiles() => Images(Path.Combine(AssetsDir, "tilesets"));
     public IEnumerable<string> ImageFiles() => Images(Path.Combine(AssetsDir, "images"));
-    public IEnumerable<string> MusicFiles() => Files(Path.Combine(AssetsDir, "audio", "music"), "*.*").Where(f => f.EndsWith(".mod") || f.EndsWith(".xm"));
+    /// <summary>The images by name in a fixed order: a picture's id in Bitmap.Show is its place here.</summary>
+    public IReadOnlyList<string> PictureNames() => ImageFiles().Select(AssetName).Distinct(StringComparer.Ordinal).OrderBy(n => n, StringComparer.Ordinal).ToList();
+    public IEnumerable<string> MusicFiles() => Files(Path.Combine(AssetsDir, "audio", "music"), "*.*").Where(f => MusicExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+    public static readonly string[] MusicExtensions = [".mod", ".xm", ".s3m", ".it"];
     public IEnumerable<string> SoundFiles() => Files(Path.Combine(AssetsDir, "audio", "sfx"), "*.wav");
     public IEnumerable<string> StringTables() => Files(TextDir, "strings.*.json").Where(f => !f.EndsWith("strings.meta.json"));
 

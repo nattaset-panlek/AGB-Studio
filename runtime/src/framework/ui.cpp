@@ -670,6 +670,8 @@ bool openPausePage();
 
 void openPause() {
     if (!g_kit) return;
+    // The pause menu is a text layer, which Modes 3, 4 and 5 do not have: an unseen menu would look like a frozen game.
+    if (render::bg::videoMode() >= 3) return;
     if (openPausePage()) return;  // a page named Pause is this game's pause menu, made in the UI Editor
     game::push(new (g_pauseStorage) PauseScreen());
 }
@@ -2053,6 +2055,10 @@ bool openHudPage(const char* name) {
 }
 
 bool openPage(int index, int data) {
+    if (render::bg::videoMode() >= 3) {
+        debug::warnOnce(45, "this scene uses a bitmap video mode (3, 4 or 5), which has no tile layer for UI pages, so the page is not opened. Use Mode 0, 1 or 2 for scenes with UI pages.");
+        return false;
+    }
     if (!g_pages || index < 0 || index >= g_pages->count) {
         debug::warnOnce(23, "UI.Open: there is no such UI page. Check the name against the pages in the project's ui folder.");
         return false;

@@ -9,7 +9,9 @@ namespace agb::commit {
 namespace {
 // One queued write of `rows` rows, `dstStride` bytes apart in VRAM: a copy reads each row from the caller's memory, a
 // fill writes `value` to every halfword, a sequence writes value, value + 1 ... across the rows.
-enum class Kind : u8 { Copy, Fill, Sequence };
+// bytes writes one byte per row (read-modify-write), pixels applies `rows` entries of g_pixels, page sets DISPCNT bit 4.
+// romRows copies like copy, from ROM, whose slower reads cost half again as much of the frame's budget.
+enum class Kind : u8 { Copy, Fill, Sequence, Bytes, Pixels, Page, RomRows };
 struct Write {
     u8* dst;
     const u8* src;
@@ -29,6 +31,13 @@ u8 g_bgRefDirty = 0;
 bool g_oamDirty = false, g_palDirty = false;
 // Read once per entry in VBlank: EWRAM is fast enough, and IWRAM is kept for the stack and hot data (G-HW.04).
 AGB_EWRAM_BSS Write g_queue[kDmaQueueSize];
+struct Pixel {
+    u16* dst;
+    u16 value, mask;
+};
+static_assert(sizeof(Pixel) * kPixelQueueSize == kPixelQueueBytes);
+AGB_EWRAM_BSS Pixel* g_pixels;  // lent by the bitmap scene (setPixelQueue)
+AGB_EWRAM_BSS int g_pixelEnd;   // next free entry; back to 0 whenever the queue runs empty
 int g_queueLen = 0;
 u32 g_queueBytes = 0, g_budget = kDefaultDmaBudget, g_deferred = 0;
 bool g_staged = false;
@@ -60,6 +69,7 @@ void dmaFill(void* dst, u16 value, u32 bytes) {
 void writeRow(Write& w) {
     switch (w.kind) {
         case Kind::Copy:
+        case Kind::RomRows:
             dmaCopy(w.dst, w.src, w.rowBytes);
             w.src += w.rowBytes;
             break;
@@ -71,10 +81,29 @@ void writeRow(Write& w) {
             for (u32 i = 0; i < w.rowBytes / 2; ++i) d[i] = w.value++;
             break;
         }
+        case Kind::Bytes: {
+            volatile u16* h = reinterpret_cast<volatile u16*>(reinterpret_cast<u32>(w.dst) & ~1u);
+            *h = (reinterpret_cast<u32>(w.dst) & 1) ? static_cast<u16>((*h & 0x00FF) | (w.value << 8)) : static_cast<u16>((*h & 0xFF00) | w.value);
+            break;
+        }
+        case Kind::Pixels: {
+            const Pixel& p = *reinterpret_cast<const Pixel*>(w.src);
+            volatile u16* d = p.dst;
+            *d = p.mask == 0xFFFF ? p.value : static_cast<u16>((*d & ~p.mask) | p.value);
+            w.src += sizeof(Pixel);
+            break;
+        }
+        case Kind::Page:
+            g_regs[DispCnt] = static_cast<u16>((g_regs[DispCnt] & ~DCNT_PAGE) | w.value);
+            REG_DISPCNT = g_regs[DispCnt];
+            break;
     }
     w.dst += w.dstStride;
     --w.rows;
 }
+
+// What a row takes of the frame's budget: past it, the writes would run out of VBlank and show (tearing, a late flip).
+u32 rowCost(const Write& w) { return w.kind == Kind::RomRows ? w.rowBytes + w.rowBytes / 2 : w.rowBytes; }
 
 void deferred() {
     ++g_deferred;
@@ -113,6 +142,7 @@ void init() {
     g_regs[Bg2Pa] = g_regs[Bg2Pd] = g_regs[Bg3Pa] = g_regs[Bg3Pd] = 0x100;
     g_regDirty = (1u << RegCount) - 1;
     g_oamDirty = g_palDirty = true;
+    g_pixelEnd = 0;
     g_queueLen = 0;
     g_queueBytes = 0;
 }
@@ -147,9 +177,10 @@ void flush() {
     int done = 0;
     for (; done < g_queueLen; ++done) {
         Write& w = g_queue[done];
-        while (w.rows && (w.rowBytes <= left || !any)) {
+        const u32 cost = rowCost(w);
+        while (w.rows && (cost <= left || !any)) {
             writeRow(w);
-            left = w.rowBytes < left ? left - w.rowBytes : 0;
+            left = cost < left ? left - cost : 0;
             any = true;
         }
         if (w.rows) break;
@@ -157,6 +188,7 @@ void flush() {
     if (done == g_queueLen) {
         g_queueLen = 0;
         g_queueBytes = 0;
+        g_pixelEnd = 0;
         return;
     }
     g_queueBytes = 0;
@@ -223,6 +255,48 @@ bool queueFill(void* dst, u16 value, u32 rowBytes, u32 rows, u32 dstStride) {
 bool queueSequence(void* dst, u16 value, u32 rowEntries, u32 rows, u32 dstStride) {
     if (!rows || !rowEntries) return true;
     return push({static_cast<u8*>(dst), nullptr, rowEntries * 2, static_cast<u16>(rows), static_cast<u16>(dstStride), value, Kind::Sequence});
+}
+
+bool queueCopyRows(void* dst, const void* src, u32 rowBytes, u32 rows, u32 dstStride) {
+    if (!rows || !rowBytes) return true;
+    return push({static_cast<u8*>(dst), static_cast<const u8*>(src), rowBytes, static_cast<u16>(rows), static_cast<u16>(dstStride), 0, Kind::RomRows});
+}
+
+bool queueBytes(void* dst, u8 value, u32 rows, u32 dstStride) {
+    if (!rows) return true;
+    return push({static_cast<u8*>(dst), nullptr, 2, static_cast<u16>(rows), static_cast<u16>(dstStride), value, Kind::Bytes});
+}
+
+void setPixelQueue(void* memory) {
+    g_pixels = static_cast<Pixel*>(memory);
+    g_pixelEnd = 0;
+}
+
+bool queuePixel(u16* dst, u16 value, u16 mask) {
+    if (!g_pixels || g_pixelEnd >= kPixelQueueSize) {
+        debug::warnOnce(41, "more than 512 pixels were set in one frame, so the rest were dropped. Set fewer pixels per frame, or draw rectangles.");
+        return false;
+    }
+    // The newest batch grows while nothing else was queued after it (its entries are next to each other).
+    if (g_queueLen > 0 && g_queue[g_queueLen - 1].kind == Kind::Pixels) {
+        ++g_queue[g_queueLen - 1].rows;
+        g_queueBytes += kPixelBudgetBytes;
+    } else if (!push({nullptr, reinterpret_cast<const u8*>(&g_pixels[g_pixelEnd]), kPixelBudgetBytes, 1, 0, 0, Kind::Pixels})) {
+        return false;
+    }
+    g_pixels[g_pixelEnd++] = {dst, value, mask};
+    return true;
+}
+
+bool queuePage(int page) {
+    return push({nullptr, nullptr, 0, 1, 0, static_cast<u16>(page ? DCNT_PAGE : 0), Kind::Page});
+}
+
+void dropQueued() {
+    g_queueLen = 0;
+    g_queueBytes = 0;
+    g_pixels = nullptr;
+    g_pixelEnd = 0;
 }
 
 void setDmaBudget(u32 bytes) { g_budget = bytes; }

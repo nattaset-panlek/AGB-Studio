@@ -128,7 +128,7 @@ public sealed class ViewportPanel : Panel
         if (_videoChip != null && _m.Scene != null) _videoChip.Content = VideoModeText(_m.Scene.VideoMode);
     }
 
-    public static string VideoModeText(int mode) => $"GBA · Mode {mode} · 240×160";
+    public static string VideoModeText(int mode) => mode == 5 ? "GBA · Mode 5 · 160×128" : $"GBA · Mode {mode} · 240×160";
 }
 
 /// <summary>The GBA screen of the viewport: game pixels scaled without smoothing, grid, selection and picking.</summary>

@@ -57,6 +57,8 @@ public sealed class ScriptOutput
     public List<string> IncludeDirs { get; } = new();
     public List<Diagnostic> Diagnostics { get; } = new();
     public int ScriptCount { get; set; }
+    // Images the scripts name in Bitmap.Show: the build puts them in ROM.
+    public List<string> Pictures { get; } = new();
     // Script class name -> C++ expression creating it with field overrides: (arena, fields) => code
     public Func<string, IReadOnlyDictionary<string, string>, string?> FactoryCall { get; set; } = (_, _) => null;
     public string RegistryHeader { get; set; } = "";
@@ -740,6 +742,7 @@ public sealed partial class GameBuilder
         var scenes = _p.SceneFiles().Select(f => (File: f, Scene: GameProject.Load<SceneFile>(f))).ToList();
         var names = scenes.Select(s => s.Scene.Name.Length > 0 ? s.Scene.Name : GameProject.AssetName(s.File)).ToList();
         _maps.Clear();
+        GeneratePictures(scenes);
         foreach (var (file, scene) in scenes) GenerateScene(file, scene, names);
         GeneratePrefabs();
         GenerateUiPages(names);
@@ -775,7 +778,11 @@ public sealed partial class GameBuilder
         var tiles = 0L;
         var banks = 0;
         var mapPath = Path.Combine(_p.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
-        if (scene.Map.Length > 0 && File.Exists(mapPath))
+        // Modes 3-5 load no layers or text: the picture's frame buffers take that memory (and more than BG VRAM's 64 KB of
+        // tile modes, which the sprites' half of the OBJ tiles pays for below).
+        var bitmap = scene.VideoMode >= 3;
+        if (bitmap) WarnAboutBitmapMode(file, scene, mapPath);
+        else if (scene.Map.Length > 0 && File.Exists(mapPath))
         {
             // The same numbers as the assets' own (report.json assets): each layer's map, the tileset's tiles once,
             // each image layer's tiles.
@@ -799,12 +806,12 @@ public sealed partial class GameBuilder
                 }
             }
         }
-        var text = TextLayerBytes(file, scene);
-        tiles += 2048 + text;  // the text layer's map, its blank tile and the tiles of its boxes
-        if (tiles > BgVramBytes)
+        var text = bitmap ? 0 : TextLayerBytes(file, scene);
+        if (!bitmap) tiles += 2048 + text;  // the text layer's map, its blank tile and the tiles of its boxes
+        if (!bitmap && tiles > BgVramBytes)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {tiles / 1024} KB of background VRAM; the GBA has 64 KB. " +
                 "Use fewer layers, a smaller tileset, or image layers with more repeated tiles."));
-        else if (tiles + _largestPageBytes > BgVramBytes)
+        else if (!bitmap && tiles + _largestPageBytes > BgVramBytes)
             Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} leaves too little background VRAM for the largest UI page ({_largestPageBytes / 1024} KB), so that page won't open in this scene. Make the page smaller, or use a smaller tileset."));
         if (banks > SceneBgBanks)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs {banks} background palettes; {SceneBgBanks} are free " +
@@ -820,7 +827,6 @@ public sealed partial class GameBuilder
             obj += Math.Min(g.Count(), Math.Max(1, s.FrameCount)) * s.TilesPerFrame * 32L;
             palettes.Add(_paletteOwner.GetValueOrDefault(g.Key, g.Key));
         }
-        var bitmap = scene.VideoMode >= 3;
         var objCap = bitmap ? ObjVramBitmapBytes : ObjVramBytes;
         if (obj > objCap)
             Add(new Diagnostic(Severity.Error, file, 0, 0, "", $"Scene {scene.Name} needs up to {(obj + 1023) / 1024} KB of OBJ VRAM for the sprite frames " +
@@ -1035,6 +1041,9 @@ public sealed partial class GameBuilder
             externs.Append($"extern const agb::data::MapLayer {map.Symbol}[];\n");
         }
 
+        var picture = PictureSymbol(scene);
+        if (picture != null) externs.Append($"extern const agb::data::Picture {picture};\n");
+
         // Actors and their behaviours
         var actorNames = scene.Actors.Select(a => a.Name).ToList();
         var actors = new StringBuilder();
@@ -1081,7 +1090,7 @@ public sealed partial class GameBuilder
         var hooks = ScriptsCompiled ? $"agb_scene_{id}_onLoad, agb_scene_{id}_onEnter, agb_scene_{id}_onExit" : "nullptr, nullptr, nullptr";
         sb.Append($"    {hooks}, {backdrop}, {(scene.AlphaBlending ? "true" : "false")}, {(scene.Mosaic ? "true" : "false")},\n");
         // World Map inspector music Volume: the game's music volume while the scene's own track plays (0..256).
-        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}, {SceneMusicVolume(scene)}{(scene.Page.Length > 0 ? ", " + Cpp.Str(scene.Page) : scene.Hud.Length > 0 ? ", " + Cpp.Str(scene.Hud) + ", true" : "")}}};\n");
+        sb.Append($"    {(scene.Menu != null ? $"&agbasset_scene_{id}_menu" : "nullptr")}, {SceneMusicVolume(scene)}{(scene.Page.Length > 0 ? ", " + Cpp.Str(scene.Page) + (picture != null ? ", false" : "") : scene.Hud.Length > 0 ? ", " + Cpp.Str(scene.Hud) + ", true" : picture != null ? ", nullptr, false" : "")}{(picture != null ? ", &" + picture : "")}}};\n");
         foreach (var opened in new[] { scene.Page, scene.Hud })
             if (opened.Length > 0 && !File.Exists(Path.Combine(_p.UiDir, opened + ".uipage")) && !UiPresets.Names.Contains(opened))
                 Add(new Diagnostic(Severity.Warning, file, 0, 0, "", $"Scene {scene.Name} opens the UI page '{opened}', which is not in the ui folder. Make it in the UI Editor, or pick another page."));
@@ -1374,6 +1383,7 @@ public sealed partial class GameBuilder
         if (splash) sb.Append("extern const agb::ui::Splash agb_splash;\n");
         if (ui) sb.Append("extern const agb::ui::Kit agb_ui;\n");
         foreach (var lang in _languages) sb.Append($"extern const agb::text::Table agbtext_{Cpp.Ident(lang)};\n");
+        foreach (var symbol in _scriptPictureTable.Where(n => n.Length > 0).Distinct(StringComparer.Ordinal)) sb.Append($"extern const agb::data::Picture {symbol};\n");
         sb.Append("namespace {\n");
         // Save type ID string: emulators and flash carts detect the save chip from it.
         var saveId = s.Save.Type switch
@@ -1391,6 +1401,7 @@ public sealed partial class GameBuilder
         sb.Append("};\n");
         var actions = s.Input.Where(a => a.Button != "D-pad").ToList();
         Cpp.U16(sb, "const unsigned short kActionKeys", actions.Select(a => KeyMask(a.Button)));
+        if (_scriptPictureTable.Count > 0) sb.Append("const agb::data::Picture* const kPictures[] = {" + string.Join(", ", _scriptPictureTable.Select(n => n.Length > 0 ? "&" + n : "nullptr")) + "};\n");
         sb.Append("const void* const kText[] = {");
         sb.Append(_languages.Count == 0 ? "nullptr" : string.Join(", ", _languages.Select(l => $"&agbtext_{Cpp.Ident(l)}")));
         sb.Append("};\n}  // namespace\n");
@@ -1406,7 +1417,7 @@ public sealed partial class GameBuilder
         sb.Append($"{(_languages.Count > 0 ? "kText" : "nullptr")}, {_languages.Count}, 0,\n");
         var language = Math.Max(0, _languages.IndexOf(s.General.DefaultLanguage));
         sb.Append($"    {(splash ? "&agb_splash" : "nullptr")}, {(ui ? "&agb_ui" : "nullptr")}, {language}, {(s.Save.Autosave && s.Save.Type != SaveType.None ? "true" : "false")}, {(_dmgCount > 0 ? "agb_dmg_sfx" : "nullptr")}, {_dmgCount},\n");
-        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}, {(_musicIds.Count > 0 ? "agb_soundbank_music" : "nullptr")}, {_musicIds.Count}{(_hasPages ? ", &agb_pages" : "")}}};\n");
+        sb.Append($"    {(_prefabCount > 0 ? "agb_prefabs" : "nullptr")}, {_prefabCount}, {(_musicIds.Count > 0 ? "agb_soundbank_music" : "nullptr")}, {_musicIds.Count}{(_hasPages ? ", &agb_pages" : _scriptPictureTable.Count > 0 ? ", nullptr" : "")}{(_scriptPictureTable.Count > 0 ? $", kPictures, {_scriptPictureTable.Count}" : "")}}};\n");
         sb.Append("int main() {\n");
         if (saveId.Length > 0) sb.Append("    asm volatile(\"\" ::\"r\"(kSaveTypeId));\n");
         sb.Append("    agb::game::run(agb_game);\n}\n");

@@ -152,7 +152,10 @@ public static class Program
         {
             "mini" => AgbStudio.Build.Content.SampleProjects.CreatePlatformerMini(dir),
             "skyhopper" => AgbStudio.Build.Content.SkyHopper.Create(dir),
-            _ => throw new ArgumentException($"Unknown sample '{kind}'. Samples: mini, skyhopper."),
+            "cavequest" => AgbStudio.Build.Content.Samples.CaveQuest(dir),
+            "snowrun" => AgbStudio.Build.Content.Samples.SnowRun(dir),
+            "duskstory" => AgbStudio.Build.Content.Samples.DuskStory(dir),
+            _ => throw new ArgumentException($"Unknown sample '{kind}'. Samples: mini, skyhopper, cavequest, snowrun, duskstory."),
         };
         Console.WriteLine($"created {p.ProjectPath}");
         return 0;

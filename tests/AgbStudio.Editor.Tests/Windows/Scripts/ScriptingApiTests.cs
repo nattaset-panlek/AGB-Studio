@@ -21,7 +21,7 @@ public sealed class ScriptingApiTests : IDisposable
         _h.S.Commands.Execute("help.scriptingApi");
         Capture.Pump();
         var page = _h.Page<ScriptingApiPage>();
-        Assert.Equal(["Behaviour", "Actor", "Input", "Key", "Sound", "Music", "Scene", "Camera", "Save", "Text & Dialogue", "Items (Database)", "fixed (math)"], page.TreeLabels);
+        Assert.Equal(["Behaviour", "Actor", "Input", "Key", "Sound", "Music", "Scene", "Camera", "Bitmap", "Save", "Text & Dialogue", "Items (Database)", "fixed (math)"], page.TreeLabels);
         Assert.Equal("Scripting API", _h.Win.TitleBar.Document);
         // the table is generated from the reference assembly (ApiDocs): AxisX / AxisY share a row
         Assert.Equal(["Pressed(Key key)", "Held(Key key)", "Released(Key key)", "AxisX / AxisY", "AnyKey"], page.Rows.Select(r => r.Member));

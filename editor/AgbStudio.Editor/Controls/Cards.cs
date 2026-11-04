@@ -32,10 +32,13 @@ public class SceneCard : SelectableRow
     public static readonly StyledProperty<string?> NameTextProperty = AvaloniaProperty.Register<SceneCard, string?>(nameof(NameText));
     public static readonly StyledProperty<string?> MetaProperty = AvaloniaProperty.Register<SceneCard, string?>(nameof(Meta));
     public static readonly StyledProperty<string?> PreviewProperty = AvaloniaProperty.Register<SceneCard, string?>(nameof(Preview), "art/scene/day");
+    public static readonly StyledProperty<Avalonia.Media.IImage?> PreviewImageProperty = AvaloniaProperty.Register<SceneCard, Avalonia.Media.IImage?>(nameof(PreviewImage));
 
     public string? NameText { get => GetValue(NameTextProperty); set => SetValue(NameTextProperty, value); }
     public string? Meta { get => GetValue(MetaProperty); set => SetValue(MetaProperty, value); }
     public string? Preview { get => GetValue(PreviewProperty); set => SetValue(PreviewProperty, value); }
+    /// <summary>A picture of the real scene, drawn over <see cref="Preview"/> (World Map).</summary>
+    public Avalonia.Media.IImage? PreviewImage { get => GetValue(PreviewImageProperty); set => SetValue(PreviewImageProperty, value); }
 }
 
 /// <summary>Figma "Template Card": 252 px card with an art/genre/* preview, title and description; Default / Selected.</summary>

@@ -35,7 +35,14 @@ namespace agb::script::natives {
     X(SaveWrite, false, "slot: returns 1 when written")                                         \
     X(SaveRead, false, "slot: returns 1 when read")                                             \
     X(SaveCheckpoint, false, "remembers the scene and the player position, writes slot 0")   \
-    X(UiChoose, true, "wake on move (0 or 1): waits for the top UI page, returns the Data of the control chosen, -1 for B, -2 when the cursor moved")
+    X(UiChoose, true, "wake on move (0 or 1): waits for the top UI page, returns the Data of the control chosen, -1 for B, -2 when the cursor moved") \
+    X(BitmapClear, false, "color: fills the page being drawn")                                 \
+    X(BitmapSetPixel, false, "x, y, color")                                                     \
+    X(BitmapFillRect, false, "x, y, width, height, color")                                      \
+    X(BitmapShow, false, "picture id: draws a picture into the page being drawn")               \
+    X(BitmapFlip, false, "shows the page just drawn (Modes 4 and 5)")                           \
+    X(BitmapRgb, false, "r, g, b (0..31): returns the BGR555 colour")                           \
+    X(BitmapSetPaletteColor, false, "index (1..255), color: Mode 4 palette")
 
 #define AGB_NATIVE_DECLARE(name, waits, note) s32 name(Context& ctx, const s32* args, int argc);
 AGB_BUILTIN_NATIVES(AGB_NATIVE_DECLARE)

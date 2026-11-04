@@ -54,7 +54,7 @@ An upper layer calls only lower layers. User code (translated C# behaviours and 
 |---|---|
 | Platform | libtonc, maxmod (`libmm`), `bios.hpp` (LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet), `types.hpp` (`AGB_IWRAM_CODE`, `AGB_EWRAM_BSS`; `*.iwram.cpp` files are compiled as ARM into IWRAM) |
 | Core services | `system.hpp` (VBlank frame loop, interrupts, profiler), `commit.hpp` (OAM / palette / register shadows and the DMA queue with a per-frame byte budget, flushed in VBlank), `input.hpp`, `task.hpp` (16 tasks), `memory.hpp`, `rng.hpp` (xoshiro128**, one stream per purpose), `save.hpp`, `debug.hpp`, `assert.hpp`, `format.hpp`, `fixed.hpp` (24.8) |
-| Rendering and media | `render/bg.hpp` (video modes 0-3, char / screen block allocation), `render/map.hpp` (metatile streaming), `render/affine.hpp` (affine layers, Mode 7), `render/bitmap.hpp` (Mode 3 frame buffer), `render/sprite.hpp` (128 sprites, 32 affine matrices, shared frame cache), `render/palette.hpp` (fade, tint, cycle, flash), `render/text.hpp` (VWF text windows), `render/effects.hpp` (blending, mosaic, windows, scanline DMA, transitions), `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
+| Rendering and media | `render/bg.hpp` (video modes 0-5, char / screen block allocation), `render/map.hpp` (metatile streaming), `render/affine.hpp` (affine layers, Mode 7), `render/bitmap.hpp` (frame buffers of Modes 3, 4 and 5), `render/sprite.hpp` (128 sprites, 32 affine matrices, shared frame cache), `render/palette.hpp` (fade, tint, cycle, flash), `render/text.hpp` (VWF text windows), `render/effects.hpp` (blending, mosaic, windows, scanline DMA, transitions), `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
 | Game framework | `game.hpp` (screens, scenes, links, camera), `actor.hpp` (64 actors, 6 behaviours each), `behaviours.hpp`, `script.hpp` + `script_ops.def` + `natives.hpp` (Event Script VM), `bus.hpp`, `ui.hpp` (Menu / UI kit, D-23), `api.hpp` (the C++ side of the C# API), `probe.hpp` (C# breakpoints, D-21) |
 
 The lint (`tools/AgbStudio.Build/Lint.cs`) keeps two rules of these layers: runtime code writes video hardware only
@@ -63,9 +63,16 @@ through the commit queues (a short allow-list of modules may touch registers), a
 
 ### Video modes, affine layers and Mode 7
 
-`render::bg::setVideoMode` takes modes 0-3 (the Video Mode popover). Modes 0-2 draw tile layers; mode 3 only sets the
-display mode bits; `render/bitmap.hpp` draws the Mode 3 frame buffer (show a picture, fill, queue rows) and resets
-BG2's matrix to 1:1, and sprites use OBJ tiles 512 and up in that mode. A map layer of type `Affine` (Add Layer "Rotate / scale layer
+`render::bg::setVideoMode` takes modes 0-5 (the Video Mode popover). Modes 0-2 draw tile layers. Modes 3, 4 and 5 show a
+frame buffer on BG2 at priority 3, through `render/bitmap.hpp`: Mode 3 has one 240 x 160 page of BGR555, Mode 4 two 240 x 160 pages of
+palette indices at 0x06000000 and 0x0600A000 (index 0 is the backdrop, so a picture has 255 colours), Mode 5 two 160 x 128 pages of BGR555
+shown 1:1 at the top-left corner with the backdrop around them. `bitmap::begin` resets BG2's matrix, takes the whole background memory
+in the allocator and drops queued writes left from the last scene; sprites use OBJ tiles 512 and up. A scene in these modes
+shows `SceneDef::picture` (`data::Picture`, from `Scene.picture` via `Pipeline/GameBuilder.Pictures.cs` and `Graphics/BitmapConverter.cs`, which the
+Scene Editor's `GbaScreenRenderer` also uses) on both pages, loads no map layers (their collision still reads the ROM data) and no
+text layer, UI pages or pause menu, and gets a 40 KB DMA budget. Drawing goes through the commit queue, in order: `bitmap::fill`,
+`setPixel`, `clear`, `queuePicture`, and in Modes 4 and 5 it lands on the hidden page until `flip`. The C# API is `Bitmap` (`Facades.cs`, `api.hpp`,
+built-in natives for cutscenes); it is not a Logic Graph node. A map layer of type `Affine` (Add Layer "Rotate / scale layer
 (Mode 1-2)") is converted at build time by `Graphics/AffineConverter.cs` to 8bpp tiles with flips and palette banks
 baked in (at most 256 tiles, map side 16 / 32 / 64 / 128). At runtime `render::affine::load` and `setTransform` rotate
 and scale it with the BG2 / BG3 matrices; `render::affine::mode7` fills a per-scanline matrix table that
@@ -114,9 +121,11 @@ the commit, and frame overruns.
 `commit::flush` (VBlank only) writes the registers, OAM and palette, then the queued VRAM writes in order up to the
 per-frame DMA budget (16 KB by default). Three kinds of VRAM write are queued: `queueCopy` (a copy from the caller's
 memory; refused when the budget is used up, so the caller retries next frame: sprite frames, text tiles, map rows),
-`queueFill` (a rectangle filled with one value: closing a text panel, the text layer's blank map, the Mode 3
-`bitmap::fill`) and `queueSequence` (a rectangle of map entries value, value + 1 ...: a text panel's tiles mapped in
-order). Fills and sequences keep everything they need in the queue entry, so rows past the budget wait for the next
+`queueFill` (a rectangle filled with one value: closing a text panel, the text layer's blank map, `bitmap::fill`) and
+`queueSequence` (a rectangle of map entries value, value + 1 ...: a text panel's tiles mapped in
+order). The bitmap modes add `queueCopyRows` (a picture from ROM, row by row), `queueBytes` and `queuePixel` (GBA VRAM has no byte
+writes, so these read, change and write a halfword in VBlank, in queue order: two Mode 4 pixels in one halfword in one frame both stay; at most 512
+`queuePixel` a frame, in memory the bitmap scene lends from its screen arena) and `queuePage` (a page flip that waits for the writes queued before it). Fills and sequences keep everything they need in the queue entry, so rows past the budget wait for the next
 VBlank instead of being refused, and `queueCopy` leaves the last 16 of the 64 queue entries to them. A deferral counts in `deferredCount()` and logs "too much graphics data changed this
 frame, so the rest is copied next frame" once. `copyNow` / `fillNow` (and LZ77 to VRAM) write at once and are only for
 staged loads: the scene loader opens `beginStagedLoad` / `endStagedLoad` around each load step, which runs while the

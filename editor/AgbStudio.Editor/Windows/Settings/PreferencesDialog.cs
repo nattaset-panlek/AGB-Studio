@@ -32,13 +32,18 @@ namespace AgbStudio.Editor.Windows.Settings;
 [EditorWindow("T-S07")]
 [EditorWindow("T-S08")]
 [EditorWindow("T-S09")]
+[EditorWindow("T-S10")]
 public sealed class PreferencesDialog : SettingsDialog
 {
     public static readonly IReadOnlyList<SettingsTab> AllTabs =
     [
         new("T-S06", "Appearance", "image"), new("T-S07", "Editor", "code"), new("T-S08", "Paths", "folder"),
-        new("T-D09", "Emulator", "pad"), new("T-S09", "Shortcuts", "type"),
+        new("T-D09", "Emulator", "pad"), new("T-S09", "Shortcuts", "type"), new("T-S10", "MCP", "code"),
     ];
+
+    /// <summary>The clients Preferences · MCP manages (tests use a temporary folder).</summary>
+    public McpClients McpClients { get; set; } = McpClients.ForThisMachine();
+    public string McpSettingsPath { get; set; } = AgbStudio.Mcp.McpSettings.DefaultPath;
 
     /// <summary>The rows Preferences · Shortcuts lists when the search is empty (Figma), with the command they bind.</summary>
     public static readonly IReadOnlyList<(string Label, string Command)> DefaultRows =
@@ -104,6 +109,7 @@ public sealed class PreferencesDialog : SettingsDialog
         "T-S08" => PathsTab(),
         "T-D09" => EmulatorTab(),
         "T-S09" => ShortcutsTab(),
+        "T-S10" => McpTab(),
         _ => AppearanceTab(),
     };
 
@@ -421,6 +427,82 @@ public sealed class PreferencesDialog : SettingsDialog
     static readonly IReadOnlyList<string> Cores = ["mGBA (built in)"];
     static readonly IReadOnlyList<string> ScaleOptions = ["1× · 240×160", "2× · 480×320", "3× · 720×480", "4× · 960×640"];
     static readonly IReadOnlyList<string> Filters = ["Pixel-perfect", "Smooth"];
+
+    /// <summary>Preferences · MCP (T-S10): which AI clients can start the server and which tools they may call. These change files outside the project, so they apply at once and Cancel does not undo them.</summary>
+    Control McpTab()
+    {
+        var note = UI.Text("AI clients start AGB Studio's server themselves. Changes here apply at once; restart the client to pick them up.", "Body/12", "text/secondary");
+        note.TextWrapping = TextWrapping.Wrap;
+        var clients = Column(8);
+        clients.Width = 420;
+        clients.HorizontalAlignment = HorizontalAlignment.Left;
+        foreach (var client in McpClients.All)
+        {
+            var status = UI.Text("", "Label/11", "text/muted");
+            status.Name = "McpStatus_" + client.Id;
+            void Show() => status.Text = McpClients.IsEnabled(client)
+                ? McpClients.PointsElsewhere(client) ? "On, but it starts another copy of AGB Studio. Turn it off and on to use this one." : "On."
+                : client.Detected ? "Off." : "Not found on this PC; turning it on creates its settings file.";
+            var row = ToggleRow(client.Name, McpClients.IsEnabled(client), on =>
+            {
+                try
+                {
+                    McpClients.SetEnabled(client, on);
+                }
+                catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException)
+                {
+                    _s.Toasts.Show(e.Message);
+                }
+                Show();
+            }, "McpClient_" + client.Id);
+            Show();
+            clients.Children.Add(Column(2, row, status));
+        }
+
+        var testResult = UI.Text("", "Label/11", "text/muted");
+        testResult.Name = "McpTestResult";
+        var test = new AgbButton { Kind = ButtonKind.Secondary, Content = "Test server", Name = "McpTest" };
+        test.Click += async (_, _) =>
+        {
+            test.IsEnabled = false;
+            testResult.Text = "Testing…";
+            testResult.Text = (await McpClients.ProbeAsync()).Message;
+            test.IsEnabled = true;
+        };
+        var copy = new AgbButton { Kind = ButtonKind.Secondary, Content = "Copy settings for another client", Name = "McpCopy" };
+        copy.Click += async (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(McpClients.Snippet());
+                _s.Toasts.Show("Copied the MCP settings.");
+            }
+        };
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { test, copy } };
+
+        var settings = AgbStudio.Mcp.McpSettings.Load(McpSettingsPath);
+        var tools = Column(4);
+        tools.Width = 420;
+        tools.HorizontalAlignment = HorizontalAlignment.Left;
+        foreach (var tool in new AgbStudio.Mcp.McpToolRegistry().Tools.OrderBy(t => t.Name, StringComparer.Ordinal))
+        {
+            var row = ToggleRow(tool.Name, !settings.DisabledTools.Contains(tool.Name), on =>
+            {
+                settings.DisabledTools.Remove(tool.Name);
+                if (!on) settings.DisabledTools.Add(tool.Name);
+                settings.DisabledTools.Sort(StringComparer.Ordinal);
+                try { settings.Save(McpSettingsPath); }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException) { _s.Toasts.Show($"The tool list could not be saved: {e.Message}"); }
+            }, "McpTool_" + tool.Name);
+            ToolTip.SetTip(row, tool.Description);
+            tools.Children.Add(row);
+        }
+        return new ScrollViewer
+        {
+            Name = "McpScroll",
+            Content = Column(12, Title("MCP"), note, Overline("Clients"), clients, actions, testResult, Overline("Tools"), tools),
+        };
+    }
 
     Control EmulatorTab()
     {

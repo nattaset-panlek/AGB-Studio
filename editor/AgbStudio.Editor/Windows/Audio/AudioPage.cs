@@ -259,7 +259,7 @@ public sealed class AudioPage : DockPanel
         _grid = null;
         if (Module is null || Analysis is null)
         {
-            var empty = UI.Text(MusicFiles.Count == 0 ? "No music in this project yet. Use + to import a .mod or .xm file." : "Select a track.", "Body/12", "text/muted");
+            var empty = UI.Text(MusicFiles.Count == 0 ? "No music in this project yet. Use + to import a song: .mod, .xm, .s3m, .it, .mp3, .ogg or .mid." : "Select a track.", "Body/12", "text/muted");
             empty.HorizontalAlignment = HorizontalAlignment.Center;
             _center.Content = empty;
             return;
@@ -454,6 +454,11 @@ public sealed class AudioPage : DockPanel
 
     void SetCell(TrackerPattern pattern, int row, int channel, TrackerCell value, string name)
     {
+        if (Module is { CanEdit: false })
+        {
+            _s.Toasts.Show($"{Module.Format} songs play and preview here, but are edited in your tracker. Save it there, then import it again.");
+            return;
+        }
         var old = pattern.Cells[row, channel];
         if (old == value) return;
         void Apply(TrackerCell c) { pattern.Cells[row, channel] = c; _moduleEdited = true; Dirty(); _grid?.InvalidateVisual(); }

@@ -79,6 +79,61 @@ public sealed class BytecodeTests
     }
 
     [Fact]
+    public void BitmapCompilesToCppAndToNatives()
+    {
+        const string src = """
+using System.Threading.Tasks;
+using GBA;
+
+public class Painter : SceneScript
+{
+    void OnEnter()
+    {
+        Bitmap.Clear(Bitmap.Rgb(1, 2, 3));
+        Bitmap.SetPixel(4, 5, 6);
+        Bitmap.FillRect(1, 2, 3, 4, 5);
+        Bitmap.Show("title");
+        Bitmap.Flip();
+        Bitmap.SetPaletteColor(7, 8);
+    }
+
+    [Cutscene]
+    static async Task Paint()
+    {
+        Bitmap.Clear(Bitmap.Rgb(1, 2, 3));
+        Bitmap.SetPixel(4, 5, 6);
+        Bitmap.FillRect(1, 2, 3, 4, 5);
+        Bitmap.Show("backdrop");
+        Bitmap.Flip();
+        Bitmap.SetPaletteColor(7, 8);
+        await Wait(1);
+    }
+}
+""";
+        var ctx = TestSupport.Context();
+        ctx.Pictures = ScriptCompileContext.Indexed(["backdrop", "other", "title"]);
+        var r = TestSupport.Compile("bytecode-bitmap", ctx, TestSupport.Inline("Painter.cs", src));
+        Assert.True(r.Success, TestSupport.Errors(r));
+        var cpp = string.Concat(Directory.EnumerateFiles(r.IncludeDir, "*.cpp").Select(File.ReadAllText));
+        foreach (var call in new[] { "agb::api::Bitmap::Clear(agb::api::Bitmap::Rgb(1, 2, 3))", "agb::api::Bitmap::SetPixel(4, 5, 6)", "agb::api::Bitmap::FillRect(1, 2, 3, 4, 5)", "agb::api::Bitmap::Show(2)", "agb::api::Bitmap::Flip()", "agb::api::Bitmap::SetPaletteColor(7, 8)" })
+            Assert.Contains(call, cpp);
+        var listing = OpcodeTable.Load().Disassemble(r.Scripts.Single().Code);
+        int Native(string name) => r.Natives.FindIndex(n => n.Name == name);
+        foreach (var (name, argc) in new[] { ("BitmapRgb", 3), ("BitmapClear", 1), ("BitmapSetPixel", 3), ("BitmapFillRect", 5), ("BitmapShow", 1), ("BitmapFlip", 0), ("BitmapSetPaletteColor", 2) })
+            Assert.Contains($"Native #{Native(name)} argc {argc}", listing);
+        // The names both forms used are what the build puts in ROM.
+        Assert.Equal(["backdrop", "title"], ctx.UsedPictures.OrderBy(n => n, StringComparer.Ordinal));
+        Assert.False(natives_wait(r, "BitmapFlip"));
+
+        // A name that is no image says what is wrong, why, and the closest name.
+        var bad = TestSupport.Compile("bytecode-bitmap-bad", ctx, TestSupport.Inline("Painter.cs", "using GBA;\n\npublic class Painter : SceneScript\n{\n    void OnEnter() { Bitmap.Show(\"titles\"); }\n}\n"));
+        var d = Assert.Single(bad.Diagnostics, x => x.IsError);
+        Assert.Contains("Picture \"titles\" is not in the project. Picture names are the images in assets/images without the extension. Did you mean \"title\"?", d.Message);
+    }
+
+    static bool natives_wait(ScriptCompileResult r, string name) => r.Natives.Single(n => n.Name == name).Waits;
+
+    [Fact]
     public void ScriptNativeTableFromAttributes()
     {
         // P6.13: [ScriptNative(waits: ...)] methods are appended to the native table with their waits flag.

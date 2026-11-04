@@ -17,6 +17,7 @@ public sealed class UiCanvas : Control
     enum Grip { None, Move, L, R, T, B, TL, TR, BL, BR }
 
     const int HandleSize = 7;
+    const int SnapWindowPixels = 8;  // how near a line snaps, in window pixels
 
     readonly UiPageLibrary _lib;
     WriteableBitmap? _bitmap;
@@ -26,8 +27,11 @@ public sealed class UiCanvas : Control
     int _startX, _startY, _startW, _startH;
     bool _moved;
     UiElement? _mover;  // what a drag moves, when that is not the element clicked (it sits in a layout group)
+    List<UiSnapTarget> _snapTargets = [];
 
     public UiPageRenderer? Renderer { get; set; }
+    /// <summary>The smart guides of the drag in progress.</summary>
+    public IReadOnlyList<UiGuide> Guides { get; private set; } = [];
     public int Scale { get; private set; } = 3;
     /// <summary>The element a drag was refused for, because a layout group places it.</summary>
     public event Action? PlacedByLayout;
@@ -86,6 +90,14 @@ public sealed class UiCanvas : Control
             ctx.FillRectangle(Token("bg/panel"), h);
             ctx.DrawRectangle(new Pen(accent), h);
         }
+        var guide = new Pen(Token("lit/smart-guide"));
+        foreach (var g in Guides)
+        {
+            // on the pixel grid of the window, so the line stays one sharp pixel at any scale
+            var at = Math.Floor((g.Vertical ? o.X : o.Y) + g.At * Scale) + 0.5;
+            if (g.Vertical) ctx.DrawLine(guide, new Point(at, o.Y + g.From * Scale), new Point(at, o.Y + g.To * Scale));
+            else ctx.DrawLine(guide, new Point(o.X + g.From * Scale, at), new Point(o.X + g.To * Scale, at));
+        }
     }
 
     bool CanPlace(UiElement e) =>
@@ -142,6 +154,12 @@ public sealed class UiCanvas : Control
         _startRect = sr;
         (_startX, _startY, _startW, _startH) = (sel.Rect.X, sel.Rect.Y, sel.Rect.W, sel.Rect.H);
         _moved = false;
+        // What this drag can line up with: the screen and every visible element that does not move with it.
+        var moving = sel.Walk().ToHashSet();
+        _snapTargets = [new UiSnapTarget(0, 0, UiPageRenderer.W, UiPageRenderer.H)];
+        foreach (var other in page.Root.Walk())
+            if (!ReferenceEquals(other, page.Root) && !other.Hidden && !moving.Contains(other) && rects.TryGetValue(other, out var a))
+                _snapTargets.Add(new UiSnapTarget(a.X, a.Y, a.Right, a.Bottom));
         _lib.BeginLive();
         e.Pointer.Capture(this);
     }
@@ -157,6 +175,12 @@ public sealed class UiCanvas : Control
         if (!_moved && _mover != null) _lib.Select(_mover);
         _moved = true;
         var g = _grip;
+        var edges = new UiSnapEdges(
+            g is Grip.L or Grip.TL or Grip.BL or Grip.Move, g is Grip.R or Grip.TR or Grip.BR or Grip.Move,
+            g is Grip.T or Grip.TL or Grip.TR or Grip.Move, g is Grip.B or Grip.BL or Grip.BR or Grip.Move);
+        // Alt drags freely, without snapping.
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt)) Guides = [];
+        else (dx, dy, Guides) = UiSnap.Solve(_startRect, dx, dy, edges, _snapTargets, Math.Max(1, (int)Math.Round((double)SnapWindowPixels / Scale)));
         // How far each edge moved. The Rect Transform's X and W then follow from the pivot, for any anchors.
         int left = g is Grip.L or Grip.TL or Grip.BL or Grip.Move ? dx : 0;
         int right = g is Grip.R or Grip.TR or Grip.BR or Grip.Move ? dx : 0;
@@ -181,6 +205,8 @@ public sealed class UiCanvas : Control
         if (_grip == Grip.None) return;
         var grip = _grip;
         _grip = Grip.None;
+        Guides = [];
+        InvalidateVisual();
         e.Pointer.Capture(null);
         if (_moved) _lib.EndLive(grip == Grip.Move ? "Move element" : "Resize element");
     }

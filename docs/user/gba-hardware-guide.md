@@ -34,7 +34,7 @@ warning.
 | 0 | 4 regular tile layers | most games: platformers, top-down, menus |
 | 1 | 2 regular + 1 rotate / scale | a Mode 7 floor with a sky and a HUD (Racing template) |
 | 2 | 2 rotate / scale | rotating or zooming playfields |
-| 3-5 | bitmap modes | not used by the templates |
+| 3-5 | bitmap modes: a picture and sprites, no tile layers or text (Mode 3: 240×160, 16-bit colour; Mode 4: 240×160, 255 colours, two pages; Mode 5: 160×128, 16-bit colour, two pages) | not used by the templates; pick the scene's picture in Video Mode, draw with `Bitmap` in C# |
 
 Set the mode per scene in the Scene Settings. Add Layer offers "Rotate / scale layer (Mode 1-2)" for affine layers.
 
