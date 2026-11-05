@@ -148,6 +148,7 @@
         </DockPanel>
       </ControlTemplate>
     </Setter>
+    <Style Selector="^.selected /template/ DockPanel"><Setter Property="Background" Value="{DynamicResource accent/subtle}" /></Style>
     <Style Selector="^[Level=Success]"><Setter Property="Foreground" Value="{DynamicResource status/success}" />
       <Style Selector="^ /template/ g|Icon#PART_Level"><Setter Property="Glyph" Value="check" /><Setter Property="Foreground" Value="{DynamicResource status/success}" /></Style></Style>
     <Style Selector="^[Level=Warning]"><Setter Property="Foreground" Value="{DynamicResource status/warning}" />

@@ -160,6 +160,47 @@ public sealed class SceneEditorModel
         if (!File.Exists(path)) return;
         MapPath = path;
         Map = GameProject.Load<MapFile>(path);
+        _mapText = File.ReadAllText(path);
+        _mapJson = MapJson();
+    }
+
+    string _mapText = "", _mapJson = "";  // the .map as last read or written, and Map as it was then
+
+    /// <summary>The Tilemap Editor, another program or the MCP server may have changed the .map: reads it again when its text
+    /// differs, and draws the scene again in any case (a tileset's picture or properties may have changed too). A map that
+    /// cannot be read stays as it was, with a line in the Console. True when the map was read again.</summary>
+    public bool RefreshFromDisk()
+    {
+        if (Scene == null) return false;
+        var changed = false;
+        if (MapPath != null && Map != null && File.Exists(MapPath))
+        {
+            string? text = null;
+            try { text = File.ReadAllText(MapPath); }
+            catch (IOException) { }  // being written: the next look finds it
+            if (text != null && text != _mapText)
+            {
+                _mapText = text;
+                try
+                {
+                    Map = JsonSerializer.Deserialize<MapFile>(text, GameProject.Json) ?? Map;
+                    _mapJson = MapJson();
+                    _lastEdit = null;
+                    _lastMergeKey = null;
+                    changed = true;
+                    if (_selection is { Kind: SceneItemKind.Layer } l && l.Index >= Map.Layers.Count) _selection = null;
+                    (_s.GetService(typeof(Tilemap.MapLibrary)) as Tilemap.MapLibrary)?.FileChanged(MapPath);
+                    ConsoleLog.Of(_s).Info($"{Path.GetFileName(MapPath)} changed, so the scene shows it as it is now.");
+                }
+                catch (JsonException e)
+                {
+                    ConsoleLog.Of(_s).Add(Controls.ConsoleLevel.Warning, $"{Path.GetFileName(MapPath)} cannot be read ({e.Message}), so the scene still shows the map from before. Fix the file, or restore it.", MapPath);
+                }
+            }
+        }
+        Changed?.Invoke();
+        if (changed) SelectionChanged?.Invoke();
+        return changed;
     }
 
     /// <summary>After New Scene / Scene Settings (and their undo): project settings and the given scene from disk.</summary>
@@ -199,11 +240,7 @@ public sealed class SceneEditorModel
     }
 
     /// <summary>Writes the scene and its map (Save on the Scene tab; edits already write through).</summary>
-    public void Save()
-    {
-        if (ScenePath != null && Scene != null) GameProject.Save(ScenePath, Scene);
-        if (MapPath != null && Map != null) GameProject.Save(MapPath, Map);
-    }
+    public void Save() => Write();
 
     // ---- selection ------------------------------------------------------------------------------------
 
@@ -347,6 +384,7 @@ public sealed class SceneEditorModel
     public void Edit(string name, Action change, string? mergeKey = null)
     {
         if (Scene == null || ScenePath == null) return;
+        RefreshFromDisk();  // the edit goes on the map as it is now
         var beforeScene = SceneJson();
         var beforeMap = MapJson();
         var selection = _selection;
@@ -361,13 +399,15 @@ public sealed class SceneEditorModel
         if (mergeKey != null && mergeKey == _lastMergeKey && _lastEdit != null && _s.Undo.UndoCount == _undoCountAfterLast && _s.Undo.NextUndo == _lastEdit.Name)
         {
             _lastEdit.AfterScene = afterScene;
-            _lastEdit.AfterMap = afterMap;
+            if (afterMap != beforeMap) _lastEdit.AfterMap = afterMap;
             _lastEdit.AfterSelection = after;
             _lastEdit.AfterActors = afterActors;
         }
         else
         {
-            _lastEdit = new SnapshotAction(this, name, ScenePath, beforeScene, beforeMap, afterScene, afterMap, selection, after, actors, afterActors);
+            // An edit of the scene alone keeps no map: undoing it must not bring back the map from before later edits.
+            var mapEdited = afterMap != beforeMap;
+            _lastEdit = new SnapshotAction(this, name, ScenePath, beforeScene, mapEdited ? beforeMap : "", afterScene, mapEdited ? afterMap : "", selection, after, actors, afterActors);
             _s.Undo.Push(_lastEdit);
             _lastMergeKey = mergeKey;
             _undoCountAfterLast = _s.Undo.UndoCount;
@@ -378,9 +418,12 @@ public sealed class SceneEditorModel
     void Write()
     {
         if (ScenePath != null && Scene != null) GameProject.Save(ScenePath, Scene);
-        if (MapPath != null && Map != null)
+        // Only a map the scene really changed: an edit of the scene must not write its copy over the file.
+        if (MapPath != null && Map != null && MapJson() != _mapJson)
         {
             GameProject.Save(MapPath, Map);
+            _mapText = File.ReadAllText(MapPath);
+            _mapJson = MapJson();
             // the Tilemap Editor reads the map again when it has no unsaved edits of its own
             (_s.GetService(typeof(Tilemap.MapLibrary)) as Tilemap.MapLibrary)?.FileChanged(MapPath);
         }

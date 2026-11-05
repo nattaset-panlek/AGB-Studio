@@ -118,6 +118,46 @@ public class TilemapE2ETests : IDisposable
         Assert.Equal(6, s.Doc.Cell(ground, 2, 1));
     }
 
+    // A map saved in the Tilemap Editor or changed by another program shows in the Scene, and the Scene never writes its old copy over it.
+    [AvaloniaFact]
+    public void ASavedMapShowsInTheSceneAndASceneEditDoesNotPutTheOldOneBack()
+    {
+        var page = OpenFromTab();
+        var doc = page.Session!.Doc;
+        var scene = AgbStudio.Editor.Windows.SceneEditor.SceneEditorModel.Of(_h.S);
+        var ground = doc.Map.Layers.FindIndex(l => l.Type == LayerType.Tile);
+        var painted = doc.Cell(ground, 0, 0) == 3 ? 4 : 3;
+        doc.SetCell(ground, 0, 0, painted);
+        doc.Save();
+        var text = File.ReadAllText(doc.Path);
+
+        // back on the Scene tab it is there
+        _h.Click(_h.Find<DocTab>("Doc_Scene"));
+        _h.Pump();
+        Assert.Equal(painted, scene.Map!.Layers[ground].Cells[0]);
+        // an edit of the scene alone leaves the file as it is, and undoing it too
+        scene.EditScene("Backdrop", (s, _) => s.Backdrop = "#102030");
+        Assert.Equal(text, File.ReadAllText(doc.Path));
+        _h.S.Undo.Undo();
+        Assert.Equal(text, File.ReadAllText(doc.Path));
+        Assert.Equal(painted, scene.Map!.Layers[ground].Cells[0]);
+
+        // changed by another program: an edit of the scene goes on the map as it is now
+        var map = GameProject.Load<MapFile>(doc.Path);
+        map.Layers[ground].Cells[1] = 5;
+        GameProject.Save(doc.Path, map);
+        scene.EditScene("Backdrop", (s, _) => s.Backdrop = "#203040");
+        Assert.Equal(5, scene.Map!.Layers[ground].Cells[1]);
+        Assert.Equal(5, GameProject.Load<MapFile>(doc.Path).Layers[ground].Cells[1]);
+
+        // a file that cannot be read keeps the scene's map and says so
+        File.WriteAllText(doc.Path, "{ not a map");
+        Assert.False(scene.RefreshFromDisk());
+        Assert.Equal(5, scene.Map!.Layers[ground].Cells[1]);
+        Assert.Contains(AgbStudio.Editor.Windows.SceneEditor.ConsoleLog.Of(_h.S).Entries, e => e.Text.Contains("cannot be read"));
+        Assert.Equal("{ not a map", File.ReadAllText(doc.Path));
+    }
+
     // P5.01 Tileset panel: Primary names the shared tileset this one extends; saved in the tileset's meta file, undoable
     [AvaloniaFact]
     public void TilesetPanel_PrimaryField_PicksTheSharedTilesetSavesAndUndoes()

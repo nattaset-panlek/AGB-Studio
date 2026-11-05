@@ -97,6 +97,65 @@ public sealed class BottomPanelTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void Console_SelectsLinesWithClickCtrlShiftAndDrag_MenuCopiesClearsAndSaves()
+    {
+        var log = ConsoleLog.Of(_w.S);
+        log.Clear();
+        log.Clock = () => new DateTime(2026, 11, 5, 12, 4, 53);
+        log.Add(ConsoleLevel.Info, "first");
+        log.Add(ConsoleLevel.Error, "second", "C:/game/Player.cs", 19);
+        log.Add(ConsoleLevel.Warning, "third");
+        log.Add(ConsoleLevel.Info, "first");  // reads the same as the first line, and is its own line
+        OpenTab("Console");
+        var panel = _w.All<ConsolePanel>().Single();
+        var pageBefore = _w.Win.CurrentPageId;
+        ConsoleLine Line(int i) => _w.All<ConsoleLine>().ElementAt(i);
+        string[] Picked() => panel.Selected.Select(e => e.Text).ToArray();
+        Point At(int i) => Line(i).TranslatePoint(new Point(100, 11), _w.Win)!.Value;
+
+        // a click selects and does not leave the page, even on a line with a file
+        _w.Click(Line(1));
+        Assert.Equal(["second"], Picked());
+        Assert.Equal(pageBefore, _w.Win.CurrentPageId);
+        Assert.Contains("selected", Line(1).Classes);
+        // Ctrl adds and takes away one line
+        _w.Win.MouseDown(At(2), MouseButton.Left, RawInputModifiers.Control);
+        _w.Win.MouseUp(At(2), MouseButton.Left, RawInputModifiers.Control);
+        Assert.Equal(["second", "third"], Picked());
+        // Shift selects from the last line clicked
+        _w.Click(Line(0));
+        _w.Win.MouseDown(At(2), MouseButton.Left, RawInputModifiers.Shift);
+        _w.Win.MouseUp(At(2), MouseButton.Left, RawInputModifiers.Shift);
+        Assert.Equal(["first", "second", "third"], Picked());
+        // dragging selects what it passes over
+        _w.Win.MouseDown(At(3), MouseButton.Left);
+        _w.Win.MouseMove(At(1), RawInputModifiers.LeftMouseButton);
+        _w.Win.MouseUp(At(1), MouseButton.Left);
+        Assert.Equal(["second", "third", "first"], Picked());
+        Capture.Pump();
+
+        // what is copied says everything needed without a screenshot
+        Assert.Equal("12:04:53 [Error] second  (C:/game/Player.cs:19)" + Environment.NewLine + "12:04:53 [Warning] third" + Environment.NewLine + "12:04:53 [Info] first",
+            ConsolePanel.TextOf(panel.Selected));
+
+        // the menu of the "..." button
+        Assert.Equal(["Copy Selected (3)", "Copy All", "Select All", "Save to File", "Clear"], panel.MenuEntries().Select(m => m.Text));
+        _ = _w.Find<IconButton>("ConsoleMenu");
+        panel.MenuEntries().Single(m => m.Text == "Select All").Run();
+        Assert.Equal(4, panel.Selected.Count);
+        var saved = panel.SaveToFile()!;
+        Assert.Contains("[Error] second", File.ReadAllText(saved));
+        // a new line keeps the selection; Clear empties both
+        log.Info("later");
+        Assert.Equal(4, panel.Selected.Count);
+        panel.MenuEntries().Single(m => m.Text == "Clear").Run();
+        Assert.Empty(log.Entries);
+        Assert.Empty(panel.Selected);
+        Assert.False(panel.MenuEntries().Single(m => m.Text.StartsWith("Copy Selected")).Enabled);
+        log.Clock = () => DateTime.Now;
+    }
+
+    [AvaloniaFact]
     public void Console_LinesFiltersCountsAndClickToCode()
     {
         var log = ConsoleLog.Of(_w.S);
@@ -120,9 +179,9 @@ public sealed class BottomPanelTests : IDisposable
         void Press(string chip) { _w.Find<Chip>(chip).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent)); Capture.Pump(); }
         Press("Filter_Errors");
         Assert.Equal(["PlayerController.cs(19): NullReference — target was destroyed"], panel.Visible.Select(e => e.Text));
-        // clicking a line with a file opens the Script Editor at that line
+        // a double click on a line with a file opens the Script Editor at that line
         var line = _w.All<ConsoleLine>().Single();
-        _w.Click(line);
+        _w.DoubleClick(line);
         Assert.Equal(("T-P04", "ConsoleLine"), _w.S.Windows.Requests[^1]);
         var script = Assert.IsType<ScriptEditorPage>(_w.Win.CurrentPage);
         Assert.Equal((file, 19), (script.Buffer!.Path, script.Editor.CaretLine));

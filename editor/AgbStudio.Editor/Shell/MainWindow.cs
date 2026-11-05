@@ -35,6 +35,7 @@ public sealed class MainWindow : Window, IShellHost
     public MainWindow(EditorServices s, string? startPage = "T-P01")
     {
         _s = s;
+        Activated += (_, _) => RefreshScene();
         Title = "AGB Studio";
         Icon = Graphics.WindowIcons.App();
         Width = 1440;
@@ -143,8 +144,12 @@ public sealed class MainWindow : Window, IShellHost
         if (view.GetVisualRoot() is null && IsVisible) { _page.Content = null; _page.Content = view; }
         SettleActiveDocument(id);
         UpdateTitle();
+        if (id == "T-P01") RefreshScene();
         PageShown?.Invoke(id);
     }
+
+    // Coming back to the Scene tab or to the program: what the scene shows may have changed in another tab or program.
+    void RefreshScene() => (_s.GetService(typeof(Windows.SceneEditor.SceneEditorModel)) as Windows.SceneEditor.SceneEditorModel)?.RefreshFromDisk();
 
     /// <summary>A document's page goes in the document area of the one Scene workspace, so the panels around it stay as
     /// they are. The Launcher and the empty project have no documents to work on and take the whole window.</summary>

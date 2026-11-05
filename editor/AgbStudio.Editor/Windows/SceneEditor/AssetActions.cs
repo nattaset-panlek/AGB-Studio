@@ -140,8 +140,12 @@ public sealed class AssetActions
                     else if (assets?.Image(GameProject.AssetName(path)) is { } img) meta = $"{img.WidthTiles * 8}×{img.HeightTiles * 8} · image";
                     break;
                 case AssetCategory.Maps:
-                    var map = GameProject.Load<MapFile>(path);
-                    meta = $"{map.Width}×{map.Height} · {map.Layers.Count} layers";
+                    try
+                    {
+                        var map = GameProject.Load<MapFile>(path);
+                        meta = $"{map.Width}×{map.Height} · {map.Layers.Count} layers";
+                    }
+                    catch (System.Text.Json.JsonException) { meta = "cannot be read"; }  // being edited by hand
                     thumb = "thumb/map";
                     break;
                 case AssetCategory.Fonts:

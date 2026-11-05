@@ -5,7 +5,12 @@ Figma: T-P05 · Page
 > แผงล่างของ Scene Editor เมื่อกดแท็บ Console: log จากสคริปต์และการ build กรองตามระดับได้ คลิกบรรทัดเพื่อไปที่โค้ด
 
 The bottom panel of the Scene Editor when you click the Console tab: messages from your scripts and from builds. You can
-filter by level and click a line to go to the code.
+filter by level, double-click a line to go to the code, and copy lines as text to report a problem without a screenshot.
+
+Click a line to select it. Ctrl+click adds or removes a line, Shift+click selects from the last line clicked, and dragging
+selects what it passes over; Ctrl+A selects all and Esc clears. The **...** button at the top right and a right click offer
+**Copy Selected** (Ctrl+C), **Copy All**, **Select All**, **Save to File** (`build/console.log`) and **Clear**. A copied line has
+its time, level, message and the file it points at.
 
 ## Opens from
 

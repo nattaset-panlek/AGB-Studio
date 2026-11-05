@@ -78,7 +78,7 @@ public sealed class MapLibrary
     {
         path = Path.GetFullPath(path);
         _peek.Remove(path);
-        if (_open.TryGetValue(path, out var s) && !s.Doc.IsDirty) s.Doc.ReloadMap();
+        if (_open.TryGetValue(path, out var s) && !s.Doc.IsDirty && File.Exists(path) && File.ReadAllText(path) != s.Doc.Serialize()) s.Doc.ReloadMap();
     }
 
     readonly Dictionary<string, MapDocument> _peek = new(StringComparer.OrdinalIgnoreCase);

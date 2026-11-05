@@ -63,7 +63,9 @@ public sealed class CrashGuard : IDisposable
 
     void OnTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        Handle(e.Exception);
+        // The same error comes here again when the garbage collector finds the task it ran in: a second log would replace
+        // the first, which says what was saved.
+        if (_lastError == null || !e.Exception.Flatten().InnerExceptions.Contains(_lastError)) Handle(e.Exception);
         e.SetObserved();
     }
 
@@ -97,9 +99,12 @@ public sealed class CrashGuard : IDisposable
         return sb.ToString();
     }
 
+    Exception? _lastError;
+
     /// <summary>Saves the changed documents and writes the crash log; returns the log path.</summary>
     public string Handle(Exception error)
     {
+        _lastError = error;
         var saved = new List<string>();
         var failed = new List<string>();
         foreach (var d in _s.Documents.Dirty.ToList())

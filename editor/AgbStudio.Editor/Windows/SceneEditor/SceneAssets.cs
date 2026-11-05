@@ -131,7 +131,10 @@ public sealed class SceneAssets(GameProject project)
     {
         if (scene.Map.Length == 0) return null;
         var path = Path.Combine(Project.MapsDir, Path.GetFileNameWithoutExtension(scene.Map) + ".map");
-        return File.Exists(path) ? GameProject.Load<MapFile>(path) : null;
+        if (!File.Exists(path)) return null;
+        // a file being edited by hand may not read yet: the panels go on without it, the Console says what is wrong
+        try { return GameProject.Load<MapFile>(path); }
+        catch (System.Text.Json.JsonException) { return null; }
     }
 
     /// <summary>Fonts and string tables as the build lays them out (ConvertText): the run of a key in the
