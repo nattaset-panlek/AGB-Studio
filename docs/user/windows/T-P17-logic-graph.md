@@ -40,7 +40,12 @@ C# is always shown beside the graph (Graph ⇄ C#). Good for beginners and for s
   draws it, with its sprite animations playing at game speed. It does not run the graph. It stays on the first frame
   while Preferences › Appearance › Reduce motion is on, and shows a sample picture when the project has no scene.
 - **Node inspector**: the selected node's name, category and a short description, then its settings. A setting that
-  is wired from another node shows "(wired)" and cannot be typed in.
+  is wired from another node shows "(wired)" and cannot be typed in. A setting that names something in the project is
+  a dropdown: scenes, sounds, music, number fields of Save data, project tags and text keys. On Touch also has "(any)".
+  A name the project no longer has stays in the graph, shows a red line under the field and a red box on the node, and
+  can be replaced from the dropdown. The field and tag dropdowns end with "+ New field" and "+ New tag": type a name
+  and press Enter (Esc cancels) to add it to the project. A new field is an `int` in Save data; undo takes back the
+  node's value, and the new name stays in the project.
 - **Generated C#**: the C# made from the graph, updated as you edit. You can type in it too; after a short pause the
   graph is rebuilt from your C#.
 - **Status line**: Ready, the number of nodes and wires, and "Compiled to C#" (or "C# generation failed · see

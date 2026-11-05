@@ -137,6 +137,78 @@ public sealed class WorldMapTests : IDisposable
         Assert.Equal("T-D02", _h.S.Windows.Requests[^1].Window);
     }
 
+    // P17.05: the "Only if" builder. It writes the same text the box shows, one undo step per change.
+    [AvaloniaFact]
+    public void OnlyIfBuilder_ReadsAndWritesTheCondition()
+    {
+        _h.S.Project.Current!.Settings.Save.Fields =
+        [
+            new SaveField { Name = "coins", Type = "int" }, new SaveField { Name = "lives", Type = "byte" }, new SaveField { Name = "metOwl", Type = "bool" },
+        ];
+        Open();
+        _h.Click(_h.Find<Chip>("Chip_Goal_Flag"));
+        var link = Assert.IsType<LinkSettingsPopover>(_h.Win.Overlays.Open.Single());
+        string Stored() => Scene("Forest_01").Links[0].OnlyIf;
+        void Pick(Button b, string option)
+        {
+            _h.Click(b);
+            Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(option));
+            Capture.Pump();
+        }
+        Assert.Equal("coins", LinkSettingsPopover.TextOf(link.ConditionField));
+        Assert.Equal(">=", LinkSettingsPopover.TextOf(link.ConditionOp));
+        Assert.Equal("10", link.ConditionValue.Text);
+
+        Pick(link.ConditionOp, "<");
+        Assert.Equal("Game.coins < 10", Stored());
+        Assert.Equal("Game.coins < 10", link.OnlyIf.Text);
+
+        link.ConditionValue.Text = "20";
+        link.ConditionValue.Focus();
+        Capture.Pump();
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins < 20", Stored());
+
+        // not a number: nothing is written and the box goes back
+        link.ConditionValue.Text = "many";
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins < 20", Stored());
+        Assert.Equal("20", link.ConditionValue.Text);
+
+        // the list holds number fields only
+        _h.Click(link.ConditionField);
+        Assert.Equal(["None", "coins", "lives"], ((IEnumerable<Control>)AgbStudio.Editor.Windows.Database.Dropdown.Last!.ItemsSource!).OfType<MenuItem>().Select(i => (string)i.Header!));
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose("lives"));
+        Capture.Pump();
+        Assert.Equal("Game.lives < 20", Stored());
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Equal("Game.coins < 20", Stored());
+
+        Pick(link.ConditionField, "None");
+        Assert.Equal("", Stored());
+        Assert.Equal("", link.OnlyIf.Text);
+        Assert.False(link.ConditionOp.IsEnabled);
+        Pick(link.ConditionField, "coins");
+        Assert.Equal("Game.coins >= 1", Stored());
+
+        // a condition the builder cannot show stays as typed and still counts
+        link.OnlyIf.Text = "Game.coins > Game.lives";
+        link.OnlyIf.Focus();
+        Capture.Pump();
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins > Game.lives", Stored());
+        Assert.Equal(LinkSettingsPopover.CustomCondition, LinkSettingsPopover.TextOf(link.ConditionField));
+        Assert.False(link.ConditionOp.IsEnabled);
+        Assert.False(link.ConditionValue.IsEnabled);
+
+        // opening never rewrites what is saved, even a spelling the builder can read
+        link.OnlyIf.Text = "Game.coins>=5";
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins>=5", Stored());
+        Assert.Equal("coins", LinkSettingsPopover.TextOf(link.ConditionField));
+    }
+
     [AvaloniaFact]
     public void LinkChipOpensLinkSettings_ChangesAreSaved()
     {

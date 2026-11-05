@@ -1,4 +1,5 @@
-﻿using AgbStudio.Editor.Controls;
+﻿using AgbStudio.Core.Project;
+using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Tests.Shot;
 using AgbStudio.Editor.Tests.Windows.Scripts;
 using AgbStudio.Editor.Windows.LogicGraph;
@@ -34,6 +35,300 @@ public sealed class LogicGraphTests : IDisposable
     }
 
     Point Screen(LogicGraphPage page, double x, double y) => _h.At(page.Canvas, page.Canvas.ToScreen(new Point(x, y)));
+
+    // P17.02: opens the field's dropdown and returns its rows.
+    IReadOnlyList<string> OpenReference(string prop)
+    {
+        var button = _h.Find<InspectorField>("Prop_" + prop).GetVisualDescendants().OfType<Button>().First(b => b.Name == "PART_Dropdown");
+        _h.Click(button);
+        return [.. ((IEnumerable<Control>)AgbStudio.Editor.Windows.Database.Dropdown.Last!.ItemsSource!).OfType<MenuItem>().Select(i => (string)i.Header!)];
+    }
+
+    [AvaloniaFact]
+    public void ReferenceDropdowns_ListTheProjectWriteTheNodeAndAreOneUndoStep()
+    {
+        var p = _h.S.Project.Current!;
+        foreach (var f in Directory.GetFiles(p.TextDir, "strings.*.json")) File.Delete(f);
+        GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), new StringTable { Strings = { ["intro.hello"] = "Hello", ["intro.bye"] = "Bye" } });
+        GameProject.Save(Path.Combine(p.TextDir, "strings.th.json"), new StringTable { Language = "th", Strings = { ["intro.hello"] = "สวัสดี" } });
+        var sfx = Path.Combine(p.AssetsDir, "audio", "sfx");
+        var music = Path.Combine(p.AssetsDir, "audio", "music");
+        Directory.CreateDirectory(sfx);
+        Directory.CreateDirectory(music);
+        File.WriteAllBytes(Path.Combine(sfx, "reflist_coin.wav"), []);
+        File.WriteAllBytes(Path.Combine(music, "reflist_town.xm"), []);
+        File.WriteAllText(Path.Combine(p.ScenesDir, "RefListCave.scene"), "{}");
+        p.Settings.Tags = ["Player", "Door"];
+        p.Settings.Save.Fields =
+        [
+            new SaveField { Name = "coins", Type = "int" }, new SaveField { Name = "speed", Type = "fixed" },
+            new SaveField { Name = "metOwl", Type = "bool" }, new SaveField { Name = "bag", Type = "Items[16]" },
+        ];
+
+        var page = Open();
+        string Add(string type)
+        {
+            var id = page.AddNode(type, new Point(900, 700), null);
+            page.Canvas.Select([id]);
+            Capture.Pump();
+            return id;
+        }
+        void Pick(string id, string prop, string option, string written)
+        {
+            page.Canvas.Select([id]);
+            Capture.Pump();
+            OpenReference(prop);
+            Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(option));
+            Capture.Pump();
+            Assert.Equal(written, page.Document.Node(id)!.Props[prop]);
+        }
+
+        var scene = page.AddNode("LoadScene", new Point(900, 300), ("n7", "out"));
+        page.Canvas.Select([scene]);
+        Capture.Pump();
+        Assert.Contains("RefListCave", OpenReference("scene"));
+        Pick(scene, "scene", "RefListCave", "RefListCave");
+        Assert.Contains("Scene.Load(\"RefListCave\");", page.Code.Text);
+
+        var show = Add("ShowText");
+        Assert.Equal(["intro.bye", "intro.hello"], OpenReference("key"));
+        Pick(show, "key", "intro.hello", "intro.hello");
+
+        var song = Add("PlayMusic");
+        Assert.Contains("reflist_town", OpenReference("music"));
+        Pick(song, "music", "reflist_town", "reflist_town");
+
+        // only numbers fit the variable nodes
+        var variable = Add("SetVariable");
+        Assert.Equal(["coins", "speed", GraphReferences.NewField], OpenReference("variable"));
+        Pick(variable, "variable", "speed", "speed");
+
+        // "jump.wav" keeps its row and its spelling until another row is chosen; one undo step brings it back
+        page.Canvas.Select(["n7"]);
+        Capture.Pump();
+        File.WriteAllBytes(Path.Combine(sfx, "jump.wav"), []);
+        var sounds = OpenReference("sound");
+        Assert.Contains("jump.wav", sounds);
+        Assert.DoesNotContain("jump", sounds);
+        Assert.Contains("reflist_coin", sounds);
+        Pick("n7", "sound", "reflist_coin", "reflist_coin");
+        Assert.Contains("Sound.Play(\"reflist_coin\", 0.8);", page.Code.Text);
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Equal("jump.wav", page.Document.Node("n7")!.Props["sound"]);
+        Assert.Equal("jump.wav", _h.Find<InspectorField>("Prop_sound").Value);
+
+        // On Touch: "(any)" clears the tag; Compare Tag must name one
+        page.Canvas.Select(["n8"]);
+        Capture.Pump();
+        Assert.Equal(["(any)", "Player", "Door", GraphReferences.NewTag], OpenReference("tag"));
+        Pick("n8", "tag", "(any)", "");
+        Assert.Equal("(any)", _h.Find<InspectorField>("Prop_tag").Value);
+        Add("CompareTag");
+        Assert.Equal(["Player", "Door", GraphReferences.NewTag], OpenReference("tag"));
+    }
+
+    [AvaloniaFact]
+    public void ReferenceDropdown_WithNothingInTheProjectChangesNothing()
+    {
+        var p = _h.S.Project.Current!;
+        foreach (var f in Directory.GetFiles(p.TextDir, "strings.*.json")) File.Delete(f);
+        var page = Open();
+        var id = page.AddNode("ShowText", new Point(900, 700), null);
+        page.Canvas.Select([id]);
+        Capture.Pump();
+        Assert.Equal([GraphReferences.NoneFound], OpenReference("key"));
+        var undo = _h.S.Undo.UndoCount;
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(GraphReferences.NoneFound));
+        Capture.Pump();
+        Assert.Equal("", page.Document.Node(id)!.Props.GetValueOrDefault("key", ""));
+        Assert.Equal(undo, _h.S.Undo.UndoCount);
+    }
+
+    // P17.04: types a name into the box the "+ New" row opened and presses Enter.
+    void EnterNewName(string name)
+    {
+        var box = _h.Find<TextBox>("NewReference");
+        box.Text = name;
+        box.Focus();
+        Capture.Pump();
+        _h.Key(Key.Enter);
+        Capture.Pump();
+    }
+
+    [AvaloniaFact]
+    public void NewField_FromTheDropdown_GoesToProjectSettingsAndTheGeneratedCode()
+    {
+        var p = _h.S.Project.Current!;
+        p.Settings.Save.Fields = [new SaveField { Name = "coins", Type = "int" }];
+        var page = Open();
+        var id = page.AddNode("SetVariable", new Point(900, 300), ("n7", "out"));
+        page.Canvas.Select([id]);
+        Capture.Pump();
+        OpenReference("variable");
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(GraphReferences.NewField));
+        Capture.Pump();
+
+        // refused names leave the project and the node alone, and say why
+        foreach (var bad in new[] { "two words", "9lives", "class", "COINS", "" })
+        {
+            EnterNewName(bad);
+            Assert.NotEmpty(_h.Find<TextBlock>("NewReferenceProblem").Text!);
+            Assert.Equal(["coins"], p.Settings.Save.Fields.Select(f => f.Name));
+        }
+        Assert.Equal("score", page.Document.Node(id)!.Props.GetValueOrDefault("variable", "score"));
+
+        EnterNewName("lives");
+        Assert.Equal("int", p.Settings.Save.Fields.Single(f => f.Name == "lives").Type);
+        Assert.Contains("\"lives\"", File.ReadAllText(p.ProjectPath));
+        Assert.Equal("lives", page.Document.Node(id)!.Props["variable"]);
+        Assert.Equal("lives", _h.Find<InspectorField>("Prop_variable").Value);
+        Assert.Contains("Game.lives = ", page.Code.Text);
+        Assert.DoesNotContain(_h.Win.GetVisualDescendants().OfType<TextBox>(), b => b.Name == "NewReference");
+        Assert.Contains("lives", OpenReference("variable"));
+
+        // undo takes back the node's value; the field stays in the project
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.NotEqual("lives", page.Document.Node(id)!.Props.GetValueOrDefault("variable", ""));
+        Assert.Contains(p.Settings.Save.Fields, f => f.Name == "lives");
+    }
+
+    [AvaloniaFact]
+    public void NewField_IsRefusedWhenTheSaveDataPageWouldRefuseIt()
+    {
+        var p = _h.S.Project.Current!;
+        p.Settings.Save.Fields = [new SaveField { Name = "odd", Type = "not a type" }];
+        var page = Open();
+        var id = page.AddNode("SetVariable", new Point(900, 300), ("n7", "out"));
+        Assert.False(page.CreateReference(id, "variable", "lives"));
+        Assert.DoesNotContain(p.Settings.Save.Fields, f => f.Name == "lives");
+    }
+
+    [AvaloniaFact]
+    public void NewTag_FromTheDropdown_GoesToTheProjectAndTheNode_EscapeCancels()
+    {
+        var p = _h.S.Project.Current!;
+        p.Settings.Tags = ["Player"];
+        var page = Open();
+        page.Canvas.Select(["n8"]);
+        Capture.Pump();
+        OpenReference("tag");
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(GraphReferences.NewTag));
+        Capture.Pump();
+        var box = _h.Find<TextBox>("NewReference");
+        box.Focus();
+        Capture.Pump();
+        _h.Key(Key.Escape);
+        Capture.Pump();
+        Assert.DoesNotContain(_h.Win.GetVisualDescendants().OfType<TextBox>(), b => b.Name == "NewReference");
+        Assert.Equal(["Player"], p.Settings.Tags);
+
+        OpenReference("tag");
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(GraphReferences.NewTag));
+        Capture.Pump();
+        EnterNewName("player");
+        Assert.Contains("already exists", _h.Find<TextBlock>("NewReferenceProblem").Text);
+        EnterNewName("Door");
+        Assert.Equal(["Player", "Door"], p.Settings.Tags);
+        Assert.Equal("Door", page.Document.Node("n8")!.Props["tag"]);
+        Assert.Contains("\"Door\"", File.ReadAllText(p.ProjectPath));
+    }
+
+    [AvaloniaFact]
+    public void MissingReference_IsShownKeptOnSaveAndCanBeReplaced()
+    {
+        var p = _h.S.Project.Current!;
+        var scene = Path.Combine(p.ScenesDir, "RefGoneCave.scene");
+        File.WriteAllText(scene, "{}");
+        File.WriteAllText(Path.Combine(p.ScenesDir, "RefHere.scene"), "{}");
+        var page = Open();
+        var id = page.AddNode("LoadScene", new Point(900, 300), ("n7", "out"));
+        Capture.Pump();
+        Assert.True(page.SetProp(id, "scene", "RefGoneCave"));
+        Capture.Pump();
+        page.Canvas.Select([id]);
+        Capture.Pump();
+        Assert.DoesNotContain(_h.Win.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "Missing_scene");
+
+        // the scene is deleted: the next look marks the field and the node, and the name is untouched
+        File.Delete(scene);
+        page.Canvas.Rebuild();
+        page.Canvas.Select(["n7"]);
+        Capture.Pump();
+        page.Canvas.Select([id]);
+        Capture.Pump();
+        Assert.Equal("RefGoneCave", _h.Find<InspectorField>("Prop_scene").Value);
+        Assert.StartsWith("RefGoneCave is not in this project.", _h.Find<TextBlock>("Missing_scene").Text);
+        Border Box() => page.Canvas.ViewOf(id)!.GetVisualDescendants().OfType<Border>().First(b => b.Name == "Prop_scene");
+        Assert.Equal(AgbStudio.Editor.Services.ThemeService.Token(Box(), "status/danger"), Box().BorderBrush);
+
+        // nothing is erased: saving and opening the file again keep the name, and it is still marked
+        page.Document.Save();
+        var saved = File.ReadAllText(page.Document.Path);
+        Assert.Contains("\"scene\": \"RefGoneCave\"", saved);
+        Assert.Contains("Scene.Load(\"RefGoneCave\");", page.Code.Text);
+        var reopened = AgbStudio.Scripting.Graph.LogicGraph.Parse(saved);
+        Assert.Equal("RefGoneCave", reopened.Node(id)!.Props["scene"]);
+
+        // choosing another scene clears the mark, and undo brings the missing name back
+        OpenReference("scene");
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose("RefHere"));
+        Capture.Pump();
+        Assert.Equal("RefHere", page.Document.Node(id)!.Props["scene"]);
+        Assert.DoesNotContain(_h.Win.GetVisualDescendants().OfType<TextBlock>(), t => t.Name == "Missing_scene");
+        Assert.NotEqual(AgbStudio.Editor.Services.ThemeService.Token(Box(), "status/danger"), Box().BorderBrush);
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Equal("RefGoneCave", page.Document.Node(id)!.Props["scene"]);
+        Assert.NotNull(_h.Find<TextBlock>("Missing_scene"));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(PropKind.Scene, "here", false)]
+    [InlineData(PropKind.Scene, "HERE", false)]    // the build ignores case
+    [InlineData(PropKind.Scene, "gone", true)]
+    [InlineData(PropKind.Scene, "", false)]        // not set yet
+    [InlineData(PropKind.Sound, "ding", false)]
+    [InlineData(PropKind.Sound, "ding.wav", false)]
+    [InlineData(PropKind.Sound, "beep", false)]    // an SFX Designer effect
+    [InlineData(PropKind.Sound, "gone.wav", true)]
+    [InlineData(PropKind.Music, "town.xm", false)]
+    [InlineData(PropKind.Music, "gone", true)]
+    [InlineData(PropKind.Variable, "coins", false)]
+    [InlineData(PropKind.Variable, "COINS", true)]  // a C# member: case matters
+    [InlineData(PropKind.Variable, "metOwl", false)] // exists, even though the list offers only numbers
+    [InlineData(PropKind.Tag, "door", false)]
+    [InlineData(PropKind.Tag, "gone", true)]
+    [InlineData(PropKind.TextKey, "intro.hello", false)]
+    [InlineData(PropKind.TextKey, "gone", true)]
+    public void IsMissing_MatchesNamesAsTheBuildDoes(PropKind kind, string value, bool missing)
+    {
+        var p = _h.S.Project.Current!;
+        var sfx = Path.Combine(p.AssetsDir, "audio", "sfx");
+        var music = Path.Combine(p.AssetsDir, "audio", "music");
+        Directory.CreateDirectory(sfx);
+        Directory.CreateDirectory(music);
+        Directory.CreateDirectory(p.SfxDir);
+        File.WriteAllBytes(Path.Combine(sfx, "ding.wav"), []);
+        File.WriteAllText(Path.Combine(p.SfxDir, "beep.sfx"), "{}");
+        File.WriteAllBytes(Path.Combine(music, "town.xm"), []);
+        File.WriteAllText(Path.Combine(p.ScenesDir, "here.scene"), "{}");
+        foreach (var f in Directory.GetFiles(p.TextDir, "strings.*.json")) File.Delete(f);
+        GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), new StringTable { Strings = { ["intro.hello"] = "Hello" } });
+        p.Settings.Tags = ["Door"];
+        p.Settings.Save.Fields = [new SaveField { Name = "coins", Type = "int" }, new SaveField { Name = "metOwl", Type = "bool" }];
+        Assert.Equal(missing, new GraphReferences(p).IsMissing(new PropDef("x", kind, "d"), value));
+    }
+
+    [AvaloniaFact]
+    public void IsMissing_NeverCallsATextKeyMissingWhileATableIsBroken()
+    {
+        var p = _h.S.Project.Current!;
+        File.WriteAllText(Path.Combine(p.TextDir, "strings.xx.json"), "{ broken");
+        Assert.False(new GraphReferences(p).IsMissing(new PropDef("key", PropKind.TextKey, ""), "anything"));
+        Assert.False(new GraphReferences(null).IsMissing(new PropDef("scene", PropKind.Scene, ""), "anything"));
+    }
 
     [AvaloniaFact]
     public void ToolsLogicGraph_ShowsNodesWiresPaletteStatusAndGeneratedCode()

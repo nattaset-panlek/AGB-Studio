@@ -26,6 +26,8 @@ whether it needs a condition.
 - **Only if**: a condition the game must meet before the link works, for example `Game.coins >= 10` (the code font
   draws `>=` as one sign; typing `≥` works too). Press Enter or leave the box to keep it. Leave it empty to always
   allow the link.
+- **Choose**: builds a simple condition from a number field of Save data, a comparison and a number, and writes it
+  to **Only if**. A condition it cannot show, like `Game.coins > Game.best`, stays as typed, and this row shows "Custom".
 
 Each change is saved to the scene at once and can be undone.
 

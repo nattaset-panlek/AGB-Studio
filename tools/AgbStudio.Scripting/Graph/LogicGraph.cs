@@ -24,7 +24,8 @@ public sealed record PinDef(string Name, PinKind Kind, bool Output);
 /// values in <paramref name="Options"/> (Set Velocity Y "Mode": Set / Add / Clamp).</summary>
 public sealed record PropDef(string Name, PropKind Kind, string Default, IReadOnlyList<string>? Options = null);
 
-public enum PropKind { Number, Text, Key, Bool, Compare, Choice }
+/// <summary>How a property is filled in. Scene to TextKey name something in the project; in the file they are plain strings like Text.</summary>
+public enum PropKind { Number, Text, Key, Bool, Compare, Choice, Scene, Sound, Music, Variable, Tag, TextKey }
 
 /// <summary>One node type of the palette (category as in the Figma Logic Graph sidebar).</summary>
 public sealed record NodeDef(string Type, string Category, string Title, NodeRole Role, IReadOnlyList<PinDef> Pins, IReadOnlyList<PropDef> Props)
@@ -196,7 +197,7 @@ public static class NodeCatalog
         new("OnUpdate", "Events", "On Update", NodeRole.Event, [ExecOut], []),
         new("OnLateUpdate", "Events", "On Late Update", NodeRole.Event, [ExecOut], []),
         // A Tag on On Touch runs the chain only for actors with that tag (Figma "Tag  Coin").
-        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], [Txt("tag", "")]),
+        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], [new("tag", PropKind.Tag, "")]),
         new("OnButton", "Events", "On Button", NodeRole.Event, [ExecOut], [new("button", PropKind.Key, "A")]),
         new("OnDestroy", "Events", "On Destroy", NodeRole.Event, [ExecOut], []),
         // Input
@@ -233,24 +234,24 @@ public static class NodeCatalog
             [Num("vx", "0"), Num("vy", "0")]),
         new("Compare", "Math", "Compare", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Bool)], [Num("a", "0"), Num("b", "0"), new("op", PropKind.Compare, ">")]),
         // Actor
-        new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [Txt("tag", "Player")]),
+        new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [new("tag", PropKind.Tag, "Player")]),
         new("Destroy", "Actor", "Destroy", NodeRole.Action, [ExecIn, ExecOut, In("actor", PinKind.Actor)], []),
         new("Self", "Actor", "Self", NodeRole.Value, [Out("value", PinKind.Actor)], []),
         // Sound
-        new("PlaySound", "Sound", "Play Sound", NodeRole.Action, [ExecIn, ExecOut], [Txt("sound", "jump"), Num("volume", "1")]),
-        new("PlayMusic", "Sound", "Play Music", NodeRole.Action, [ExecIn, ExecOut], [Txt("music", "")]),
+        new("PlaySound", "Sound", "Play Sound", NodeRole.Action, [ExecIn, ExecOut], [new("sound", PropKind.Sound, "jump"), Num("volume", "1")]),
+        new("PlayMusic", "Sound", "Play Music", NodeRole.Action, [ExecIn, ExecOut], [new("music", PropKind.Music, "")]),
         new("StopMusic", "Sound", "Stop Music", NodeRole.Action, [ExecIn, ExecOut], []),
         // Data & Save
-        new("GetVariable", "Data & Save", "Get Variable", NodeRole.Value, [Out("value", PinKind.Fixed)], [Txt("variable", "score")]),
-        new("SetVariable", "Data & Save", "Set Variable", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [Txt("variable", "score"), Num("value", "0")]),
-        new("AddToVariable", "Data & Save", "Add to Variable", NodeRole.Action, [ExecIn, ExecOut, In("amount", PinKind.Fixed)], [Txt("variable", "score"), Num("amount", "1")]),
+        new("GetVariable", "Data & Save", "Get Variable", NodeRole.Value, [Out("value", PinKind.Fixed)], [new("variable", PropKind.Variable, "score")]),
+        new("SetVariable", "Data & Save", "Set Variable", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [new("variable", PropKind.Variable, "score"), Num("value", "0")]),
+        new("AddToVariable", "Data & Save", "Add to Variable", NodeRole.Action, [ExecIn, ExecOut, In("amount", PinKind.Fixed)], [new("variable", PropKind.Variable, "score"), Num("amount", "1")]),
         new("SaveGame", "Data & Save", "Save Game", NodeRole.Action, [ExecIn, ExecOut], [Num("slot", "0")]),
         new("Checkpoint", "Data & Save", "Checkpoint", NodeRole.Action, [ExecIn, ExecOut], []),
         // Text & UI
-        new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [Txt("key", "")]),
+        new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
         // Other
         new("DebugLog", "Other", "Debug Log", NodeRole.Action, [ExecIn, ExecOut], [Txt("text", "")]),
-        new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [Txt("scene", "")]),
+        new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [new("scene", PropKind.Scene, "")]),
         new("ShakeCamera", "Other", "Shake Camera", NodeRole.Action, [ExecIn, ExecOut], [Num("amplitude", "2"), Num("frames", "20")]),
     ];
 

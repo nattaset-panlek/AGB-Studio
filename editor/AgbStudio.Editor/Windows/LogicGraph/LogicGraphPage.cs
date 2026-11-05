@@ -418,9 +418,36 @@ public sealed class LogicGraphPage : DockPanel
                 rows.Add(choice);
                 continue;
             }
-            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : value, Name = "Prop_" + prop.Name, IsEnabled = !connected };
+            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : GraphReferences.Display(prop, value), Name = "Prop_" + prop.Name, IsEnabled = !connected };
             switch (prop.Kind)
             {
+                case var kind when GraphReferences.IsReference(kind):
+                    field.Kind = FieldKind.Dropdown;
+                    field.TemplateApplied += (_, e) =>
+                    {
+                        if (e.NameScope.Find<Button>("PART_Dropdown") is not { } button) return;
+                        button.Click += (_, _) => Database.Dropdown.Show(button, References().Options(prop, value), field.Value, option =>
+                        {
+                            if (GraphReferences.IsNewRow(option)) { _creating = (n.Id, name); _createProblem = null; RebuildInspector(); }
+                            else if (GraphReferences.Value(option) is { } chosen) SetProp(n.Id, name, chosen);
+                        });
+                    };
+                    if (_creating == (n.Id, name))
+                    {
+                        rows.Add(field);
+                        rows.AddRange(NewReferenceRows(n.Id, name));
+                        continue;
+                    }
+                    if (!connected && References().IsMissing(prop, value))
+                    {
+                        rows.Add(field);
+                        var missing = UI.Text(GraphReferences.MissingText(prop, value), "Label/11", "status/danger");
+                        missing.TextWrapping = TextWrapping.Wrap;
+                        missing.Name = "Missing_" + name;
+                        rows.Add(missing);
+                        continue;
+                    }
+                    break;
                 case PropKind.Key:
                     field.Kind = FieldKind.Dropdown;
                     field.Choices(() => ["A", "B", "Select", "Start", "Right", "Left", "Up", "Down", "R", "L"], x => SetProp(n.Id, name, x));
@@ -467,6 +494,66 @@ public sealed class LogicGraphPage : DockPanel
         _inspector.Children.Add(section);
         _inspector.Children.Add(PageChrome.Divider());
     }
+
+    // ---- a new Save data field or tag, named under the dropdown (P17.04) -------------------------------
+
+    (string Node, string Prop)? _creating;
+    string? _createProblem;
+
+    IEnumerable<Control> NewReferenceRows(string node, string prop)
+    {
+        var box = new TextBox { Name = "NewReference", Height = 28, Padding = new Thickness(10, 0), Watermark = "Name, then Enter" };
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape) { _creating = null; _createProblem = null; RebuildInspector(); e.Handled = true; }
+            if (e.Key != Key.Enter) return;
+            e.Handled = true;
+            CreateReference(node, prop, box.Text ?? "");
+        };
+        box.AttachedToVisualTree += (_, _) => box.Focus();
+        yield return box;
+        if (_createProblem is null) yield break;
+        var problem = UI.Text(_createProblem, "Label/11", "status/danger");
+        problem.TextWrapping = TextWrapping.Wrap;
+        problem.Name = "NewReferenceProblem";
+        yield return problem;
+    }
+
+    /// <summary>
+    /// Adds a Save data field (int) or project tag and sets the node to it. False when the name is refused; the problem
+    /// shows under the box. The project file is saved at once; undo takes back the node's value, not the new name.
+    /// </summary>
+    public bool CreateReference(string node, string prop, string name)
+    {
+        if (_s.Project.Current is not { } project || Document.Node(node) is not { } n || NodeCatalog.Find(n.Type)?.Props.FirstOrDefault(p => p.Name == prop) is not { } def) return false;
+        name = name.Trim();
+        var isTag = def.Kind == PropKind.Tag;
+        var problem = GraphReferences.NameProblem(isTag ? "tag" : "field", name);
+        var taken = isTag ? project.Settings.Tags : project.Settings.Save.Fields.Select(f => f.Name.Trim());
+        if (problem is null && taken.Contains(name, StringComparer.OrdinalIgnoreCase)) problem = $"{name} already exists. Choose it from the list.";
+        var field = new AgbStudio.Core.Project.SaveField { Name = name, Type = "int" };
+        if (problem is null && !isTag)
+        {
+            // the Save data page's own check: for example, whether the save chip still holds every slot
+            var model = new Settings.ProjectSettingsModel(project.Settings, project);
+            model.Draft.Save.Fields.Add(field);
+            problem = model.Validate();
+        }
+        _createProblem = problem;
+        if (problem is null)
+        {
+            if (isTag) project.Settings.Tags.Add(name);
+            else project.Settings.Save.Fields.Add(field);
+            _s.ProjectSettings.Save();
+            _creating = null;
+            SetProp(node, prop, name);
+        }
+        RebuildInspector();
+        return problem is null;
+    }
+
+    /// <summary>A fresh look at what the project holds, for the dropdowns and for marking names it no longer has.</summary>
+    public GraphReferences References() => new(_s.Project.Current);
 
     /// <summary>Changes a node property (inspector), checking numbers.</summary>
     public bool SetProp(string id, string prop, string value)

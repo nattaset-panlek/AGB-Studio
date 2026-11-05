@@ -22,6 +22,7 @@ public enum GraphTool { Select, Hand, Link }
 public sealed class GraphCanvas : Panel, IEditTarget
 {
     readonly LogicGraphPage _page;
+    GraphReferences? _references;   // one look at the project per rebuild
     readonly Canvas _world = new() { Name = "GraphWorld", IsHitTestVisible = false };
     readonly BackLayer _back;
     readonly WireLayer _wires;
@@ -154,9 +155,13 @@ public sealed class GraphCanvas : Panel, IEditTarget
 
     // ---- building visuals ------------------------------------------------------------------------------------
 
+    bool MissingReference(GraphNode n, string prop) =>
+        NodeCatalog.Find(n.Type)?.Props.FirstOrDefault(p => p.Name == prop) is { } def && n.Props.TryGetValue(prop, out var value) && _references?.IsMissing(def, value) == true;
+
     /// <summary>Rebuilds node views and wires from the document.</summary>
     public void Rebuild()
     {
+        _references = _page.References();
         _world.Children.Clear();
         _nodeViews.Clear();
         _world.Children.Add(_back);
@@ -210,7 +215,7 @@ public sealed class GraphCanvas : Panel, IEditTarget
                 var self = row.Prop is null && row.Left is { Kind: PinKind.Actor } && !connected;
                 if ((row.Prop != null || self) && !connected)
                 {
-                    var box = UI.Frame(UI.Text(self ? "Self" : GraphDocument.PropText(n, row.Prop!), "Mono/10", "text/primary"), "bg/base", "border/default", new Thickness(1), new Thickness(6, 0), 4);
+                    var box = UI.Frame(UI.Text(self ? "Self" : GraphDocument.PropText(n, row.Prop!), "Mono/10", "text/primary"), "bg/base", !self && MissingReference(n, row.Prop!) ? "status/danger" : "border/default", new Thickness(1), new Thickness(6, 0), 4);
                     box.Height = 20;
                     box.Name = self ? "Pin_" + row.Left!.Name : "Prop_" + row.Prop;
                     box.Measure(Size.Infinity);

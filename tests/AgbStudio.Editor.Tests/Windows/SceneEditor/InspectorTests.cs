@@ -111,6 +111,33 @@ public sealed class InspectorTests : IDisposable
         Assert.Equal(("T-P10", "InspectorPalette"), _w.S.Windows.Requests[^1]);
     }
 
+    // P17.06: a Text Label's key comes from the Localization tables, and a typed key still works.
+    [AvaloniaFact]
+    public void TextKey_ChoosesFromTheTablesAndStillTakesATypedKey()
+    {
+        var p = _w.M.Project!;
+        foreach (var f in Directory.GetFiles(p.TextDir, "strings.*.json")) File.Delete(f);
+        GameProject.Save(Path.Combine(p.TextDir, "strings.en.json"), new StringTable { Strings = { ["hud.lives"] = "Lives", ["hud.score"] = "Score" } });
+        var index = _w.M.AddActor(_w.M.NewActor(ActorKind.TextLabel), "Add Text");
+        Capture.Pump();
+        Assert.Equal(_w.M.SelectedActorIndex, index);
+        var before = _w.M.Scene!.Actors[index].Text;
+
+        _w.Click(_w.Find<AgbButton>("TextKeyChoose"));
+        Assert.Equal(["hud.lives", "hud.score"], ((IEnumerable<Control>)AgbStudio.Editor.Windows.Database.Dropdown.Last!.ItemsSource!).OfType<MenuItem>().Select(i => (string)i.Header!));
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose("hud.score"));
+        Capture.Pump();
+        Assert.Equal("hud.score", _w.M.Scene!.Actors[index].Text);
+        Assert.Equal("hud.score", Field("TextKey").Value);
+        _w.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Equal(before, _w.M.Scene!.Actors[index].Text);
+
+        var box = Field("TextKey").GetVisualDescendants().OfType<TextBox>().First(b => b.Name == "PART_Text");
+        TypeInto(box, "hud.typed");
+        Assert.Equal("hud.typed", _w.M.Scene!.Actors[index].Text);
+    }
+
     [AvaloniaFact]
     public void SheetAndAnimationDropdowns()
     {

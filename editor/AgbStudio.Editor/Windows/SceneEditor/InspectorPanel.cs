@@ -322,7 +322,21 @@ public sealed class InspectorPanel : Panel
             if (!Editing(textField) || e.Property != InspectorField.ValueProperty) return;
             _m.Edit("Change Text Key", () => _m.Scene!.Actors[index].Text = textField.Value?.Trim() ?? "", "textKey:" + index);
         };
-        rows.Add(textField);
+        // P17.06: choose a key from the Localization tables, or keep typing one
+        var chooseKey = new AgbButton { Kind = ButtonKind.Ghost, Glyph = "down", Name = "TextKeyChoose", Padding = new Thickness(6, 0), VerticalAlignment = VerticalAlignment.Bottom };
+        chooseKey.Click += (_, _) =>
+        {
+            var current = _m.Scene!.Actors[index].Text;
+            var options = new LogicGraph.GraphReferences(_m.Project).Options(new AgbStudio.Scripting.Graph.PropDef("key", AgbStudio.Scripting.Graph.PropKind.TextKey, ""), current);
+            Database.Dropdown.Show(chooseKey, options, current, option =>
+            {
+                if (LogicGraph.GraphReferences.Value(option) is not { } key) return;
+                _m.Edit("Change Text Key", () => _m.Scene!.Actors[index].Text = key);
+                textField.Value = key;
+            });
+        };
+        DockPanel.SetDock(chooseKey, Dock.Right);
+        rows.Add(new DockPanel { HorizontalSpacing = 4, Children = { chooseKey, textField } });
 
         var padField = new InspectorField { Kind = FieldKind.Text, Label = "Padding", Name = "Field_TextPadding" };
         Refresh(() =>
