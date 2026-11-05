@@ -2,6 +2,16 @@
 
 เขียนเมื่อ 2026-11-05 จากเครื่อง `C:\Personal\AGB-Studio` เจ้าของย้ายไปทำต่อที่ PC เครื่องอื่น Claude ที่เครื่องใหม่อ่านไฟล์นี้ก่อน
 
+## สถานะล่าสุด (2026-11-06, เครื่อง `D:\devkitPro\AGB-Studio`)
+
+เครื่องนี้มี devkitPro และปิด Smart App Control จึงรัน test ทั้งหมดได้ในเครื่อง งานด้านล่างยังไม่ commit อยู่บน `handoff/2026-11-05`
+
+- **Test ของ Phase 18 แก้แล้ว:** `ActorsStopOn...` เช็กว่าพิกเซลที่วาด player นิ่ง เพราะ `PlatformerBody` บวกแรงโน้มถ่วงทุกเฟรมแล้วชนพื้น `Vy` และ Y จึงขยับไม่ถึงพิกเซล (อ่านโค้ดยืนยันแล้ว) ส่วน `pla` ในแถบค้นหาคำสั่งแก้ที่ตัวโปรแกรม: คำสั่ง `scene.place.*` มี `SearchLast` จึงขึ้นหลังผลอื่น
+- **Test เดิม 5 ตัวแก้แล้ว:** ทั้งหมดเป็น test ที่ไม่ตามงาน workspace เดียว: แท็บ Assets ย้ายไปแผงกลาง, Debug.Log เข้า Console ผ่าน `ReceiveGameLine`, editor เตี้ยลงจึงต้องเลื่อนบรรทัดก่อนคลิก gutter และระยะ snap ของ UI Editor ขึ้นกับ scale จึงลากด้วย Alt
+- **ผล test ในเครื่อง:** build และ lint ผ่าน, Tests 284/284, Scripting 129/129, Mcp 13/13, Editor 672/672
+- **Checklist:** ติ๊ก P18.01, 02, 03, 05 และ P19.01-05 พร้อมหลักฐาน เพิ่ม Scope log 3 แถวแล้ว ข้อ `USER` ยังไม่ติ๊ก
+- **P24.01 เสร็จ (ลองในเครื่อง):** Arm GNU Toolchain 15.2.rel1 ผ่าน runtime test 24/24, ROM เล็กลง 0.16 %, เฟรมหนักสุดช้าลง 1.1 %, Sky Hopper build ได้และภาพตรงกัน ยังยืม `gba_crt0.o`, linker script, libtonc, maxmod, gbafix, mmutil ของ devkitPro อยู่ ข้อควรระวัง: IWRAM hot code 8,128 จาก 8,192 ไบต์ รายละเอียดอยู่ที่ `docs/evidence/p24-01-arm-toolchain.md` ชุดที่ลองอยู่ที่ `D:gb-studio-tmp	rial` (ไม่อยู่ใน repo)
+
 ## เริ่มที่เครื่องใหม่
 
 ```bash

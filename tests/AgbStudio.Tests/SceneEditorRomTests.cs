@@ -75,6 +75,14 @@ public sealed class SceneEditorRomTests(EmulatorFixture emu, ITestOutputHelper l
         log.WriteLine($"player stopped at y {player.Y}");
         // the top of row 4 is y 64; the sample map's own ground is far below it, at row 8 and down
         Assert.InRange(player.Y, 64 - 8, 64 + 8);
-        Assert.Equal(0, player.Vy, 0.01);
+        // standing still: Vy itself goes up and down under a pixel a frame (PlatformerBody adds gravity, then hits the ground)
+        Assert.True(player.OnGround, "the player should stand on the painted cells");
+        // and its position by under a pixel with it, so the pixel it is drawn at stays the same
+        var y = Math.Floor(player.Y);
+        for (var f = 0; f < 30; f++)
+        {
+            Play.Hold(s, 0, 1);
+            Assert.Equal(y, Math.Floor(Assert.IsType<LiveActor>(Play.Actor(s, "Player")).Y));
+        }
     }
 }

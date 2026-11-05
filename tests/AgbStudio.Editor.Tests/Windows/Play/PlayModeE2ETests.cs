@@ -400,7 +400,7 @@ public class PlayModeE2ETests : EditorDriver
         Assert.All(lines, l => Assert.Matches(@"^\d\d:\d\d:\d\d$", l.Time));
         // a Debug.Log line from the game appears with the time it arrived
         Play.Console.Clock = () => new DateTime(2026, 10, 31, 12, 4, 53);
-        Play.Console.AddGameLine("Debug.Log: jumpPower = 3.50");
+        Play.ReceiveGameLine("Debug.Log: jumpPower = 3.50");
         Capture.Pump();
         var last = Lines(workspace).Last();
         Assert.Equal(("12:04:53", "Debug.Log: jumpPower = 3.50", ConsoleLevel.Info), (last.Time, last.Text, last.Level));

@@ -33,6 +33,9 @@ public sealed class BreakpointUiTests : EditorDriver
     /// <summary>Clicks the line number of a line in the code editor's gutter.</summary>
     void ClickGutter(CodeEditor ed, int line)
     {
+        // the shared bottom panel leaves the editor less room: bring the line into view first
+        ed.MoveCaret(line, 1);
+        Capture.Pump();
         var local = new Point(20, ed.PointOf(ed.Text.Split('\n').Take(line - 1).Sum(l => l.Length + 1)).Y + ed.LineHeight / 2);
         var p = ed.TranslatePoint(local, Win)!.Value;
         Win.MouseMove(p);

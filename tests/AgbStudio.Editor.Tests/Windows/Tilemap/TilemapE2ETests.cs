@@ -264,7 +264,7 @@ public class TilemapE2ETests : IDisposable
         var page = OpenFromTab();
         var s = page.Session!;
         var table = page.Bottom!;
-        Assert.Equal(["Layers", "Auto-tile rules", "Assets"], table.Tabs.Select(t => t.Label));
+        Assert.Equal(["Layers", "Auto-tile rules"], table.Tabs.Select(t => t.Label));
         Assert.Equal(["BG0 · Sky", "Image", "3", "× 0.20", "char block 0 · screen 30"], table.RowTexts(0));
         Assert.Equal(["BG1 · Hills", "Image", "2", "× 0.50", "char block 0 · screen 28"], table.RowTexts(1));
         Assert.Equal(["BG2 · Ground", "Tilemap", "1", "× 1.00", "char block 0 · screen 26"], table.RowTexts(2));

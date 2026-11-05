@@ -95,7 +95,8 @@ public static class PaletteSearch
         if (commandsOnly) query = query[1..].Trim();
         var cmds = commands.Where(c => c.InPalette)
             .Select((c, order) => (c, order, s: Score(c.Title, query))).Where(x => x.s >= 0)
-            .OrderByDescending(x => x.s).ThenBy(x => x.order)
+            // SearchLast: a better name match must not push out the results a short query is known for
+            .OrderBy(x => x.c.SearchLast).ThenByDescending(x => x.s).ThenBy(x => x.order)
             .Take(commandsOnly ? MaxCommandsOnly : MaxPerGroup)
             .Select(x => new PaletteResult(x.c.Title, x.c.Glyph ?? "dots", shortcut(x.c), x.c, null)).ToList();
         if (commandsOnly) return (cmds, []);

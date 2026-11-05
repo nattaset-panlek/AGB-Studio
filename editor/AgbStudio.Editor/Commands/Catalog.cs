@@ -13,8 +13,8 @@ public static class Catalog
 {
     static KeyGesture K(string s) => Theme.Shortcuts.Parse(s);
 
-    static EditorCommand C(string id, string title, string category, string? glyph = null, string? keys = null, string? window = null, ShortcutContext ctx = Global, bool palette = true) =>
-        new() { Id = id, Title = title, Category = category, Glyph = glyph, DefaultGesture = keys is null ? null : K(keys), Window = window, Context = ctx, InPalette = palette };
+    static EditorCommand C(string id, string title, string category, string? glyph = null, string? keys = null, string? window = null, ShortcutContext ctx = Global, bool palette = true, bool searchLast = false) =>
+        new() { SearchLast = searchLast, Id = id, Title = title, Category = category, Glyph = glyph, DefaultGesture = keys is null ? null : K(keys), Window = window, Context = ctx, InPalette = palette };
 
     public static void RegisterAll(CommandRegistry r)
     {
@@ -113,12 +113,12 @@ public static class Catalog
         C("scene.toggleGrid", "Toggle grid", "Scene", "grid", "G", ctx: Scene),
         C("scene.focusSelection", "Focus selection", "Scene", "expand", "F", ctx: Scene),
         // P18.01, P18.02: place mode, for each kind that belongs at a spot of the map
-        C("scene.place.actor", "Place Actor", "Scene", "plus", "A", ctx: Scene),
-        C("scene.place.trigger", "Place Trigger Zone", "Scene", "plus", "T", ctx: Scene),
-        C("scene.place.player", "Place Player", "Scene", "plus", ctx: Scene),
-        C("scene.place.enemy", "Place Enemy", "Scene", "plus", ctx: Scene),
-        C("scene.place.pickup", "Place Pickup", "Scene", "plus", ctx: Scene),
-        C("scene.place.camera", "Place Camera Zone", "Scene", "plus", ctx: Scene),
+        C("scene.place.actor", "Place Actor", "Scene", "plus", "A", ctx: Scene, searchLast: true),
+        C("scene.place.trigger", "Place Trigger Zone", "Scene", "plus", "T", ctx: Scene, searchLast: true),
+        C("scene.place.player", "Place Player", "Scene", "plus", ctx: Scene, searchLast: true),
+        C("scene.place.enemy", "Place Enemy", "Scene", "plus", ctx: Scene, searchLast: true),
+        C("scene.place.pickup", "Place Pickup", "Scene", "plus", ctx: Scene, searchLast: true),
+        C("scene.place.camera", "Place Camera Zone", "Scene", "plus", ctx: Scene, searchLast: true),
         C("script.goToLine", "Go to line", "Script", "code", "Ctrl+G", ctx: Script),
     ];
 }
