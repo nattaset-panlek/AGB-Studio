@@ -35,6 +35,18 @@ branch นี้มีงานทั้งหมดของเครื่อ�
 
 รายการเต็มและวิธีตรวจอยู่ที่ `docs/ENGINE-CHECKLIST.md` หัวข้อ "Upgrade section" ถึง Phase 24 ส่วนรายงานเปรียบเทียบอยู่ที่ `docs/GB-STUDIO-COMPARE.md` ซึ่งยังมี 3 ข้อที่คลาดเคลื่อน ฉบับแก้แล้วอยู่ใน Upgrade section
 
+## ผล CI ล่าสุด (run 42047865350, commit 8e1806c)
+
+Build, lint, ข้อความ commit, Scripting 129/129 และ Mcp 13/13 ผ่าน `AgbStudio.Tests` ผ่าน 282/283 Editor ผ่าน 663/670 Test ใหม่ของ Phase 18 และ 19 ผ่านทั้งหมด ยกเว้นข้อแรกด้านล่าง
+
+ต้องแก้ 3 ตัว ทั้งหมดมาจากงาน Phase 18:
+
+1. **`SceneEditorRomTests.ActorsStopOn...`:** ตำแหน่ง Y ผ่านแล้ว แต่ `Vy` เป็น 0.5 แทน 0 น่าจะเป็นแรงโน้มถ่วงที่บวกทุกเฟรมตอนยืนบนพื้น ให้เปลี่ยน test ไปเช็กว่า Y นิ่งหลายเฟรม (ข้อนี้ยังเป็นการตีความจากตัวเลข ยังไม่ได้อ่าน `PlatformerBody`)
+2. **`CommandAndShortcutTests.Palette_FindsTheFigmaResultsForPla`** และ
+3. **`ShellE2ETests.CommandPalette_CtrlK_TypeArrowEnter`:** บั๊กจริง พิมพ์ `pla` แล้ว "Place Actor" แทรกแทน "Palette Manager" ซึ่งเป็นผลที่ Figma กำหนด ต้องแก้คำสั่ง `scene.place.*` เช่น ชื่อหรืออันดับ โดยไม่แก้ test ให้ตรงบั๊ก
+
+ที่เหลือ 5 ตัวเป็นของเดิม: Tilemap LayersTable, P12_07, UiEditor 2 ตัว และ `Breakpoints_From...`
+
 ## ทำอะไรต่อ ตามลำดับ
 
 1. **อ่านผล CI ของ `ci/phase18`** (วิธีอยู่ด้านล่าง) ถ้ารอบล่าสุดยังรันหรือถูกยกเลิก ให้รอหรือ push ใหม่
