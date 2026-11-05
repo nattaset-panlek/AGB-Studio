@@ -48,7 +48,7 @@ public static class ToolchainHelp
             s.Toolchain.Changed -= First;
             Dispatcher.UIThread.Post(() =>
             {
-                if (s.Toolchain.Find("devkitARM") is not { Found: false } || s.Preferences.Current.DevkitProNoticeShown) return;
+                if (s.Toolchain.Find("compiler") is not { Found: false } || s.Preferences.Current.DevkitProNoticeShown) return;
                 s.Preferences.Update(p => p.DevkitProNoticeShown = true);
                 _ = Show(s, new ToolchainMissingDialog(s, null));
             });

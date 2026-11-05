@@ -2,7 +2,7 @@
 // (system::waitVBlank and the BIOS VBlankIntrWait), with stack garbage where it builds maxmod's set-up, and at the
 // mixing rate from Project Settings · Audio. maxmod reads the set-up's mixing mode as a 32-bit word while the compiler
 // stores the enum in one byte: garbage in the padding made the init hang or restart the ROM.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/audio.hpp"

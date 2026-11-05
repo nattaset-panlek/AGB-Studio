@@ -1,6 +1,6 @@
 // Audio: maxmod music and sampled effects from a generated soundbank, music fades, DMG register effects
 // and the audio share of the frame budget.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/audio.hpp"

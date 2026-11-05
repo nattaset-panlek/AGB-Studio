@@ -1669,16 +1669,15 @@ public sealed partial class GameBuilder
         return _step == StepLink ? Path.GetFileName(RomPath) : $"{compiled} files";
     }
 
-    /// <summary>The notices of the libraries linked into every ROM (docs/THIRD_PARTY.md): libtonc (MIT) and maxmod (ISC),
+    /// <summary>The notices of what every ROM contains (docs/THIRD_PARTY.md): the AGB Studio runtime (MIT) and maxmod (ISC),
     /// written next to the ROM so they travel with it.</summary>
     void WriteNotices(string path)
     {
         var sb = new StringBuilder();
         sb.Append($"{_p.Settings.General.GameTitle} was made with AGB Studio and contains the following libraries.\n\n");
-        // D-05: the AGB Studio runtime inside the ROM is MIT; the same permission text covers it and libtonc.
+        // D-05: the AGB Studio runtime inside the ROM is MIT. Since P24.03 the ROM no longer links libtonc.
         sb.Append("AGB Studio runtime\n------------------\nCopyright (c) 2026 AGB Studio contributors\n\n");
-        sb.Append("libtonc\n-------\nCopyright (c) J Vijn\n\n");
-        sb.Append("Both are under the MIT licence:\n\n");
+        sb.Append("It is under the MIT licence:\n\n");
         sb.Append("Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\n");
         sb.Append("documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation\n");
         sb.Append("the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to\n");
@@ -1690,7 +1689,7 @@ public sealed partial class GameBuilder
         sb.Append("AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,\n");
         sb.Append("TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n");
         sb.Append("SOFTWARE.\n\n");
-        var maxmod = Path.Combine(_tc.DevkitPro, "libgba", "maxmod_license.txt");
+        var maxmod = Path.Combine(NativeBuild.MaxmodDir, "maxmod_license.txt");
         sb.Append("maxmod\n------\n");
         sb.Append(File.Exists(maxmod) ? File.ReadAllText(maxmod).Replace("\r\n", "\n").Trim() + "\n" : "Copyright (c) 2008, Mukunda Johnson. ISC licence (see maxmod_license.txt in devkitPro).\n");
         SoundbankBuilder.WriteIfChanged(path, sb.ToString().Replace("\n", Environment.NewLine));

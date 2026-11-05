@@ -275,7 +275,7 @@ public sealed class ScriptWorkspace : IDisposable
     {
         Dispatcher.UIThread.Post(() =>
         {
-            var gcc = _s.Toolchain.Find("devkitARM")?.Version ?? "devkitARM";
+            var gcc = _s.Toolchain.Find("compiler")?.Version ?? "arm-none-eabi-g++";
             var opt = _s.Project.Current?.Settings.Build.Optimise ?? "-O2";
             if (r.StepTimes.TryGetValue(GameBuilder.StepCompile, out var t))
                 Log(r.Success ? ConsoleLevel.Info : ConsoleLevel.Error, string.Create(CultureInfo.InvariantCulture, $"g++ {gcc}  {opt} -mthumb  · {t.TotalSeconds:0.00} s"), check: true);

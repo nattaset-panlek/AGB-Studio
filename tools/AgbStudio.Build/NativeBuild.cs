@@ -57,25 +57,61 @@ public sealed class NativeBuild
     public static string CommonFlags(Toolchain tc, BuildConfig config) =>
         "-mcpu=arm7tdmi -mtune=arm7tdmi -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit " +
         "-ffunction-sections -fdata-sections -Wall -Wextra -Werror -Wno-volatile " +
-        $"-isystem {Q(tc.LibtoncInclude)} -isystem {Q(tc.LibgbaInclude)} " +
+        $"-isystem {Q(Path.Combine(MaxmodDir, "include"))} " +
         (config == BuildConfig.Debug ? "-DAGB_DEBUG=1 -g" : "-DAGB_RELEASE=1 -DNDEBUG");
+
+    /// <summary>P24.02: the start code, linker script and specs of AGB Studio (runtime/link), in place of devkitPro's
+    /// gba.specs. The start code is assembled into build/link, which -B adds to where gcc finds start files and scripts.</summary>
+    public static string LinkDir => Path.Combine(RuntimeDir, "link");
+
+    string PrepareLink(Action<string>? onLine, CancellationToken cancel)
+    {
+        var dir = Path.Combine(_buildDir, "link");
+        Directory.CreateDirectory(dir);
+        var src = Path.Combine(LinkDir, "agb_crt0.s");
+        var obj = Path.Combine(dir, "agb_crt0.o");
+        if (!File.Exists(obj) || File.GetLastWriteTimeUtc(src) > File.GetLastWriteTimeUtc(obj))
+        {
+            var r = Proc.Run(_tc.Gcc, $"-mcpu=arm7tdmi -c {Q(src)} -o {Q(obj)}", _buildDir, TimeSpan.FromMinutes(1), onLine, cancel);
+            if (r.ExitCode != 0) throw new InvalidOperationException("The start code (runtime/link/agb_crt0.s) could not be assembled: " + r.Output.Trim());
+        }
+        foreach (var f in new[] { "agb_cart.ld", "agb.specs" })
+        {
+            var from = Path.Combine(LinkDir, f);
+            var to = Path.Combine(dir, f);
+            if (!File.Exists(to) || File.ReadAllText(to) != File.ReadAllText(from)) File.Copy(from, to, true);
+        }
+        return dir;
+    }
+
+    /// <summary>P24.03: maxmod's GBA sources (third_party/maxmod), assembled with the game instead of devkitPro's libmm.a.</summary>
+    public static string MaxmodDir => Path.Combine(RepoRoot, "third_party", "maxmod");
+
+    public static IEnumerable<string> MaxmodSources() =>
+        new[] { "source", "source_gba" }.SelectMany(d => Directory.EnumerateFiles(Path.Combine(MaxmodDir, d), "*.s")).OrderBy(p => p, StringComparer.Ordinal);
+
+    static string MaxmodFlags => $"-x assembler-with-cpp -mthumb -mthumb-interwork -mcpu=arm7tdmi -DSYS_GBA -DUSE_IWRAM -I{Q(Path.Combine(MaxmodDir, "asm_include"))} -I{Q(Path.Combine(MaxmodDir, "include"))}";
+
+    static string LinkFlags(string linkDir) => $"-mthumb -mcpu=arm7tdmi -specs={Q(Path.Combine(linkDir, "agb.specs"))} -B{Q(linkDir + Path.DirectorySeparatorChar)}";
 
     public NativeBuildResult Build(IReadOnlyList<RomTarget> targets, Action<string>? onLine = null, CancellationToken cancel = default)
     {
         Directory.CreateDirectory(_buildDir);
+        var linkDir = PrepareLink(onLine, cancel);
         var ninja = new StringBuilder();
         ninja.AppendLine("ninja_required_version = 1.10");
         ninja.AppendLine($"gxx = {Q(_tc.Gxx)}");
         ninja.AppendLine($"objcopy = {Q(_tc.Objcopy)}");
-        ninja.AppendLine($"gbafix = {Q(_tc.Gbafix)}");
         ninja.AppendLine("rule cxx\n  command = $gxx -MMD -MF $out.d $flags -c $in -o $out\n  depfile = $out.d\n  deps = gcc\n  description = CXX $in");
-        ninja.AppendLine("rule link\n  command = $gxx -mthumb -mcpu=arm7tdmi -specs=gba.specs $in $libs -o $out -Wl,-Map,$out.map -Wl,--gc-sections\n  description = LINK $out");
-        ninja.AppendLine("rule gba\n  command = cmd /c \"$objcopy -O binary $in $out && $gbafix $out $fix\"\n  description = GBAFIX $out");
+        ninja.AppendLine($"linkflags = {LinkFlags(linkDir)}");
+        ninja.AppendLine("rule link\n  command = $gxx $linkflags $in $libs -o $out -Wl,-Map,$out.map -Wl,--gc-sections\n  description = LINK $out");
+        // P24.04: the header is written in C# after the build (GbaHeader), not by gbafix
+        ninja.AppendLine("rule gba\n  command = $objcopy -O binary $in $out\n  description = GBAFIX $out");
 
         var compiled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var defaults = new List<string>();
         var compileJobs = new List<(string Src, string Obj, string Flags)>();
-        var linkJobs = new List<(string Elf, List<string> Objs, string Libs, string Rom, string Fix)>();
+        var linkJobs = new List<(string Elf, List<string> Objs, string Libs, string Rom, RomHeader Fix)>();
         foreach (var t in targets)
         {
             var flags = CommonFlags(_tc, t.Config) + " " + t.Optimise + " " +
@@ -96,13 +132,23 @@ public sealed class NativeBuild
             }
             var elf = Path.Combine(_buildDir, t.Name + ".elf");
             var rom = Path.Combine(_buildDir, t.Name + ".gba");
-            var libs = $"-L{Q(_tc.LibtoncLib)} -L{Q(_tc.LibgbaLib)} " + (t.LinkMaxmod ? "-lmm " : "") + "-ltonc";
-            ninja.AppendLine($"build {E(elf)}: link {string.Join(' ', objs.Select(E))}");
+            if (t.LinkMaxmod)
+                foreach (var src in MaxmodSources())
+                {
+                    var obj = Path.Combine(_buildDir, "obj", "maxmod", Path.GetFileNameWithoutExtension(src) + ".o");
+                    objs.Add(obj);
+                    if (!compiled.Add(obj)) continue;
+                    ninja.AppendLine($"build {E(obj)}: cxx {E(src)}");
+                    ninja.AppendLine($"  flags = {MaxmodFlags}");
+                    compileJobs.Add((src, obj, MaxmodFlags));
+                }
+            var libs = "";
+            // the start code and the linker script relink every ROM when they change
+            ninja.AppendLine($"build {E(elf)}: link {string.Join(' ', objs.Select(E))} | {E(Path.Combine(linkDir, "agb_crt0.o"))} {E(Path.Combine(linkDir, "agb_cart.ld"))}");
             ninja.AppendLine($"  libs = {libs}");
             var h = t.Header;
             ninja.AppendLine($"build {E(rom)}: gba {E(elf)}");
-            var fix = $"-t{Fix(h.Title, 12)} -c{Fix(h.GameCode, 4)} -m{Fix(h.Maker, 2)} -r{h.Version}";
-            ninja.AppendLine($"  fix = {fix}");
+            var fix = h with { Title = Fix(h.Title, 12), GameCode = Fix(h.GameCode, 4), Maker = Fix(h.Maker, 2) };
             defaults.Add(E(rom));
             linkJobs.Add((elf, objs, libs, rom, fix));
         }
@@ -117,6 +163,8 @@ public sealed class NativeBuild
         var r = File.Exists(_tc.Ninja) || Toolchain.FindOnPath(_tc.Ninja) != null
             ? Proc.Run(_tc.Ninja, jobs + "-f build.ninja", _buildDir, TimeSpan.FromMinutes(10), onLine, cancel)
             : RunWithoutNinja(compileJobs, linkJobs, onLine, cancel);
+        if (r.ExitCode == 0)
+            foreach (var l in linkJobs) GbaHeader.Fix(l.Rom, l.Fix);
         var first = targets[0];
         return new NativeBuildResult(r.ExitCode == 0, Path.Combine(_buildDir, first.Name + ".gba"),
             Path.Combine(_buildDir, first.Name + ".elf.map"), r.Output, sw.Elapsed);
@@ -126,7 +174,7 @@ public sealed class NativeBuild
     // devkitPro): objects older than their source or any header in their .d file are compiled, several at a time, then
     // each ROM is linked and fixed when an object is newer. Lines look like Ninja's so progress parsing is the same.
     ProcResult RunWithoutNinja(List<(string Src, string Obj, string Flags)> compiles,
-        List<(string Elf, List<string> Objs, string Libs, string Rom, string Fix)> links, Action<string>? onLine, CancellationToken cancel)
+        List<(string Elf, List<string> Objs, string Libs, string Rom, RomHeader Fix)> links, Action<string>? onLine, CancellationToken cancel)
     {
         var log = new StringBuilder();
         var gate = new object();
@@ -161,12 +209,11 @@ public sealed class NativeBuild
             var newest = l.Objs.Select(o => File.Exists(o) ? File.GetLastWriteTimeUtc(o) : DateTime.MaxValue).DefaultIfEmpty(DateTime.MinValue).Max();
             if (File.Exists(l.Rom) && File.Exists(l.Elf) && File.GetLastWriteTimeUtc(l.Elf) >= newest) continue;
             Line($"[{++done}/{total}] LINK {l.Elf}");
-            var r = Proc.Run(_tc.Gxx, $"-mthumb -mcpu=arm7tdmi -specs=gba.specs {string.Join(' ', l.Objs.Select(Q))} {l.Libs} -o {Q(l.Elf)} -Wl,-Map,{Q(l.Elf + ".map")} -Wl,--gc-sections",
+            var r = Proc.Run(_tc.Gxx, $"{LinkFlags(Path.Combine(_buildDir, "link"))} {string.Join(' ', l.Objs.Select(Q))} {l.Libs} -o {Q(l.Elf)} -Wl,-Map,{Q(l.Elf + ".map")} -Wl,--gc-sections",
                 _buildDir, TimeSpan.FromMinutes(5), Line, cancel);
             if (r.ExitCode != 0) return new ProcResult(1, log.ToString());
             Line($"[{++done}/{total}] GBAFIX {l.Rom}");
             r = Proc.Run(_tc.Objcopy, $"-O binary {Q(l.Elf)} {Q(l.Rom)}", _buildDir, TimeSpan.FromMinutes(2), Line, cancel);
-            if (r.ExitCode == 0) r = Proc.Run(_tc.Gbafix, $"{Q(l.Rom)} {l.Fix}", _buildDir, TimeSpan.FromMinutes(2), Line, cancel);
             if (r.ExitCode != 0) return new ProcResult(1, log.ToString());
         }
         return new ProcResult(0, log.ToString());

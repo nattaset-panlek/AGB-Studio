@@ -1,6 +1,6 @@
 #include "agb/render/bg.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/bios.hpp"
 #include "agb/commit.hpp"

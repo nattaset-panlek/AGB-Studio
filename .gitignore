@@ -5,3 +5,4 @@ obj/
 .vs/
 TestResults/
 /docs/evidence/app/*.tmp
+/toolchain/

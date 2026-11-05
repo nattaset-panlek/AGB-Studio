@@ -147,10 +147,10 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.True(File.Exists(Path.Combine(p.BuildDir, "report-history.json")));
         // The library notices travel next to the ROM.
         var notices = File.ReadAllText(Path.Combine(Path.GetDirectoryName(r.RomPath)!, "THIRD_PARTY.txt"));
-        Assert.Contains("AGB Studio runtime", notices);  // D-05: MIT, like libtonc
-        Assert.Contains("libtonc", notices);
+        Assert.Contains("AGB Studio runtime", notices);  // D-05: MIT
+        Assert.DoesNotContain("libtonc", notices);       // P24.03: no longer in the ROM
         Assert.Contains("Mukunda Johnson", notices);
-        // ROM header written by gbafix from Project Settings · General.
+        // ROM header written by GbaHeader (P24.04) from Project Settings · General.
         var rom = File.ReadAllBytes(r.RomPath);
         Assert.Equal("MINIPLAT", System.Text.Encoding.ASCII.GetString(rom, 0xA0, 8));
         Assert.Equal("AMPE", System.Text.Encoding.ASCII.GetString(rom, 0xAC, 4));
@@ -351,7 +351,7 @@ public sealed class PipelineTests(EmulatorFixture emu)
     {
         // P10.16 / T-D09 / T-S08: found / not found per tool and the devkitARM version, without starting a process.
         var root = Directory.CreateTempSubdirectory("fakedkp").FullName;
-        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe", @"tools\bin\gbafix.exe", @"libtonc\lib\libtonc.a" })
+        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe" })
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(root, f))!);
             File.WriteAllText(Path.Combine(root, f), "");
@@ -359,14 +359,23 @@ public sealed class PipelineTests(EmulatorFixture emu)
         var asked = new List<string>();
         var tc = new Toolchain(root) { RunTool = (exe, args) => { asked.Add(Path.GetFileName(exe) + " " + args); return new ProcResult(0, "16.1.0\n"); } };
         var status = tc.Check().ToDictionary(t => t.Name);
-        Assert.True(status["devkitPro"].Found);
-        Assert.Equal("devkitARM 16.1", status["devkitARM"].Version);
-        Assert.True(status["libtonc"].Found);
-        Assert.True(status["gbafix"].Found);
-        Assert.False(status["maxmod"].Found);
-        Assert.False(status["mmutil"].Found);
+        Assert.True(status["toolchain"].Found);
+        Assert.False(tc.BuiltIn);
+        Assert.Equal("devkitARM 16.1", status["compiler"].Version);
+        Assert.True(status["maxmod"].Found);  // P24.03: maxmod's sources are in the repository
+        Assert.Equal(File.Exists(tc.Mmutil), status["mmutil"].Found);  // from devkitPro on a PC that has it
         Assert.Equal(["arm-none-eabi-gcc.exe -dumpversion"], asked);
         Assert.False(new Toolchain(Path.Combine(root, "missing")).IsComplete);
+
+        // P24.06: a folder laid out as Arm's toolchain (AGB Studio's own) has bin\ at its top
+        var own = Directory.CreateTempSubdirectory("faketc").FullName;
+        Directory.CreateDirectory(Path.Combine(own, "bin"));
+        foreach (var f in new[] { "arm-none-eabi-g++.exe", "arm-none-eabi-gcc.exe", "mmutil.exe" }) File.WriteAllText(Path.Combine(own, "bin", f), "");
+        var builtIn = new Toolchain(own) { RunTool = (_, _) => new ProcResult(0, "15.2.1\n") };
+        Assert.True(builtIn.BuiltIn);
+        Assert.Equal(Path.Combine(own, "bin", "arm-none-eabi-g++.exe"), builtIn.Gxx);
+        Assert.Equal(Path.Combine(own, "bin", "mmutil.exe"), builtIn.Mmutil);
+        Assert.Equal("Arm GNU Toolchain 15.2", builtIn.Check().Single(t => t.Name == "compiler").Version);
     }
 
     [Fact]

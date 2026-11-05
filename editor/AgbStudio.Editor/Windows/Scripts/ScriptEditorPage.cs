@@ -397,7 +397,7 @@ public sealed class ScriptEditorPage : DockPanel
             : warnings > 0 ? $"{warnings} warning{(warnings == 1 ? "" : "s")}" : "No problems";
         _statusProblems.Glyph = problems.Count > 0 ? "warn" : "check";
         _statusLanguage.Content = _s.Project.Current?.Settings.Scripting.Language ?? "C# · GBA subset";
-        _statusToolchain.Content = _s.Toolchain.Find("devkitARM") is { Found: true } t ? t.Version ?? "devkitARM" : _s.Toolchain.Tools.Count == 0 ? "devkitARM" : "devkitARM not found · set it in Preferences › Paths";
+        _statusToolchain.Content = _s.Toolchain.Find("compiler") is { Found: true } t ? t.Version ?? "arm-none-eabi-g++" : _s.Toolchain.Tools.Count == 0 ? "devkitARM" : "compiler not found · set it in Preferences › Paths";
         _bottomTabs[0].Count = problems.Count > 0 ? problems.Count : null;
     }
 

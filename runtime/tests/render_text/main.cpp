@@ -1,5 +1,5 @@
 // Text windows: glyph placement (1bpp and 2bpp, shadow), typewriter reveal with blips, continue marker.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

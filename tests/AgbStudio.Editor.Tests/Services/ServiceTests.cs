@@ -118,20 +118,14 @@ public class ServiceTests
     {
         using var fx = new Fixture(withApp: false);
         var dkp = Path.Combine(fx.Folder, "devkitPro");
-        foreach (var f in new[] { @"libtonc\lib\libtonc.a", @"libgba\lib\libmm.a", @"tools\bin\gbafix.exe" })
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dkp, f))!);
-            File.WriteAllText(Path.Combine(dkp, f), "");
-        }
+        Directory.CreateDirectory(dkp);
         var svc = new ToolchainStatusService(() => dkp);
         var tools = svc.CheckNow();
-        Assert.True(svc.Find("devkitPro")!.Found);
-        Assert.True(svc.Find("libtonc")!.Found);
-        Assert.True(svc.Find("maxmod")!.Found);
-        Assert.True(svc.Find("gbafix")!.Found);
-        Assert.False(svc.Find("devkitARM")!.Found);
+        Assert.True(svc.Find("toolchain")!.Found);
+        Assert.True(svc.Find("maxmod")!.Found);  // in the repository since P24.03
+        Assert.False(svc.Find("compiler")!.Found);
         Assert.False(svc.IsComplete);
-        Assert.False(new ToolchainStatusService(() => Path.Combine(fx.Folder, "missing")).CheckNow().First(t => t.Name == "devkitPro").Found);
+        Assert.False(new ToolchainStatusService(() => Path.Combine(fx.Folder, "missing")).CheckNow().First(t => t.Name == "toolchain").Found);
         Assert.NotEmpty(tools);
     }
 }

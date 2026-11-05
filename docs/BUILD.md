@@ -1,7 +1,9 @@
 # Building AGB Studio
 
-Requirements: Windows 10/11 x64, .NET SDK 10, devkitPro with devkitARM, libtonc, libgba (maxmod) and the GBA tools
-(gbafix, mmutil), found through `DEVKITPRO`, `C:\devkitPro` or `D:\devkitPro`. Ninja is optional: when `ninja.exe` is
+Requirements: Windows 10/11 x64, .NET SDK 10, and a compiler: run `tools\fetch-toolchain.ps1` once to put Arm GNU
+Toolchain in `toolchain\` (P24.06), or have devkitPro (`DEVKITPRO`, `C:\devkitPro` or `D:\devkitPro`). The start code,
+linker script, hardware header, maxmod and the ROM header writer are in the repository. A project with music still
+needs `mmutil.exe` from devkitPro's `tools\bin` until P24.05 is done. Ninja is optional: when `ninja.exe` is
 on `PATH` the native build runs it, otherwise AGB Studio runs the same build graph itself. Versions used are in
 `TOOLCHAIN.md`.
 
@@ -54,12 +56,13 @@ After `dotnet build tools/agb/agb.csproj -c Release` it is `tools\agb\bin\Releas
 ## Building a game
 
 `agb build` and the editor's Build ROM run the same pipeline (`GameBuilder`, see `ARCHITECTURE.md`): Convert assets,
-C# → C++, Generate game, Compile (devkitARM g++ -O2), Link + gbafix. Output goes to `<project>/build/` by default;
+C# → C++, Generate game, Compile (arm-none-eabi-g++ -O2), Link + gbafix (the step keeps its name; the header is
+written by `GbaHeader`). Output goes to `<project>/build/` by default;
 Project Settings · Build · Output folder moves it (a folder relative to the project). The paths below use the default:
 
 | Path | What |
 |---|---|
-| `build/<rom>.gba` | the ROM, with `THIRD_PARTY.txt` (the AGB Studio runtime notice, then the libtonc and maxmod notices) next to it |
+| `build/<rom>.gba` | the ROM, with `THIRD_PARTY.txt` (the AGB Studio runtime notice, then the maxmod notice) next to it |
 | `build/gen/` | generated C++ (assets, scenes, strings, scripts, database) |
 | `build/obj/` | `build.ninja`, objects, the linked `.elf` and its `.map` |
 | `build/cache/manifest.json` | hashes of converted assets for incremental builds |

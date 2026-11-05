@@ -2,7 +2,7 @@
 // overrun warnings, World Map links (on touch, door, respawn, "Only if", condition only), map scripts OnLoad /
 // OnEnter / OnExit, Scene.Pause, the camera (dead zone, shake, Camera Zone actors), prefab templates and the Video
 // Mode toggles (alpha blending, mosaic).
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/api.hpp"

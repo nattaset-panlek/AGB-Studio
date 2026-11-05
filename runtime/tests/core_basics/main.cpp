@@ -1,5 +1,5 @@
 // Core services: formatter, fixed-point, RNG, tasks, pools, arenas, input, frame loop, profiler.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/bios.hpp"

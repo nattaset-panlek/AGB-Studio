@@ -3,9 +3,10 @@
 | Component | Licence | How it is used | Ships in |
 |---|---|---|---|
 | mGBA libretro core | MPL-2.0 (`third_party/mgba/LICENSE-mgba.txt`) | loaded unmodified as a DLL by the editor and test runner | editor |
-| libtonc (Tonc library) | MIT | linked into every game ROM | games |
-| maxmod (libmm) | ISC-style (`D:\devkitPro\libgba\maxmod_license.txt`) | linked into every game ROM | games |
-| devkitARM / newlib | GPL toolchain with runtime exception; newlib BSD-style | compiler and C library; not redistributed by AGB Studio | user install |
+| maxmod 1.0.15 (GBA sources) | ISC (`third_party/maxmod/maxmod_license.txt`) | assembled into every game ROM that has sound (P24.03) | repository, games |
+| Arm GNU Toolchain 15.2.rel1 (`arm-none-eabi`: GCC, binutils, newlib) | GCC and binutils GPL-3.0 with the GCC Runtime Library Exception for what goes into a ROM (libgcc, libstdc++); newlib BSD-style | compiler and C library (D-30, P24.06); `tools/fetch-toolchain.ps1` puts the parts a GBA build needs in `toolchain/`; sources: <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads> | editor package |
+| devkitARM / devkitPro tools | GPL toolchain with runtime exception | still works when chosen in Preferences; `mmutil.exe` is still taken from devkitPro (P24.05); not redistributed by AGB Studio | user install |
+| libtonc (Tonc library) | no licence file in its repository | **no longer used** since P24.03: `runtime/include/agb/hw.hpp` and `runtime/src/core/irq*.cpp` replace it | none |
 | Roslyn (Microsoft.CodeAnalysis 4.14, incl. its localized resource folders `cs` ... `zh-Hant`) | MIT | parses, analyses and translates C# scripts | editor |
 | System.Composition 9.0 | MIT | dependency of Roslyn Workspaces | editor |
 | Humanizer (Humanizer.Core 2.14.1) | MIT | dependency of Roslyn Workspaces | editor |
@@ -38,7 +39,7 @@ traced or copied from any other font, and is covered by AGB Studio's licence (`L
 
 Reference only, no code copied: pokeemerald (pret), Butano (zlib), Poryscript.
 
-The build writes `THIRD_PARTY.txt` next to every ROM with the libtonc and maxmod notices, and Export ROM copies it
+The build writes `THIRD_PARTY.txt` next to every ROM with the maxmod notice, and Export ROM copies it
 next to the exported ROM. It starts with the MIT notice of the AGB Studio runtime itself (D-05, `GameBuilder`
 `WriteNotices`); `docs/user/licence-for-your-games.md` tells users what the file is for.
 

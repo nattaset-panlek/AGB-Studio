@@ -15,7 +15,7 @@ namespace AgbStudio.Editor.Windows.Menus;
 [EditorWindow("T-D11")]
 public sealed class AboutDialog : FigmaDialog
 {
-    public const string Credits = "Built on devkitPro (devkitARM, libtonc, maxmod) and the mGBA emulator core. Scripts are C#, compiled to C++ with Roslyn.";
+    public const string Credits = "Built with Arm GNU Toolchain, maxmod and the mGBA emulator core. Scripts are C#, compiled to C++ with Roslyn.";
 
     public string VersionLine { get; }
     public AgbButton LicensesButton { get; }

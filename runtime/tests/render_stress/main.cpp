@@ -1,7 +1,7 @@
 // P3.X1 stress picture: four scrolling tile layers (parallax x1.0, x0.5, x0.2, x1.2), 128 animated moving sprites and
 // music, for 600 frames (10 s). The profiler must count no frame that missed its VBlank, every sprite must be drawn
 // every frame, and the streamed maps must be right in VRAM at the end. The log ends with the profiler capture.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/audio.hpp"

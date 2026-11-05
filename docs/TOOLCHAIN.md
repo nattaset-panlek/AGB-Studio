@@ -1,5 +1,23 @@
 # Toolchain
 
+## AGB Studio's own toolchain (Phase 24, 2026-11-06)
+
+The build looks for a compiler in this order (`Toolchain.Detect`): Preferences · Paths, then `toolchain\` in the AGB
+Studio folder, then `DEVKITPRO`, `C:\devkitPro` and `D:\devkitPro`.
+
+| Part | Version | Where | Used for |
+|---|---|---|---|
+| Arm GNU Toolchain | 15.2.rel1 (gcc 15.2.1 20251203), zip SHA-256 `7936cac8...0b9ece` | `toolchain\` from `tools\fetch-toolchain.ps1` (230 MB of 1.1 GB: C and C++ for the ARM and `thumb/nofp` libraries) | compile and link |
+| Start code, linker script, specs | AGB Studio's own | `runtime/link` | boot, memory layout (P24.02) |
+| Registers, BIOS calls, interrupts | AGB Studio's own | `runtime/include/agb/hw.hpp`, `runtime/src/core/irq*.cpp` | replaces libtonc (P24.03) |
+| maxmod | 1.0.15, GBA sources | `third_party/maxmod` | assembled with every ROM that links it (P24.03) |
+| ROM header | AGB Studio's own | `tools/AgbStudio.Build/GbaHeader.cs` | replaces gbafix (P24.04) |
+| mmutil | devkitPro's 1.10.1 | devkitPro `tools\bin` | soundbank; still needed for music (P24.05 open) |
+
+What the trial measured is in `docs/evidence/p24-01-arm-toolchain.md`.
+
+## Before Phase 24
+
 Recorded on 2026-10-31 on the development machine. The build reads `DEVKITPRO` (the devkitPro installer sets it to
 `/opt/devkitpro`, its MSYS2 name for `C:\devkitPro`), then tries `C:\devkitPro` and `D:\devkitPro`
 (`tools/AgbStudio.Build/Toolchain.cs`); in the editor, Preferences · Paths › devkitPro overrides it.

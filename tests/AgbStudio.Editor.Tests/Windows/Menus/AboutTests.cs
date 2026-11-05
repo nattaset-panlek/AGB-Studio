@@ -55,7 +55,7 @@ public sealed class AboutTests : IDisposable
         Assert.EndsWith("THIRD_PARTY.md", notices);
         var components = About.LicensedComponents(notices);
         // THIRD_PARTY.md rows may add a version or the shipped files after the name ("Avalonia 11.3 (incl. ...)")
-        foreach (var c in new[] { "mGBA libretro core", "libtonc (Tonc library)", "maxmod (libmm)", "Roslyn (Microsoft.CodeAnalysis", "Avalonia", "Inter", "Noto Sans Thai" })
+        foreach (var c in new[] { "mGBA libretro core", "maxmod 1.0.15 (GBA sources)", "Arm GNU Toolchain 15.2.rel1", "Roslyn (Microsoft.CodeAnalysis", "Avalonia", "Inter", "Noto Sans Thai" })
             Assert.Contains(components, x => x.StartsWith(c, StringComparison.Ordinal));
 
         Assert.True(about.WebsiteButton.IsEnabled);

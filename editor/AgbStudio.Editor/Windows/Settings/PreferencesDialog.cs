@@ -324,12 +324,12 @@ public sealed class PreferencesDialog : SettingsDialog
     {
         var tc = _s.Toolchain;
         if (tc.Tools.Count == 0) return "Checking the toolchain…";
-        var arm = tc.Find("devkitARM") is { Found: true, Version: { } v } ? v : "devkitARM";
-        string[] names = ["libtonc", "maxmod"];
+        var arm = tc.Find("compiler") is { Found: true, Version: { } v } ? v : "compiler";
+        string[] names = ["maxmod", "mmutil"];
         var missing = names.Where(n => tc.Find(n) is { Found: false }).ToList();
-        if (tc.Find("devkitARM") is { Found: false }) missing.Insert(0, "devkitARM");
-        return missing.Count == 0 ? $"{arm} · libtonc · maxmod found"
-            : string.Join(" · ", missing) + " not found here · Browse to the devkitPro folder or install devkitPro";
+        if (tc.Find("compiler") is { Found: false }) missing.Insert(0, "arm-none-eabi-g++");
+        return missing.Count == 0 ? $"{arm} · maxmod · mmutil found"
+            : string.Join(" · ", missing) + " not found here · Browse to a toolchain folder (AGB Studio's toolchain or devkitPro)";
     }
 
     Control PathRow(string label, string value, string? help, Action<string> changed, bool folder, string name)

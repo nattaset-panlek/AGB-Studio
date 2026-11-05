@@ -1,6 +1,6 @@
 #include "agb/render/bitmap.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"

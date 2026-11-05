@@ -1,6 +1,6 @@
 #include "agb/game.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/api.hpp"
 #include "agb/commit.hpp"

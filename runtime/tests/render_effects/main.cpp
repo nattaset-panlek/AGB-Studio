@@ -1,6 +1,6 @@
 // Palette effects (fade, tint, cycle, flash), blending, mosaic, transitions, HBlank scanline DMA,
 // and IWRAM code placement.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

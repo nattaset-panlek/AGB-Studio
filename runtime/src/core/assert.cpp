@@ -1,6 +1,6 @@
 #include "agb/assert.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/debug.hpp"
 

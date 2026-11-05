@@ -1,6 +1,6 @@
 #include "agb/input.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 namespace agb::input {
 

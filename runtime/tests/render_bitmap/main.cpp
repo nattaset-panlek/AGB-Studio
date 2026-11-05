@@ -2,7 +2,7 @@
 // picture is held on screen after a "shot <name>" log line; VideoModeTests.BitmapModesMatchReferenceImages captures it
 // and compares it pixel for pixel with a reference image computed on the host from the same content. The checks in this
 // ROM cover registers, VRAM contents and the order of queued writes.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

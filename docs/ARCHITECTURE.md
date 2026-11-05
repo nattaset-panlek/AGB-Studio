@@ -52,7 +52,7 @@ An upper layer calls only lower layers. User code (translated C# behaviours and 
 
 | Layer | Headers (`runtime/include/agb`) |
 |---|---|
-| Platform | libtonc, maxmod (`libmm`), `bios.hpp` (LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet), `types.hpp` (`AGB_IWRAM_CODE`, `AGB_EWRAM_BSS`; `*.iwram.cpp` files are compiled as ARM into IWRAM) |
+| Platform | `hw.hpp` (registers and BIOS calls, P24.03), `core/irq*.cpp` (interrupt dispatcher), `runtime/link` (start code `agb_crt0.s`, `agb_cart.ld`, `agb.specs`, P24.02), maxmod assembled from `third_party/maxmod`, `bios.hpp` (LZ77 to VRAM / WRAM, Div, Halt, CpuFastSet), `types.hpp` (`AGB_IWRAM_CODE`, `AGB_EWRAM_BSS`; `*.iwram.cpp` files are compiled as ARM into IWRAM) |
 | Core services | `system.hpp` (VBlank frame loop, interrupts, profiler), `commit.hpp` (OAM / palette / register shadows and the DMA queue with a per-frame byte budget, flushed in VBlank), `input.hpp`, `task.hpp` (16 tasks), `memory.hpp`, `rng.hpp` (xoshiro128**, one stream per purpose), `save.hpp`, `debug.hpp`, `assert.hpp`, `format.hpp`, `fixed.hpp` (24.8) |
 | Rendering and media | `render/bg.hpp` (video modes 0-5, char / screen block allocation), `render/map.hpp` (metatile streaming), `render/affine.hpp` (affine layers, Mode 7), `render/bitmap.hpp` (frame buffers of Modes 3, 4 and 5), `render/sprite.hpp` (128 sprites, 32 affine matrices, shared frame cache), `render/palette.hpp` (fade, tint, cycle, flash), `render/text.hpp` (VWF text windows), `render/effects.hpp` (blending, mosaic, windows, scanline DMA, transitions), `text.hpp` (string tables, dialogue box, labels), `audio.hpp` |
 | Game framework | `game.hpp` (screens, scenes, links, camera), `actor.hpp` (64 actors, 6 behaviours each), `behaviours.hpp`, `script.hpp` + `script_ops.def` + `natives.hpp` (Event Script VM), `bus.hpp`, `ui.hpp` (Menu / UI kit, D-23), `api.hpp` (the C++ side of the C# API), `probe.hpp` (C# breakpoints, D-21) |
@@ -183,15 +183,16 @@ goes down during that overlap (holding Up does not fire it); Respawn fires on th
 4. **Compile (devkitARM g++ -O2)**: runtime sources plus generated sources, Thumb by default, ARM for `*.iwram.cpp`,
    `-std=c++20 -fno-exceptions -fno-rtti`, `-Wall -Wextra -Werror`, `AGB_DEBUG` or `AGB_RELEASE`, optimise flags from
    Project Settings · Build (`-O2` by default; the step keeps its name whatever the setting).
-5. **Link + gbafix**: link with `gba.specs`, `-lmm -ltonc`, `--gc-sections` and a map file, `objcopy` to a binary,
-   `gbafix` writes the header (title, game code, maker, version, checksum). The step name switches from Compile to
+5. **Link + gbafix**: link with `runtime/link/agb.specs` (AGB Studio's start code and linker script, written from the
+   GBA memory map), maxmod's objects, `--gc-sections` and a map file, `objcopy` to a binary, then `GbaHeader` writes
+   the header (logo, title, game code, maker, version, checksum) as gbafix did. The step name switches from Compile to
    Link + gbafix when the first link line appears.
 
 After a successful build: `build/report.json` (ROM by category, per asset ROM bytes with the VRAM, palette and RAM
 buffer bytes it takes when loaded, largest assets, IWRAM / EWRAM from the linker map, per-scene budgets, warnings;
 schema `docs/schemas/report.schema.json`), `build/report-history.json` (failed builds included;
 `report-history.schema.json`), and `THIRD_PARTY.txt` next to the ROM with the AGB Studio runtime notice (MIT), then the
-libtonc and maxmod notices. Per asset ROM bytes come from the linker map for graphics, maps, fonts, text and data;
+maxmod notice. Per asset ROM bytes come from the linker map for graphics, maps, fonts, text and data;
 music and sounds share the soundbank's bytes in proportion to their source file sizes, and DMG effects share the DMG
 table evenly. Generated files are written only when their content changes.
 
@@ -282,4 +283,4 @@ release banners and icon), `THIRD_PARTY.md` and `RELEASE-NOTES.md` (also as `bin
 Launcher's What's new reads), writes an empty `bin/editor.json` (D-13), a `README.txt` and the `agb-studio.root` marker
 that lets `NativeBuild.RepoRoot` find the runtime in an installed copy, and zips it as
 `AGB-Studio-<version>-win-x64.zip`.
-devkitPro is not bundled.
+devkitPro is not bundled; AGB Studio's own compiler is, when `toolchain/` is there (P24.06, P24.07).

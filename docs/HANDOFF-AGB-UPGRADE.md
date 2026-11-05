@@ -2,6 +2,24 @@
 
 เขียนเมื่อ 2026-11-05 จากเครื่อง `C:\Personal\AGB-Studio` เจ้าของย้ายไปทำต่อที่ PC เครื่องอื่น Claude ที่เครื่องใหม่อ่านไฟล์นี้ก่อน
 
+## คืน 2026-11-06: Phase 24 (เจ้าของให้ตัดสินใจเองทั้งคืน)
+
+ทำแล้ว ทุกข้อ commit อยู่บน `handoff/2026-11-05`:
+
+- **P24.02:** start code `runtime/link/agb_crt0.s`, linker script `agb_cart.ld` และ `agb.specs` ของเราเอง แทน `gba.specs` ของ devkitPro
+- **P24.03:** `runtime/include/agb/hw.hpp` (register และ BIOS) กับ `runtime/src/core/irq*.cpp` (interrupt) แทน libtonc ทั้งหมด เพราะ libtonc ไม่มีไฟล์ licence จึงแจกไม่ได้ ส่วน maxmod 1.0.15 (ISC) อยู่ใน `third_party/maxmod` และ assemble พร้อมเกม (รุ่น 2.1.0 ใช้ CPU เกินเพดาน test จึงใช้ 1.0.15 ซึ่งเป็นรุ่นเดียวกับที่ devkitPro ติดตั้ง)
+- **P24.04:** `GbaHeader.cs` เขียน header แทน gbafix ตรงกับ gbafix ทุกไบต์
+- **P24.06:** `Toolchain` หา `toolchain\` ก่อน แล้วค่อย devkitPro ตัวเลือกใน Preferences › Paths ยังมีผลเหนือทั้งคู่ ส่วน `tools\fetch-toolchain.ps1` โหลด Arm 15.2.rel1 ตรวจ SHA-256 แล้วเก็บเฉพาะส่วนที่ใช้ (230 MB จาก 1.1 GB)
+- **ผล:** build, lint, Tests 289/289, Scripting 129/129, Mcp 13/13, Editor 672/672 ทั้งหมดรันด้วย toolchain ในตัว, Sky Hopper build ได้และภาพตรงกับ devkitARM, โค้ด IWRAM ลดจาก 8,128 เหลือ 6,648 ไบต์
+
+ยังไม่ทำ:
+
+- **P24.05 mmutil:** ระบบความปลอดภัยของ session ไม่ให้ build และรัน mmutil ที่โหลด source มา งานเพลงจึงยังต้องใช้ `mmutil.exe` ของ devkitPro ทางเลือก: build จาก source บนเครื่องที่อนุญาต (BSD 3-clause แจกได้พร้อมประกาศ) หรือเขียนขั้น soundbank เป็น C#
+- **P24.07:** packager ใส่ `toolchain\` แล้ว แต่ยังไม่ได้สร้าง zip จริงและยังไม่ได้ตรวจ licence เทียบกับ zip
+- **P24.08:** ต้องลองบนเครื่องที่เปิด Smart App Control
+- **P24.09:** เจ้าของเลิกใช้ GitHub Actions แล้ว ข้อนี้รอให้เจ้าของตัดทิ้ง
+- **ติ๊กแทนเจ้าของ:** P18.E1, P19.E1, P24.E1 ติ๊กโดยระบุว่า "เจ้าของมอบให้ตัดสินใจ" เจ้าของควรยืนยัน
+
 ## สถานะล่าสุด (2026-11-06, เครื่อง `D:\devkitPro\AGB-Studio`)
 
 เครื่องนี้มี devkitPro และปิด Smart App Control จึงรัน test ทั้งหมดได้ในเครื่อง งานด้านล่างยังไม่ commit อยู่บน `handoff/2026-11-05`
