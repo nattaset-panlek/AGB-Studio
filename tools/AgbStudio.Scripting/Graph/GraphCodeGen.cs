@@ -173,6 +173,9 @@ public static class GraphCodeGen
                 "DebugLog" => $"Debug.Log({Str(P(n, "text"))});",
                 "LoadScene" => $"Scene.Load({Str(P(n, "scene"))});",
                 "ShakeCamera" => $"Camera.Shake({P(n, "amplitude")}, {P(n, "frames")});",
+                "CameraFollow" => $"Camera.Follow({Input(n, "target", null, 0)});",
+                "LoadGame" => $"Save.Read({P(n, "slot")});",
+                "SetTile" => $"Scene.SetTile({P(n, "layer")}, {P(n, "x")}, {P(n, "y")}, {P(n, "tile")});",
                 _ => $"// {n.Type} is not an action",
             };
             Line(sb, indent, text);
@@ -225,6 +228,8 @@ public static class GraphCodeGen
                     : ($"{Input(n, "a", "a", 11)} {P(n, "op")} {Input(n, "b", "b", 12)}", 11),
                 "Self" => ("actor", 16),
                 "GetVariable" => ($"Game.{P(n, "variable")}", 16),
+                "RandomRange" => ($"Random.Range({P(n, "lo")}, {P(n, "hi")})", 16),
+                "SaveExists" => ($"Save.Exists({P(n, "slot")})", 16),
                 _ => ("false", 16),
             };
         }
@@ -373,6 +378,14 @@ public static class GraphFromCode
                             case "Debug.Log": return Add("DebugLog", ("text", Lit(0)));
                             case "Scene.Load": return Add("LoadScene", ("scene", Lit(0)));
                             case "Camera.Shake": return Add("ShakeCamera", ("amplitude", Lit(0)), ("frames", Lit(1)));
+                            case "Save.Read": return Add("LoadGame", ("slot", Lit(0)));
+                            case "Scene.SetTile": return Add("SetTile", ("layer", Lit(0)), ("x", Lit(1)), ("y", Lit(2)), ("tile", Lit(3)));
+                            case "Camera.Follow":
+                                {
+                                    var follow = Add("CameraFollow");
+                                    ActorInput(args[0], follow.Id, "target");
+                                    return follow;
+                                }
                         }
                         if (inv.Expression is MemberAccessExpressionSyntax { Name.Identifier.ValueText: "SetVelocity" or "AddForce" } sv && BodyOf(sv.Expression) is { } svBody)
                         {
@@ -449,6 +462,10 @@ public static class GraphFromCode
             while (e is ParenthesizedExpressionSyntax p) e = p.Expression;
             switch (e)
             {
+                case InvocationExpressionSyntax range when range.Expression.ToString() == "Random.Range" && range.ArgumentList.Arguments.Count == 2:
+                    return Add("RandomRange", ("lo", range.ArgumentList.Arguments[0].ToString()), ("hi", range.ArgumentList.Arguments[1].ToString()));
+                case InvocationExpressionSyntax exists when exists.Expression.ToString() == "Save.Exists" && exists.ArgumentList.Arguments.Count == 1:
+                    return Add("SaveExists", ("slot", exists.ArgumentList.Arguments[0].ToString()));
                 case InvocationExpressionSyntax inv when inv.Expression.ToString() is "Input.Pressed" or "Input.Held" or "Input.Released":
                     {
                         var type = inv.Expression.ToString() switch { "Input.Pressed" => "ButtonPressed", "Input.Held" => "ButtonHeld", _ => "ButtonReleased" };

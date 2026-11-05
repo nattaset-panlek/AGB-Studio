@@ -25,7 +25,7 @@ public sealed record PinDef(string Name, PinKind Kind, bool Output);
 public sealed record PropDef(string Name, PropKind Kind, string Default, IReadOnlyList<string>? Options = null);
 
 /// <summary>How a property is filled in. Scene to TextKey name something in the project; in the file they are plain strings like Text.</summary>
-public enum PropKind { Number, Text, Key, Bool, Compare, Choice, Scene, Sound, Music, Variable, Tag, TextKey }
+public enum PropKind { Number, Text, Key, Bool, Compare, Choice, Scene, Sound, Music, Variable, Tag, TextKey, Integer }
 
 /// <summary>One node type of the palette (category as in the Figma Logic Graph sidebar).</summary>
 public sealed record NodeDef(string Type, string Category, string Title, NodeRole Role, IReadOnlyList<PinDef> Pins, IReadOnlyList<PropDef> Props)
@@ -151,7 +151,7 @@ public sealed class LogicGraph
                     foreach (var (k, v) in n.Props)
                     {
                         var kind = def?.Props.FirstOrDefault(p => p.Name == k)?.Kind;
-                        if (kind == PropKind.Number && double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        if (kind is PropKind.Number or PropKind.Integer && double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
                         {
                             w.WritePropertyName(k);
                             w.WriteRawValue(v);
@@ -186,6 +186,7 @@ public static class NodeCatalog
     static PinDef Out(string n, PinKind k) => new(n, k, true);
     static readonly PinDef ExecIn = In("in", PinKind.Exec), ExecOut = Out("out", PinKind.Exec);
     static PropDef Num(string n, string d) => new(n, PropKind.Number, d);
+    static PropDef Int(string n, string d) => new(n, PropKind.Integer, d);
     static PropDef Txt(string n, string d) => new(n, PropKind.Text, d);
 
     public static readonly string[] Categories = ["Events", "Input", "Physics", "Flow", "Math", "Actor", "Sound", "Data & Save", "Text & UI", "Other"];
@@ -232,6 +233,7 @@ public static class NodeCatalog
         new("Multiply", "Math", "Multiply", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Fixed)], [Num("a", "0"), Num("b", "1")]),
         new("VectorFromVelocity", "Math", "Vector from Velocity", NodeRole.Value, [In("vx", PinKind.Fixed), In("vy", PinKind.Fixed), Out("value", PinKind.Vector)],
             [Num("vx", "0"), Num("vy", "0")]),
+        new("RandomRange", "Math", "Random Range", NodeRole.Value, [Out("value", PinKind.Fixed)], [Int("lo", "0"), Int("hi", "1")]),
         new("Compare", "Math", "Compare", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Bool)], [Num("a", "0"), Num("b", "0"), new("op", PropKind.Compare, ">")]),
         // Actor
         new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [new("tag", PropKind.Tag, "Player")]),
@@ -247,11 +249,15 @@ public static class NodeCatalog
         new("AddToVariable", "Data & Save", "Add to Variable", NodeRole.Action, [ExecIn, ExecOut, In("amount", PinKind.Fixed)], [new("variable", PropKind.Variable, "score"), Num("amount", "1")]),
         new("SaveGame", "Data & Save", "Save Game", NodeRole.Action, [ExecIn, ExecOut], [Num("slot", "0")]),
         new("Checkpoint", "Data & Save", "Checkpoint", NodeRole.Action, [ExecIn, ExecOut], []),
+        new("LoadGame", "Data & Save", "Load Game", NodeRole.Action, [ExecIn, ExecOut], [Int("slot", "0")]),
+        new("SaveExists", "Data & Save", "Save Exists", NodeRole.Value, [Out("value", PinKind.Bool)], [Int("slot", "0")]),
         // Text & UI
         new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
         // Other
         new("DebugLog", "Other", "Debug Log", NodeRole.Action, [ExecIn, ExecOut], [Txt("text", "")]),
         new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [new("scene", PropKind.Scene, "")]),
+        new("CameraFollow", "Other", "Camera Follow", NodeRole.Action, [ExecIn, ExecOut, In("target", PinKind.Actor)], []),
+        new("SetTile", "Other", "Set Tile", NodeRole.Action, [ExecIn, ExecOut], [Int("layer", "0"), Int("x", "0"), Int("y", "0"), Int("tile", "0")]),
         new("ShakeCamera", "Other", "Shake Camera", NodeRole.Action, [ExecIn, ExecOut], [Num("amplitude", "2"), Num("frames", "20")]),
     ];
 

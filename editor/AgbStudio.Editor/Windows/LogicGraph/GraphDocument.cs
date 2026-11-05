@@ -374,6 +374,11 @@ public sealed class GraphDocument
         "DebugLog" => "Writes a line to the Console.",
         "LoadScene" => "Loads another scene with a fade.",
         "ShakeCamera" => "Shakes the view for a number of frames.",
+        "CameraFollow" => "Makes the camera follow an actor.",
+        "RandomRange" => "A whole number from Lo to Hi, both included.",
+        "LoadGame" => "Reads the game state from a save slot.",
+        "SaveExists" => "True when a save slot holds a save.",
+        "SetTile" => "Changes one tile of a map layer while the game runs.",
         _ => "",
     };
 

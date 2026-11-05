@@ -23,7 +23,9 @@ C# is always shown beside the graph (Graph ⇄ C#). Good for beginners and for s
 - **Graph ⇄ C# in sync**: shows whether the graph and its C# match. It turns to "not in sync" when typed C# cannot be
   read back into nodes; hover it to see why. Click it to save and open the generated script in the Script Editor.
 - **Nodes**: the node list by category: Events, Input, Physics, Actor, Flow, Math, Sound, Data & Save, Text & UI.
-  Click a category to open or close it. Double-click a node to add it in the middle of the view.
+  Click a category to open or close it. Double-click a node to add it in the middle of the view. Besides the nodes in
+  the Figma frame, there are Random Range, Load Game, Save Exists, Camera Follow and Set Tile. Random Range, Set Tile and
+  the save nodes take whole numbers.
 - **Add node…**: click the box or start typing in it to open [Add Node](T-O08-add-node.md) for the middle of the view;
   what you type goes into its search.
 - **Canvas**: drag nodes to move them; Ctrl-click or Shift-click selects more than one. Drag from a pin to another pin

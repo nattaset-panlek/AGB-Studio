@@ -194,6 +194,33 @@ public sealed class LogicGraphTests : IDisposable
         Assert.Contains(p.Settings.Save.Fields, f => f.Name == "lives");
     }
 
+    // P19.05: the nodes of Phase 19 can be found, have a description, and take whole numbers only where the API does.
+    [AvaloniaTheory]
+    [InlineData("camera follow", "CameraFollow")]
+    [InlineData("random", "RandomRange")]
+    [InlineData("load game", "LoadGame")]
+    [InlineData("save exists", "SaveExists")]
+    [InlineData("set tile", "SetTile")]
+    public void NewNodes_AreFoundInAddNodeAndDescribed(string query, string type)
+    {
+        Assert.Contains(AddNodePopover.Search(query), d => d.Type == type);
+        Assert.NotEmpty(GraphDocument.Description(type));
+    }
+
+    [AvaloniaFact]
+    public void WholeNumberSettings_RefuseDecimals()
+    {
+        var page = Open();
+        var id = page.AddNode("SetTile", new Point(900, 300), ("n7", "out"));
+        Capture.Pump();
+        Assert.True(page.SetProp(id, "tile", "12"));
+        Assert.False(page.SetProp(id, "tile", "1.5"));
+        Assert.False(page.SetProp(id, "x", "two"));
+        Assert.True(page.SetProp(id, "x", "-1"));
+        Assert.Equal("12", page.Document.Node(id)!.Props["tile"]);
+        Assert.Contains("Scene.SetTile(0, -1, 0, 12);", page.Code.Text);
+    }
+
     [AvaloniaFact]
     public void NewField_IsRefusedWhenTheSaveDataPageWouldRefuseIt()
     {

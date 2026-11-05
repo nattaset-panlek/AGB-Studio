@@ -565,6 +565,8 @@ public sealed class LogicGraphPage : DockPanel
             value = value.TrimStart('+');
             if (!double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)) { RebuildInspector(); return false; }
         }
+        // Random Range, Set Tile and the save slots take whole numbers; the C# API has no decimal form of them
+        if (def.Kind == PropKind.Integer && !int.TryParse(value, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out _)) { RebuildInspector(); return false; }
         var current = n.Props.TryGetValue(prop, out var c) ? c : def.Default;
         if (current == value) return false;
         return Edit("Change " + GraphDocument.Label(prop), () => { n.Props[prop] = value; return true; });
