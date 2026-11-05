@@ -1,0 +1,77 @@
+# infra: the same checks as ci.cmd, on a machine without Windows Smart App Control, so a freshly built DLL can load.
+name: CI
+
+on:
+  push:
+    branches: [ "ci/**" ]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      AGB_COMMIT_BASE: 8d7fe2325029a9b968858715846f8adb17da92d6
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: false
+
+      - name: Install devkitPro
+        shell: msys2 {0}
+        run: |
+          pacman-key --recv BC26F752D25B92CE272E0F44F7FD5492264BB9D0 --keyserver keyserver.ubuntu.com
+          pacman-key --lsign BC26F752D25B92CE272E0F44F7FD5492264BB9D0
+          pacman -U --noconfirm https://pkg.devkitpro.org/devkitpro-keyring.pkg.tar.zst
+          printf '[dkp-libs]\nServer = https://pkg.devkitpro.org/packages\n[dkp-windows]\nServer = https://pkg.devkitpro.org/packages/windows/$arch/\n' >> /etc/pacman.conf
+          pacman -Sy --noconfirm --needed gba-dev
+          echo "DEVKITPRO=$(cygpath -w /opt/devkitpro)" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: dotnet build AGB-Studio.sln -c Release -v q -nologo
+
+      - name: Lint
+        run: tools\agb\bin\Release\net10.0\agb.exe lint
+
+      - name: Commit messages
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\check-commit-emoji.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\check-commit-refs.ps1 -Strict
+
+      # One test project at a time: they build ROMs into shared folders under build\. Every project runs even when an
+      # earlier one fails, so one run reports everything.
+      - name: AgbStudio.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Tests\AgbStudio.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=tests.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Scripting.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Scripting.Tests\AgbStudio.Scripting.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=scripting.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Mcp.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Mcp.Tests\AgbStudio.Mcp.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=mcp.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Editor.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Editor.Tests\AgbStudio.Editor.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=editor.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: Keep the test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results
+          retention-days: 14
