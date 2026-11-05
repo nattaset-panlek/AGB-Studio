@@ -2,8 +2,8 @@ using AgbStudio.Core.Project;
 
 namespace AgbStudio.Editor.Windows.Launcher;
 
-/// <summary>Genre filter of Launcher · Templates (T-P20): All / Action / Adventure / RPG / Puzzle / Story / Racing.</summary>
-public enum TemplateCategory { Action, Adventure, Rpg, Puzzle, Story, Racing }
+/// <summary>Genre filter of Launcher · Templates (T-P20): All / Action / Adventure / RPG / Puzzle / Story / Racing. Blank has no chip, only All shows it.</summary>
+public enum TemplateCategory { Action, Adventure, Rpg, Puzzle, Story, Racing, Blank }
 
 /// <summary>
 /// One genre template (D-09). Texts are the Figma texts: <see cref="Description"/> on the cards of Launcher · Templates
@@ -25,7 +25,7 @@ public enum TemplateContent
 }
 
 /// <summary>
-/// The 8 templates of Launcher · Templates and New Project (D-09), in the Figma order. The list is data: the cards,
+/// The 8 templates of Launcher · Templates and New Project (D-09), in the Figma order, then Blank. The list is data: the cards,
 /// filters, details panel and the New Project dialog are generated from it. A template's content comes from a prepared
 /// project in <c>templates/&lt;id&gt;/</c> when that folder exists, else from the AgbStudio.Build template of the same id
 /// (ProjectCreator.BuildTemplate), else from <see cref="TemplateInfo.Content"/>.
@@ -74,6 +74,11 @@ public static class TemplateCatalog
             "A side-scrolling brawler: the player fights waves of enemies with combos.",
             ["Side-scrolling fights", "Combos", "Enemy waves", "Health and lives"],
             "Mode 0 · 3 BG layers · 8 actors · 4 scripts", "fighters, combos and enemy waves", TemplateContent.None),
+        new("blank", "Blank", TemplateCategory.Blank, "art/genre/blank", "art/genre/blank",
+            "One empty scene. Start from nothing.", "One empty scene. Start from nothing.",
+            "A project with one empty scene and no art, scripts or music: everything in it is yours to add.",
+            ["One empty scene"],
+            "Mode 0 · 0 BG layers · 0 actors · 0 scripts", "one empty scene", TemplateContent.None),
     ];
 
     public static TemplateInfo Find(string? id) => All.FirstOrDefault(t => t.Id == id) ?? All[0];

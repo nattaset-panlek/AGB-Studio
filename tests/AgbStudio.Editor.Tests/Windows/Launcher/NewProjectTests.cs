@@ -57,7 +57,7 @@ public class NewProjectTests
     [Fact]
     public void Catalog_EightTemplatesInFigmaOrder()
     {
-        Assert.Equal(["Platformer", "Top-down Adventure", "Turn-based RPG", "Shoot 'em up", "Puzzle", "Visual Novel", "Racing (Mode 7)", "Beat 'em up"], TemplateCatalog.All.Select(t => t.Title));
+        Assert.Equal(["Platformer", "Top-down Adventure", "Turn-based RPG", "Shoot 'em up", "Puzzle", "Visual Novel", "Racing (Mode 7)", "Beat 'em up", "Blank"], TemplateCatalog.All.Select(t => t.Title));
         Assert.All(TemplateCatalog.All, t => Assert.True(Graphics.IconCatalog.Art(t.Preview).Width > 0));
         Assert.Equal(["Platformer", "Shoot 'em up", "Beat 'em up"], TemplateCatalog.Filter(TemplateCategory.Action, null).Select(t => t.Title));
         Assert.Equal(["Visual Novel"], TemplateCatalog.Filter(null, "portraits").Select(t => t.Title));
@@ -71,7 +71,7 @@ public class NewProjectTests
         var dlg = Assert.IsType<NewProjectDialog>(h.Win.Overlays.Open.Single());
         Assert.Equal(1180, dlg.Bounds.Width);
         Assert.Equal(668, dlg.Bounds.Height);
-        Assert.Equal(8, dlg.Cards.Count);
+        Assert.Equal(9, dlg.Cards.Count);
         Assert.Equal("Platformer", dlg.Cards.Single(c => c.IsSelected).Title);
         Assert.Equal("Template adds: player controller, enemies, coins, HUD and a title screen.", dlg.GetVisualDescendants().OfType<DialogFooter>().Single().Hint);
         Assert.Equal("My Game", dlg.NameField.Text);
@@ -213,6 +213,34 @@ public class NewProjectTests
         Assert.Equal("T-P01", h.Win.CurrentPageId);
         Assert.Equal(["Scene", "Game"], h.S.Documents.Open.Select(d => d.Name));
         Assert.Equal("art/scene/day", h.Launcher.Thumbnail(p.ProjectPath, "Forest Run"));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Create_Blank_IsOneEmptyScene_WithOrWithoutTheSampleLevelBox(bool sampleLevel)
+    {
+        using var h = new LauncherHarness();
+        h.Launcher.Git = null;
+        _ = h.S.Windows.Open("T-D01", "blank", source: "test");
+        Capture.Pump();
+        var dlg = (NewProjectDialog)h.Win.Overlays.Open.Single();
+        Assert.False(dlg.SampleLevel.IsEnabled);
+        dlg.NameField.Text = "Nothing Yet";
+        dlg.SetLocationBase(Path.Combine(h.Fx.Folder, "Made"));
+        dlg.SampleLevel.IsChecked = sampleLevel;
+        dlg.ThaiFont.IsChecked = true;
+        dlg.Git.IsChecked = false;
+        var o = dlg.Options();
+        var p = AgbStudio.Core.Project.GameProject.Open(ProjectCreator.Create(o).ProjectPath);
+        var scene = Assert.Single(p.SceneFiles());
+        Assert.Empty(AgbStudio.Core.Project.GameProject.Load<AgbStudio.Core.Project.SceneFile>(scene).Actors);
+        Assert.Equal(AgbStudio.Core.Project.GameProject.AssetName(scene), p.Settings.General.StartScene);
+        Assert.Empty(p.SpriteFiles());
+        Assert.Empty(p.MusicFiles());
+        Assert.Empty(p.ScriptFiles());
+        Assert.True(File.Exists(Path.Combine(p.FontsDir, "thai_vwf.font")));
+        await Task.CompletedTask;
     }
 
     [AvaloniaFact]

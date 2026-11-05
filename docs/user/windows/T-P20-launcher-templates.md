@@ -5,7 +5,7 @@ Figma: T-P20 · Page
 No caption in Figma.
 
 The Templates tab of the Launcher: browse the genre templates, read what each one includes, and start a new project
-from one.
+from one. Blank starts from one empty scene and appears only under All.
 
 ## Opens from
 

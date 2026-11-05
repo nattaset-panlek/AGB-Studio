@@ -25,6 +25,7 @@ ROM in an embedded mGBA core for Play mode and the Debugger.
   Thai word wrap, and per-language strings that switch while the game runs.
 - **Start from a game that already works.** Eight templates: Platformer, Top-down Adventure, Visual Novel, Puzzle,
   Shoot 'em up, Turn-based RPG, Racing (Mode 7) and Beat 'em up. Each comes with title, pause and options menus, ready to change.
+  Or pick Blank to start from one empty scene.
 - **Sell what you make.** The runtime linked into your game is MIT licensed.
 
 ## See it work

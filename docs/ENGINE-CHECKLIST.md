@@ -35,6 +35,7 @@
 | 21 | Upgrade: scripts on the object and the event list | Phase 19 และ 20 ผ่าน, frame อนุมัติแล้ว | - |
 | 22 | Upgrade: Navigator and usages | เจ้าของเลือก, frame ของ Navigator อนุมัติแล้ว | 21 |
 | 23 | Upgrade: World canvas | Phase 18, 21 และ 22 ผ่าน, frame อนุมัติแล้ว | - |
+| 24 | Upgrade: built-in toolchain | D-30 decided, Phase 18 and 19 have test results | - |
 
 ---
 
@@ -1495,6 +1496,34 @@ Exit gate:
 
 ---
 
+### Phase 24 · Upgrade: built-in toolchain (no devkitPro download)
+
+> Scope: ผู้ใช้เปิดโปรแกรมแล้วกด Build ได้เลย ไม่ต้องดาวน์โหลดอะไรเพิ่ม กระทบ T-S08, T-P12, T-D11, T-D06 และ D-19 (D-19 เดิมเลือกไม่รวม toolchain) ไม่ได้เขียน compiler เอง
+>
+> **ห้ามรวมชุดของ devkitPro:** หน้า <https://devkitpro.org/wiki/About> ขอไม่ให้นำ toolchain ของเขาไปใช้สร้างโค้ดอัตโนมัติหรือรวมไปกับผลิตภัณฑ์ อ่านเมื่อ 2026-11-05 ส่วนหน้า Trademark Guidelines ที่อ้างถึงไม่มีเนื้อหา (ตอบ 404) จึงใช้ toolchain ของ Arm และซอร์สของไลบรารีแทน ก่อนแจกจริงต้องตรวจเงื่อนไขของทุกชุดจากไฟล์ licence ของรุ่นที่ใช้
+
+Decisions:
+- [x] D-30 Replaces the "not bundled" part of D-19: AGB Studio ships Arm GNU Toolchain (`arm-none-eabi`) with its own ROM start code and linker script, and libtonc and maxmod built from source, instead of asking users to install devkitPro · Verify: `USER` — evidence: user:2026-11-05
+
+Entry gate:
+- [ ] P24.E1 D-30 decided, and Phases 18 and 19 have their test results · Verify: `USER`
+
+Items:
+- [ ] P24.01 Trial: pin one Arm GNU Toolchain version and build the runtime and one sample with it, on a branch. Record whether its libraries fit ARM7TDMI Thumb and ARM code, the toolchain's size, and any code the version change breaks · Verify: `RT` the runtime test ROMs; `BUD` ROM size and frame time against devkitARM 16.1
+- [ ] P24.02 Our own ROM start code and linker script in place of `gba.specs`, written from the GBA's documented memory map: ROM header, IWRAM, EWRAM, interrupt stack; `BuildReport` and the Debugger's memory figures follow them (infra: Build ROM, T-D06) · Verify: `RT` every runtime test ROM; `EMU` mGBA; `HW` n/a until hardware
+- [ ] P24.03 libtonc and maxmod built from source with the pinned compiler, kept with their notices; check each licence first (infra: Build ROM) · Verify: `RT` graphics and audio test ROMs; `REV` against `docs/THIRD_PARTY.md`
+- [ ] P24.04 `gbafix` written in C#: ROM title, game code and header checksum (infra: Build ROM) · Verify: `UT` same header bytes as gbafix on a fixed input; `RT` the ROM boots
+- [ ] P24.05 `mmutil`: read its licence, then ship it built from source or write the soundbank step in C# (infra: Build ROM, T-P15) · Verify: `UT` same soundbank as today for XM, MOD, IT, S3M and WAV; `RT` music plays
+- [ ] P24.06 `Toolchain` uses the built-in tools first; a folder in Preferences still overrides them; status lines, errors, About credits and the "devkitPro not found" notice change to match [T-S08, T-P12, T-D11, T-D06] · Verify: `E2E` Build ROM with no devkitPro present; `DOC` every user page that names devkitPro
+- [ ] P24.07 Package holds only what a GBA build needs, with GPL notices and a way to get the matching sources (P16.01, P16.02, G-LEGAL) · Verify: `BUD` zip size; `REV` licence list against the zip; install on a clean Windows user account
+- [ ] P24.08 Try the packaged compiler on a PC with Smart App Control on. If it is blocked, tell the owner before the release, since D-19 has no signing certificate (T-D06) · Verify: `USER`
+- [ ] P24.09 CI uses the built-in toolchain and stops downloading from pkg.devkitpro.org (infra: CI) · Verify: a CI run with no devkitPro step
+
+Exit gate:
+- [ ] P24.X1 On a Windows PC with no devkitPro: unzip, open, New Project, Build ROM, Play, with nothing else to install · Verify: `USER`
+
+---
+
 ## 6. Cross-cutting gates
 
 > Scope: gate เหล่านี้ใช้กับทุก phase phase ใดจะผ่าน exit gate ได้ต้องไม่ทำให้ gate เหล่านี้พัง
@@ -1679,9 +1708,11 @@ Exit gate:
 | 2026-11-05 | owner | T-S02 Save data, runtime scripts | Owner asked for saving during cutscenes, which section 1.2 had out of scope, without a Figma design first. New project setting and checkbox "Save during cutscenes" (off by default, 320 bytes a slot) | Moved out of "Out of scope" by the owner's decision. On load the wait the cutscene was in starts again (the line shows again, the move runs again), and other actors stand where the scene file puts them. The T-S02 Figma frame needs the new checkbox at the next sync | decided by the owner (2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-P02 Play Mode, T-M06 Tools menu, `agb test` | Owner asked for replay recording and a test runner for users, which section 1.2 had out of scope, without a Figma design first. Record chip on the Play Mode toolbar, Tools › Run Recorded Tests with results in the Console, and `agb test`; no window of its own | Moved out of "Out of scope" by the owner's decision. A replay compares screens, so any change to what shows (art, text) fails it and it must be recorded again; it does not say which behaviour broke. T-P02 and T-M06 need the new controls at the next Figma sync | decided by the owner (2026-11-05); the frames are still to review |
 | 2026-11-05 | owner | T-P05 Console | Owner asked to copy Console lines as text so problems can be reported without a screenshot: a "..." menu (Copy Selected, Copy All, Select All, Save to File, Clear) and selecting several lines; not in Figma. A click now selects a line, and opening its file takes a double click instead of a click | Built ahead of Figma; the T-P05 frame needs the "..." button, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-P20 Launcher Templates, T-D01 New Project | Owner asked for a Blank template: one empty scene, ninth card, no filter chip, Sample level box off; the frames have eight cards | Built; the "matches Figma" ticks of T-P20 and T-D01 need a new shot or design | approved (owner, 2026-11-05) |
 | 2026-11-05 | owner | Upgrade section, Phases 17-23, D-26 to D-29 | Owner wants GB Studio's workflow for GBA; `docs/GB-STUDIO-COMPARE.md` compared the two by reading code and the app was not run. Checking the code corrected three of its findings (listed in the section). The section adds work outside Figma | Added as Phases 17-23: list and node both, no conversion between them; dropdowns first; small changes built first with the frame updated at the next sync, new screens designed in Figma first. Not in this section: piano roll, web export, Plugin, UI languages (D-29); subgraph, constants and sprites from several OBJ are also left out until the owner asks | approved (owner, 2026-11-05) |
 | 2026-11-05 | owner | T-P17 node inspector, P17.02 | Scene, sound, music, variable, tag and text key settings are dropdowns, not the text fields of the T-P17 frame. On Touch has an extra row "(any)", and an empty list shows "(none in this project)". The variable list holds only int, byte, short and fixed fields, because the variable nodes use number pins | Built first under D-28; the T-P17 frame needs the dropdowns, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-P17 node inspector and node, P17.03 | A name the project no longer has shows a red line under the field and a red box on the node; the frame has no such state | Built first under D-28; the T-P17 frame needs this state at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-P17 node inspector, P17.04 | The field and tag dropdowns end with "+ New field" and "+ New tag", which open a name box under the field; the frame has neither. Undo takes back the node's value, and the new name stays in the project | Built first under D-28; the T-P17 frame needs both at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-O09 Link Settings, P17.05 | New row "Choose" (field, comparison, number) under "Only if"; the 360 x 330 frame has no such row, so the popover is taller | Built first under D-28; the T-O09 frame needs the row, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-P01 Inspector, Text Label, P17.06 | A small dropdown button beside Text Key; the frame has only the text field | Built first under D-28; the T-P01 frame needs the button, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | Phase 24, D-30, D-19, P16.01 | Owner wants AGB Studio to work when opened, with no devkitPro download. The devkitPro About page asks projects not to package their toolchain or use it to build generated code, which also describes how AGB Studio uses devkitARM today (its Trademark Guidelines page has no text) | Draft Phase 24: Arm GNU Toolchain, own start code and linker script, libtonc and maxmod from source. Licences and the trial build are not checked yet | decided by the owner: use Arm (D-30, 2026-11-05) |

@@ -47,6 +47,7 @@ public sealed class NewProjectDialog : FigmaDialog
         Name = "NewProjectDialog";
         _launcher = LauncherService.Of(s);
         Template = TemplateCatalog.Find(templateId);
+        SampleLevel.IsEnabled = Template.Id != AgbStudio.Build.Content.Templates.BlankTemplate.Id;
         _locationBase = _launcher.DefaultLocationBase();
 
         var choose = UI.Text("Choose a genre template", "Overline/11", "text/secondary");
@@ -231,6 +232,8 @@ public sealed class NewProjectDialog : FigmaDialog
     {
         Template = t;
         foreach (var c in Cards) c.IsSelected = c.Name == "Template_" + t.Id;
+        // Blank has no sample level to include.
+        SampleLevel.IsEnabled = t.Id != AgbStudio.Build.Content.Templates.BlankTemplate.Id;
         _footer.Hint = $"Template adds: {Template.Adds}.";
     }
 

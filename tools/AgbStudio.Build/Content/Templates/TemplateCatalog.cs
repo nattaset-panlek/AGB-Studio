@@ -5,7 +5,7 @@ namespace AgbStudio.Build.Content.Templates;
 /// <summary>A New Project template (Launcher · Templates and New Project, D-09).</summary>
 /// <param name="Id">Stable id used by the New Project dialog and tests.</param>
 /// <param name="Name">Card title as in Figma.</param>
-/// <param name="Genre">Filter chip: Action, Adventure, RPG, Puzzle, Story or Racing.</param>
+/// <param name="Genre">Filter chip: Action, Adventure, RPG, Puzzle, Story or Racing; Blank has no chip.</param>
 /// <param name="Summary">Card text as in Figma.</param>
 /// <param name="Description">Details panel paragraph.</param>
 /// <param name="Includes">Details panel "Includes" list.</param>
@@ -31,7 +31,7 @@ public sealed record TemplateInfo(string Id, string Name, string Genre, string S
     }
 }
 
-/// <summary>The eight templates of Launcher · Templates, in the build order of D-09.</summary>
+/// <summary>The eight templates of Launcher · Templates, in the build order of D-09, then Blank.</summary>
 public static class TemplateCatalog
 {
     public static readonly IReadOnlyList<TemplateInfo> All =
@@ -68,6 +68,10 @@ public static class TemplateCatalog
             "A side-scrolling brawler: the player fights waves of enemies with combos.",
             ["Side-scrolling fights", "Combos", "Enemy waves", "Health and lives"],
             BrawlerTemplate.Create),
+        new(BlankTemplate.Id, "Blank", "Blank", "One empty scene. Start from nothing.",
+            "A project with one empty scene and no art, scripts or music: everything in it is yours to add.",
+            ["One empty scene"],
+            BlankTemplate.Create),
     ];
 
     public static TemplateInfo? Find(string id) => All.FirstOrDefault(t => t.Id == id);
