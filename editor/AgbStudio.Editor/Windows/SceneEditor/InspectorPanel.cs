@@ -614,6 +614,41 @@ public sealed class InspectorPanel : Panel
         _content.Children.Add(Section(UI.Column(6,
             new InspectorField { Kind = FieldKind.Text, Label = "Actors", Value = sc.Actors.Count.ToString(CultureInfo.InvariantCulture), IsEnabled = false },
             settings), new Thickness(12, 12, 12, 12)));
+        CollisionSection();
+    }
+
+    // P18.05: paint collision here when the map keeps it apart from the art; otherwise say where it comes from.
+    void CollisionSection()
+    {
+        if (_m.Map == null) return;
+        var rows = new List<Control>();
+        if (_m.HasCollisionOnlyLayer)
+        {
+            static string Label(CollisionType t) => t == CollisionType.OneWay ? "One-way" : t.ToString();
+            var field = new InspectorField { Kind = FieldKind.Dropdown, Label = "Brush", Name = "Field_CollisionBrush", Value = _m.CollisionBrush is { } now ? Label(now) : "Off" };
+            field.TemplateApplied += (_, e) =>
+            {
+                if (e.NameScope.Find<Button>("PART_Dropdown") is not { } button) return;
+                button.Click += (_, _) =>
+                {
+                    var types = _m.CollisionBrushTypes();
+                    Database.Dropdown.Show(button, ["Off", .. types.Select(Label)], field.Value, option =>
+                    {
+                        _m.SetCollisionBrush(option == "Off" ? null : types.First(t => Label(t) == option));
+                        field.Value = option;
+                    });
+                };
+            };
+            rows.Add(field);
+        }
+        else
+        {
+            var source = UI.Text(_m.CollisionSourceText(), "Label/11", "text/secondary");
+            source.TextWrapping = TextWrapping.Wrap;
+            source.Name = "CollisionSource";
+            rows.Add(source);
+        }
+        _content.Children.Add(Section(SectionBody(new SectionHeader { Title = "Collision", Glyph = "grid" }, rows)));
     }
 
     void BuildCamera()
@@ -656,6 +691,7 @@ public sealed class InspectorPanel : Panel
         var open = new AgbButton { Content = "Open in Tilemap Editor", Glyph = "tiles", HorizontalAlignment = HorizontalAlignment.Stretch, Name = "OpenTilemapButton" };
         open.Click += (_, _) => _ = _s.Windows.Open("T-P03", _m.MapPath, source: "InspectorLayer");
         _content.Children.Add(Section(SectionBody(new SectionHeader { Title = "Layer", Glyph = "layers" }, [p, open])));
+        if (index == _m.Map?.CollisionLayer) CollisionSection();
     }
 
     // ---- GBA Budget (#33) -----------------------------------------------------------------------------

@@ -19,6 +19,20 @@ public static class SceneCommands
     // ---- Add Actor (T-M10) and Add to Scene (T-M11) ----------------------------------------------------
 
     [CommandHandler("scene.addActor.empty")] public static void AddEmpty(EditorServices s) => AddActor(s, ActorKind.Empty);
+    [CommandHandler("scene.place.actor")] public static void PlaceEmpty(EditorServices s) => StartPlacing(s, ActorKind.Empty);
+    [CommandHandler("scene.place.trigger")] public static void PlaceTrigger(EditorServices s) => StartPlacing(s, ActorKind.TriggerZone);
+    [CommandHandler("scene.place.player")] public static void PlacePlayer(EditorServices s) => StartPlacing(s, ActorKind.Player);
+    [CommandHandler("scene.place.enemy")] public static void PlaceEnemy(EditorServices s) => StartPlacing(s, ActorKind.Enemy);
+    [CommandHandler("scene.place.pickup")] public static void PlacePickup(EditorServices s) => StartPlacing(s, ActorKind.Pickup);
+    [CommandHandler("scene.place.camera")] public static void PlaceCamera(EditorServices s) => StartPlacing(s, ActorKind.CameraZone);
+
+    static void StartPlacing(EditorServices s, ActorKind kind)
+    {
+        if (M(s).Scene == null) return;
+        M(s).PlaceKind = kind;
+        s.Toasts.Show(SceneEditorModel.IsZone(kind) ? "Click or drag on the scene to place it. Esc stops." : "Click on the scene to place it. Esc stops.", AgbStudio.Editor.Controls.ToastStatus.Success);
+    }
+
     [CommandHandler("scene.addActor.player")] public static void AddPlayer(EditorServices s) => AddActor(s, ActorKind.Player);
     [CommandHandler("scene.addActor.enemy")] public static void AddEnemy(EditorServices s) => AddActor(s, ActorKind.Enemy);
     [CommandHandler("scene.addActor.pickup")] public static void AddPickup(EditorServices s) => AddActor(s, ActorKind.Pickup);
