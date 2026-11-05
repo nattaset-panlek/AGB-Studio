@@ -2,6 +2,37 @@
 
 เขียนเมื่อ 2026-11-05 จากเครื่อง `C:\Personal\AGB-Studio` เจ้าของย้ายไปทำต่อที่ PC เครื่องอื่น Claude ที่เครื่องใหม่อ่านไฟล์นี้ก่อน
 
+## ลองตอนเช้า (เจ้าของ)
+
+เปิดโปรแกรม: ปิด AGB Studio ก่อน แล้วรัน `build-and-run.cmd` ที่ `D:\devkitPro\AGB-Studio` (branch `handoff/2026-11-05`) เครื่องนี้มี `toolchain\` แล้ว ถ้าเป็นเครื่องอื่นให้รัน `tools\fetch-toolchain.ps1` ก่อน (โหลด 296 MB)
+
+| # | ที่ไหน | ทำอะไร | ควรเห็น |
+|---|---|---|---|
+| 1 | Edit › Preferences › Paths | ดูแถว devkitPro | path เป็น `...\AGB-Studio\toolchain`, ข้อความ "Arm GNU Toolchain 15.2 · maxmod · mmutil found" |
+| 2 | แถวเดียวกัน | ใส่ `D:\devkitPro` แล้วบันทึก จากนั้นลบออก | สลับเป็น "devkitARM 16.1" แล้วกลับเป็น Arm |
+| 3 | Project Settings › Build | ดูการ์ด Toolchain | รุ่น compiler และ "found" |
+| 4 | Help › About | ดูบรรทัด credits | "Built with Arm GNU Toolchain, maxmod and the mGBA emulator core..." |
+| 5 | เปิด WildKin หรือ Sky Hopper | Build › Build ROM แล้วกด Play | build ผ่าน, เล่นได้, **ฟังว่าเพลงและเสียงยังปกติ**, เซฟแล้วโหลดได้ |
+| 6 | Tilemap Editor | แก้แมพ, Ctrl+S, กลับแท็บ Scene | Scene แสดงแมพใหม่ และแก้ฉากต่อแล้วแมพไม่ย้อนกลับ |
+| 7 | แท็บ Console | คลิก, Ctrl+คลิก, Shift+คลิก, ลาก, Ctrl+C, ปุ่ม `...`, คลิกขวา, ดับเบิลคลิกบรรทัดที่มีไฟล์ | เลือกหลายบรรทัดแล้ว copy เป็นข้อความได้, ดับเบิลคลิกเปิดโค้ด |
+| 8 | Scene Editor | กด `A` แล้วคลิกบนฉาก, กด `T` แล้วลาก, ลากป้าย START, Inspector › Collision แล้วทาสี | วาง actor ทีละตัว (Esc ออก), trigger ขนาดตามที่ลาก, Player ย้าย, ทาสี collision ได้ (ข้อนี้คือ P18.04 และ P18.X1) |
+| 9 | Logic Graph › Add Node | หา Camera Follow, Random Range, Load Game, Save Exists, Set Tile | ทั้ง 5 node มีและต่อสายได้ (P19.X1) |
+| 10 | Ctrl+K | พิมพ์ `pla` แล้วพิมพ์ `place` | `pla` ได้ Play, Play from Here, Palette Manager ส่วน `place` เจอ Place Actor |
+| 11 | Play Mode | กด Record, เล่นสักพัก, กดอีกครั้ง แล้ว Tools › Run Recorded Tests | ได้ไฟล์ `replays\Replay 1.replay` และ Console บอกว่าผ่าน |
+| 12 | World Map › Connections | ต่อสองฉาก (tileset และ layer เดียวกัน) แล้ว Play | เดินข้ามฉากได้ทันทีโดยไม่มีจอดำ |
+| 13 | Tilemap Editor › Tile | ใส่ "Over actors" | tile นั้นอยู่หน้าตัวละครในเกม |
+| 14 | Project Settings › Save data | เปิด "Save during cutscenes", เซฟกลาง cutscene แล้วโหลด | cutscene เล่นต่อจากจุดที่เซฟ |
+
+ต้องตัดสินใจ:
+
+1. ยืนยัน P18.E1, P19.E1, P24.E1 ที่ผมติ๊กแทน และการเลิกใช้ libtonc
+2. P24.05 mmutil: build จาก source บนเครื่องที่อนุญาต หรือให้เขียนเป็น C#
+3. P24.09: ตัดทิ้งเพราะเลิกใช้ GitHub Actions หรือเก็บไว้
+4. Merge `handoff/2026-11-05` เข้า `main`
+5. Phase ถัดไป: 20 ทำได้เลย ส่วน 21-23 ต้องออกแบบใน Figma ก่อน
+
+ถ้าเจอปัญหา: เลือกบรรทัดใน Console แล้วกด Ctrl+C ส่งมาได้เลย หรือย้อนไปใช้ devkitPro ได้โดยใส่ `D:\devkitPro` ใน Preferences › Paths
+
 ## คืน 2026-11-06: Phase 24 (เจ้าของให้ตัดสินใจเองทั้งคืน)
 
 ทำแล้ว ทุกข้อ commit อยู่บน `handoff/2026-11-05`:
