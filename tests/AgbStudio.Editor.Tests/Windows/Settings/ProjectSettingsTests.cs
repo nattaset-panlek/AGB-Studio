@@ -251,9 +251,9 @@ public sealed class ProjectSettingsTests : IDisposable
         Assert.Equal("ไทย", d.Find<SelectField>("DefaultLanguage").Selected);
         win.Click(d.Find<NavItem>("Nav_T-S03"));
         var card = d.Find<Border>("ToolchainCard").GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
-        var devkit = _fx.Services.Toolchain.Find("devkitPro")!;
+        var devkit = _fx.Services.Toolchain.Find("toolchain")!;
         Assert.Contains(card, t => t != null && t.EndsWith(devkit.Path));
-        Assert.Contains(card, t => t != null && (t.EndsWith("found") || t.EndsWith("not found · set the devkitPro folder, or install devkitPro")));
+        Assert.Contains(card, t => t != null && (t.EndsWith("found") || t.EndsWith("not found · set the toolchain folder in Preferences › Paths, or reinstall AGB Studio")));
     }
 
     [AvaloniaFact]

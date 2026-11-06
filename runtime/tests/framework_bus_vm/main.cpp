@@ -277,6 +277,34 @@ AGB_TEST(vm_wait_until_checks_its_condition_every_frame) {
     CHECK_EQ(script::var(0x8006), 1);
 }
 
+// P20.02: [Cutscene(Background)] starts at Trigger priority and leaves input on; [Cutscene(Once)] refuses a second start
+// of the same script with the same key (the actor) while the first runs, but starts it for another actor.
+AGB_TEST(vm_background_and_once_scripts_start_together) {
+    script::setTables(kScripts, 4, kNatives, 3);
+    script::resetContexts();
+    g_vars[4] = 0;
+    const int a = script::start(3, script::Priority::Trigger, nullptr, 0, 7);
+    CHECK(a >= 0);
+    CHECK(!script::cutsceneRunning());
+    CHECK_EQ(script::start(3, script::Priority::Trigger, nullptr, 0, 7), -1);
+    const int b = script::start(3, script::Priority::Trigger, nullptr, 0, 8);
+    CHECK(b >= 0);
+    CHECK(b != a);
+    const int c = script::start(3, script::Priority::Trigger);
+    CHECK(c >= 0);
+    const int cut = script::start(0, script::Priority::Cutscene);
+    CHECK(cut >= 0);
+    CHECK(script::cutsceneRunning());
+    for (int i = 0; i < 3; ++i) script::run();
+    CHECK(script::running(a));
+    CHECK(script::running(b));
+    CHECK(script::running(c));
+    CHECK(g_vars[4] >= 9);  // three copies of the loop, three frames, beside the cutscene
+    script::stop(a);
+    CHECK(script::start(3, script::Priority::Trigger, nullptr, 0, 7) >= 0);
+    script::resetContexts();
+}
+
 AGB_TEST(vm_single_step_and_locals_view) {
     script::setTables(kScripts2, 5, kNatives, 3);
     script::resetContexts();

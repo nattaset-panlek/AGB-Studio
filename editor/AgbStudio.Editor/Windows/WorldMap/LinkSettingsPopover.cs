@@ -4,6 +4,7 @@ using AgbStudio.Editor.Controls;
 using AgbStudio.Editor.Graphics;
 using AgbStudio.Editor.Shell;
 using AgbStudio.Editor.Windows.Scripts;
+using AgbStudio.Scripting;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -32,6 +33,10 @@ public sealed class LinkSettingsPopover : Border, IOverlayContent
     public Button SpawnAt { get; }
     public AgbSlider Duration { get; } = new() { Name = "Duration", Maximum = 100 };
     public TextBox OnlyIf { get; } = new() { Name = "OnlyIf" };
+    public Button ConditionField { get; }
+    public Button ConditionOp { get; }
+    public TextBox ConditionValue { get; } = new() { Name = "ConditionValue", Height = 28, Width = 56, Padding = new Thickness(8, 0) };
+    public const string NoCondition = "None", CustomCondition = "Custom";
 
     public LinkSettingsPopover(WindowContext ctx) : this(ctx.Args as LinkSettingsArgs) { }
 
@@ -66,13 +71,26 @@ public sealed class LinkSettingsPopover : Border, IOverlayContent
         AgbStudio.Editor.Theme.Fig.SetStyle(OnlyIf, "Mono/11");
         OnlyIf.LostFocus += (_, _) => CommitCondition();
         OnlyIf.KeyDown += (_, e) => { if (e.Key == Key.Enter) { CommitCondition(); e.Handled = true; } };
+        ConditionField = Dropdown("ConditionField");
+        ConditionOp = Dropdown("ConditionOp");
+        ConditionField.Width = 106;
+        ConditionOp.Width = 52;
+        ConditionField.Click += (_, _) => Database.Dropdown.Show(ConditionField, [NoCondition, .. LogicGraph.GraphReferences.NumberFields(_model?.Project)], TextOf(ConditionField), PickField);
+        ConditionOp.Click += (_, _) => Database.Dropdown.Show(ConditionOp, LinkCondition.Ops, TextOf(ConditionOp), op =>
+        {
+            if (LinkCondition.Parse(OnlyIf.Text ?? "") is { } c) SetCondition(c with { Op = op });
+        });
+        AgbStudio.Editor.Theme.Fig.SetStyle(ConditionValue, "Mono/11");
+        ConditionValue.LostFocus += (_, _) => CommitValue();
+        ConditionValue.KeyDown += (_, e) => { if (e.Key == Key.Enter) { CommitValue(); e.Handled = true; } };
+        var builder = UI.Row(6, ConditionField, ConditionOp, ConditionValue);
         var help = UI.Text("Leave “Only if” empty to always allow the link.", "Label/11", "text/muted");
         help.Margin = new Thickness(0, 3, 0, 0);
         var duration = UI.Row(16, Duration, _durationText);
         duration.VerticalAlignment = VerticalAlignment.Center;
         var rows = UI.Column(10,
             Row("From", From, 28), Row("To scene", To, 28), Row("Spawn at", SpawnAt, 28), Row("Transition", transitions, 34),
-            Row("Duration", duration, 28), Row("Only if", OnlyIf, 28), help);
+            Row("Duration", duration, 28), Row("Only if", OnlyIf, 28), Row("Choose", builder, 28), help);
         rows.Margin = new Thickness(20, 18, 20, 16);
         Child = UI.Column(0, _header, rows);
         Load();
@@ -122,6 +140,7 @@ public sealed class LinkSettingsPopover : Border, IOverlayContent
         Duration.Value = Math.Clamp(l.Duration / MaxDuration * 100, 0, 100);
         _durationText.Text = Seconds(l.Duration);
         OnlyIf.Text = WorldMapModel.ShowCondition(l.OnlyIf);
+        ShowBuilder(l.OnlyIf);
         _loading = false;
         From.Click -= OnFrom;
         From.Click += OnFrom;
@@ -150,10 +169,41 @@ public sealed class LinkSettingsPopover : Border, IOverlayContent
         PageChrome.ShowChoices(SpawnAt, _model.SpawnPoints(link.To), TextOf(SpawnAt), v => Change("Spawn point", l => _model.ApplySpawn(l, v)));
     }
 
+    // The builder shows a condition it can read; anything else stays as typed text, with the builder on "Custom".
+    void ShowBuilder(string stored)
+    {
+        var parsed = LinkCondition.Parse(stored);
+        SetText(ConditionField, parsed?.Field ?? (stored.Trim().Length == 0 ? NoCondition : CustomCondition));
+        SetText(ConditionOp, parsed?.Op ?? "");
+        ConditionValue.Text = parsed?.Value ?? "";
+        ConditionOp.IsEnabled = ConditionValue.IsEnabled = parsed != null;
+    }
+
+    void PickField(string field)
+    {
+        if (field == NoCondition) { if (Link is { OnlyIf.Length: > 0 }) Change("Only if", x => x.OnlyIf = ""); return; }
+        var current = LinkCondition.Parse(OnlyIf.Text ?? "");
+        SetCondition(new LinkCondition(field, current?.Op ?? ">=", current?.Value ?? "1"));
+    }
+
+    void SetCondition(LinkCondition c)
+    {
+        if (Link is { } l && l.OnlyIf != c.Text) Change("Only if", x => x.OnlyIf = c.Text);
+    }
+
+    void CommitValue()
+    {
+        if (_loading || LinkCondition.Parse(OnlyIf.Text ?? "") is not { } c) return;
+        var value = (ConditionValue.Text ?? "").Trim();
+        if (LinkCondition.IsValue(value)) SetCondition(c with { Value = value });
+        else ConditionValue.Text = c.Value;
+    }
+
     void CommitCondition()
     {
         var stored = WorldMapModel.StoreCondition(OnlyIf.Text ?? "");
         if (Link is { } l && l.OnlyIf != stored) Change("Only if", x => x.OnlyIf = stored);
+        else ShowBuilder(stored);
     }
 
     /// <summary>Applies one change to the link and saves its scene (one undo step).</summary>

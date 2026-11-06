@@ -24,8 +24,11 @@ it to plan the levels and the order of the story.
   it, or loses the last heart in this scene). Click one to open Link Settings.
 - **Map**: each scene is a card with a picture, its name and size. Drag a card to move it; its place is saved. Lines
   join linked scenes, and each line has a chip (the trigger, or a condition such as "3 stars"); click the chip for Link
-  Settings. Title menu starts are dashed. The mouse wheel zooms; the middle button or the Hand tool moves the view.
-- **New scene card**: the dashed card opens New Scene, and the new scene is placed there.
+  Settings. Each line starts and ends on the side of a card; several lines on one side are spread along it. Title
+  menu starts are dashed. The mouse wheel zooms; the middle button or the Hand tool moves the view.
+- **Map menu**: right-click empty space for New Scene Here… (the new scene is placed where you clicked), Link Scenes
+  (the Link tool), Go to Start Scene, Fit All Scenes and Zoom to 100%. New Scene in the toolbar and the + of Scenes
+  place the new scene under the lowest card.
 - **Card shortcuts**: double-click or Enter opens the scene, F2 renames it (Enter keeps, Esc cancels). Edit › Duplicate
   and Delete work on the selected scene. Right-click a card for the Scene Context Menu (Open, Rename, Duplicate, Set as
   start scene, Delete).

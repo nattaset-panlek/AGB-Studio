@@ -330,6 +330,12 @@ public static class ProjectApi
                 const agb::s32 args[sizeof...(A) + 1] = {static_cast<agb::s32>(a)..., 0};
                 return agb::script::start(id, agb::script::Priority::Cutscene, args, static_cast<int>(sizeof...(A)));
             }
+            // [Cutscene(Background = ..., Once = ...)]: once is the key a second start is refused for while the first runs, or -1.
+            template <typename... A>
+            inline int agb_start_script_as(agb::script::Priority priority, agb::s32 once, agb::u16 id, A... a) {
+                const agb::s32 args[sizeof...(A) + 1] = {static_cast<agb::s32>(a)..., 0};
+                return agb::script::start(id, priority, args, static_cast<int>(sizeof...(A)), once);
+            }
 
             """.Replace("\r\n", "\n"));
         if (ctx.Enums.Count > 0)

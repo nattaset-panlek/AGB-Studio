@@ -147,6 +147,8 @@ public sealed class GbaScreenView : Control
     (int X, int Y) _panStart;
     bool _spaceDown;
     bool _painting;
+    (int X, int Y)? _placeFrom;
+    (int X, int Y) _placeTo;
 
     public GbaScreenView(SceneEditorModel m)
     {
@@ -156,6 +158,12 @@ public sealed class GbaScreenView : Control
         m.Changed += Invalidate;
         m.ViewChanged += Invalidate;
         m.SelectionChanged += InvalidateVisual;
+        m.PlaceChanged += () =>
+        {
+            Cursor = m.PlaceKind != null ? new Cursor(StandardCursorType.Cross) : null;
+            if (m.PlaceKind != null) Focus();
+            else _placeFrom = null;
+        };
     }
 
     void Invalidate()
@@ -271,9 +279,49 @@ public sealed class GbaScreenView : Control
             if (PixelGridShown) DrawPixelGrid(ctx, screen, k);
             if (_m.Grid.ShowGrid && _m.Grid.Size > 0) DrawGrid(ctx, screen, k);
             if (_m.Grid.CameraBounds) DrawCameraBounds(ctx, k);
-            if (_m.IsTileTool) DrawBrush(ctx, k);
+            if (StartMarker is { } start) DrawStartMarker(ctx, start);
+            if (_m.PlaceKind != null) DrawPlacing(ctx, k);
+            else if (_m.IsTileTool) DrawBrush(ctx, k);
             else DrawSelection(ctx);
         }
+    }
+
+    const double StartMarkerHeight = 14;
+
+    /// <summary>The "START" tag under the Player of the start scene (P18.03), in this control. Dragging it moves the Player.</summary>
+    public Rect? StartMarker
+    {
+        get
+        {
+            if (_m.StartActor < 0 || ActorRect(_m.StartActor) is not { } r) return null;
+            var bottomLeft = ToView(r.X, r.Y + r.H);
+            return new Rect(Math.Round(bottomLeft.X), Math.Round(bottomLeft.Y) + 2, 40, StartMarkerHeight);
+        }
+    }
+
+    void DrawStartMarker(DrawingContext ctx, Rect tag)
+    {
+        var style = AgbStudio.Editor.Theme.TextStyles.Get("Label/11");
+        var text = new FormattedText("START", CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+            new Typeface(style.FontFamily, FontStyle.Normal, style.FontWeight), 9, Token("text/on-accent"));
+        ctx.DrawRectangle(Token("status/success"), null, tag, 3, 3);
+        ctx.DrawText(text, new Point(tag.X + (tag.Width - text.Width) / 2, tag.Y + (tag.Height - text.Height) / 2));
+    }
+
+    /// <summary>Place mode: the dragged zone, or the cell a click would use.</summary>
+    void DrawPlacing(DrawingContext ctx, double k)
+    {
+        var pen = new Pen(Token("accent/default"), 2);
+        if (_placeFrom is { } from)
+        {
+            var a = ToView(_m.SnapValue(Math.Min(from.X, _placeTo.X)), _m.SnapValue(Math.Min(from.Y, _placeTo.Y)));
+            var b = ToView(_m.SnapValue(Math.Max(from.X, _placeTo.X)), _m.SnapValue(Math.Max(from.Y, _placeTo.Y)));
+            ctx.DrawRectangle(null, pen, new Rect(a, b));
+            return;
+        }
+        if (_m.Cursor is not { } c) return;
+        var size = _m.Grid.Snap && _m.Grid.Size > 0 ? _m.Grid.Size : 8;
+        ctx.DrawRectangle(null, pen, new Rect(ToView(_m.SnapValue(c.X), _m.SnapValue(c.Y)), new Size(size * k, size * k)));
     }
 
     /// <summary>Paint tiles / Fill / Erase: the brush outline on the cell under the pointer.</summary>
@@ -452,6 +500,19 @@ public sealed class GbaScreenView : Control
             e.Handled = true;
             return;
         }
+        if (_m.PlaceKind is { } place)
+        {
+            if (pt.Properties.IsRightButtonPressed) _m.PlaceKind = null;
+            else if (pt.Properties.IsLeftButtonPressed && SceneEditorModel.IsZone(place))
+            {
+                _placeTo = ToScene(p);
+                _placeFrom = _placeTo;
+                e.Pointer.Capture(this);
+            }
+            else if (pt.Properties.IsLeftButtonPressed) { var (px, py) = ToScene(p); _m.PlaceActor(place, px, py); }
+            e.Handled = true;
+            return;
+        }
         if (pt.Properties.IsLeftButtonPressed && _m.IsTileTool)
         {
             // Paint tiles and Erase paint while the button is held (one undo step per stroke); Fill fills once
@@ -462,7 +523,7 @@ public sealed class GbaScreenView : Control
             e.Handled = true;
             return;
         }
-        var actor = ActorAt(p);
+        var actor = StartMarker is { } startTag && startTag.Contains(p) ? _m.StartActor : ActorAt(p);
         if (pt.Properties.IsRightButtonPressed)
         {
             if (actor >= 0)
@@ -499,6 +560,12 @@ public sealed class GbaScreenView : Control
         var o = Origin;
         var inside = p.X >= o.X && p.Y >= o.Y && p.X < o.X + 240 * k && p.Y < o.Y + 160 * k;
         _m.SetCursor(inside ? ToScene(p) : null);
+        if (_placeFrom != null)
+        {
+            _placeTo = ToScene(p);
+            InvalidateVisual();
+            return;
+        }
         if (_panning)
         {
             var dx = (int)Math.Round((_dragStart.X - p.X) / k);
@@ -528,6 +595,13 @@ public sealed class GbaScreenView : Control
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+        if (_placeFrom is { } from && _m.PlaceKind is { } zone)
+        {
+            // barely moved: a click, which gives the zone its default size
+            if (Math.Abs(from.X - _placeTo.X) < 4 && Math.Abs(from.Y - _placeTo.Y) < 4) _m.PlaceActor(zone, from.X, from.Y);
+            else _m.PlaceZone(zone, from, _placeTo);
+        }
+        _placeFrom = null;
         _dragActor = -1;
         _panning = false;
         _painting = false;
@@ -561,6 +635,7 @@ public sealed class GbaScreenView : Control
     {
         base.OnKeyDown(e);
         if (e.Key == Key.Space) { _spaceDown = true; e.Handled = true; }
+        if (e.Key == Key.Escape && _m.PlaceKind != null) { _m.PlaceKind = null; e.Handled = true; return; }
         var i = _m.SelectedActorIndex;
         if (i < 0 || e.Handled || e.KeyModifiers != KeyModifiers.None) return;
         var step = _m.Grid.Snap ? _m.Grid.Size : 1;

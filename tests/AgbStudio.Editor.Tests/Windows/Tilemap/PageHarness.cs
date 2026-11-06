@@ -76,6 +76,16 @@ public sealed class PageHarness : IDisposable
         Capture.Pump();
     }
 
+    /// <summary>A drag with Alt held: the UI Editor moves freely, without snapping to its guides.</summary>
+    public void DragFree(Point from, Point to, int steps = 4)
+    {
+        Win.MouseMove(from);
+        Win.MouseDown(from, MouseButton.Left, RawInputModifiers.Alt);
+        for (var i = 1; i <= steps; i++) Win.MouseMove(new Point(from.X + (to.X - from.X) * i / steps, from.Y + (to.Y - from.Y) * i / steps), RawInputModifiers.Alt);
+        Win.MouseUp(to, MouseButton.Left, RawInputModifiers.Alt);
+        Capture.Pump();
+    }
+
     public void Key(PhysicalKey k, RawInputModifiers m = RawInputModifiers.None)
     {
         Win.KeyPressQwerty(k, m);

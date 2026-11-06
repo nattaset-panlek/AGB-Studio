@@ -1,6 +1,6 @@
 #include "agb/render/effects.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/commit.hpp"
 #include "agb/system.hpp"

@@ -116,7 +116,8 @@ public sealed class UiEditorTests : IDisposable
         Assert.Equal(steps + 1, _h.S.Undo.UndoCount);
         Assert.Equal(18, GameProject.Load<UiPageFile>(PageFile("Page")).Root.Children[0].Rect.X);
 
-        _h.Drag(At(114, 66), At(124, 76));   // the bottom right handle
+        // Alt: how near a guide snaps depends on the canvas scale, and that on the window
+        _h.DragFree(At(114, 66), At(124, 76));   // the bottom right handle
         Assert.Equal((106, 58), (page.Library.Selected!.Rect.W, page.Library.Selected!.Rect.H));
         _h.S.Undo.Undo();
         Assert.Equal((96, 48), (page.Library.Selected!.Rect.W, page.Library.Selected!.Rect.H));
@@ -221,7 +222,7 @@ public sealed class UiEditorTests : IDisposable
         Point At(int x, int y) => new(origin.X + x * scale, origin.Y + y * scale);
         var window = page.Library.Page!.Root.Children.Single(e => e.Name == "Window");
         var before = UiLayoutEngine.Resolve(page.Library.Page!)[window];
-        _h.Drag(At(before.X + 40, before.Y + 16), At(before.X + 44, before.Y + 10));
+        _h.DragFree(At(before.X + 40, before.Y + 16), At(before.X + 44, before.Y + 10));
         Assert.Equal("Window", page.Library.Selected!.Name);
         var after = UiLayoutEngine.Resolve(page.Library.Page!)[page.Library.Selected!];
         Assert.Equal((before.X + 4, before.Y - 6), (after.X, after.Y));

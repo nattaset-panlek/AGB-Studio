@@ -1,7 +1,7 @@
 // Menu / UI kit end to end (Figma "In-game" screens): boot splash timing, a title scene menu with a disabled
 // Continue, the pause overlay (dimmed scene, restored after), the options screen (hidden layers, sliders,
 // button remap with swap) and that overlays give their VRAM back.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/api.hpp"

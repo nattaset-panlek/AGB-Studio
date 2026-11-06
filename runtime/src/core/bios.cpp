@@ -1,6 +1,6 @@
 #include "agb/bios.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 namespace agb::bios {
 

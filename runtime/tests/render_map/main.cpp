@@ -1,6 +1,6 @@
 // BG allocation, tileset loading and map streaming: after scrolling across a large map, every visible
 // cell in VRAM must hold the expected screen entry, and per-frame DMA stays within budget.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

@@ -306,8 +306,11 @@ void setVar(u16 id, s32 v) {
     }
 }
 
-int start(u16 id, Priority priority, const s32* args, int argc) {
+int start(u16 id, Priority priority, const s32* args, int argc, s32 once) {
     if (id >= g_scriptCount) return -1;
+    if (once >= 0)
+        for (const Context& c : g_ctx)
+            if (c.active && c.root == id && (c.onceKey == once || c.onceKey == kOnceAny)) return -1;
     for (int i = 0; i < kMaxContexts; ++i) {
         Context& c = g_ctx[i];
         if (c.active) continue;
@@ -315,6 +318,8 @@ int start(u16 id, Priority priority, const s32* args, int argc) {
         c.active = true;
         c.priority = priority;
         c.id = g_nextId++;
+        c.root = id;
+        c.onceKey = once;
         for (int k = 0; k < argc; ++k) push(c, args[k]);
         if (!enterScript(c, id, argc)) {
             c.active = false;
@@ -451,6 +456,9 @@ bool resumeCutscene() {
     c.active = true;
     c.priority = Priority::Cutscene;
     c.id = g_nextId++;
+    // the save does not say which actor started it: while it runs, a [Cutscene(Once)] start of it is refused for every actor
+    c.root = s.frames[0].script;
+    c.onceKey = kOnceAny;
     c.depth = s.depth;
     c.sp = s.sp;
     c.localTop = s.localTop;

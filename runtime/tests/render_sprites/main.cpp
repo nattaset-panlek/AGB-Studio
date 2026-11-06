@@ -1,6 +1,6 @@
 // Sprite manager: 128 sprites, OAM contents, priority order, animation timing, shared frame cache,
 // all 12 OAM shapes and affine matrices.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

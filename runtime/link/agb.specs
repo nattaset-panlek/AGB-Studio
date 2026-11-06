@@ -1,0 +1,9 @@
+*link:
++ -T agb_cart.ld%s --gc-sections --no-warn-rwx-segments
+
+*startfile:
+agb_crt0%O%s crti%O%s crtbegin%O%s
+
+*lib:
++ -lnosys
+

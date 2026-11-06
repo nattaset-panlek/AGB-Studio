@@ -28,6 +28,14 @@
 | 14 | External IDE support | Phase 6 (tier 1) และ 10 ผ่าน | 11-13 |
 | 15 | Genre kits, templates, tutorials, samples | Phase 4-9 และ 11 ผ่าน | 16 |
 | 16 | Packaging and release | ทุก phase และทุก gate ผ่าน | - |
+| 17 | Upgrade: choose references instead of typing them | เจ้าของเลือก (D-27) | - |
+| 18 | Upgrade: place and paint on the scene | เจ้าของเลือก | 19 |
+| 19 | Upgrade: nodes the engine can already run | เจ้าของเลือก | 18 |
+| 20 | Upgrade: logic that can wait | เจ้าของเลือก | - |
+| 21 | Upgrade: scripts on the object and the event list | Phase 19 และ 20 ผ่าน, frame อนุมัติแล้ว | - |
+| 22 | Upgrade: Navigator and usages | เจ้าของเลือก, frame ของ Navigator อนุมัติแล้ว | 21 |
+| 23 | Upgrade: World canvas | Phase 18, 21 และ 22 ผ่าน, frame อนุมัติแล้ว | - |
+| 24 | Upgrade: built-in toolchain | D-30 decided, Phase 18 and 19 have test results | - |
 
 ---
 
@@ -1340,6 +1348,182 @@ Exit gate:
 
 ---
 
+### Upgrade section · Workflow from the GB Studio comparison (Phases 17-23)
+
+> ที่มา: `docs/GB-STUDIO-COMPARE.md` ปัญหาหลักคือต้องสลับหน้าไปมา, ต้องพิมพ์อ้างอิงเอง และ logic อยู่ห่างจากวัตถุ ไม่ใช่กำลังของ engine ทำทีละข้อตามที่เจ้าของเลือก พร้อม test ติ๊กเฉพาะข้อที่มีหลักฐาน
+>
+> **ลิขสิทธิ์:** เรียนรู้ flow และ UI จาก GB Studio ได้ ถ้าคัดลอกโค้ด (MIT) ต้องเก็บประกาศลิขสิทธิ์และเพิ่มแถวใน `docs/THIRD_PARTY.md` ห้ามนำรูปใน template, เพลง, เสียง และฟอนต์ของ GB Studio มาใช้ เพราะไม่พบเงื่อนไขการให้สิทธิ์
+>
+> **ตัวเลข test ตั้งต้น:** ณ 2026-11-05 `ci.cmd` ล้มจาก Editor test 5 ตัวที่บันทึกใน `docs/HANDOFF-2026-11-05.md` และบนเครื่อง `C:\Personal` มีอีก 1 ตัวที่ผลไม่แน่นอนคือ `LongOperationTests.Build_CancelledFromBuildRom...` (UI ค้าง 717 ถึง 861 ms เกินเกณฑ์ 250 ms ล้มเหมือนกันที่ commit `cf4bfa2` แต่ผ่านเมื่อรันทั้งชุดรอบล่าสุด) Exit gate ของแต่ละ phase นับเฉพาะความล้มเหลวใหม่ จนกว่าทั้ง 6 ตัวนี้จะถูกแก้
+
+Decisions:
+- [x] D-26 Logic format: event list and node graph both exist. Each script uses one kind, and the two do not convert to each other. Both generate C#, and a script can be converted to C# one way · Verify: `USER` — evidence: user:2026-11-05
+- [x] D-27 Build order: start with the dropdowns (Phase 17), one item at a time, with tests · Verify: `USER` — evidence: user:2026-11-05
+- [x] D-28 Figma, by size: small changes to existing windows are built first, logged in section 8, and the frame is updated at the next sync; new screens (script slots, event list, Project Navigator, World canvas) follow rule 1.1 and are designed in Figma first · Verify: `USER` — evidence: user:2026-11-05
+- [x] D-29 Large work in this section: World canvas only, as the last phase. Piano roll, web export, Plugin and UI languages stay out · Verify: `USER` — evidence: user:2026-11-05
+
+Confirmed in the code on 2026-11-05 (search and reading of the named files; the app was not run):
+- Corrected: the Scene Editor already has Paint, Fill and Erase on the canvas and a collision overlay (`SceneEditorModel.SceneTool`, `ViewportPanel`), so the report's "only in the Tilemap page" is wrong
+- Corrected: Link Settings "To scene" and "Spawn at" are already dropdowns (`LinkSettingsPopover`); only "Only if" is typed
+- Corrected: `Wait`, `Say`, `Choice`, `Move`, `FadeIn` and `FadeOut` work only inside `[Cutscene] async Task` (`AgbStudio.Api/Behaviour.cs`), and `GraphCodeGen` writes plain methods, so these nodes are larger work (Phase 20)
+- Confirmed missing: player start marker, subgraph, prefab editor and prefab usages (only Make Prefab and `Scene.Spawn` exist), variable usages (`AssetActions.Usages` covers assets only), piano roll, map notes, engine eject, web export, plugins
+- Not settled: sprites built from several OBJ, what the T-D03 Scene Settings fields accept, whether a scene actor's `Prefab` value does anything beyond the name
+
+### Phase 17 · Upgrade: choose references instead of typing them
+
+> Scope: T-P17 Logic Graph, T-O09 Link Settings, T-P01 Inspector, T-D03 Scene Settings เปลี่ยนแค่วิธีกรอก รูปแบบไฟล์ไม่เปลี่ยน สร้างก่อนแล้วค่อยแก้ frame ตาม D-28
+
+Entry gate:
+- [x] P17.E1 Owner picked this phase first · Verify: `USER` — evidence: user:2026-11-05
+
+Items:
+- [x] P17.01 Reference kinds on node properties: `LoadScene.scene`, `PlaySound.sound`, `PlayMusic.music`, `GetVariable` / `SetVariable` / `AddToVariable.variable`, `OnTouch.tag`, `CompareTag.tag`, `ShowText.key`; `.graph` format 1 stays as it is [T-P17] · Verify: `UT` existing graphs load and generate the same C# as before — evidence: test:GraphTests.ReferenceProps_KeepTheFileFormatAndTheGeneratedCode (also passed before the catalog change), test:GraphTests.ReferenceProps_HaveTheirKindInTheCatalog, test:GraphTests.FigmaGraphGeneratesTheFigmaCode (2026-11-05)
+- [x] P17.02 Logic Graph shows those properties as dropdowns filled from the project: scenes, sounds, music, Save data fields (the `Game` members), project tags, text keys [T-P17] · Verify: `E2E` choosing a value writes it to the node and is one undo step — evidence: test:LogicGraphTests.ReferenceDropdowns_ListTheProjectWriteTheNodeAndAreOneUndoStep, test:LogicGraphTests.ReferenceDropdown_WithNothingInTheProjectChangesNothing, doc:docs/user/windows/T-P17-logic-graph.md, not clicked in the running app (2026-11-05)
+- [x] P17.03 A value the project no longer has stays in the file, shows as missing and can be replaced; nothing is erased on open [T-P17] · Verify: `UT` value kept on save; `E2E` a graph naming a deleted scene shows it as missing — evidence: test:LogicGraphTests.MissingReference_IsShownKeptOnSaveAndCanBeReplaced, test:LogicGraphTests.IsMissing_MatchesNamesAsTheBuildDoes, test:LogicGraphTests.IsMissing_NeverCallsATextKeyMissingWhileATableIsBroken, doc:docs/user/windows/T-P17-logic-graph.md, not clicked in the running app (2026-11-05)
+- [x] P17.04 Create a Save data field or tag from the dropdown, with the same rules as T-S02 and the project tags [T-P17, T-S02] · Verify: `E2E` the new value is in Project Settings and in the generated C#; `UT` an invalid or duplicate name is refused — evidence: test:LogicGraphTests.NewField_FromTheDropdown_GoesToProjectSettingsAndTheGeneratedCode, test:LogicGraphTests.NewField_IsRefusedWhenTheSaveDataPageWouldRefuseIt, test:LogicGraphTests.NewTag_FromTheDropdown_GoesToTheProjectAndTheNode_EscapeCancels, doc:docs/user/windows/T-P17-logic-graph.md, not clicked in the running app (2026-11-05)
+- [x] P17.05 Link "Only if" gets a builder: Save data field, comparison, value; a condition the builder cannot show stays as text and still works [T-O09] · Verify: `UT` builder output parses, and existing conditions stay unchanged; `E2E` set a condition with the builder — evidence: test:LinkConditionTests.BuilderOutput_CompilesForEveryComparison, test:LinkConditionTests.Parse_LeavesEveryOtherConditionToTheText, test:WorldMapTests.OnlyIfBuilder_ReadsAndWritesTheCondition, test:WorldMapTests.LinkChipOpensLinkSettings_ChangesAreSaved, doc:docs/user/windows/T-O09-link-settings.md, not clicked in the running app (2026-11-05)
+- [x] P17.06 Inspector Text Key chooses from the text keys and can still take a typed key [T-P01] · Verify: `E2E` — evidence: test:InspectorTests.TextKey_ChoosesFromTheTablesAndStillTakesATypedKey, not clicked in the running app (2026-11-05)
+- [x] P17.07 Read T-D03 Scene Settings, list which fields still take a typed asset name, and change those to dropdowns; if there are none, write that in the evidence [T-D03] · Verify: `E2E` per changed field, or `REV` when there are none — evidence: review:SceneDialogs.cs T-D03 has no typed asset name to change: Music and Follow are already dropdowns, Name is the scene's own name, OnEnter and OnExit are code, not clicked in the running app (2026-11-05)
+
+Exit gate:
+- [ ] P17.X1 Build, `agb lint` and tests pass with no new failure; the owner makes a door with a condition and a sound without typing a name · Verify: `USER`
+
+### Phase 18 · Upgrade: place and paint on the scene
+
+> Scope: T-P01 Scene Editor, T-M10, T-M11 ลดขั้นตอนที่ใช้บ่อย และเก็บส่วนที่ขาดจริงของการทาสีบน canvas สร้างก่อนแล้วค่อยแก้ frame ตาม D-28
+
+Entry gate:
+- [x] P18.E1 Owner picked this phase · Verify: `USER` — evidence: user:2026-11-06 the owner left the choice to Claude for the night ("decide and do what fits"); user:2026-11-07 the owner confirmed it (2026-11-07)
+
+Items:
+- [x] P18.01 Click to place: a place mode for a chosen actor kind; a click puts it on the snapped cell, `Esc` leaves the mode, and each placed actor is one undo step; the Add Actor menu keeps its current behaviour unless the owner asks otherwise [T-P01, T-M10, T-M11] · Verify: `E2E` — evidence: test:PlaceOnSceneTests.PlaceMode_EachClickPutsOneActorOnTheGrid_OneUndoStepEach_EscapeStops, test:PlaceOnSceneTests.PlaceMode_KeysStartIt_ARightClickOrAnotherToolStopsIt_TheMenuStaysAsItWas, test:PlaceOnSceneTests.PlaceMode_GivesEachKindItsDefaults, not clicked in the running app (2026-11-06)
+- [x] P18.02 Drag on the scene to place a trigger zone with that size [T-P01] · Verify: `E2E` size and position match the drag — evidence: test:PlaceOnSceneTests.TriggerZone_DragGivesItsSizeAndPosition_AClickGivesTheDefault, test:PlaceOnSceneTests.TriggerZone_ThatIsSavedKeepsItsDraggedSize, not clicked in the running app (2026-11-06)
+- [x] P18.03 Player start marker: read how the game picks its start (start scene, Player actor, Start from), then show that point and let it be dragged [T-P01] · Verify: `E2E` the drag changes the saved position; `RT` the ROM starts there — evidence: test:PlaceOnSceneTests.StartMarker_ShowsOnlyInTheStartScene_AndDraggingItMovesThePlayer, test:PlaceOnSceneTests.StartMarker_NeedsAPlayer, test:SceneEditorRomTests.TheRomStartsWhereTheStartMarkerWasDragged, not clicked in the running app (2026-11-06)
+- [x] P18.04 Try the existing collision path in the running app (collision-only layer, Tile collision overlay) and write down what is missing · Verify: `USER`, `DOC` — evidence: user:2026-11-07 the owner tried the morning list item 8 (actors, triggers, collision painting) in the running app and reported nothing missing (2026-11-07)
+- [x] P18.05 Collision brush in the Scene Editor for the gap found in P18.04: choose a type (Solid, One-way, Ladder, Hazard, Water, None) and paint; a project using tile properties is told where its collision comes from instead of having its tiles changed [T-P01] · Verify: `E2E`; `RT` an actor collides with the painted cell — evidence: test:PlaceOnSceneTests.CollisionBrush_PaintsTheChosenTypeIntoItsOwnLayer_AndLeavesTheArtAlone, test:PlaceOnSceneTests.CollisionBrush_IsAlsoOfferedOnTheCollisionLayerItself, test:PlaceOnSceneTests.CollisionFromTheTiles_SaysWhereItComesFrom_AndOffersNoBrush, test:SceneEditorRomTests.ActorsStopOnCellsOfACollisionOnlyLayer_AndTheArtLayerNoLongerStopsThem, built before the owner tried the collision path of P18.04, not clicked in the running app (2026-11-06)
+
+Exit gate:
+- [x] P18.X1 Build, `agb lint` and tests pass with no new failure; the owner places an actor and a trigger and paints collision on one page · Verify: `USER` — evidence: user:2026-11-07 the owner placed actors and a trigger and painted collision (morning list item 8); build, lint and tests pass: Scripting 137, Tests 291, Mcp 13, Editor 682 (2026-11-07)
+
+### Phase 19 · Upgrade: nodes the engine can already run
+
+> Scope: T-P17, T-O08 เพิ่ม node ที่เรียก C# API ได้ทันที ไม่ต้องรอข้ามเฟรม node ใหม่ต้องแปลงไปกลับกับ C# ได้ตาม P6.17
+
+Entry gate:
+- [x] P19.E1 Owner picked this phase · Verify: `USER` — evidence: user:2026-11-06 the owner left the choice to Claude for the night ("decide and do what fits"); user:2026-11-07 the owner confirmed it (2026-11-07)
+
+Items:
+- [x] P19.01 Node Camera Follow (`Camera.Follow`) [T-P17, T-O08] · Verify: `UT` generated C# and back; `RT` — evidence: test:GraphNodesTests.NewNodes_GenerateTheApiCalls, test:GraphNodesTests.NewNodes_TurnBackIntoTheSameGraph, test:GraphNodesTests.NewNodes_CompileAndTranslate, test:GraphNodesRomTests.AGraphUsingEveryNewNodeRunsInTheRom (the node runs; the test does not read the camera) (2026-11-06)
+- [x] P19.02 Node Random Range (`Random.Range`) [T-P17, T-O08] · Verify: `UT` generated C# and back; `RT` result stays in range — evidence: test:GraphNodesTests.NewNodes_GenerateTheApiCalls, test:GraphNodesTests.NewNodes_TurnBackIntoTheSameGraph, test:GraphNodesRomTests.AGraphUsingEveryNewNodeRunsInTheRom (2026-11-06)
+- [x] P19.03 Nodes Load Game (`Save.Read`) and Save Exists (`Save.Exists`) [T-P17, T-O08] · Verify: `UT` generated C# and back; `RT` save then load — evidence: test:GraphNodesTests.NewNodes_GenerateTheApiCalls, test:GraphNodesTests.NewNodes_TurnBackIntoTheSameGraph, test:GraphNodesRomTests.AGraphUsingEveryNewNodeRunsInTheRom (2026-11-06)
+- [x] P19.04 Node Set Tile (`Scene.SetTile`) [T-P17, T-O08] · Verify: `UT` generated C# and back; `RT` the tile changes on screen — evidence: test:GraphNodesTests.NewNodes_GenerateTheApiCalls, test:GraphNodesTests.NewNodes_TurnBackIntoTheSameGraph, test:GraphNodesRomTests.AGraphUsingEveryNewNodeRunsInTheRom (reads the tile back), test:TilesetLayersTests.SetTileFromAScriptMovesTheOverTileToo (the same Scene.SetTile on screen) (2026-11-06)
+- [x] P19.05 New nodes appear in Add Node search and the user page [T-O08] · Verify: `E2E`, `DOC` — evidence: test:LogicGraphTests.NewNodes_AreFoundInAddNodeAndDescribed, doc:docs/user/windows/T-P17-logic-graph.md (2026-11-06)
+
+Exit gate:
+- [x] P19.X1 Build, `agb lint` and tests pass with no new failure; a sample graph using every new node runs in the ROM · Verify: `RT`, `USER` — evidence: user:2026-11-07 the owner tried the five nodes in the running app (morning list item 9); test:GraphNodesRomTests.AGraphUsingEveryNewNodeRunsInTheRom (2026-11-07)
+
+### Phase 20 · Upgrade: logic that can wait
+
+> Scope: T-P17, T-O08 และ Event Script VM (P6.10 ถึง P6.13) Wait, Say, Choice, Move และ Fade ใช้ได้เฉพาะใน cutscene ส่วน graph ยังสร้างแต่ method ปกติ ต้องออกแบบก่อนเพิ่ม node และ Phase 21 ต้องใช้ผลของ phase นี้
+
+Entry gate:
+- [x] P20.E1 Owner picked this phase · Verify: `USER` — evidence: user:2026-11-07 the owner said "Start Phase 20" (2026-11-07)
+
+Items:
+- [x] P20.01 Design note: how a graph chain that waits becomes a `[Cutscene] async Task`, which nodes are allowed in it, and how its values are read · Verify: `DOC`, `USER` — evidence: doc:docs/design/P20-graph-chains-that-wait.md, user:2026-11-07 the owner approved the four recommended answers ("Approve all four") (2026-11-07)
+- [x] P20.02 Priority of a started script: code now starts every cutscene at `Priority::Cutscene` (`ProjectApi`); decide and build how an object's script runs next to another one, using the VM contexts of P6.12 · Verify: `RT` two scripts started together behave as the note says; `BUD` memory per running script — evidence: test:vm_background_and_once_scripts_start_together (framework_bus_vm ROM), test:BytecodeTests.BackgroundAndOnceCutscenesStartWithTheirPriorityAndKey; `[Cutscene(Background = true)]` starts at Trigger and leaves input on, `[Cutscene(Once = true)]` refuses a second start for the same actor (2026-11-07)
+- [x] P20.03 Generator and C# -> Graph direction for chains that wait [T-P17] · Verify: `UT` golden C# and bytecode, round trip — evidence: test:GraphWaitTests.WaitingChains_BecomeCutscenesFromTheirFirstWait (the whole generated C#), test:GraphWaitTests.WaitingChains_TurnBackIntoTheSameGraph, test:GraphWaitTests.WaitingChains_CompileToBytecodeAndTranslate, test:GraphWaitTests.Choice_HidesEmptyOptionsAndSkipsUnconnectedOnes; a Branch before the first wait stays in the event method and each of its chains splits on its own (docs/design/P20-graph-chains-that-wait.md) (2026-11-07)
+- [x] P20.04 Nodes Wait, Say, Choice (one output per option), Move, Fade In, Fade Out [T-P17, T-O08] · Verify: `UT` per node; `RT` a sample chain plays through every choice — evidence: test:LogicGraphTests.WaitingNodes_AreFoundInAddNodeAndDescribed (all six), test:GraphWaitTests (generated C# per node), test:GraphWaitRomTests.AGraphChainPlaysThroughEveryChoice_BesideAChainThatOnlyWaits (options 1, 2 and 3 in the ROM, a Wait chain running beside); Move is generated and compiled but not run in a ROM: no build fills the project's paths yet (ScriptCompileContext.Paths is empty outside tests), so Move has no path to follow in a real game (2026-11-07)
+- [x] P20.05 A waiting node placed where it cannot wait (for example On Update) is reported on the node before build [T-P17] · Verify: `UT`, `E2E` — evidence: test:GraphWaitTests.Checks_NameEachNodeThatCantWaitOrCantRunAfterAWait, test:GraphWaitTests.Checks_UsingTheTouchingActorAfterAWait_IsNamed, test:GraphWaitTests.Checks_StopTheBuildWithTheGraphsMessage (AGB0303), test:LogicGraphTests.AWaitWhereNothingCanWait_IsMarkedOnTheNode_AndExplained (red border, the reason in the inspector) (2026-11-07)
+- [ ] P20.06 Saving while a graph-started script waits in `Say` or `Move` (the existing tests cover only `Wait`) [T-S02] · Verify: `RT` — note 2026-11-07: Say done, test:GraphWaitRomTests.ASaveMadeWhileTheChainWaitsInSay_GoesOnFromThatSay; Move open: a build has no paths for Move to follow (see P20.04), so there is nothing to save in the middle of
+
+Exit gate:
+- [x] P20.X1 Build, `agb lint` and tests pass with no new failure; the owner builds a talk with a choice in a graph without writing C# · Verify: `USER` — evidence: user:2026-11-07 the owner built a talk with a choice in a graph in the running app; build, lint and tests pass: Scripting 137, Tests 291, Mcp 13, Editor 682 (2026-11-07)
+
+### Phase 21 · Upgrade: scripts on the object and the event list
+
+> Scope: หน้าจอใหม่ ต้องออกแบบใน Figma ก่อนตาม D-28 และใช้รูปแบบตาม D-26 ขึ้นกับ Phase 20 คำสั่งรอบแรกมีเท่าที่ node ทำได้ ไม่เพิ่มความสามารถ engine ยกเว้น On Interact
+
+Entry gate:
+- [ ] P21.E1 Phase 19 and 20 exits ticked; frames for script slots and the event list approved, with new `T-...` ids in section 4 · Verify: `USER`
+
+Items:
+- [ ] P21.01 Slot list: On Start, On Update, On Touch, On Button, On Destroy, and whether On Interact is added (no such event exists in `Behaviour`; press A near an actor) [new T-id] · Verify: `USER`; `RT` On Interact, if added
+- [ ] P21.02 Event list file format with a version and schema tests; existing projects open unchanged (infra: event list) · Verify: `UT`
+- [ ] P21.03 Event list -> C# generator, using plain methods and cutscenes as P20.01 sets out; generated files are marked and not edited by hand [new T-id] · Verify: `UT` golden C#; `RT` door with one line of text, then Load Scene
+- [ ] P21.04 Event list editor: search to add, drag to reorder, If / Else nesting, disable, copy and paste; dropdowns from Phase 17; undo [new T-id] · Verify: `E2E`
+- [ ] P21.05 Script slots in the Inspector: an empty slot asks list or node, a filled one opens its editor, and the component is attached with no extra step [new T-id, T-P01] · Verify: `E2E` the file is created and attached and the actor runs it in Play
+- [ ] P21.06 Convert a list script to C#, one way, with a warning; no conversion between list and node is offered (D-26) [new T-id] · Verify: `UT` the C# compiles and behaves the same; `E2E`
+- [ ] P21.07 Text lines show the real look of the dialogue box in the list, as the Dialogue page does [new T-id] · Verify: `E2E`, `SHOT`
+- [ ] P21.08 User page and one tutorial step for the door flow · Verify: `DOC`
+
+Exit gate:
+- [ ] P21.X1 Build, `agb lint` and tests pass with no new failure; from a Blank project, the owner makes a door with one line of text without leaving the Scene page except to play · Verify: `USER`
+
+### Phase 22 · Upgrade: Navigator and usages
+
+> Scope: ลดการสลับหน้าและบอกว่าอะไรใช้อยู่ที่ไหน ส่วนรายการจุดที่ใช้สร้างก่อนแล้วค่อยแก้ frame ส่วน Navigator เป็นหน้าจอใหม่ ต้องออกแบบใน Figma ก่อนตาม D-28
+
+Entry gate:
+- [ ] P22.E1 Owner picked this phase; Navigator frame approved with a new `T-...` id before P22.01 · Verify: `USER`
+
+Items:
+- [ ] P22.01 Project Navigator: every scene and actor in one list, with a filter; a click opens the scene and selects the actor [new T-id] · Verify: `E2E`
+- [ ] P22.02 Usages of a Save data field: graphs, event lists, Link conditions, dialogue, C# [T-S02] · Verify: `UT` with one planted use of each kind; `E2E`
+- [ ] P22.03 Find Usages for prefabs: scene actors and `Scene.Spawn` calls [T-M11, T-O04] · Verify: `UT`, `E2E`
+- [ ] P22.04 Read what a scene actor's `Prefab` value does in the editor and in the build, then propose how a prefab is edited and what an actor can override; build only after the owner agrees · Verify: `DOC`, `USER`, then `E2E` and `RT` for what was agreed
+
+Exit gate:
+- [ ] P22.X1 Build, `agb lint` and tests pass with no new failure; the owner finds any actor and where a variable is used · Verify: `USER`
+
+### Phase 23 · Upgrade: World canvas
+
+> Scope: T-P13 World Map และหน้าจอใหม่ เปลี่ยนวิธีทำงานมากที่สุด จึงทำเป็น phase สุดท้าย ต้องออกแบบใน Figma ก่อนตาม D-28 ฉากใหญ่และ 4 BG ของ GBA ต้องมี thumbnail หรือ LOD
+
+Entry gate:
+- [ ] P23.E1 Phase 18, 21 and 22 exits ticked; frames approved with new `T-...` ids · Verify: `USER`
+
+Items:
+- [ ] P23.01 Scene thumbnails that update after an edit (the open World Map tab now keeps old art when a tileset or sprite changes) [T-P13] · Verify: `UT`; budget for the largest sample project under G-PERF
+- [ ] P23.02 Actors show on the canvas and can be selected and dragged, with one undo step per drag and the right scene saved [T-P13] · Verify: `E2E`
+- [ ] P23.03 Paint tiles and collision on a scene in the canvas with the Scene Editor tools [T-P13] · Verify: `E2E` the map equals the same strokes made in the Scene Editor
+- [ ] P23.04 Arrows from Load Scene in graphs and event lists; a Load Scene in hand-written C# is reported as not shown rather than guessed [T-P13] · Verify: `UT`, `E2E`
+- [ ] P23.05 Drag the end of a link to another scene and drag the spawn point [T-P13, T-O09] · Verify: `E2E`; `RT` the player arrives there
+- [ ] P23.06 Map notes: add, edit, move and delete; saved in the project and never in the ROM [new T-id] · Verify: `E2E`; `UT` the ROM is unchanged
+
+Exit gate:
+- [ ] P23.X1 Build, `agb lint` and tests pass with no new failure; the owner lays out two connected scenes, with actors and collision, from the canvas · Verify: `USER`
+
+---
+
+### Phase 24 · Upgrade: built-in toolchain (no devkitPro download)
+
+> Scope: ผู้ใช้เปิดโปรแกรมแล้วกด Build ได้เลย ไม่ต้องดาวน์โหลดอะไรเพิ่ม กระทบ T-S08, T-P12, T-D11, T-D06 และ D-19 (D-19 เดิมเลือกไม่รวม toolchain) ไม่ได้เขียน compiler เอง
+>
+> **ห้ามรวมชุดของ devkitPro:** หน้า <https://devkitpro.org/wiki/About> ขอไม่ให้นำ toolchain ของเขาไปใช้สร้างโค้ดอัตโนมัติหรือรวมไปกับผลิตภัณฑ์ อ่านเมื่อ 2026-11-05 ส่วนหน้า Trademark Guidelines ที่อ้างถึงไม่มีเนื้อหา (ตอบ 404) จึงใช้ toolchain ของ Arm และซอร์สของไลบรารีแทน ก่อนแจกจริงต้องตรวจเงื่อนไขของทุกชุดจากไฟล์ licence ของรุ่นที่ใช้
+
+Decisions:
+- [x] D-30 Replaces the "not bundled" part of D-19: AGB Studio ships Arm GNU Toolchain (`arm-none-eabi`) with its own ROM start code and linker script, and libtonc and maxmod built from source, instead of asking users to install devkitPro · Verify: `USER` — evidence: user:2026-11-05
+
+Entry gate:
+- [x] P24.E1 D-30 decided, and Phases 18 and 19 have their test results · Verify: `USER` — evidence: user:2026-11-06 the owner left the choice to Claude for the night ("decide and do what fits"); user:2026-11-07 the owner confirmed it; D-30 is decided and Phases 18 and 19 have test results (2026-11-07)
+
+Items:
+- [x] P24.01 Trial: pin one Arm GNU Toolchain version and build the runtime and one sample with it, on a branch. Record whether its libraries fit ARM7TDMI Thumb and ARM code, the toolchain's size, and any code the version change breaks · Verify: `RT` the runtime test ROMs; `BUD` ROM size and frame time against devkitARM 16.1 — evidence: doc:docs/evidence/p24-01-arm-toolchain.md (Arm 15.2.rel1: 24/24 runtime tests, ROM −0.16 %, render_stress +1.1 % cycles, IWRAM hot code 8,128 of 8,192), local trial and not yet on a CI branch (2026-11-06)
+- [x] P24.02 Our own ROM start code and linker script in place of `gba.specs`, written from the GBA's documented memory map: ROM header, IWRAM, EWRAM, interrupt stack; `BuildReport` and the Debugger's memory figures follow them (infra: Build ROM, T-D06) · Verify: `RT` every runtime test ROM; `EMU` mGBA; `HW` n/a until hardware — evidence: file:runtime/link/agb_crt0.s, file:runtime/link/agb_cart.ld, file:runtime/link/agb.specs, test:RuntimeRomTests (24/24 runtime test ROMs on devkitARM 16.1 and on Arm 15.2), test:FixtureBuildTests.FixtureReportMatchesTheLinkerMap, test:BuildReportTests.ReportNumbersMatchTheLinkerMap, mGBA only, no hardware (2026-11-06)
+- [x] P24.03 libtonc and maxmod built from source with the pinned compiler, kept with their notices; check each licence first (infra: Build ROM) · Verify: `RT` graphics and audio test ROMs; `REV` against `docs/THIRD_PARTY.md` — evidence: file:runtime/include/agb/hw.hpp, file:runtime/src/core/irq.iwram.cpp, file:runtime/src/core/irq.cpp, file:third_party/maxmod (1.0.15, ISC), test:RuntimeTextAudioTests.MixerShareFor8ChannelsAt21kHzIsMeasured, 24/24 runtime test ROMs; libtonc has no licence file in its repository, so it was replaced instead of built: doc:docs/THIRD_PARTY.md (2026-11-06)
+- [x] P24.04 `gbafix` written in C#: ROM title, game code and header checksum (infra: Build ROM) · Verify: `UT` same header bytes as gbafix on a fixed input; `RT` the ROM boots — evidence: file:tools/AgbStudio.Build/GbaHeader.cs, test:GbaHeaderTests.SameBytesAsGbafix, test:GbaHeaderTests.HeaderOfAFixedInput, test:PipelineTests (the header of a built ROM) (2026-11-06)
+- [ ] P24.05 `mmutil`: read its licence, then ship it built from source or write the soundbank step in C# (infra: Build ROM, T-P15) · Verify: `UT` same soundbank as today for XM, MOD, IT, S3M and WAV; `RT` music plays — note 2026-11-06: mmutil 1.10.1 source (BSD 3-clause) was fetched, but building and running it on this PC was refused by the session's safety check, so it is not done; the owner chooses: build mmutil from source on a PC that allows it, or write the soundbank step in C# — note 2026-11-07: the owner chose the C# soundbank step, as long as it gives the same result
+- [x] P24.06 `Toolchain` uses the built-in tools first; a folder in Preferences still overrides them; status lines, errors, About credits and the "devkitPro not found" notice change to match [T-S08, T-P12, T-D11, T-D06] · Verify: `E2E` Build ROM with no devkitPro present; `DOC` every user page that names devkitPro — evidence: file:tools/AgbStudio.Build/Toolchain.cs, file:tools/fetch-toolchain.ps1, test:PipelineTests.ToolchainReportsFoundToolsAndTheDevkitArmVersionFromAFakeInstall, test:ToolchainHelpTests, test:PreferencesTests, agb runtime-test and agb build of Sky Hopper with only toolchain\ (no DEVKITPRO), doc:docs/TOOLCHAIN.md, doc:docs/BUILD.md; mmutil still comes from devkitPro (P24.05), not clicked in the running app (2026-11-06)
+- [ ] P24.07 Package holds only what a GBA build needs, with GPL notices and a way to get the matching sources (P16.01, P16.02, G-LEGAL) · Verify: `BUD` zip size; `REV` licence list against the zip; install on a clean Windows user account — note 2026-11-06: the packager copies toolchain\ and third_party\maxmod, and README.txt names where the GPL sources are; the zip was not built or measured, and the licence review against the zip is still to do
+- [ ] P24.08 Try the packaged compiler on a PC with Smart App Control on. If it is blocked, tell the owner before the release, since D-19 has no signing certificate (T-D06) · Verify: `USER` — note 2026-11-07: the owner skipped this for now
+- [x] P24.09 CI uses the built-in toolchain and stops downloading from pkg.devkitpro.org (infra: CI) · Verify: a CI run with no devkitPro step — note 2026-11-06: the owner stopped using GitHub Actions ("ทำบนนี้ไม่ต้องใช้ git action"); this item waits for the owner to drop it or keep it — dropped: user:2026-11-07 the owner cut this item, since the project no longer uses GitHub Actions; nothing was built for it (2026-11-07)
+
+Exit gate:
+- [ ] P24.X1 On a Windows PC with no devkitPro: unzip, open, New Project, Build ROM, Play, with nothing else to install · Verify: `USER`
+
+---
+
 ## 6. Cross-cutting gates
 
 > Scope: gate เหล่านี้ใช้กับทุก phase phase ใดจะผ่าน exit gate ได้ต้องไม่ทำให้ gate เหล่านี้พัง
@@ -1524,3 +1708,16 @@ Exit gate:
 | 2026-11-05 | owner | T-S02 Save data, runtime scripts | Owner asked for saving during cutscenes, which section 1.2 had out of scope, without a Figma design first. New project setting and checkbox "Save during cutscenes" (off by default, 320 bytes a slot) | Moved out of "Out of scope" by the owner's decision. On load the wait the cutscene was in starts again (the line shows again, the move runs again), and other actors stand where the scene file puts them. The T-S02 Figma frame needs the new checkbox at the next sync | decided by the owner (2026-11-05); the frame is still to review |
 | 2026-11-05 | owner | T-P02 Play Mode, T-M06 Tools menu, `agb test` | Owner asked for replay recording and a test runner for users, which section 1.2 had out of scope, without a Figma design first. Record chip on the Play Mode toolbar, Tools › Run Recorded Tests with results in the Console, and `agb test`; no window of its own | Moved out of "Out of scope" by the owner's decision. A replay compares screens, so any change to what shows (art, text) fails it and it must be recorded again; it does not say which behaviour broke. T-P02 and T-M06 need the new controls at the next Figma sync | decided by the owner (2026-11-05); the frames are still to review |
 | 2026-11-05 | owner | T-P05 Console | Owner asked to copy Console lines as text so problems can be reported without a screenshot: a "..." menu (Copy Selected, Copy All, Select All, Save to File, Clear) and selecting several lines; not in Figma. A click now selects a line, and opening its file takes a double click instead of a click | Built ahead of Figma; the T-P05 frame needs the "..." button, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-P20 Launcher Templates, T-D01 New Project | Owner asked for a Blank template: one empty scene, ninth card, no filter chip, Sample level box off; the frames have eight cards | Built; the "matches Figma" ticks of T-P20 and T-D01 need a new shot or design | approved (owner, 2026-11-05) |
+| 2026-11-05 | owner | Upgrade section, Phases 17-23, D-26 to D-29 | Owner wants GB Studio's workflow for GBA; `docs/GB-STUDIO-COMPARE.md` compared the two by reading code and the app was not run. Checking the code corrected three of its findings (listed in the section). The section adds work outside Figma | Added as Phases 17-23: list and node both, no conversion between them; dropdowns first; small changes built first with the frame updated at the next sync, new screens designed in Figma first. Not in this section: piano roll, web export, Plugin, UI languages (D-29); subgraph, constants and sprites from several OBJ are also left out until the owner asks | approved (owner, 2026-11-05) |
+| 2026-11-05 | owner | T-P17 node inspector, P17.02 | Scene, sound, music, variable, tag and text key settings are dropdowns, not the text fields of the T-P17 frame. On Touch has an extra row "(any)", and an empty list shows "(none in this project)". The variable list holds only int, byte, short and fixed fields, because the variable nodes use number pins | Built first under D-28; the T-P17 frame needs the dropdowns, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-P17 node inspector and node, P17.03 | A name the project no longer has shows a red line under the field and a red box on the node; the frame has no such state | Built first under D-28; the T-P17 frame needs this state at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-P17 node inspector, P17.04 | The field and tag dropdowns end with "+ New field" and "+ New tag", which open a name box under the field; the frame has neither. Undo takes back the node's value, and the new name stays in the project | Built first under D-28; the T-P17 frame needs both at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-O09 Link Settings, P17.05 | New row "Choose" (field, comparison, number) under "Only if"; the 360 x 330 frame has no such row, so the popover is taller | Built first under D-28; the T-O09 frame needs the row, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | T-P01 Inspector, Text Label, P17.06 | A small dropdown button beside Text Key; the frame has only the text field | Built first under D-28; the T-P01 frame needs the button, and its "matches Figma" tick a new shot, at the next sync | decided by the owner (D-28, 2026-11-05); the frame is still to review |
+| 2026-11-05 | owner | Phase 24, D-30, D-19, P16.01 | Owner wants AGB Studio to work when opened, with no devkitPro download. The devkitPro About page asks projects not to package their toolchain or use it to build generated code, which also describes how AGB Studio uses devkitARM today (its Trademark Guidelines page has no text) | Draft Phase 24: Arm GNU Toolchain, own start code and linker script, libtonc and maxmod from source. Licences and the trial build are not checked yet | decided by the owner: use Arm (D-30, 2026-11-05) |
+| 2026-11-06 | handoff | T-P01 Scene Editor | The START marker under the Player, the Collision section of the Inspector and the place mode with keys `A` and `T` are not in Figma | Built ahead of Figma (D-28); the frame needs them at the next sync, and the "matches Figma" tick a new shot | allowed by D-28; the frame is still to review |
+| 2026-11-06 | handoff | T-D10 Keyboard Shortcuts, Command Palette | The `scene.place.*` commands are not in the frame. They come after other matches in the Command Palette, so "pla" still gives the Figma results | Built ahead of Figma (D-28); the frame needs them at the next sync | allowed by D-28; the frame is still to review |
+| 2026-11-06 | handoff | T-P17 Logic Graph, T-O08 Add Node | Five new nodes and the kind `PropKind.Integer` are not in the frames | Built ahead of Figma (D-28); the frames need them at the next sync | allowed by D-28; the frames are still to review |
+| 2026-11-06 | owner, P24 | T-S08 Paths, T-S03 Build, T-D11 About, T-D09 toolchain notice, Launcher and Script Editor status lines | The toolchain rows are now toolchain, compiler, maxmod and mmutil (libtonc and gbafix are gone, the compiler may be Arm GNU Toolchain), the About credits name Arm GNU Toolchain and maxmod, and the missing-tool messages point at the toolchain folder | Built by the owner's D-30 and P24; the frames need the new words at the next Figma sync | allowed by D-30; the frames are still to review |
+| 2026-11-06 | Claude, overnight | P24.03 libtonc | libtonc's repository has no licence file, so it cannot be shipped; P24.03 asked to build it from source | Replaced it with AGB Studio's own `hw.hpp` and interrupt dispatcher instead; the runtime no longer links it | decided by Claude under the owner's "decide yourself" (2026-11-06); the owner to confirm |

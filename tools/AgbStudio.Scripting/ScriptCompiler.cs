@@ -129,6 +129,9 @@ public sealed class ScriptCompiler
                         {
                             var g = LogicGraph.Parse(s.Text);
                             var code = GraphCodeGen.Generate(g, Path.GetFileNameWithoutExtension(s.Path));
+                            // P20.05: say which node can't wait or can't run after a wait, instead of an error in the generated C#
+                            foreach (var problem in GraphChecks.Check(g))
+                                result.Diagnostics.Add(new ScriptDiagnostic("AGB0303", ScriptSeverity.Error, problem.Message, Display(s.Path), 1, 1));
                             result.GeneratedCSharp[s.Path] = code;
                             csharp.Add((Path.ChangeExtension(s.Path, ".cs"), code, false));
                             break;

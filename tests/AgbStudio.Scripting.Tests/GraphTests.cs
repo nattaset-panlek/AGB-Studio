@@ -79,6 +79,63 @@ public sealed class GraphTests
         Assert.Equal(g.ToJson(), LogicGraph.Parse(g.ToJson()).ToJson());
     }
 
+    // P17.01: every property that names something in the project, with values that look like numbers to catch a typed write.
+    const string ReferenceGraph = """
+        { "format": 1, "class": "Refs",
+          "nodes": [
+            { "id": "n1", "type": "OnTouch", "x": 0, "y": 0, "props": { "tag": "Coin" } },
+            { "id": "n2", "type": "CompareTag", "x": 10, "y": 0, "props": { "tag": "Player" } },
+            { "id": "n3", "type": "PlaySound", "x": 20, "y": 0, "props": { "sound": "jump", "volume": 1 } },
+            { "id": "n4", "type": "PlayMusic", "x": 30, "y": 0, "props": { "music": "town" } },
+            { "id": "n5", "type": "SetVariable", "x": 40, "y": 0, "props": { "variable": "coins", "value": 0 } },
+            { "id": "n6", "type": "GetVariable", "x": 40, "y": 40, "props": { "variable": "lives" } },
+            { "id": "n7", "type": "AddToVariable", "x": 50, "y": 0, "props": { "variable": "score", "amount": 2 } },
+            { "id": "n8", "type": "ShowText", "x": 60, "y": 0, "props": { "key": "intro.hello" } },
+            { "id": "n9", "type": "LoadScene", "x": 70, "y": 0, "props": { "scene": "2" } }
+          ],
+          "links": [
+            { "from": "n1.out", "to": "n2.in" }, { "from": "n1.other", "to": "n2.actor" }, { "from": "n2.match", "to": "n3.in" },
+            { "from": "n3.out", "to": "n4.in" }, { "from": "n4.out", "to": "n5.in" }, { "from": "n6.value", "to": "n5.value" },
+            { "from": "n5.out", "to": "n7.in" }, { "from": "n7.out", "to": "n8.in" }, { "from": "n8.out", "to": "n9.in" }
+          ] }
+        """;
+
+    [Fact]
+    public void ReferenceProps_KeepTheFileFormatAndTheGeneratedCode()
+    {
+        var g = LogicGraph.Parse(ReferenceGraph);
+        var json = g.ToJson();
+        Assert.Contains("\"format\": 1", json);
+        Assert.Contains("\"scene\": \"2\"", json);
+        Assert.Contains("\"sound\": \"jump\"", json);
+        Assert.Contains("\"variable\": \"coins\"", json);
+        Assert.Contains("\"key\": \"intro.hello\"", json);
+        Assert.Equal(json, LogicGraph.Parse(json).ToJson());
+
+        var code = GraphCodeGen.Generate(g, "Refs");
+        foreach (var line in new[]
+        {
+            "if (other.tag != \"Coin\") return;", "if (other.tag == \"Player\")", "Sound.Play(\"jump\");", "Music.Play(\"town\");",
+            "Game.coins = Game.lives;", "Game.score += 2;", "Text.Show(\"intro.hello\");", "Scene.Load(\"2\");",
+        })
+            Assert.Contains(line, code);
+        Assert.Equal(json, GraphFromCode.Parse(code, g).ToJson());
+    }
+
+    [Theory]
+    [InlineData("OnTouch", "tag", PropKind.Tag)]
+    [InlineData("CompareTag", "tag", PropKind.Tag)]
+    [InlineData("PlaySound", "sound", PropKind.Sound)]
+    [InlineData("PlayMusic", "music", PropKind.Music)]
+    [InlineData("GetVariable", "variable", PropKind.Variable)]
+    [InlineData("SetVariable", "variable", PropKind.Variable)]
+    [InlineData("AddToVariable", "variable", PropKind.Variable)]
+    [InlineData("ShowText", "key", PropKind.TextKey)]
+    [InlineData("LoadScene", "scene", PropKind.Scene)]
+    [InlineData("DebugLog", "text", PropKind.Text)]
+    public void ReferenceProps_HaveTheirKindInTheCatalog(string node, string prop, PropKind kind) =>
+        Assert.Equal(kind, NodeCatalog.Find(node)!.Props.Single(p => p.Name == prop).Kind);
+
     [Fact]
     public void CatalogCoversEveryFigmaCategory()
     {

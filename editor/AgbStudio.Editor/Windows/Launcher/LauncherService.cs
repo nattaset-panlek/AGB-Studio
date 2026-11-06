@@ -155,8 +155,8 @@ public sealed class LauncherService
 
     string DefaultStatusLine()
     {
-        var arm = Services.Toolchain.Find("devkitARM");
-        var tool = arm is null ? null : arm.Found ? $"{arm.Version ?? "devkitARM"} found" : "devkitARM not found · set it in Settings › Paths";
+        var arm = Services.Toolchain.Find("compiler");
+        var tool = arm is null ? null : arm.Found ? $"{arm.Version ?? "arm-none-eabi-g++"} found" : "compiler not found · set it in Settings › Paths";
         return tool is null ? EditorVersion.Short : $"{EditorVersion.Short} · {tool}";
     }
 

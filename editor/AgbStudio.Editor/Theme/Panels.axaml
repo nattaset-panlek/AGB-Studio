@@ -421,10 +421,7 @@
     <Setter Property="Foreground" Value="{DynamicResource lit/pin-bool}" />
     <Setter Property="Template">
       <ControlTemplate>
-        <Panel>
-          <Ellipse Name="PART_Dot" Fill="{DynamicResource lit/pin-hollow}" Stroke="{TemplateBinding Foreground}" StrokeThickness="2" />
-          <g:Icon Name="PART_Exec" Glyph="play" Size="12" IsVisible="False" />
-        </Panel>
+        <Ellipse Name="PART_Dot" Fill="{DynamicResource lit/pin-hollow}" Stroke="{TemplateBinding Foreground}" StrokeThickness="2" />
       </ControlTemplate>
     </Setter>
     <Style Selector="^[Type=Fixed]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-fixed}" /></Style>
@@ -432,12 +429,11 @@
     <Style Selector="^[Type=Text]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-text}" /></Style>
     <Style Selector="^[Type=Vector]"><Setter Property="Foreground" Value="{DynamicResource lit/pin-vector}" /></Style>
     <Style Selector="^[Dir=Out] /template/ Ellipse#PART_Dot"><Setter Property="Fill" Value="{Binding $parent[c:NodePin].Foreground}" /></Style>
+    <!-- exec pins are round dots too, a little larger, so every pin is one click target centred on the node edge -->
     <Style Selector="^[Type=Exec]">
       <Setter Property="Width" Value="12" />
       <Setter Property="Height" Value="12" />
       <Setter Property="Foreground" Value="{DynamicResource lit/pin-exec}" />
-      <Style Selector="^ /template/ Ellipse#PART_Dot"><Setter Property="IsVisible" Value="False" /></Style>
-      <Style Selector="^ /template/ g|Icon#PART_Exec"><Setter Property="IsVisible" Value="True" /></Style>
     </Style>
   </ControlTheme>
 

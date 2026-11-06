@@ -22,6 +22,11 @@ public enum GraphTool { Select, Hand, Link }
 public sealed class GraphCanvas : Panel, IEditTarget
 {
     readonly LogicGraphPage _page;
+    GraphReferences? _references;   // one look at the project per rebuild
+    Dictionary<string, string> _problems = new(StringComparer.Ordinal);  // P20.05: node id -> why it can't build
+
+    /// <summary>Why a node can't build as it is (a wait where nothing can wait, a node after a wait), or null.</summary>
+    public string? ProblemOf(string id) => _problems.GetValueOrDefault(id);
     readonly Canvas _world = new() { Name = "GraphWorld", IsHitTestVisible = false };
     readonly BackLayer _back;
     readonly WireLayer _wires;
@@ -64,7 +69,8 @@ public sealed class GraphCanvas : Panel, IEditTarget
         Children.Add(_grid);
         Children.Add(_world);
         _mini = new MiniMap(this) { Width = 160, Height = 106, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 16, 20), Name = "MiniMap" };
-        Children.Add(Tip());
+        _tip = Tip();
+        Children.Add(_tip);
         Children.Add(ZoomBar());
         Children.Add(_mini);
         ApplyTransform();
@@ -128,16 +134,25 @@ public sealed class GraphCanvas : Panel, IEditTarget
         plus.Click += (_, _) => ZoomStep(1);
         var fit = new AgbButton { Content = "Fit", Kind = ButtonKind.Ghost, Name = "ZoomFit", Padding = new Thickness(10, 0) };
         fit.Click += (_, _) => Fit();
+        // the tip is hidden until asked for, so it never covers nodes
+        var help = new AgbButton { Content = "?", Kind = ButtonKind.Ghost, Name = "GraphTipToggle", Padding = new Thickness(10, 0) };
+        ToolTip.SetTip(help, "Show or hide the tip");
+        help.Click += (_, _) => _tip.IsVisible = !_tip.IsVisible;
         var level = UI.Frame(_zoomText, "bg/hover", pad: new Thickness(10, 0), radius: 5);
         level.Height = 24;
         level.Cursor = new Cursor(StandardCursorType.Hand);
         level.PointerPressed += (_, e) => { SetZoom(1); e.Handled = true; };
-        var bar = UI.Frame(UI.Row(2, minus, level, plus, fit), "bg/panel", "border/default", new Thickness(1), new Thickness(4), 8).Named("ZoomBar");
+        var bar = UI.Frame(UI.Row(2, minus, level, plus, fit, help), "bg/panel", "border/default", new Thickness(1), new Thickness(4), 8).Named("ZoomBar");
         bar.HorizontalAlignment = HorizontalAlignment.Left;
         bar.VerticalAlignment = VerticalAlignment.Bottom;
         bar.Margin = new Thickness(16, 0, 0, 16);
         return bar;
     }
+
+    readonly Control _tip;
+
+    /// <summary>The graph tip, hidden until the zoom bar's ? button shows it.</summary>
+    public bool TipVisible => _tip.IsVisible;
 
     static Control Tip()
     {
@@ -149,14 +164,20 @@ public sealed class GraphCanvas : Panel, IEditTarget
         tip.VerticalAlignment = VerticalAlignment.Bottom;
         tip.Margin = new Thickness(24, 0, 0, 102);
         tip.IsHitTestVisible = false;
+        tip.IsVisible = false;
         return tip;
     }
 
     // ---- building visuals ------------------------------------------------------------------------------------
 
+    bool MissingReference(GraphNode n, string prop) =>
+        NodeCatalog.Find(n.Type)?.Props.FirstOrDefault(p => p.Name == prop) is { } def && n.Props.TryGetValue(prop, out var value) && _references?.IsMissing(def, value) == true;
+
     /// <summary>Rebuilds node views and wires from the document.</summary>
     public void Rebuild()
     {
+        _references = _page.References();
+        _problems = GraphChecks.Check(Doc.Graph).ToDictionary(p => p.Node, p => p.Message, StringComparer.Ordinal);
         _world.Children.Clear();
         _nodeViews.Clear();
         _world.Children.Add(_back);
@@ -210,7 +231,7 @@ public sealed class GraphCanvas : Panel, IEditTarget
                 var self = row.Prop is null && row.Left is { Kind: PinKind.Actor } && !connected;
                 if ((row.Prop != null || self) && !connected)
                 {
-                    var box = UI.Frame(UI.Text(self ? "Self" : GraphDocument.PropText(n, row.Prop!), "Mono/10", "text/primary"), "bg/base", "border/default", new Thickness(1), new Thickness(6, 0), 4);
+                    var box = UI.Frame(UI.Text(self ? "Self" : GraphDocument.PropText(n, row.Prop!), "Mono/10", "text/primary"), "bg/base", !self && MissingReference(n, row.Prop!) ? "status/danger" : "border/default", new Thickness(1), new Thickness(6, 0), 4);
                     box.Height = 20;
                     box.Name = self ? "Pin_" + row.Left!.Name : "Prop_" + row.Prop;
                     box.Measure(Size.Infinity);
@@ -226,9 +247,8 @@ public sealed class GraphCanvas : Panel, IEditTarget
         {
             var pin = new NodePin { Type = (Controls.PinType)(int)p.Kind, Dir = p.Output ? PinDir.Out : PinDir.In };
             var size = p.Kind == PinKind.Exec ? 12 : 10;
-            // exec arrows sit just inside / outside the edge; value pins are centred on it
-            var x = p.Kind == PinKind.Exec ? (p.Output ? p.Offset.X - 4 : p.Offset.X - 6) : p.Offset.X - size / 2.0;
-            Canvas.SetLeft(pin, x);
+            // every pin is a dot centred on the node edge: the same point the wire ends at and PinAt hits
+            Canvas.SetLeft(pin, p.Offset.X - size / 2.0);
             Canvas.SetTop(pin, p.Offset.Y - size / 2.0);
             pins.Children.Add(pin);
         }
@@ -245,7 +265,7 @@ public sealed class GraphCanvas : Panel, IEditTarget
         {
             var body = (Border)view.Children[0];
             var sel = Selection.Contains(id);
-            body.Token(Border.BorderBrushProperty, sel ? "lit/white" : "border/default");
+            body.Token(Border.BorderBrushProperty, sel ? "lit/white" : _problems.ContainsKey(id) ? "status/danger" : "border/default");
             body.BorderThickness = new Thickness(sel ? 2 : 1);
         }
         _mini.InvalidateVisual();
@@ -575,12 +595,12 @@ public sealed class GraphCanvas : Panel, IEditTarget
                 if (a is null || b is null) continue;
                 var kind = NodeCatalog.Find(doc.Node(l.FromNode)!.Type)?.Pin(l.FromPin)?.Kind ?? PinKind.Exec;
                 var disabled = doc.IsDisabled(l.FromNode) || doc.IsDisabled(l.ToNode);
-                Curve(ctx, a.Value, b.Value, Brush(kind), disabled ? 0.4 : 1, kind == PinKind.Exec);
+                Curve(ctx, a.Value, b.Value, Brush(kind), disabled ? 0.4 : 1);
             }
             if (c._drag == Drag.Wire && c._wireFrom is { } from && doc.PinPoint(from.Node, from.Pin, from.Output) is { } p)
             {
                 var (s, e) = from.Output ? (p, c._wireEnd) : (c._wireEnd, p);
-                Curve(ctx, s, e, Brush(from.Kind), 0.8, from.Kind == PinKind.Exec);
+                Curve(ctx, s, e, Brush(from.Kind), 0.8);
             }
         }
 
@@ -590,11 +610,9 @@ public sealed class GraphCanvas : Panel, IEditTarget
             PinKind.Vector => "lit/pin-vector", _ => "lit/pin-exec",
         });
 
-        static void Curve(DrawingContext ctx, Point a, Point b, IBrush? brush, double opacity, bool exec)
+        static void Curve(DrawingContext ctx, Point a, Point b, IBrush? brush, double opacity)
         {
             if (brush is null) return;
-            // exec wires start after the arrow and end at its tip
-            if (exec) { a = new Point(a.X + 6, a.Y); b = new Point(b.X + 6, b.Y); }
             var dx = Math.Max(40, Math.Abs(b.X - a.X) * 0.5);
             var g = new StreamGeometry();
             using (var s = g.Open())

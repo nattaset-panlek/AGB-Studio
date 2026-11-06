@@ -125,7 +125,8 @@ public sealed class WindowService : IWindowRouter
     void IWindowRouter.Open(string windowId, EditorCommand source) => _ = Open(windowId, source: source.Id);
 
     /// <summary>Opens a window. Dialogs and popovers complete with their result when closed; pages and panels complete at once.</summary>
-    public async Task<object?> Open(string id, object? args = null, Control? anchor = null, string? source = null)
+    /// <param name="at">A popover's top-left corner in the overlay layer (a context-menu popover at the mouse); kept inside the window.</param>
+    public async Task<object?> Open(string id, object? args = null, Control? anchor = null, string? source = null, Avalonia.Point? at = null)
     {
         Requests.Add((id, source));
         Opened?.Invoke(id);
@@ -157,7 +158,7 @@ public sealed class WindowService : IWindowRouter
                 return null;
             default:
                 content = reg.Factory(ctx);
-                return await Host.Overlays.Show(content, info.Kind == WindowKind.Popover ? OverlayPlacement.TopCenter : OverlayPlacement.Center, info.Kind == WindowKind.Popover);
+                return await Host.Overlays.Show(content, info.Kind == WindowKind.Popover ? OverlayPlacement.TopCenter : OverlayPlacement.Center, info.Kind == WindowKind.Popover, at);
         }
     }
 

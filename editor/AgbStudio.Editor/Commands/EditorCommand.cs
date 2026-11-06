@@ -29,6 +29,8 @@ public sealed class EditorCommand : ICommand
     public KeyGesture? DefaultGesture { get; init; }
     public ShortcutContext Context { get; init; } = ShortcutContext.Global;
     public string? Window { get; init; }
+    /// <summary>The Command Palette lists this after every other match (the Scene's place commands would take "pla" from Play and Palette Manager).</summary>
+    public bool SearchLast { get; init; }
     /// <summary>False for entries that only exist inside a menu (e.g. one recent project) and should not be listed in the palette.</summary>
     public bool InPalette { get; init; } = true;
 

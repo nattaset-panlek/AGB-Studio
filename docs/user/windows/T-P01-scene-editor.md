@@ -38,6 +38,14 @@ assets from the bottom panel.
     has this map open, otherwise the first named tile of the tileset. The painted layer is the layer selected in the
     Hierarchy, otherwise the ground (collision) layer. Each stroke or fill is one undo step, and the selection stays
     as it was.
+  - Press A to place actors or T to place trigger zones (the Command Palette also has Player, Enemy, Pickup and Camera
+    Zone): each click puts one on the grid. Drag to give a zone its size. Esc, a right click or another tool stops.
+    Add Actor in the menus still puts the actor in the middle of the screen.
+  - In the start scene, a START tag sits under the Player: the game starts there. Drag the Player or the tag to move it.
+  - To paint collision, select the scene or its collision layer and choose a **Brush** in the Inspector's Collision
+    section. This needs a Collision layer (add one in the Tilemap Editor). Without one, collision comes from the tiles
+    of the map, and the section says so, because painting those would change the art. The list holds the types the
+    tileset's tiles have.
   - Right click an actor for the Actor Context Menu.
   - Pan with the middle mouse button, Space + drag, or the mouse wheel. Ctrl + wheel zooms from 100% to 800%.
   - Chips at the bottom: scene name and size (opens Scene Settings), cursor position, Grid (opens Grid & Snap), zoom

@@ -41,11 +41,11 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
     [Fact]
     public void CatalogListsTheEightFigmaTemplates()
     {
-        Assert.Equal(["Platformer", "Top-down Adventure", "Visual Novel", "Puzzle", "Shoot 'em up", "Turn-based RPG", "Racing (Mode 7)", "Beat 'em up"], TemplateCatalog.All.Select(t => t.Name));
-        Assert.All(TemplateCatalog.All, t => Assert.Contains(t.Genre, new[] { "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing" }));
+        Assert.Equal(["Platformer", "Top-down Adventure", "Visual Novel", "Puzzle", "Shoot 'em up", "Turn-based RPG", "Racing (Mode 7)", "Beat 'em up", "Blank"], TemplateCatalog.All.Select(t => t.Name));
+        Assert.All(TemplateCatalog.All, t => Assert.Contains(t.Genre, new[] { "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing", "Blank" }));
     }
 
-    public static IEnumerable<object[]> TemplateIds => TemplateCatalog.All.Select(t => new object[] { t.Id });
+    public static IEnumerable<object[]> TemplateIds => TemplateCatalog.All.Where(t => t.Id != BlankTemplate.Id).Select(t => new object[] { t.Id });
 
     /// <summary>
     /// T-D12: every template is a readable example. Its objects carry the components they use (built-in behaviours of
@@ -666,6 +666,27 @@ public sealed class TemplateTests(EmulatorFixture emu, ITestOutputHelper log)
         Assert.NotEqual(pier, SceneIndex());  // stage clear returns to the title
         Assert.False(s.Log.Any(l => GameplayOverrun(l)), string.Join(" | ", Overruns));
         AssertFrameBudget(s);
+        s.Stop();
+    }
+
+    [Fact]
+    public void BlankIsOneEmptySceneThatBuildsAndBoots()
+    {
+        var dir = Path.Combine(NativeBuild.RepoRoot, "build", "test-projects", "template_blank");
+        if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        var p = TemplateCatalog.Find(BlankTemplate.Id)!.Create(dir, "Blank");
+        var scene = Assert.Single(p.SceneFiles());
+        Assert.Empty(GameProject.Load<SceneFile>(scene).Actors);
+        Assert.Empty(p.SpriteFiles());
+        Assert.Empty(p.ScriptFiles());
+        Assert.Empty(p.MusicFiles());
+        var r = new GameBuilder(p, new Toolchain()) { Scripts = new ScriptBackend() }.Build();
+        Assert.True(r.Success, string.Join('\n', r.Diagnostics));
+        var s = new PlaySession(emu.Core);
+        s.Start(r.RomPath);
+        for (var i = 0; i < 200; i++) s.Step();
+        Assert.NotNull(s.Channel);
+        Assert.Equal(0, s.Core.ReadU16(s.Channel!.Game));
         s.Stop();
     }
 

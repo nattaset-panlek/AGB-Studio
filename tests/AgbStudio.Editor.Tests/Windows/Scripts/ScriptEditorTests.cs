@@ -238,7 +238,7 @@ public sealed class ScriptEditorTests : IDisposable
         _h.Click(page.BottomTabs[2]);
         Assert.Contains(_h.Find<StackPanel>("Output").Children.OfType<ConsoleLine>(), c => c.Text!.StartsWith("C# → C++  12 scripts translated", StringComparison.Ordinal));
         Capture.Pump();
-        Assert.StartsWith("devkitARM", (string?)_h.Find<StatusItem>("Status_Toolchain").Content);
+        Assert.Matches("^(devkitARM|Arm GNU Toolchain) ", (string?)_h.Find<StatusItem>("Status_Toolchain").Content);
     }
 
     [AvaloniaFact]

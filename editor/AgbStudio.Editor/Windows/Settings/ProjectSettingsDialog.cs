@@ -317,16 +317,16 @@ public sealed class ProjectSettingsDialog : SettingsDialog
     {
         var tools = s.Toolchain.Tools;
         var ok = s.Toolchain.IsComplete;
-        var root = s.Toolchain.Find("devkitPro")?.Path ?? s.Preferences.Current.DevkitProOrNull() ?? new AgbStudio.Build.Toolchain().DevkitPro;
-        var arm = s.Toolchain.Find("devkitARM")?.Version ?? "devkitARM";
+        var root = s.Toolchain.Find("toolchain")?.Path ?? s.Preferences.Current.DevkitProOrNull() ?? new AgbStudio.Build.Toolchain().DevkitPro;
+        var arm = s.Toolchain.Find("compiler")?.Version ?? "compiler";
         var title = UI.Text(versionFirst ? $"{arm} · {root}" : root, "Mono/11 Bold", "text/primary");
-        string[] shown = versionFirst ? ["arm-none-eabi-g++", "libtonc", "maxmod", "gbafix"] : [arm, "libtonc", "maxmod", "gbafix"];
-        string[] keys = ["devkitARM", "libtonc", "maxmod", "gbafix"];
+        string[] shown = versionFirst ? ["arm-none-eabi-g++", "maxmod", "mmutil"] : [arm, "maxmod", "mmutil"];
+        string[] keys = ["compiler", "maxmod", "mmutil"];
         var missing = keys.Where(k => tools.Count > 0 && s.Toolchain.Find(k) is { Found: false }).ToList();
         var detail = tools.Count == 0 ? "Checking the toolchain…"
             : missing.Count == 0 ? string.Join(" · ", shown) + " found"
             : string.Join(" · ", keys.Where(k => !missing.Contains(k))) + (keys.Length > missing.Count ? " found · " : "") + string.Join(" · ", missing)
-              + " not found · set the devkitPro folder, or install devkitPro";
+              + " not found · set the toolchain folder in Preferences › Paths, or reinstall AGB Studio";
         var text = UI.Column(2, title, Caption(detail));
         text.VerticalAlignment = VerticalAlignment.Center;
         button.VerticalAlignment = VerticalAlignment.Center;

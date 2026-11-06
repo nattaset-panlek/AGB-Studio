@@ -37,11 +37,20 @@ public static class Packager
         log("Copying the runtime, fonts, word list, emulator core and docs...");
         CopyTree(Path.Combine(root, "runtime", "include"), Path.Combine(stage, "runtime", "include"));
         CopyTree(Path.Combine(root, "runtime", "src"), Path.Combine(stage, "runtime", "src"));
-        foreach (var d in new[] { "fonts", "icu", "mgba" })
+        CopyTree(Path.Combine(root, "runtime", "link"), Path.Combine(stage, "runtime", "link"));
+        foreach (var d in new[] { "fonts", "icu", "mgba", "maxmod" })
             CopyTree(Path.Combine(root, "third_party", d), Path.Combine(stage, "third_party", d));
         CopyTree(Path.Combine(root, "docs", "user"), Path.Combine(stage, "docs", "user"));
         // T-R03: the banners and icons for the release page (the release notes show the hero banner).
         CopyTree(Path.Combine(root, "docs", "brand"), Path.Combine(stage, "docs", "brand"));
+        // P24.07: AGB Studio's own compiler (tools/fetch-toolchain.ps1 makes it), so a game builds with nothing else installed.
+        var toolchain = Path.Combine(root, "toolchain");
+        if (File.Exists(Path.Combine(toolchain, "bin", "arm-none-eabi-g++.exe")))
+        {
+            log("Copying the toolchain (Arm GNU Toolchain)...");
+            CopyTree(toolchain, Path.Combine(stage, "toolchain"));
+        }
+        else log("No toolchain\\ in the repository: the package needs devkitPro to build games. Run tools\\fetch-toolchain.ps1 first.");
         foreach (var f in new[] { "THIRD_PARTY.md", "RELEASE-NOTES.md" })
             File.Copy(Path.Combine(root, "docs", f), Path.Combine(stage, "docs", f), true);
         File.WriteAllText(Path.Combine(stage, RootMarker), Version + "\n");
@@ -53,9 +62,10 @@ public static class Packager
         File.WriteAllText(Path.Combine(bin, "editor.json"),
             "{\n  \"websiteUrl\": \"\",\n  \"bugUrl\": \"\",\n  \"updateFeed\": \"\",\n  \"communityUrl\": \"\",\n  \"releaseNotesUrl\": \"\"\n}\n");
         File.WriteAllText(Path.Combine(stage, "README.txt"),
-            $"AGB Studio {Version}\r\n\r\nRun bin\\AGBStudio.exe. Games are built with devkitPro (devkitARM, libtonc, maxmod), which is\r\n" +
-            "installed separately: the editor finds it in DEVKITPRO, C:\\devkitPro or D:\\devkitPro, or asks for the folder in\r\n" +
-            "Preferences > Paths. To uninstall, delete this folder; your projects are not inside it.\r\n" +
+            $"AGB Studio {Version}\r\n\r\nRun bin\\AGBStudio.exe. Games are built with the compiler in toolchain\\ (Arm GNU Toolchain,\r\n" +
+            "GPL; its source code is at https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads). A devkitPro folder\r\n" +
+            "set in Preferences > Paths is used instead when you choose one. Music still needs mmutil from devkitPro.\r\n" +
+            "To uninstall, delete this folder; your projects are not inside it.\r\n" +
             "This build is not code-signed, so Windows may ask before the first start.\r\n");
         var zip = Path.Combine(outDir, name + ".zip");
         if (File.Exists(zip)) File.Delete(zip);

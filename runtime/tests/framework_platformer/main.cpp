@@ -1,7 +1,7 @@
 // Game framework end to end: a two-scene platformer driven by scripted input. Checks staged loading,
 // gravity and tile collision, a script behaviour (written like the C# translator's output), coin pickup,
 // patrol turning at a ledge, damage and invincibility, the camera, a scene link, and 60 fps throughout.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/api.hpp"

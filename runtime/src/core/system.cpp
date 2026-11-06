@@ -1,6 +1,6 @@
 #include "agb/system.hpp"
 
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "agb/commit.hpp"
 #include "agb/debug.hpp"

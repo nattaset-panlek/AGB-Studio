@@ -14,6 +14,8 @@ public static class Lint
     [
         "core/commit.cpp", "core/system.cpp", "core/save.cpp", "core/bios.cpp", "core/assert.cpp", "core/input.cpp",
         "render/effects.cpp", "audio/audio.cpp",
+        // P24.03: the interrupt setup that libtonc's irq_init / irq_add did (it runs once at boot, before any commit)
+        "core/irq.cpp",
     ];
 
     static readonly Regex HardwareWrite = new(@"\b(REG_[A-Z0-9_]+|pal_bg_mem|pal_obj_mem|oam_mem|vid_mem|tile_mem|se_mem)\s*(\[[^\]]*\])?(\.\w+)?\s*(=|\|=|&=)(?!=)", RegexOptions.Compiled);

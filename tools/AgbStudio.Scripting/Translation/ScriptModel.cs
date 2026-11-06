@@ -142,6 +142,15 @@ internal sealed class ScriptModel
 
     public static bool IsCutscene(IMethodSymbol m) => Attr(m, "GBA.CutsceneAttribute") != null;
 
+    /// <summary>[Cutscene(Background = ..., Once = ...)]: false when not set.</summary>
+    public static (bool Background, bool Once) CutsceneOptions(IMethodSymbol m)
+    {
+        var a = Attr(m, "GBA.CutsceneAttribute");
+        if (a == null) return (false, false);
+        bool Named(string name) => a.NamedArguments.Any(x => x.Key == name && x.Value.Value is true);
+        return (Named("Background"), Named("Once"));
+    }
+
     /// <summary>The C# symbol of an operator for error texts ("~", "&lt;&lt;"), not the Roslyn enum name (G-ERR.01).</summary>
     public static string OperatorText(Microsoft.CodeAnalysis.Operations.UnaryOperatorKind k) => k switch
     {

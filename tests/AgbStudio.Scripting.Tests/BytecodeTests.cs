@@ -185,4 +185,57 @@ public class Painter : SceneScript
         Assert.Contains("agb_start_script(agb_cutscene::Npc_Talk, actor->index, 2)", File.ReadAllText(Path.Combine(r.IncludeDir, "Npc.cpp")));
         Assert.Equal("", TestSupport.CompileCpp(r));
     }
+
+    [Fact]
+    public void BackgroundAndOnceCutscenesStartWithTheirPriorityAndKey()
+    {
+        const string src = """
+            using System.Threading.Tasks;
+            using GBA;
+
+            public class Npc : Behaviour
+            {
+                void OnTouch(Actor other) { Glow(); Talk(); }
+
+                [Cutscene(Background = true, Once = true)]
+                async Task Glow()
+                {
+                    await FadeOut(0.5);
+                }
+
+                [Cutscene(Once = true)]
+                async Task Talk()
+                {
+                    await Say("forest.help_me");
+                }
+            }
+
+            """;
+        var r = TestSupport.Compile("bytecode-once", TestSupport.Context(), TestSupport.Inline("Npc.cs", src));
+        Assert.True(r.Success, TestSupport.Errors(r));
+        var cpp = File.ReadAllText(Path.Combine(r.IncludeDir, "Npc.cpp"));
+        Assert.Contains("agb_start_script_as(agb::script::Priority::Trigger, actor->index, agb_cutscene::Npc_Glow, actor->index)", cpp);
+        Assert.Contains("agb_start_script_as(agb::script::Priority::Cutscene, actor->index, agb_cutscene::Npc_Talk, actor->index)", cpp);
+        Assert.Equal("", TestSupport.CompileCpp(r));
+
+        const string scene = """
+            using System.Threading.Tasks;
+            using GBA;
+
+            public class Hall : SceneScript
+            {
+                void OnEnter() { Dim(); }
+
+                [Cutscene(Background = true)]
+                static async Task Dim()
+                {
+                    await Wait(10);
+                }
+            }
+
+            """;
+        var r2 = TestSupport.Compile("bytecode-bg", TestSupport.Context(), TestSupport.Inline("Hall.cs", scene));
+        Assert.True(r2.Success, TestSupport.Errors(r2));
+        Assert.Contains("agb_start_script_as(agb::script::Priority::Trigger, -1, agb_cutscene::Hall_Dim)", File.ReadAllText(Path.Combine(r2.IncludeDir, "Hall.cpp")));
+    }
 }

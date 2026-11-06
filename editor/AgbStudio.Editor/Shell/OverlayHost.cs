@@ -30,12 +30,26 @@ public sealed class OverlayHost : Panel
     public IReadOnlyList<Control> Open => _open.Select(o => o.Content).ToList();
     public bool IsOpen => _open.Count > 0;
 
-    public Task<object?> Show(Control content, OverlayPlacement placement = OverlayPlacement.Center, bool lightDismiss = false)
+    public Task<object?> Show(Control content, OverlayPlacement placement = OverlayPlacement.Center, bool lightDismiss = false, Point? at = null)
     {
         var layer = new Panel { Background = Brushes.Transparent, Focusable = true };
-        content.HorizontalAlignment = HorizontalAlignment.Center;
-        content.VerticalAlignment = placement == OverlayPlacement.Center ? VerticalAlignment.Center : VerticalAlignment.Top;
-        if (placement == OverlayPlacement.TopCenter) content.Margin = new Thickness(0, 72, 0, 0);
+        if (at is { } p)
+        {
+            // at a point (a context menu at the mouse): moved left / up as needed so it stays inside the window
+            content.HorizontalAlignment = HorizontalAlignment.Left;
+            content.VerticalAlignment = VerticalAlignment.Top;
+            content.Measure(Size.Infinity);
+            var size = content.DesiredSize;
+            var x = Bounds.Width > 0 ? Math.Clamp(p.X, 8, Math.Max(8, Bounds.Width - size.Width - 8)) : p.X;
+            var y = Bounds.Height > 0 ? Math.Clamp(p.Y, 8, Math.Max(8, Bounds.Height - size.Height - 8)) : p.Y;
+            content.Margin = new Thickness(x, y, 0, 0);
+        }
+        else
+        {
+            content.HorizontalAlignment = HorizontalAlignment.Center;
+            content.VerticalAlignment = placement == OverlayPlacement.Center ? VerticalAlignment.Center : VerticalAlignment.Top;
+            if (placement == OverlayPlacement.TopCenter) content.Margin = new Thickness(0, 72, 0, 0);
+        }
         layer.Children.Add(content);
         MakeDraggable(layer, content);
         var done = new TaskCompletionSource<object?>();

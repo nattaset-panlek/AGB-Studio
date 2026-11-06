@@ -112,8 +112,8 @@ public class LauncherE2ETests
         using var h = new LauncherHarness("T-P20");
         var page = h.Page;
         Assert.Equal(TemplateCatalog.All.Select(t => t.Title), page.TemplateCards.Select(c => c.Title));
-        Assert.Equal(8, page.TemplateCards.Count);
-        Assert.Equal(["All · 8", "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing"], h.Find<StackPanel>("TemplateFilters").Children.OfType<Chip>().Select(c => (string)c.Content!));
+        Assert.Equal(9, page.TemplateCards.Count);
+        Assert.Equal(["All · 9", "Action", "Adventure", "RPG", "Puzzle", "Story", "Racing"], h.Find<StackPanel>("TemplateFilters").Children.OfType<Chip>().Select(c => (string)c.Content!));
         Assert.Equal(ChipStyle.Accent, h.Find<Chip>("Filter_All").Style);
         // details of the selected template: Includes, stats
         Assert.Equal("Platformer", h.Find<TextBlock>("TemplateTitle").Text);

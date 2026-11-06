@@ -181,7 +181,7 @@ public static class ProjectCreator
         var ns = GameProject.FileName(name).Replace("-", "_", StringComparison.Ordinal);
         s.Scripting.Namespace = ns.Length > 0 && char.IsDigit(ns[0]) ? "_" + ns : ns;
 
-        var sample = o.SampleLevel && !complete;
+        var sample = o.SampleLevel && !complete && o.Template.Id != AgbStudio.Build.Content.Templates.BlankTemplate.Id;
         if (sample) AddSampleLevel(p);
         if (!p.SceneFiles().Any()) AddStartScene(p);
         var start = sample ? SampleScene : p.SceneFiles().Select(GameProject.AssetName).Contains(s.General.StartScene) ? s.General.StartScene : GameProject.AssetName(p.SceneFiles().First());

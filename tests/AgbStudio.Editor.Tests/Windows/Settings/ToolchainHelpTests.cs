@@ -92,12 +92,12 @@ public class ToolchainHelpTests
             var r = PlayTestSupport.Wait(fx.Services.Build.BuildAsync());
             Assert.False(r.Success);
             var gxx = Path.Combine(empty, "devkitARM", "bin", "arm-none-eabi-g++.exe");
-            Assert.Contains(r.Errors, e => e.Message == $"devkitARM is not at {gxx}. Set the devkitPro folder in Preferences › Paths.");
-            Assert.Contains(("devkitARM", gxx), fx.Services.Build.MissingTools);
+            Assert.Contains(r.Errors, e => e.Message == $"arm-none-eabi-g++ is not at {gxx}. Set the toolchain folder in Preferences › Paths, or reinstall AGB Studio.");
+            Assert.Contains(("arm-none-eabi-g++", gxx), fx.Services.Build.MissingTools);
             // the build's dialog only: the first-run notice was shown before
             var d = WaitForDialog(win);
             Assert.Equal("A build tool is missing", d.GetVisualDescendants().OfType<DialogHeader>().Single().Title);
-            Assert.Contains($"devkitARM · {gxx}", d.Lines);
+            Assert.Contains($"arm-none-eabi-g++ · {gxx}", d.Lines);
             Press(d, "PART_Confirm");
             PlayTestSupport.WaitUntil(() => fx.Services.Windows.Requests.Contains(("T-S08", "ToolchainMissing")), 30);
         }

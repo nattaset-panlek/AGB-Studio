@@ -54,12 +54,13 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
     /// <summary>The tools the last build could not find (it did not start then); empty when it had them all.</summary>
     public IReadOnlyList<(string Tool, string Path)> MissingTools { get; private set; } = [];
 
-    /// <summary>The tools a build runs or links that are not at their path: devkitARM g++, gbafix, mmutil, libtonc, maxmod.</summary>
+    /// <summary>The tools a build runs that are not at their path: the compiler (arm-none-eabi-g++), mmutil and maxmod's
+    /// sources. Since P24.02-P24.04 the start code, hardware header and ROM header writer are AGB Studio's own.</summary>
     public static IReadOnlyList<(string Tool, string Path)> FindMissingTools(Toolchain tc) =>
         new[]
         {
-            ("devkitARM", tc.Gxx), ("gbafix", tc.Gbafix), ("mmutil", tc.Mmutil),
-            ("libtonc", Path.Combine(tc.LibtoncLib, "libtonc.a")), ("maxmod", Path.Combine(tc.LibgbaLib, "libmm.a")),
+            ("arm-none-eabi-g++", tc.Gxx), ("mmutil", tc.Mmutil),
+            ("maxmod", Path.Combine(NativeBuild.MaxmodDir, "source_gba", "mm_main_gba.s")),
         }.Where(t => !File.Exists(t.Item2)).ToList();
 
     CancellationTokenSource? _cancel;
@@ -124,7 +125,7 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
         {
             var failed = new BuildResult { Success = false, FailedStep = GameBuilder.StepCompile };
             foreach (var (tool, path) in MissingTools)
-                failed.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"{tool} is not at {path}. Set the devkitPro folder in Preferences › Paths."));
+                failed.Diagnostics.Add(new Diagnostic(Severity.Error, "", 0, 0, "", $"{tool} is not at {path}. Set the toolchain folder in Preferences › Paths, or reinstall AGB Studio."));
             return failed;
         }
         return await Task.Run(() => new GameBuilder(p, tc, observer) { Scripts = Scripts }.Build(options));

@@ -468,6 +468,101 @@ public sealed class SceneEditorModel
             if (Scene.Actors.All(a => a.Name != $"{stem} ({i})")) return $"{stem} ({i})";
     }
 
+    // ---- place mode (P18.01, P18.02) --------------------------------------------------------------------
+
+    ActorKind? _placeKind;
+
+    /// <summary>While set, a click on the scene puts an actor of this kind there, until Esc or another tool.</summary>
+    public ActorKind? PlaceKind
+    {
+        get => _placeKind;
+        set { if (_placeKind == value) return; _placeKind = value; PlaceChanged?.Invoke(); ViewChanged?.Invoke(); }
+    }
+
+    public event Action? PlaceChanged;
+
+    public static bool IsZone(ActorKind kind) => kind is ActorKind.TriggerZone or ActorKind.CameraZone;
+
+    /// <summary>One actor of the kind with its box's top-left on the snapped cell under the point. One undo step.</summary>
+    public int PlaceActor(ActorKind kind, int sceneX, int sceneY)
+    {
+        if (Scene == null) return -1;
+        var a = NewActor(kind);
+        a.X = SnapValue(sceneX);
+        // a zone's position is its bottom-left corner, as the build makes its collider
+        a.Y = SnapValue(sceneY) + (IsZone(kind) ? a.ZoneH : 0);
+        return AddActor(a, "Place " + a.Name);
+    }
+
+    /// <summary>A zone covering the dragged rectangle, its corners snapped, never smaller than one grid cell. One undo step.</summary>
+    public int PlaceZone(ActorKind kind, (int X, int Y) from, (int X, int Y) to)
+    {
+        if (Scene == null) return -1;
+        int left = SnapValue(Math.Min(from.X, to.X)), top = SnapValue(Math.Min(from.Y, to.Y));
+        int right = SnapValue(Math.Max(from.X, to.X)), bottom = SnapValue(Math.Max(from.Y, to.Y));
+        var least = Grid.Snap && Grid.Size > 0 ? Grid.Size : 8;
+        var a = NewActor(kind);
+        a.ZoneW = Math.Max(right - left, least);
+        a.ZoneH = Math.Max(bottom - top, least);
+        a.X = left;
+        a.Y = top + a.ZoneH;
+        return AddActor(a, "Place " + a.Name);
+    }
+
+    // ---- where the game starts (P18.03) -----------------------------------------------------------------
+
+    /// <summary>The Player actor the game starts with: only in the start scene, whose Player's position is the start.</summary>
+    public int StartActor =>
+        Scene != null && Project is { } p && p.Settings.General.StartScene == SceneName ? Scene.Actors.FindIndex(a => a.Kind == ActorKind.Player) : -1;
+
+    // ---- collision brush (P18.05) -----------------------------------------------------------------------
+
+    CollisionType? _collisionBrush;
+
+    /// <summary>The map keeps its collision in a layer of its own, so painting it leaves the art alone.</summary>
+    public bool HasCollisionOnlyLayer => Map is { } m && m.CollisionLayer >= 0 && m.CollisionLayer < m.Layers.Count && m.Layers[m.CollisionLayer] is { Type: LayerType.CollisionOnly } l && l.Cells.Count == m.Width * m.Height;
+
+    /// <summary>The type being painted into the collision-only layer, or null for the normal tile brush.</summary>
+    public CollisionType? CollisionBrush => HasCollisionOnlyLayer ? _collisionBrush : null;
+
+    /// <summary>Chooses the type and turns on what painting it needs: the Paint tiles tool and the collision overlay.</summary>
+    public void SetCollisionBrush(CollisionType? type)
+    {
+        _collisionBrush = type;
+        if (type != null && HasCollisionOnlyLayer)
+        {
+            Grid.TileCollision = true;
+            _s.Commands.Execute("scene.tool.paint");
+        }
+        ViewChanged?.Invoke();
+    }
+
+    /// <summary>The types the tileset can paint: a cell holds a tile, and the tile says its collision. None empties the cell.</summary>
+    public IReadOnlyList<CollisionType> CollisionBrushTypes()
+    {
+        var tiles = TilesetTiles();
+        return [.. Enum.GetValues<CollisionType>().Where(t => t != CollisionType.None && tiles.Values.Any(x => x.Collision == t)), CollisionType.None];
+    }
+
+    /// <summary>Where this scene's collision comes from, for a map that has no collision-only layer.</summary>
+    public string CollisionSourceText()
+    {
+        if (Map is not { } map) return "";
+        var index = map.CollisionLayer >= 0 ? map.CollisionLayer : map.Layers.FindIndex(l => l.Type == LayerType.Tile);
+        var layer = index >= 0 && index < map.Layers.Count ? map.Layers[index].Name : "";
+        var from = layer.Length > 0 ? $"Collision comes from the tiles of layer {layer}, so painting it would change the art." : "This map has no layer that sets collision.";
+        return from + " Set a tile's collision in the Tilemap Editor, or add a Collision layer there to paint collision here.";
+    }
+
+    IReadOnlyDictionary<int, TileProperties> TilesetTiles()
+    {
+        var path = Map is { } m ? Assets?.TilesetPath(m.Tileset) : null;
+        return path != null ? Project!.LoadMeta<TilesetMeta>(path).Tiles : new Dictionary<int, TileProperties>();
+    }
+
+    int CollisionBrushTile(CollisionType type) =>
+        type == CollisionType.None ? 0 : TilesetTiles().Where(t => t.Value.Collision == type).Select(t => t.Key).DefaultIfEmpty(0).Min();
+
     /// <summary>Where new actors go: the centre of the shown screen, snapped to the grid.</summary>
     public (int X, int Y) SpawnPoint()
     {
@@ -820,7 +915,7 @@ public sealed class SceneEditorModel
     public SceneTool Tool
     {
         get => _tool;
-        set { if (_tool == value) return; _tool = value; ViewChanged?.Invoke(); }
+        set { if (_tool == value) return; _tool = value; PlaceKind = null; ViewChanged?.Invoke(); }
     }
 
     public bool IsTileTool => _tool is SceneTool.Paint or SceneTool.Fill or SceneTool.Erase;
@@ -834,6 +929,7 @@ public sealed class SceneEditorModel
         get
         {
             if (Map is not { } map) return -1;
+            if (CollisionBrush != null) return map.CollisionLayer;
             bool Paintable(int i) => i >= 0 && i < map.Layers.Count && map.Layers[i].Type is LayerType.Tile or LayerType.CollisionOnly
                                      && map.Layers[i].Cells.Count == map.Width * map.Height;
             if (_selection is { Kind: SceneItemKind.Layer } l && Paintable(l.Index)) return l.Index;
@@ -851,6 +947,7 @@ public sealed class SceneEditorModel
     {
         get
         {
+            if (CollisionBrush is { } painting) return ([CollisionBrushTile(painting)], 1, 1);
             if (_s.GetService(typeof(Tilemap.MapLibrary)) is Tilemap.MapLibrary lib && lib.Active is { } ses && MapPath != null
                 && string.Equals(ses.Doc.Path, Path.GetFullPath(MapPath), StringComparison.OrdinalIgnoreCase))
                 return (ses.Stamp, ses.StampWidth, ses.StampHeight);

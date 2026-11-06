@@ -1,5 +1,5 @@
 // Affine layer (rotate / scale) and the Mode 7 floor table.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

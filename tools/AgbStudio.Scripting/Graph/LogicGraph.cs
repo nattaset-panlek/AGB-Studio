@@ -24,7 +24,8 @@ public sealed record PinDef(string Name, PinKind Kind, bool Output);
 /// values in <paramref name="Options"/> (Set Velocity Y "Mode": Set / Add / Clamp).</summary>
 public sealed record PropDef(string Name, PropKind Kind, string Default, IReadOnlyList<string>? Options = null);
 
-public enum PropKind { Number, Text, Key, Bool, Compare, Choice }
+/// <summary>How a property is filled in. Scene to TextKey name something in the project; in the file they are plain strings like Text.</summary>
+public enum PropKind { Number, Text, Key, Bool, Compare, Choice, Scene, Sound, Music, Variable, Tag, TextKey, Integer }
 
 /// <summary>One node type of the palette (category as in the Figma Logic Graph sidebar).</summary>
 public sealed record NodeDef(string Type, string Category, string Title, NodeRole Role, IReadOnlyList<PinDef> Pins, IReadOnlyList<PropDef> Props)
@@ -150,7 +151,7 @@ public sealed class LogicGraph
                     foreach (var (k, v) in n.Props)
                     {
                         var kind = def?.Props.FirstOrDefault(p => p.Name == k)?.Kind;
-                        if (kind == PropKind.Number && double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
+                        if (kind is PropKind.Number or PropKind.Integer && double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _))
                         {
                             w.WritePropertyName(k);
                             w.WriteRawValue(v);
@@ -185,6 +186,7 @@ public static class NodeCatalog
     static PinDef Out(string n, PinKind k) => new(n, k, true);
     static readonly PinDef ExecIn = In("in", PinKind.Exec), ExecOut = Out("out", PinKind.Exec);
     static PropDef Num(string n, string d) => new(n, PropKind.Number, d);
+    static PropDef Int(string n, string d) => new(n, PropKind.Integer, d);
     static PropDef Txt(string n, string d) => new(n, PropKind.Text, d);
 
     public static readonly string[] Categories = ["Events", "Input", "Physics", "Flow", "Math", "Actor", "Sound", "Data & Save", "Text & UI", "Other"];
@@ -196,7 +198,7 @@ public static class NodeCatalog
         new("OnUpdate", "Events", "On Update", NodeRole.Event, [ExecOut], []),
         new("OnLateUpdate", "Events", "On Late Update", NodeRole.Event, [ExecOut], []),
         // A Tag on On Touch runs the chain only for actors with that tag (Figma "Tag  Coin").
-        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], [Txt("tag", "")]),
+        new("OnTouch", "Events", "On Touch", NodeRole.Event, [ExecOut, Out("other", PinKind.Actor)], [new("tag", PropKind.Tag, "")]),
         new("OnButton", "Events", "On Button", NodeRole.Event, [ExecOut], [new("button", PropKind.Key, "A")]),
         new("OnDestroy", "Events", "On Destroy", NodeRole.Event, [ExecOut], []),
         // Input
@@ -222,6 +224,8 @@ public static class NodeCatalog
         new("Jump", "Physics", "Jump", NodeRole.Action, [ExecIn, ExecOut], []),
         // Flow
         new("Branch", "Flow", "Branch", NodeRole.Flow, [ExecIn, In("condition", PinKind.Bool), Out("true", PinKind.Exec), Out("false", PinKind.Exec)], []),
+        // Waiting nodes (P20): the chain from the first one runs as a [Cutscene] (docs/design/P20-graph-chains-that-wait.md).
+        new("Wait", "Flow", "Wait", NodeRole.Action, [ExecIn, ExecOut], [Int("frames", "60")]),
         // Math
         new("And", "Math", "AND", NodeRole.Value, [In("a", PinKind.Bool), In("b", PinKind.Bool), Out("value", PinKind.Bool)], []),
         new("Or", "Math", "OR", NodeRole.Value, [In("a", PinKind.Bool), In("b", PinKind.Bool), Out("value", PinKind.Bool)], []),
@@ -231,26 +235,40 @@ public static class NodeCatalog
         new("Multiply", "Math", "Multiply", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Fixed)], [Num("a", "0"), Num("b", "1")]),
         new("VectorFromVelocity", "Math", "Vector from Velocity", NodeRole.Value, [In("vx", PinKind.Fixed), In("vy", PinKind.Fixed), Out("value", PinKind.Vector)],
             [Num("vx", "0"), Num("vy", "0")]),
+        new("RandomRange", "Math", "Random Range", NodeRole.Value, [Out("value", PinKind.Fixed)], [Int("lo", "0"), Int("hi", "1")]),
         new("Compare", "Math", "Compare", NodeRole.Value, [In("a", PinKind.Fixed), In("b", PinKind.Fixed), Out("value", PinKind.Bool)], [Num("a", "0"), Num("b", "0"), new("op", PropKind.Compare, ">")]),
         // Actor
-        new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [Txt("tag", "Player")]),
+        new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [new("tag", PropKind.Tag, "Player")]),
         new("Destroy", "Actor", "Destroy", NodeRole.Action, [ExecIn, ExecOut, In("actor", PinKind.Actor)], []),
+        // Bytecode holds no other actor: Move moves the graph's actor or the player (P20.01, answer 4).
+        new("Move", "Actor", "Move", NodeRole.Action, [ExecIn, ExecOut], [new("actor", PropKind.Choice, "Self", ["Self", "Player"]), Txt("path", "")]),
         new("Self", "Actor", "Self", NodeRole.Value, [Out("value", PinKind.Actor)], []),
         // Sound
-        new("PlaySound", "Sound", "Play Sound", NodeRole.Action, [ExecIn, ExecOut], [Txt("sound", "jump"), Num("volume", "1")]),
-        new("PlayMusic", "Sound", "Play Music", NodeRole.Action, [ExecIn, ExecOut], [Txt("music", "")]),
+        new("PlaySound", "Sound", "Play Sound", NodeRole.Action, [ExecIn, ExecOut], [new("sound", PropKind.Sound, "jump"), Num("volume", "1")]),
+        new("PlayMusic", "Sound", "Play Music", NodeRole.Action, [ExecIn, ExecOut], [new("music", PropKind.Music, "")]),
         new("StopMusic", "Sound", "Stop Music", NodeRole.Action, [ExecIn, ExecOut], []),
         // Data & Save
-        new("GetVariable", "Data & Save", "Get Variable", NodeRole.Value, [Out("value", PinKind.Fixed)], [Txt("variable", "score")]),
-        new("SetVariable", "Data & Save", "Set Variable", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [Txt("variable", "score"), Num("value", "0")]),
-        new("AddToVariable", "Data & Save", "Add to Variable", NodeRole.Action, [ExecIn, ExecOut, In("amount", PinKind.Fixed)], [Txt("variable", "score"), Num("amount", "1")]),
+        new("GetVariable", "Data & Save", "Get Variable", NodeRole.Value, [Out("value", PinKind.Fixed)], [new("variable", PropKind.Variable, "score")]),
+        new("SetVariable", "Data & Save", "Set Variable", NodeRole.Action, [ExecIn, ExecOut, In("value", PinKind.Fixed)], [new("variable", PropKind.Variable, "score"), Num("value", "0")]),
+        new("AddToVariable", "Data & Save", "Add to Variable", NodeRole.Action, [ExecIn, ExecOut, In("amount", PinKind.Fixed)], [new("variable", PropKind.Variable, "score"), Num("amount", "1")]),
         new("SaveGame", "Data & Save", "Save Game", NodeRole.Action, [ExecIn, ExecOut], [Num("slot", "0")]),
         new("Checkpoint", "Data & Save", "Checkpoint", NodeRole.Action, [ExecIn, ExecOut], []),
+        new("LoadGame", "Data & Save", "Load Game", NodeRole.Action, [ExecIn, ExecOut], [Int("slot", "0")]),
+        new("SaveExists", "Data & Save", "Save Exists", NodeRole.Value, [Out("value", PinKind.Bool)], [Int("slot", "0")]),
         // Text & UI
-        new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [Txt("key", "")]),
+        new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
+        new("Say", "Text & UI", "Say", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
+        // One exec output per option; an empty option is hidden in the game.
+        new("Choice", "Text & UI", "Choice", NodeRole.Flow,
+            [ExecIn, Out("option1", PinKind.Exec), Out("option2", PinKind.Exec), Out("option3", PinKind.Exec), Out("option4", PinKind.Exec)],
+            [new("option1", PropKind.TextKey, ""), new("option2", PropKind.TextKey, ""), new("option3", PropKind.TextKey, ""), new("option4", PropKind.TextKey, "")]),
+        new("FadeIn", "Text & UI", "Fade In", NodeRole.Action, [ExecIn, ExecOut], [Num("seconds", "0.5")]),
+        new("FadeOut", "Text & UI", "Fade Out", NodeRole.Action, [ExecIn, ExecOut], [Num("seconds", "0.5")]),
         // Other
         new("DebugLog", "Other", "Debug Log", NodeRole.Action, [ExecIn, ExecOut], [Txt("text", "")]),
-        new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [Txt("scene", "")]),
+        new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [new("scene", PropKind.Scene, "")]),
+        new("CameraFollow", "Other", "Camera Follow", NodeRole.Action, [ExecIn, ExecOut, In("target", PinKind.Actor)], []),
+        new("SetTile", "Other", "Set Tile", NodeRole.Action, [ExecIn, ExecOut], [Int("layer", "0"), Int("x", "0"), Int("y", "0"), Int("tile", "0")]),
         new("ShakeCamera", "Other", "Shake Camera", NodeRole.Action, [ExecIn, ExecOut], [Num("amplitude", "2"), Num("frames", "20")]),
     ];
 

@@ -714,15 +714,25 @@ internal sealed partial class CppTranslator
         var id = _scriptId(m);
         _usesScripts = true;
         var args = new List<string>();
+        var (background, once) = ScriptModel.CutsceneOptions(m);
+        string? self = null;
         if (!m.IsStatic && _m.DerivesFrom(m.ContainingType, _m.Behaviour))
         {
             var recv = inv.Instance is null or IInstanceReferenceOperation { IsImplicit: true } ? "" : Receiver(inv.Instance, false, m.ContainingType);
-            args.Add($"{recv}actor->index");
+            self = $"{recv}actor->index";
+            args.Add(self);
         }
         foreach (var a in Args(m, inv.Arguments).Zip(m.Parameters))
             args.Add(_m.IsFixed(a.Second.Type) ? a.First.At(Primary) + ".raw" : a.First.Text);
         var name = $"agb_cutscene::{Names.Identifier(m.ContainingType.Name)}_{Names.Identifier(m.Name)}";
         if (id < 0) Error(inv, $"Cutscene {m.Name} could not be compiled (see its own error), so it can't be started here. Fix that error first.");
+        // [Cutscene(Background, Once)]: the priority, and the key a second start is refused for (the actor, or 0 for one per scene script)
+        if (background || once)
+        {
+            var priority = background ? "agb::script::Priority::Trigger" : "agb::script::Priority::Cutscene";
+            var key = once ? self ?? "0" : "-1";
+            return new CppExpr($"agb_start_script_as({priority}, {key}, {name}{string.Concat(args.Select(a => ", " + a))})", Primary);
+        }
         return new CppExpr($"agb_start_script({name}{string.Concat(args.Select(a => ", " + a))})", Primary);
     }
 

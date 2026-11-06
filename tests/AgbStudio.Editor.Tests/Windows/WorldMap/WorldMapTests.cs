@@ -137,6 +137,78 @@ public sealed class WorldMapTests : IDisposable
         Assert.Equal("T-D02", _h.S.Windows.Requests[^1].Window);
     }
 
+    // P17.05: the "Only if" builder. It writes the same text the box shows, one undo step per change.
+    [AvaloniaFact]
+    public void OnlyIfBuilder_ReadsAndWritesTheCondition()
+    {
+        _h.S.Project.Current!.Settings.Save.Fields =
+        [
+            new SaveField { Name = "coins", Type = "int" }, new SaveField { Name = "lives", Type = "byte" }, new SaveField { Name = "metOwl", Type = "bool" },
+        ];
+        Open();
+        _h.Click(_h.Find<Chip>("Chip_Goal_Flag"));
+        var link = Assert.IsType<LinkSettingsPopover>(_h.Win.Overlays.Open.Single());
+        string Stored() => Scene("Forest_01").Links[0].OnlyIf;
+        void Pick(Button b, string option)
+        {
+            _h.Click(b);
+            Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose(option));
+            Capture.Pump();
+        }
+        Assert.Equal("coins", LinkSettingsPopover.TextOf(link.ConditionField));
+        Assert.Equal(">=", LinkSettingsPopover.TextOf(link.ConditionOp));
+        Assert.Equal("10", link.ConditionValue.Text);
+
+        Pick(link.ConditionOp, "<");
+        Assert.Equal("Game.coins < 10", Stored());
+        Assert.Equal("Game.coins < 10", link.OnlyIf.Text);
+
+        link.ConditionValue.Text = "20";
+        link.ConditionValue.Focus();
+        Capture.Pump();
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins < 20", Stored());
+
+        // not a number: nothing is written and the box goes back
+        link.ConditionValue.Text = "many";
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins < 20", Stored());
+        Assert.Equal("20", link.ConditionValue.Text);
+
+        // the list holds number fields only
+        _h.Click(link.ConditionField);
+        Assert.Equal(["None", "coins", "lives"], ((IEnumerable<Control>)AgbStudio.Editor.Windows.Database.Dropdown.Last!.ItemsSource!).OfType<MenuItem>().Select(i => (string)i.Header!));
+        Assert.True(AgbStudio.Editor.Windows.Database.Dropdown.Choose("lives"));
+        Capture.Pump();
+        Assert.Equal("Game.lives < 20", Stored());
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Equal("Game.coins < 20", Stored());
+
+        Pick(link.ConditionField, "None");
+        Assert.Equal("", Stored());
+        Assert.Equal("", link.OnlyIf.Text);
+        Assert.False(link.ConditionOp.IsEnabled);
+        Pick(link.ConditionField, "coins");
+        Assert.Equal("Game.coins >= 1", Stored());
+
+        // a condition the builder cannot show stays as typed and still counts
+        link.OnlyIf.Text = "Game.coins > Game.lives";
+        link.OnlyIf.Focus();
+        Capture.Pump();
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins > Game.lives", Stored());
+        Assert.Equal(LinkSettingsPopover.CustomCondition, LinkSettingsPopover.TextOf(link.ConditionField));
+        Assert.False(link.ConditionOp.IsEnabled);
+        Assert.False(link.ConditionValue.IsEnabled);
+
+        // opening never rewrites what is saved, even a spelling the builder can read
+        link.OnlyIf.Text = "Game.coins>=5";
+        _h.Key(Key.Enter);
+        Assert.Equal("Game.coins>=5", Stored());
+        Assert.Equal("coins", LinkSettingsPopover.TextOf(link.ConditionField));
+    }
+
     [AvaloniaFact]
     public void LinkChipOpensLinkSettings_ChangesAreSaved()
     {
@@ -166,6 +238,56 @@ public sealed class WorldMapTests : IDisposable
         _h.DragAt(Card(page, "Summit"), Card(page, "Title"));
         Assert.Contains(Scene("Summit").Links, l => l.To == "Title");
         Assert.IsType<LinkSettingsPopover>(_h.Win.Overlays.Open.Single());
+    }
+
+    // every link starts and ends on the edge of a card, links on one side of a card each get their own point, and
+    // there is no New scene placeholder card
+    [AvaloniaFact]
+    public void Links_StartAndEndOnTheirCards()
+    {
+        var page = Open();
+        Assert.Null(_h.TryFind<Panel>("NewScenePlaceholder"));
+        var ends = new List<(string Scene, Point P)>();
+        foreach (var (from, to, _, _, _, _) in page.Model.Connections())
+        {
+            var (a, b, _, _) = page.Canvas.Curve(from, to);
+            ends.Add((from.Name, a));
+            ends.Add((to.Name, b));
+        }
+        foreach (var (scene, p) in ends)
+        {
+            var s = page.Model.Find(scene)!;
+            var r = new Rect(s.Data.MapX, s.Data.MapY, WorldMapCanvas.CardW, WorldMapCanvas.CardH);
+            var onEdge = (Math.Abs(p.X - r.Left) < 0.01 || Math.Abs(p.X - r.Right) < 0.01) && p.Y > r.Top && p.Y < r.Bottom
+                || (Math.Abs(p.Y - r.Top) < 0.01 || Math.Abs(p.Y - r.Bottom) < 0.01) && p.X > r.Left && p.X < r.Right;
+            Assert.True(onEdge, $"{scene} {p} {r}");
+        }
+        Assert.Equal(ends.Count, ends.Select(e => (e.Scene, Math.Round(e.P.X), Math.Round(e.P.Y))).Distinct().Count());
+    }
+
+    // right-click on empty space: the map menu at the mouse; New Scene Here places the scene where it was clicked
+    [AvaloniaFact]
+    public void MapMenu_OnEmptySpace()
+    {
+        var page = Open();
+        // an empty spot in view, away from cards and chips (at 100 % with no pan, map and canvas points are the same)
+        var cards = page.Model.Scenes.Select(s => new Rect(s.Data.MapX, s.Data.MapY, WorldMapCanvas.CardW, WorldMapCanvas.CardH).Inflate(40)).ToList();
+        var world = Enumerable.Range(1, 20).SelectMany(y => Enumerable.Range(1, 20).Select(x => new Point(x * 30, y * 30)))
+            .First(q => q.X < page.Canvas.Bounds.Width - 20 && q.Y < page.Canvas.Bounds.Height - 20 && cards.All(c => !c.Contains(q)));
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        Assert.Equal(("T-M22", "WorldMapCanvas"), _h.S.Windows.Requests[^1]);
+        var menu = _h.OpenContextMenu()!;
+        Assert.Equal(["New Scene Here…", "Link Scenes", "Go to Start Scene", "Fit All Scenes", "Zoom to 100%"],
+            menu.Items.OfType<MenuItem>().Select(i => (string?)i.Header));
+        Assert.Equal(world, page.MenuAt);
+        _h.RunMenuItem("Link Scenes");
+        Assert.Equal(2, page.Canvas.Tool);
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        _h.RunMenuItem("Go to Start Scene");
+        Assert.Equal("Title", page.Selected);
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        _h.RunMenuItem("New Scene Here…");
+        Assert.Equal(("T-D02", "WorldMapNewScene"), _h.S.Windows.Requests[^1]);
     }
 
     [AvaloniaFact]

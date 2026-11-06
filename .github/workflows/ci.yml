@@ -1,0 +1,133 @@
+# infra: the same checks as ci.cmd, on a machine without Windows Smart App Control, so a freshly built DLL can load.
+name: CI
+
+on:
+  push:
+    branches: [ "ci/**" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      AGB_COMMIT_BASE: 8d7fe2325029a9b968858715846f8adb17da92d6
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      # devkitPro asks projects not to lean on its servers: one download, then the cache. Phase 24 (P24.09) removes this.
+      - name: Restore devkitPro
+        id: devkit
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}\devkitPro
+          key: devkitpro-gba-1
+
+      - name: Install MSYS2
+        if: steps.devkit.outputs.cache-hit != 'true'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: false
+
+      - name: Install devkitPro
+        if: steps.devkit.outputs.cache-hit != 'true'
+        shell: msys2 {0}
+        run: |
+          install() {
+            pacman-key --recv BC26F752D25B92CE272E0F44F7FD5492264BB9D0 --keyserver "$1" &&
+            pacman-key --lsign BC26F752D25B92CE272E0F44F7FD5492264BB9D0 &&
+            pacman -U --noconfirm https://pkg.devkitpro.org/devkitpro-keyring.pkg.tar.zst &&
+            pacman -Sy --noconfirm --needed gba-dev
+          }
+          grep -q dkp-libs /etc/pacman.conf || printf '[dkp-libs]\nServer = https://pkg.devkitpro.org/packages\n[dkp-windows]\nServer = https://pkg.devkitpro.org/packages/windows/$arch/\n' >> /etc/pacman.conf
+          ok=
+          for server in keyserver.ubuntu.com keys.openpgp.org keyserver.ubuntu.com; do
+            if install "$server" > install.log 2>&1; then ok=1; break; fi
+            sleep 20
+          done
+          if [ -z "$ok" ]; then
+            echo "::error title=Install devkitPro::$(tail -n 8 install.log | tr '\n' ' ' | cut -c1-900)"
+            exit 1
+          fi
+          cp -r /opt/devkitpro "$(cygpath -u "$RUNNER_TEMP")/devkitPro"
+
+      - name: Keep devkitPro for the next runs
+        if: steps.devkit.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}\devkitPro
+          key: devkitpro-gba-1
+
+      - name: Point the build at devkitPro
+        shell: pwsh
+        run: Add-Content $env:GITHUB_ENV "DEVKITPRO=$env:RUNNER_TEMP\devkitPro"
+
+      - name: Build
+        run: dotnet build AGB-Studio.sln -c Release -v q -nologo
+
+      - name: Lint
+        run: tools\agb\bin\Release\net10.0\agb.exe lint
+
+      - name: Commit messages
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\check-commit-emoji.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\check-commit-refs.ps1 -Strict
+
+      # One test project at a time: they build ROMs into shared folders under build\. Every project runs even when an
+      # earlier one fails, so one run reports everything.
+      - name: AgbStudio.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Tests\AgbStudio.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=tests.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Scripting.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Scripting.Tests\AgbStudio.Scripting.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=scripting.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Mcp.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Mcp.Tests\AgbStudio.Mcp.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=mcp.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      - name: AgbStudio.Editor.Tests
+        if: ${{ !cancelled() }}
+        run: dotnet test tests\AgbStudio.Editor.Tests\AgbStudio.Editor.Tests.csproj -c Release --no-build -v q --nologo --logger "trx;LogFileName=editor.trx" --results-directory results --blame-hang --blame-hang-timeout 5m
+
+      # Annotations can be read without signing in, unlike the logs and artifacts: one per test project.
+      - name: Report the test results
+        if: ${{ !cancelled() }}
+        shell: pwsh
+        run: |
+          foreach ($file in Get-ChildItem results -Recurse -Filter *.trx -ErrorAction SilentlyContinue) {
+            [xml]$trx = Get-Content $file.FullName -Raw
+            $c = $trx.TestRun.ResultSummary.Counters
+            $lines = @("$($file.BaseName): passed $($c.passed), failed $($c.failed), total $($c.total)")
+            foreach ($t in @($trx.TestRun.Results.UnitTestResult | Where-Object { $_.outcome -eq 'Failed' })) {
+              $why = "$($t.Output.ErrorInfo.Message)" -replace '\s+', ' '
+              $lines += "- $($t.testName -replace '^.*\.Tests\.', ''): $($why.Substring(0, [Math]::Min(280, $why.Length)))"
+            }
+            $text = ($lines -join "`n")
+            Add-Content $env:GITHUB_STEP_SUMMARY $text
+            $text = $text.Substring(0, [Math]::Min(30000, $text.Length)).Replace('%', '%25').Replace("`r", '').Replace("`n", '%0A')
+            $kind = if ([int]$c.failed -gt 0) { 'error' } else { 'notice' }
+            Write-Output "::$kind title=$($file.BaseName)::$text"
+          }
+
+      - name: Keep the test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: results
+          retention-days: 14

@@ -56,7 +56,7 @@ public sealed class LogicGraphPage : DockPanel
     public GraphDocument Document { get; private set; } = new();
     public GraphCanvas Canvas { get; }
     public CodeEditor Code { get; } = new() { Name = "GeneratedCode", TextStyleName = "Mono/11", ShowLineNumbers = false, TextPadding = new Thickness(10, 10, 10, 10) };
-    public SearchField Search { get; } = new() { Watermark = "Add node…", Name = "NodeSearch" };
+    public SearchField Search { get; } = new() { Watermark = "Search nodes…", Name = "NodeSearch" };
     /// <summary>Preview: the project's scene as the ROM draws it, its sprite animations playing.</summary>
     public ScenePreview Preview { get; }
     public bool InSync { get; private set; } = true;
@@ -89,13 +89,11 @@ public sealed class LogicGraphPage : DockPanel
         PageChrome.DockTo(left, new Border { Padding = new Thickness(10, 8, 10, 6), Child = Search }, Dock.Top);
         left.Children.Add(new ScrollViewer { Content = _palette });
         Search.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) RebuildPalette(); };
-        // Nodes › Add node… opens Add Node (T-O08) for the middle of the view; what is typed goes to its search
-        Search.AddHandler(PointerPressedEvent, (_, e) => { OpenAddNodeFromSearch(null); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-        Search.AddHandler(TextInputEvent, (_, e) => { OpenAddNodeFromSearch(e.Text); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        // Nodes › Search nodes: typing filters the list in place; Enter adds the best match in the middle of the view
         Search.KeyDown += (_, e) =>
         {
-            if (e.Key is not (Key.Enter or Key.Down)) return;
-            OpenAddNodeFromSearch(null);
+            if (e.Key != Key.Enter || (Search.Text?.Trim() ?? "").Length == 0 || PaletteMatches().FirstOrDefault() is not { } best) return;
+            AddNode(best.Type, CenterOfView(), null);
             e.Handled = true;
         };
 
@@ -380,8 +378,12 @@ public sealed class LogicGraphPage : DockPanel
         return pin is null ? null : (n.Id, pin.Name);
     }
 
-    public void OpenAddNode(Point world, (string Node, string Pin)? from) =>
-        _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, world, from), source: "GraphCanvas");
+    /// <summary>Add Node at the mouse, like a context menu: its top-left corner at <paramref name="world"/> on screen.</summary>
+    public void OpenAddNode(Point world, (string Node, string Pin)? from)
+    {
+        Point? at = _s.Windows.Host?.Overlays is { } layer ? Canvas.TranslatePoint(Canvas.ToScreen(world), layer) : null;
+        _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, world, from), source: "GraphCanvas", at: at);
+    }
 
     /// <summary>Nodes › Add node…: Add Node for the middle of the view, its search starting with <paramref name="text"/>.</summary>
     public void OpenAddNodeFromSearch(string? text)
@@ -400,6 +402,13 @@ public sealed class LogicGraphPage : DockPanel
         var desc = UI.Text(GraphDocument.Description(def.Type), "Label/11", "text/secondary");
         desc.TextWrapping = TextWrapping.Wrap;
         var rows = new List<Control> { desc };
+        if (Canvas.ProblemOf(n.Id) is { } problem)
+        {
+            var why = UI.Text(problem, "Label/11", "status/danger");
+            why.TextWrapping = TextWrapping.Wrap;
+            why.Name = "NodeProblem";
+            rows.Add(why);
+        }
         foreach (var prop in def.Props)
         {
             var connected = Document.AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == prop.Name);
@@ -418,9 +427,36 @@ public sealed class LogicGraphPage : DockPanel
                 rows.Add(choice);
                 continue;
             }
-            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : value, Name = "Prop_" + prop.Name, IsEnabled = !connected };
+            var field = new InspectorField { Label = GraphDocument.Label(prop.Name), Value = connected ? "(wired)" : GraphReferences.Display(prop, value), Name = "Prop_" + prop.Name, IsEnabled = !connected };
             switch (prop.Kind)
             {
+                case var kind when GraphReferences.IsReference(kind):
+                    field.Kind = FieldKind.Dropdown;
+                    field.TemplateApplied += (_, e) =>
+                    {
+                        if (e.NameScope.Find<Button>("PART_Dropdown") is not { } button) return;
+                        button.Click += (_, _) => Database.Dropdown.Show(button, References().Options(prop, value), field.Value, option =>
+                        {
+                            if (GraphReferences.IsNewRow(option)) { _creating = (n.Id, name); _createProblem = null; RebuildInspector(); }
+                            else if (GraphReferences.Value(option) is { } chosen) SetProp(n.Id, name, chosen);
+                        });
+                    };
+                    if (_creating == (n.Id, name))
+                    {
+                        rows.Add(field);
+                        rows.AddRange(NewReferenceRows(n.Id, name));
+                        continue;
+                    }
+                    if (!connected && References().IsMissing(prop, value))
+                    {
+                        rows.Add(field);
+                        var missing = UI.Text(GraphReferences.MissingText(prop, value), "Label/11", "status/danger");
+                        missing.TextWrapping = TextWrapping.Wrap;
+                        missing.Name = "Missing_" + name;
+                        rows.Add(missing);
+                        continue;
+                    }
+                    break;
                 case PropKind.Key:
                     field.Kind = FieldKind.Dropdown;
                     field.Choices(() => ["A", "B", "Select", "Start", "Right", "Left", "Up", "Down", "R", "L"], x => SetProp(n.Id, name, x));
@@ -468,6 +504,66 @@ public sealed class LogicGraphPage : DockPanel
         _inspector.Children.Add(PageChrome.Divider());
     }
 
+    // ---- a new Save data field or tag, named under the dropdown (P17.04) -------------------------------
+
+    (string Node, string Prop)? _creating;
+    string? _createProblem;
+
+    IEnumerable<Control> NewReferenceRows(string node, string prop)
+    {
+        var box = new TextBox { Name = "NewReference", Height = 28, Padding = new Thickness(10, 0), Watermark = "Name, then Enter" };
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape) { _creating = null; _createProblem = null; RebuildInspector(); e.Handled = true; }
+            if (e.Key != Key.Enter) return;
+            e.Handled = true;
+            CreateReference(node, prop, box.Text ?? "");
+        };
+        box.AttachedToVisualTree += (_, _) => box.Focus();
+        yield return box;
+        if (_createProblem is null) yield break;
+        var problem = UI.Text(_createProblem, "Label/11", "status/danger");
+        problem.TextWrapping = TextWrapping.Wrap;
+        problem.Name = "NewReferenceProblem";
+        yield return problem;
+    }
+
+    /// <summary>
+    /// Adds a Save data field (int) or project tag and sets the node to it. False when the name is refused; the problem
+    /// shows under the box. The project file is saved at once; undo takes back the node's value, not the new name.
+    /// </summary>
+    public bool CreateReference(string node, string prop, string name)
+    {
+        if (_s.Project.Current is not { } project || Document.Node(node) is not { } n || NodeCatalog.Find(n.Type)?.Props.FirstOrDefault(p => p.Name == prop) is not { } def) return false;
+        name = name.Trim();
+        var isTag = def.Kind == PropKind.Tag;
+        var problem = GraphReferences.NameProblem(isTag ? "tag" : "field", name);
+        var taken = isTag ? project.Settings.Tags : project.Settings.Save.Fields.Select(f => f.Name.Trim());
+        if (problem is null && taken.Contains(name, StringComparer.OrdinalIgnoreCase)) problem = $"{name} already exists. Choose it from the list.";
+        var field = new AgbStudio.Core.Project.SaveField { Name = name, Type = "int" };
+        if (problem is null && !isTag)
+        {
+            // the Save data page's own check: for example, whether the save chip still holds every slot
+            var model = new Settings.ProjectSettingsModel(project.Settings, project);
+            model.Draft.Save.Fields.Add(field);
+            problem = model.Validate();
+        }
+        _createProblem = problem;
+        if (problem is null)
+        {
+            if (isTag) project.Settings.Tags.Add(name);
+            else project.Settings.Save.Fields.Add(field);
+            _s.ProjectSettings.Save();
+            _creating = null;
+            SetProp(node, prop, name);
+        }
+        RebuildInspector();
+        return problem is null;
+    }
+
+    /// <summary>A fresh look at what the project holds, for the dropdowns and for marking names it no longer has.</summary>
+    public GraphReferences References() => new(_s.Project.Current);
+
     /// <summary>Changes a node property (inspector), checking numbers.</summary>
     public bool SetProp(string id, string prop, string value)
     {
@@ -478,6 +574,8 @@ public sealed class LogicGraphPage : DockPanel
             value = value.TrimStart('+');
             if (!double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)) { RebuildInspector(); return false; }
         }
+        // Random Range, Set Tile and the save slots take whole numbers; the C# API has no decimal form of them
+        if (def.Kind == PropKind.Integer && !int.TryParse(value, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out _)) { RebuildInspector(); return false; }
         var current = n.Props.TryGetValue(prop, out var c) ? c : def.Default;
         if (current == value) return false;
         return Edit("Change " + GraphDocument.Label(prop), () => { n.Props[prop] = value; return true; });

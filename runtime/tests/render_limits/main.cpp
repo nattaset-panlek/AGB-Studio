@@ -1,7 +1,7 @@
 // G-HW.01 limits test ROM: background and sprite VRAM filled past the hardware limits at runtime (64 KB of background
 // tiles in the tile modes, 32 KB of sprite tiles, 16 KB of sprite tiles in the bitmap modes). What does not fit is
 // refused with its Console warning, and nothing already placed in VRAM changes.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"

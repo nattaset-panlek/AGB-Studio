@@ -150,6 +150,8 @@ public class CommandAndShortcutTests
         var order = new[] { "player.png", "PlayerController.cs", "Platform_tiles.png" };
         var (cmds, fs) = PaletteSearch.Search("pla", fx.Services.Commands.All, files, c => null, f => Array.IndexOf(order, f.Name) is var i and >= 0 ? i : int.MaxValue);
         Assert.Equal(["Play", "Play from Here", "Palette Manager"], cmds.Select(c => c.Label));
+        // the Scene's place commands come after those, and a longer query still finds them
+        Assert.Contains("Place Actor", PaletteSearch.Search("place", fx.Services.Commands.All, [], c => null).Commands.Select(c => c.Label));
         Assert.Equal(order, fs.Select(f => f.Label));
         Assert.Equal(["Sprites", "Scripts", "Tilesets"], fs.Select(f => f.Right));
         Assert.Equal(["image", "code", "tiles"], fs.Select(f => f.Glyph));

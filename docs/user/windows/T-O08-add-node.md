@@ -9,9 +9,7 @@ node does.
 
 ## Opens from
 
-- Logic Graph › Right-click canvas (empty space)
-- Nodes › Add node… (click the box, or start typing in it: what you type goes into the search; the node is added in
-  the middle of the view)
+- Logic Graph › Right-click canvas (empty space): it opens at the mouse, like a context menu
 - Also: double-click empty canvas, or drop a wire on empty canvas (the new node is then connected to that wire), also
   a wire drawn with the Link tool
 

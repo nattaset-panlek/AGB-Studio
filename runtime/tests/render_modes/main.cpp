@@ -3,7 +3,7 @@
 // "shot <name>" log line; RuntimeRomTests.VideoModesMatchReferenceImages captures it and compares it pixel for pixel
 // with a reference image computed on the host from the same content. The checks in this ROM cover registers and
 // VRAM placement.
-#include <tonc.h>
+#include "agb/hw.hpp"
 
 #include "../test.hpp"
 #include "agb/commit.hpp"
