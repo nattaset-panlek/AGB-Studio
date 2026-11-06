@@ -24,10 +24,6 @@ public static class GraphCodeGen
     {
         var gen = new Gen(g);
         var cls = g.Class.Length > 0 ? g.Class : Names.Identifier(fileName);
-        var sb = new StringBuilder();
-        sb.Append(HeaderPrefix).Append(fileName).Append(".graph. Edit the graph; this file is rewritten when it changes.\n");
-        sb.Append("using GBA;\n\n");
-        sb.Append($"public class {cls} : Behaviour\n{{\n");
         var usesBody = g.Nodes.Any(n => s_physics.Contains(n.Type));
         var members = new List<string>();
         if (usesBody) members.Add("    PlatformerBody body;\n");
@@ -49,6 +45,7 @@ public static class GraphCodeGen
                 _ => "void OnDestroy()",
             };
             m.Append("    ").Append(sig).Append("\n    {\n");
+            gen.Base = sig[5..sig.IndexOf('(')];
             if (ev == "OnStart" && usesBody) m.Append("        body = Get<PlatformerBody>();\n");
             foreach (var n in nodes)
             {
@@ -61,10 +58,12 @@ public static class GraphCodeGen
                 foreach (var b in buttons) m.Append($"        if (Input.Pressed(Key.{b})) OnButton{b}();\n");
             m.Append("    }\n");
             members.Add(m.ToString());
+            members.AddRange(gen.TakeCutscenes());
         }
         foreach (var b in buttons)
         {
             var m = new StringBuilder($"    void OnButton{b}()\n    {{\n");
+            gen.Base = "OnButton" + b;
             foreach (var n in g.Nodes.Where(n => n.Type == "OnButton" && gen.Prop(n, "button") == b))
             {
                 gen.Visit(n.Id);
@@ -72,16 +71,77 @@ public static class GraphCodeGen
             }
             m.Append("    }\n");
             members.Add(m.ToString());
+            members.AddRange(gen.TakeCutscenes());
         }
+        var sb = new StringBuilder();
+        sb.Append(HeaderPrefix).Append(fileName).Append(".graph. Edit the graph; this file is rewritten when it changes.\n");
+        sb.Append("using GBA;\n");
+        if (gen.AnyCutscene) sb.Append("using System.Threading.Tasks;\n");
+        sb.Append('\n');
+        sb.Append($"public class {cls} : Behaviour\n{{\n");
         sb.Append(string.Join("\n", members));
         sb.Append("}\n");
         order = gen.Order;
         return sb.ToString();
     }
 
+    /// <summary>Nodes that wait: a chain reaching one runs from there as a [Cutscene] (P20.01).</summary>
+    public static readonly IReadOnlySet<string> WaitingNodes = new HashSet<string> { "Wait", "Say", "Choice", "Move", "FadeIn", "FadeOut" };
+    /// <summary>Waiting nodes that stop the player while they run; a chain without them runs beside the game (Background).</summary>
+    public static readonly IReadOnlySet<string> StoppingNodes = new HashSet<string> { "Say", "Choice", "Move" };
+
+    /// <summary>The suffix of the [Cutscene] method a waiting chain of an event becomes (StartWaits, OnTouchWaits2).</summary>
+    public const string WaitsSuffix = "Waits";
+
+    /// <summary>The node and every node its exec outputs lead to.</summary>
+    public static IEnumerable<GraphNode> Reach(LogicGraph g, GraphNode n)
+    {
+        var seen = new HashSet<string>();
+        var stack = new Stack<GraphNode>();
+        stack.Push(n);
+        while (stack.Count > 0)
+        {
+            var cur = stack.Pop();
+            if (!seen.Add(cur.Id)) continue;
+            yield return cur;
+            foreach (var pin in NodeCatalog.Find(cur.Type)?.Pins.Where(p => p.Output && p.Kind == PinKind.Exec) ?? [])
+                foreach (var l in g.OutOf(cur.Id, pin.Name))
+                    if (g.Node(l.ToNode) is { } next) stack.Push(next);
+        }
+    }
+
     sealed class Gen(LogicGraph g)
     {
         public List<string> Order { get; } = new();
+        /// <summary>The method being written (Start, OnTouch, OnButtonA): names its [Cutscene] methods.</summary>
+        public string Base { get; set; } = "";
+        public bool AnyCutscene { get; private set; }
+        readonly List<string> _cutscenes = new();
+        readonly Dictionary<string, int> _count = new();
+        bool _inCutscene;
+        int _choices;
+
+        public List<string> TakeCutscenes()
+        {
+            var list = _cutscenes.ToList();
+            _cutscenes.Clear();
+            return list;
+        }
+
+        // A waiting node reached outside a cutscene: start a [Cutscene] method there and write the rest of the chain into it.
+        void Split(StringBuilder sb, GraphNode n, int indent)
+        {
+            var count = _count[Base] = _count.GetValueOrDefault(Base) + 1;
+            var name = Base + WaitsSuffix + (count > 1 ? count.ToString(CultureInfo.InvariantCulture) : "");
+            Line(sb, indent, name + "();");
+            var body = new StringBuilder();
+            (_inCutscene, _choices) = (true, 0);
+            Statement(body, n, 2);
+            _inCutscene = false;
+            var attr = GraphCodeGen.Reach(g, n).Any(x => StoppingNodes.Contains(x.Type)) ? "[Cutscene(Once = true)]" : "[Cutscene(Background = true, Once = true)]";
+            _cutscenes.Add($"    {attr}\n    async Task {name}()\n    {{\n{body}    }}\n");
+            AnyCutscene = true;
+        }
 
         public void Visit(string id)
         {
@@ -118,9 +178,33 @@ public static class GraphCodeGen
 
         void Statement(StringBuilder sb, GraphNode n, int indent)
         {
+            if (!_inCutscene && WaitingNodes.Contains(n.Type))
+            {
+                Split(sb, n, indent);
+                return;
+            }
             Visit(n.Id);
             switch (n.Type)
             {
+                case "Choice":
+                    {
+                        var v = "choice" + (++_choices).ToString(CultureInfo.InvariantCulture);
+                        var options = Enumerable.Range(1, 4).Select(i => P(n, "option" + i)).ToList();
+                        var last = options.FindLastIndex(o => o.Length > 0);
+                        var args = string.Join(", ", options.Take(last + 1).Select(o => o.Length > 0 ? Str(o) : "null"));
+                        Line(sb, indent, $"var {v} = await Choice({args});");
+                        var first = true;
+                        for (var i = 1; i <= 4; i++)
+                        {
+                            if (!g.OutOf(n.Id, "option" + i).Any()) continue;
+                            Line(sb, indent, $"{(first ? "if" : "else if")} ({v} == {i - 1})");
+                            Line(sb, indent, "{");
+                            Chain(sb, n.Id, "option" + i, indent + 1);
+                            Line(sb, indent, "}");
+                            first = false;
+                        }
+                        return;
+                    }
                 case "Branch":
                     {
                         var cond = Input(n, "condition", null, 0);
@@ -176,6 +260,11 @@ public static class GraphCodeGen
                 "CameraFollow" => $"Camera.Follow({Input(n, "target", null, 0)});",
                 "LoadGame" => $"Save.Read({P(n, "slot")});",
                 "SetTile" => $"Scene.SetTile({P(n, "layer")}, {P(n, "x")}, {P(n, "y")}, {P(n, "tile")});",
+                "Wait" => $"await Wait({P(n, "frames")});",
+                "Say" => $"await Say({Str(P(n, "key"))});",
+                "Move" => $"await Move({(P(n, "actor") == "Player" ? "Player" : "actor")}, {Str(P(n, "path"))});",
+                "FadeIn" => $"await FadeIn({P(n, "seconds")});",
+                "FadeOut" => $"await FadeOut({P(n, "seconds")});",
                 _ => $"// {n.Type} is not an action",
             };
             Line(sb, indent, text);
@@ -251,8 +340,12 @@ public static class GraphFromCode
             ?? throw new FormatException("The file has no class.");
         var b = new Builder();
         b.G.Class = cls.Identifier.ValueText;
+        // [Cutscene] methods hold the rest of a chain that waits; the event method ends by starting one (P20.01).
+        foreach (var m in cls.Members.OfType<MethodDeclarationSyntax>().Where(IsCutscene))
+            b.Cutscenes[m.Identifier.ValueText] = m;
         foreach (var m in cls.Members.OfType<MethodDeclarationSyntax>())
         {
+            if (IsCutscene(m)) continue;
             if (m.Identifier.ValueText.StartsWith("OnButton", StringComparison.Ordinal))
             {
                 var bn = b.Add("OnButton", ("button", m.Identifier.ValueText["OnButton".Length..]));
@@ -285,15 +378,22 @@ public static class GraphFromCode
             }
             b.Chain(statements, node.Id, "out");
         }
+        if (b.Cutscenes.Keys.FirstOrDefault(k => !b.Used.Contains(k)) is { } unused)
+            throw new FormatException($"Cutscene {unused} is not started by a graph event.");
         Layout(b.G);
         if (previous != null) Merge(b.G, previous, b.Order);
         return b.G;
     }
 
+    static bool IsCutscene(MethodDeclarationSyntax m) =>
+        m.AttributeLists.SelectMany(a => a.Attributes).Any(a => a.Name.ToString() is "Cutscene" or "CutsceneAttribute" or "GBA.Cutscene");
+
     sealed class Builder
     {
         public LogicGraph G { get; } = new();
         public List<string> Order { get; } = new();
+        public Dictionary<string, MethodDeclarationSyntax> Cutscenes { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> Used { get; } = new(StringComparer.Ordinal);
 
         public GraphNode Add(string type, params (string, string)[] props)
         {
@@ -331,6 +431,37 @@ public static class GraphFromCode
                     if (ifs.Else != null) Chain(Block(ifs.Else.Statement), br.Id, "false");
                     return;
                 }
+                // The chain goes on in a [Cutscene] method: its body continues from here.
+                if (s is ExpressionStatementSyntax { Expression: InvocationExpressionSyntax { Expression: IdentifierNameSyntax callee, ArgumentList.Arguments.Count: 0 } } &&
+                    Cutscenes.TryGetValue(callee.Identifier.ValueText, out var cut))
+                {
+                    if (i != statements.Count - 1) throw new FormatException("Statements after a cutscene starts are not part of a generated graph.");
+                    if (!Used.Add(callee.Identifier.ValueText)) throw new FormatException($"Cutscene {callee.Identifier.ValueText} is started twice.");
+                    Chain(cut.Body?.Statements.ToList() ?? [], prevNode, prevPin);
+                    return;
+                }
+                // var choiceN = await Choice(...); then if (choiceN == k) { ... } else if ... for the connected options.
+                if (s is LocalDeclarationStatementSyntax { Declaration.Variables: [{ Initializer.Value: AwaitExpressionSyntax { Expression: InvocationExpressionSyntax ch } } decl] } &&
+                    ch.Expression.ToString() == "Choice")
+                {
+                    var choice = Add("Choice");
+                    var options = ch.ArgumentList.Arguments.Select(a => a.Expression).ToList();
+                    for (var k = 0; k < options.Count; k++)
+                        if (options[k] is LiteralExpressionSyntax l && l.IsKind(SyntaxKind.StringLiteralExpression)) choice.Props["option" + (k + 1)] = l.Token.ValueText;
+                    Link(prevNode, prevPin, choice.Id, "in");
+                    if (i == statements.Count - 1) return;
+                    if (i != statements.Count - 2 || statements[i + 1] is not IfStatementSyntax arms) throw new FormatException("Only the options of a Choice can follow it.");
+                    var name = decl.Identifier.ValueText;
+                    for (IfStatementSyntax? arm = arms; arm != null; arm = arm.Else?.Statement as IfStatementSyntax)
+                    {
+                        if (arm.Condition is not BinaryExpressionSyntax { RawKind: (int)SyntaxKind.EqualsExpression, Left: IdentifierNameSyntax left, Right: LiteralExpressionSyntax index } ||
+                            left.Identifier.ValueText != name || index.Token.Value is not int option || option is < 0 or > 3)
+                            throw new FormatException($"'{arm.Condition}' is not an option of the Choice.");
+                        Chain(Block(arm.Statement), choice.Id, "option" + (option + 1));
+                        if (arm.Else is { Statement: not IfStatementSyntax }) throw new FormatException("A Choice has no else: each option is its own if.");
+                    }
+                    return;
+                }
                 if (s is not ExpressionStatementSyntax { Expression: var e }) throw new FormatException($"'{s}' is not a graph statement.");
                 var node = Action(e);
                 Link(prevNode, prevPin, node.Id, "in");
@@ -342,6 +473,21 @@ public static class GraphFromCode
 
         GraphNode Action(ExpressionSyntax e)
         {
+            if (e is AwaitExpressionSyntax { Expression: InvocationExpressionSyntax wait })
+            {
+                var a = wait.ArgumentList.Arguments.Select(x => x.Expression).ToList();
+                string Text(int i) => i < a.Count && a[i] is LiteralExpressionSyntax l && l.IsKind(SyntaxKind.StringLiteralExpression) ? l.Token.ValueText : i < a.Count ? a[i].ToString() : "";
+                switch (wait.Expression.ToString())
+                {
+                    case "Wait" when a.Count == 1: return Add("Wait", ("frames", Text(0)));
+                    case "Say" when a.Count == 1: return Add("Say", ("key", Text(0)));
+                    case "FadeIn" when a.Count == 1: return Add("FadeIn", ("seconds", Text(0)));
+                    case "FadeOut" when a.Count == 1: return Add("FadeOut", ("seconds", Text(0)));
+                    case "Move" when a.Count == 2 && a[0].ToString() is "actor" or "Player":
+                        return a[0].ToString() == "Player" ? Add("Move", ("actor", "Player"), ("path", Text(1))) : Add("Move", ("path", Text(1)));
+                }
+                throw new FormatException($"'{e}' is not a graph action.");
+            }
             switch (e)
             {
                 case AssignmentExpressionSyntax a when a.Left.ToString() == "body.vx" && a.IsKind(SyntaxKind.SimpleAssignmentExpression):

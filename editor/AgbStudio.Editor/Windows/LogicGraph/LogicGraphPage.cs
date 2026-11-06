@@ -56,7 +56,7 @@ public sealed class LogicGraphPage : DockPanel
     public GraphDocument Document { get; private set; } = new();
     public GraphCanvas Canvas { get; }
     public CodeEditor Code { get; } = new() { Name = "GeneratedCode", TextStyleName = "Mono/11", ShowLineNumbers = false, TextPadding = new Thickness(10, 10, 10, 10) };
-    public SearchField Search { get; } = new() { Watermark = "Add node…", Name = "NodeSearch" };
+    public SearchField Search { get; } = new() { Watermark = "Search nodes…", Name = "NodeSearch" };
     /// <summary>Preview: the project's scene as the ROM draws it, its sprite animations playing.</summary>
     public ScenePreview Preview { get; }
     public bool InSync { get; private set; } = true;
@@ -89,13 +89,11 @@ public sealed class LogicGraphPage : DockPanel
         PageChrome.DockTo(left, new Border { Padding = new Thickness(10, 8, 10, 6), Child = Search }, Dock.Top);
         left.Children.Add(new ScrollViewer { Content = _palette });
         Search.PropertyChanged += (_, e) => { if (e.Property == TextBox.TextProperty) RebuildPalette(); };
-        // Nodes › Add node… opens Add Node (T-O08) for the middle of the view; what is typed goes to its search
-        Search.AddHandler(PointerPressedEvent, (_, e) => { OpenAddNodeFromSearch(null); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-        Search.AddHandler(TextInputEvent, (_, e) => { OpenAddNodeFromSearch(e.Text); e.Handled = true; }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        // Nodes › Search nodes: typing filters the list in place; Enter adds the best match in the middle of the view
         Search.KeyDown += (_, e) =>
         {
-            if (e.Key is not (Key.Enter or Key.Down)) return;
-            OpenAddNodeFromSearch(null);
+            if (e.Key != Key.Enter || (Search.Text?.Trim() ?? "").Length == 0 || PaletteMatches().FirstOrDefault() is not { } best) return;
+            AddNode(best.Type, CenterOfView(), null);
             e.Handled = true;
         };
 
@@ -380,8 +378,12 @@ public sealed class LogicGraphPage : DockPanel
         return pin is null ? null : (n.Id, pin.Name);
     }
 
-    public void OpenAddNode(Point world, (string Node, string Pin)? from) =>
-        _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, world, from), source: "GraphCanvas");
+    /// <summary>Add Node at the mouse, like a context menu: its top-left corner at <paramref name="world"/> on screen.</summary>
+    public void OpenAddNode(Point world, (string Node, string Pin)? from)
+    {
+        Point? at = _s.Windows.Host?.Overlays is { } layer ? Canvas.TranslatePoint(Canvas.ToScreen(world), layer) : null;
+        _ = _s.Windows.Open("T-O08", new AddNodeRequest(this, world, from), source: "GraphCanvas", at: at);
+    }
 
     /// <summary>Nodes › Add node…: Add Node for the middle of the view, its search starting with <paramref name="text"/>.</summary>
     public void OpenAddNodeFromSearch(string? text)
@@ -400,6 +402,13 @@ public sealed class LogicGraphPage : DockPanel
         var desc = UI.Text(GraphDocument.Description(def.Type), "Label/11", "text/secondary");
         desc.TextWrapping = TextWrapping.Wrap;
         var rows = new List<Control> { desc };
+        if (Canvas.ProblemOf(n.Id) is { } problem)
+        {
+            var why = UI.Text(problem, "Label/11", "status/danger");
+            why.TextWrapping = TextWrapping.Wrap;
+            why.Name = "NodeProblem";
+            rows.Add(why);
+        }
         foreach (var prop in def.Props)
         {
             var connected = Document.AllLinks.Any(l => l.ToNode == n.Id && l.ToPin == prop.Name);

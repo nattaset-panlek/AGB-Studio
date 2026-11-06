@@ -207,6 +207,42 @@ public sealed class LogicGraphTests : IDisposable
         Assert.NotEmpty(GraphDocument.Description(type));
     }
 
+    // P20.04: the waiting nodes can be found and have a description; Choice draws one row per option with its output.
+    [AvaloniaTheory]
+    [InlineData("wait", "Wait")]
+    [InlineData("say", "Say")]
+    [InlineData("choice", "Choice")]
+    [InlineData("move", "Move")]
+    [InlineData("fade in", "FadeIn")]
+    [InlineData("fade out", "FadeOut")]
+    public void WaitingNodes_AreFoundInAddNodeAndDescribed(string query, string type)
+    {
+        Assert.Contains(AddNodePopover.Search(query), d => d.Type == type);
+        Assert.NotEmpty(GraphDocument.Description(type));
+        if (type == "Choice")
+            Assert.Equal(["option1", "option2", "option3", "option4"], GraphDocument.Rows(NodeCatalog.Find(type)!).Select(r => r.Right!.Name));
+    }
+
+    // P20.05: a Wait under On Update is marked on the node and explained in the inspector; undo clears it.
+    [AvaloniaFact]
+    public void AWaitWhereNothingCanWait_IsMarkedOnTheNode_AndExplained()
+    {
+        var page = Open();
+        var id = page.AddNode("Wait", new Point(900, 57), ("n6", "out"));
+        Capture.Pump();
+        Assert.StartsWith("Wait can't wait here: On Update runs every frame.", page.Canvas.ProblemOf(id));
+        Assert.StartsWith("Wait can't wait here", _h.Find<TextBlock>("NodeProblem").Text);
+        page.Canvas.Select([]);
+        Capture.Pump();
+        var body = (Border)((Panel)page.Canvas.ViewOf(id)!).Children[0];
+        Assert.True(body.TryFindResource("status/danger", body.ActualThemeVariant, out var danger));
+        Assert.Equal(danger, body.BorderBrush);
+        Assert.Null(page.Canvas.ProblemOf("n6"));
+        _h.S.Undo.Undo();
+        Capture.Pump();
+        Assert.Null(page.Canvas.ProblemOf(id));
+    }
+
     [AvaloniaFact]
     public void WholeNumberSettings_RefuseDecimals()
     {
@@ -482,29 +518,46 @@ public sealed class LogicGraphTests : IDisposable
         Assert.Contains("Save.Checkpoint();", page.Code.Text);
     }
 
-    // T-O08: Nodes › Add node… opens the Add Node popover for the middle of the view; typing goes to its search
+    // Nodes › Search nodes: clicking and typing stay in the box and filter the list; Enter adds the best match
     [AvaloniaFact]
-    public void NodesAddNode_OpensTheAddNodePopover()
+    public void NodesSearch_FiltersTheListInPlace()
     {
         var page = Open();
         _h.Click(page.Search);
-        Assert.Equal(("T-O08", "NodesAddNode"), _h.S.Windows.Requests[^1]);
-        var add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
-        add.Query.Focus();
-        _h.Type("veloc");
-        Assert.All(add.Items, d => Assert.Contains("Velocity", d.Title));
-        _h.Key(Key.Enter);
         Assert.False(_h.Win.Overlays.IsOpen);
-        var added = page.Document.Graph.Nodes.Last();
-        Assert.Contains("Velocity", NodeCatalog.Find(added.Type)!.Title);
-        // typing into the box opens the popover with the text in its search
         page.Search.Focus();
         _h.Type("sou");
-        add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
-        Assert.Equal("sou", add.Query.Text);
-        Assert.Contains(add.Items, d => d.Title == "Play Sound");
-        _h.Key(Key.Escape);
         Assert.False(_h.Win.Overlays.IsOpen);
+        Assert.Equal("sou", page.Search.Text);
+        Assert.Contains("Play Sound", page.PaletteLabels);
+        Assert.DoesNotContain("On Start", page.PaletteLabels);
+        var nodes = page.Document.AllNodes.Count();
+        _h.Key(Key.Enter);
+        Assert.Equal(nodes + 1, page.Document.AllNodes.Count());
+        Assert.Equal("PlaySound", page.Document.Graph.Nodes.Last().Type);
+    }
+
+    // right-click opens Add Node at the mouse, like a context menu; the tip is hidden until ? shows it
+    [AvaloniaFact]
+    public void AddNodeOpensAtTheMouse_AndTheTipIsHiddenUntilAsked()
+    {
+        var page = Open();
+        var at = Screen(page, 700, 600);
+        _h.ClickAt(at, MouseButton.Right);
+        var add = Assert.IsType<AddNodePopover>(_h.Win.Overlays.Open.Single());
+        Capture.Pump();
+        var corner = add.TranslatePoint(default, _h.Win.Overlays)!.Value;
+        var mouse = _h.Win.TranslatePoint(at, _h.Win.Overlays)!.Value;
+        // at the mouse, or moved left / up just enough to stay inside the window
+        Assert.True(corner.X <= mouse.X + 1 && corner.Y <= mouse.Y + 1, $"{corner} {mouse}");
+        Assert.True(mouse.X - corner.X < add.Bounds.Width && mouse.Y - corner.Y < add.Bounds.Height, $"{corner} {mouse}");
+        Assert.True(corner.X + add.Bounds.Width <= _h.Win.Overlays.Bounds.Width && corner.Y + add.Bounds.Height <= _h.Win.Overlays.Bounds.Height);
+        _h.Key(Key.Escape);
+        Assert.False(page.Canvas.TipVisible);
+        _h.Click(_h.Find<AgbButton>("GraphTipToggle"));
+        Assert.True(page.Canvas.TipVisible);
+        _h.Click(_h.Find<AgbButton>("GraphTipToggle"));
+        Assert.False(page.Canvas.TipVisible);
     }
 
     // P10.11: the Edit menu on Logic Graph nodes: Select All, Copy / Paste, Cut, Duplicate, Delete, each undoable

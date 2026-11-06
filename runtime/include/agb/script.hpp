@@ -39,6 +39,7 @@ constexpr int kStackSize = 24;
 constexpr int kMaxLocals = 16;
 constexpr int kCallDepth = 8;
 inline constexpr u16 kNoNative = 0xFFFF;
+inline constexpr s32 kOnceAny = -2;  // Context::onceKey of a cutscene resumed from a save: matches every once key
 
 struct Frame {
     u16 script;
@@ -63,6 +64,8 @@ struct Context {
     bool paused = false;               // debugger
     s32 userData[4] = {};              // natives keep per-call state here
     u16 lastLine = 0;
+    u16 root = 0;      // the script it was started with
+    s32 onceKey = -1;  // [Cutscene(Once)]: actor index (or 0) a second start of root is refused for; -1 = none
 };
 
 // A running cutscene as it goes into a save (Project Settings · Save data "Save during cutscenes"): where it is, its values
@@ -109,8 +112,9 @@ void setFlag(u16 id, bool value);
 s32 var(u16 id);
 void setVar(u16 id, s32 value);
 
-// Starts a script; returns the context id or -1 when all contexts are busy.
-int start(u16 script, Priority priority = Priority::Trigger, const s32* args = nullptr, int argc = 0);
+// Starts a script; returns the context id or -1 when all contexts are busy. With once >= 0 ([Cutscene(Once)]) it does not
+// start while the same script started with the same once key still runs, and returns -1.
+int start(u16 script, Priority priority = Priority::Trigger, const s32* args = nullptr, int argc = 0, s32 once = -1);
 // Runs a script to completion right now (map OnLoad); waits are not allowed and end the run.
 s32 runImmediate(u16 script, const s32* args = nullptr, int argc = 0);
 void stop(int context);

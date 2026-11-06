@@ -105,7 +105,7 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
         Refresh();
     }
 
-    void SetTool(int i)
+    internal void SetTool(int i)
     {
         for (var k = 0; k < _tools.Length; k++) _tools[k].IsActive = k == i;
         Canvas.Tool = i;
@@ -273,7 +273,7 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
 
     // ---- actions ---------------------------------------------------------------------------------------------
 
-    /// <summary>New Scene (T-D02): after it closes, a new scene is placed at <paramref name="at"/> (the placeholder card).</summary>
+    /// <summary>New Scene (T-D02): after it closes, a new scene is placed at <paramref name="at"/> (else a free spot).</summary>
     public async Task NewSceneAsync(Point? at)
     {
         var before = Model.Scenes.Select(x => x.Name).ToHashSet();
@@ -281,7 +281,7 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
         Model.Reload();
         foreach (var added in Model.Scenes.Where(x => !before.Contains(x.Name) && x.Data.MapX == 0 && x.Data.MapY == 0).ToList())
         {
-            var p = at ?? Canvas.PlaceholderPosition();
+            var p = at ?? Canvas.FreeSpot();
             Model.Move(added, (int)p.X, (int)p.Y);
             Selected = added.Name;
         }
@@ -305,6 +305,23 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
         _ = _s.Windows.Open("T-M22", name, card, source: "SceneCard");
     }
 
+    /// <summary>The map point the empty-space menu was opened at (New Scene Here puts the card's middle there).</summary>
+    public Point MenuAt { get; private set; }
+
+    /// <summary>Right-click on empty map space: the map menu (T-M22 with a point) at the mouse.</summary>
+    public void OpenMapMenu(Point world)
+    {
+        MenuAt = world;
+        _ = _s.Windows.Open("T-M22", world, Canvas, source: "WorldMapCanvas");
+    }
+
+    /// <summary>The menu on empty map space: add a scene where it was clicked, link, find the start, and the view.</summary>
+    public static IReadOnlyList<MenuEntry> MapContextMenu() =>
+    [
+        new CommandEntry("worldmap.newHere", ShowIcon: true), new CommandEntry("worldmap.linkTool"), SeparatorEntry.Instance,
+        new CommandEntry("worldmap.goStart"), new CommandEntry("worldmap.fit"), new CommandEntry("worldmap.zoom100"),
+    ];
+
     /// <summary>
     /// The Scene Context Menu as Figma draws it; <paramref name="isStart"/> checks "Set as start scene". Enter and F2 are
     /// handled by the map canvas, so they are only shown on the items.
@@ -315,10 +332,11 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
         new CommandEntry("worldmap.setStart", Checkable: true, IsChecked: isStart), SeparatorEntry.Instance, new CommandEntry("edit.delete", Danger: true),
     ];
 
-    /// <summary>T-M22 for one scene card (args: the scene name).</summary>
+    /// <summary>T-M22 for one scene card (args: the scene name), or for empty map space (args: the map point).</summary>
     [EditorMenu("T-M22")]
-    public static IReadOnlyList<MenuEntry> SceneContextMenu(WindowContext ctx) =>
-        SceneContextMenu(() => ctx.Args is string name && Current(ctx.Services)?.Model.StartScene == name);
+    public static IReadOnlyList<MenuEntry> SceneContextMenu(WindowContext ctx) => ctx.Args is Point
+        ? MapContextMenu()
+        : SceneContextMenu(() => ctx.Args is string name && Current(ctx.Services)?.Model.StartScene == name);
 
     static WorldMapPage? Current(EditorServices s) => (s.Top as MainWindow)?.CurrentPage as WorldMapPage;
 
@@ -330,11 +348,29 @@ public sealed class WorldMapPage : DockPanel, IPageBreadcrumb
 
     [EditorCommand("worldmap.setStart", "Set as start scene", Category = "World Map", Glyph = "flag", InPalette = false)]
     public static void SetStartCommand(EditorServices s) { if (Current(s) is { Selected: { } n } p) p.Model.SetStart(n); }
+
+    [EditorCommand("worldmap.newHere", "New Scene Here…", Category = "World Map", Glyph = "plus", InPalette = false)]
+    public static void NewHereCommand(EditorServices s)
+    {
+        if (Current(s) is { } p) _ = p.NewSceneAsync(new Point(p.MenuAt.X - WorldMapCanvas.CardW / 2, p.MenuAt.Y - WorldMapCanvas.CardH / 2));
+    }
+
+    [EditorCommand("worldmap.linkTool", "Link Scenes", Category = "World Map", Glyph = "link", InPalette = false)]
+    public static void LinkToolCommand(EditorServices s) => Current(s)?.SetTool(2);
+
+    [EditorCommand("worldmap.goStart", "Go to Start Scene", Category = "World Map", Glyph = "flag", InPalette = false)]
+    public static void GoStartCommand(EditorServices s) { if (Current(s) is { } p && p.Model.Find(p.Model.StartScene) is { } st) p.SelectScene(st.Name); }
+
+    [EditorCommand("worldmap.fit", "Fit All Scenes", Category = "World Map", Glyph = "search", InPalette = false)]
+    public static void FitCommand(EditorServices s) => Current(s)?.Canvas.Fit();
+
+    [EditorCommand("worldmap.zoom100", "Zoom to 100%", Category = "World Map", Glyph = "search", InPalette = false)]
+    public static void Zoom100Command(EditorServices s) => Current(s)?.Canvas.SetZoom(1);
 }
 
 /// <summary>
-/// The World Map canvas: dot grid, link curves (dashed for title-menu starts) with chips, Scene Cards, the New scene
-/// placeholder; select, drag to move (saved as MapX / MapY), link tool to connect scenes, wheel zoom, hand / middle-button pan.
+/// The World Map canvas: dot grid, link curves (dashed for title-menu starts) with chips, Scene Cards; right-click on
+/// empty space for the map menu; select, drag to move (saved as MapX / MapY), link tool to connect scenes, wheel zoom, hand / middle-button pan.
 /// </summary>
 public sealed class WorldMapCanvas : Panel, IEditTarget
 {
@@ -408,8 +444,8 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
 
     static Rect Rect(MapScene s) => new(s.Data.MapX, s.Data.MapY, CardW, CardH);
 
-    /// <summary>Where the New scene placeholder sits: below the leftmost column, level with the lowest card.</summary>
-    public Point PlaceholderPosition() => Model.Scenes.Count == 0 ? new Point(40, 40) : new Point(Model.Scenes.Min(s => s.Data.MapX), Model.Scenes.Max(s => s.Data.MapY));
+    /// <summary>Where a new scene goes when no point was picked: under the lowest card, at the left edge of the map.</summary>
+    public Point FreeSpot() => Model.Scenes.Count == 0 ? new Point(40, 40) : new Point(Model.Scenes.Min(s => s.Data.MapX), Model.Scenes.Max(s => s.Data.MapY) + CardH + 48);
 
     public SceneCard? CardOf(string name) => _cards.GetValueOrDefault(name);
 
@@ -471,14 +507,6 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
         _world.Children.Clear();
         _cards.Clear();
         _world.Children.Add(_lines);
-        var ph = PlaceholderPosition();
-        var plus = UI.Row(8, PageChrome.Glyph("plus", 14, "text/muted"), UI.Text("New scene", "Body/12", "text/muted"));
-        plus.HorizontalAlignment = HorizontalAlignment.Center;
-        plus.VerticalAlignment = VerticalAlignment.Center;
-        var placeholder = new Panel { Width = CardW, Height = CardH, Children = { plus }, Name = "NewScenePlaceholder" };
-        Avalonia.Controls.Canvas.SetLeft(placeholder, ph.X);
-        Avalonia.Controls.Canvas.SetTop(placeholder, ph.Y);
-        _world.Children.Add(placeholder);
         foreach (var s in Model.Scenes)
         {
             var card = new SceneCard { NameText = s.Name, Meta = WorldMapModel.Meta(s), Preview = null, PreviewImage = Thumbnail(s), IsSelected = s.Name == _page.Selected, Name = "Card_" + s.Name };
@@ -494,23 +522,9 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
             var (a, b, c1, c2) = Curve(from, to);
             var chip = new Chip { Content = label, Glyph = glyph, Style = ChipStyle.Accent, Name = "Chip_" + label.Replace(' ', '_'), Tag = link };
             var (cw, ch) = ChipSize(label);
-            double x, y;
-            if (Math.Abs(b.X - a.X) < 4)
-            {
-                // vertical link: the chip beside the line, half way
-                var mid = Bezier(a, c1, c2, b, 0.5);
-                (x, y) = (mid.X + 10, mid.Y - ch / 2);
-            }
-            else
-            {
-                // a little way along the link from the scene it leaves, on the line
-                var right = b.X > a.X;
-                var gap = dashed ? 24 : 35;
-                x = right ? a.X + gap : a.X - gap - cw;
-                // beside the line at 37 % (starts) or 55 % of the way down; a nearly flat link carries its chip just below it
-                var f = dashed ? 0.37 : 0.55;
-                y = Math.Abs(b.Y - a.Y) < 40 ? Math.Min(a.Y, b.Y) + Math.Abs(b.Y - a.Y) * f + 6 : a.Y + (b.Y - a.Y) * f - ch / 2;
-            }
+            // on its own line, a little way from the scene it leaves, so each chip clearly belongs to one link
+            var at = Bezier(a, c1, c2, b, dashed ? 0.3 : 0.4);
+            var (x, y) = (at.X - cw / 2, at.Y - ch / 2);
             Avalonia.Controls.Canvas.SetLeft(chip, x);
             Avalonia.Controls.Canvas.SetTop(chip, y);
             _world.Children.Add(chip);
@@ -519,51 +533,58 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
         _lines.InvalidateVisual();
     }
 
-    /// <summary>Anchor points and control points of the curve between two cards.</summary>
-    internal (Point A, Point B, Point C1, Point C2) Curve(MapScene from, MapScene to)
+    enum Side { Left, Right, Top, Bottom }
+
+    /// <summary>The card sides a link leaves from and arrives at: sideways when the cards are mostly side by side, top /
+    /// bottom when mostly above each other, else from the side to the top or bottom.</summary>
+    static (Side A, Side B) Sides(MapScene from, MapScene to)
     {
-        var ra = Rect(from);
-        var rb = Rect(to);
-        var dx = rb.Center.X - ra.Center.X;
-        var dy = rb.Center.Y - ra.Center.Y;
-        Point a, b, c1, c2;
-        if (Math.Abs(dx) >= Math.Abs(dy) * 1.2)
-        {
-            var right = dx > 0;
-            a = new Point(right ? ra.Right : ra.Left, ra.Y + FanOut(from, to, right));
-            b = new Point(right ? rb.Left : rb.Right, rb.Y + 73);
-            var k = Math.Abs(b.X - a.X) * 0.5;
-            c1 = new Point(a.X + (right ? k : -k), a.Y);
-            c2 = new Point(b.X - (right ? k : -k), b.Y);
-        }
-        else if (Math.Abs(dy) >= Math.Abs(dx) * 1.2)
-        {
-            var down = dy > 0;
-            a = new Point(ra.Center.X, down ? ra.Bottom : ra.Top);
-            b = new Point(rb.Center.X, down ? rb.Top : rb.Bottom);
-            var k = Math.Abs(b.Y - a.Y) * 0.5;
-            c1 = new Point(a.X, a.Y + (down ? k : -k));
-            c2 = new Point(b.X, b.Y - (down ? k : -k));
-        }
-        else
-        {
-            // diagonal: leave from the side, arrive at the top or bottom
-            var right = dx > 0;
-            var down = dy > 0;
-            a = new Point(right ? ra.Right : ra.Left, ra.Y + 73);
-            b = new Point(rb.Center.X - (right ? 30 : -30), down ? rb.Top : rb.Bottom);
-            c1 = new Point(a.X + (b.X - a.X) * 0.6, a.Y);
-            c2 = new Point(b.X, b.Y - (b.Y - a.Y) * 0.6);
-        }
-        return (a, b, c1, c2);
+        var dx = Rect(to).Center.X - Rect(from).Center.X;
+        var dy = Rect(to).Center.Y - Rect(from).Center.Y;
+        if (Math.Abs(dx) >= Math.Abs(dy) * 1.2) return dx > 0 ? (Side.Right, Side.Left) : (Side.Left, Side.Right);
+        if (Math.Abs(dy) >= Math.Abs(dx) * 1.2) return dy > 0 ? (Side.Bottom, Side.Top) : (Side.Top, Side.Bottom);
+        return (dx > 0 ? Side.Right : Side.Left, dy > 0 ? Side.Top : Side.Bottom);
     }
 
-    /// <summary>Height below the card top where a side link leaves: 73 for one, 60 and 120 (top target first) for several.</summary>
-    double FanOut(MapScene from, MapScene to, bool right)
+    /// <summary>Where a link meets a card: every link end on one side of a card gets its own point, spread evenly
+    /// along that side and ordered by where the other card is, so the lines start on the card and do not cross.</summary>
+    Point Port(MapScene scene, MapScene other)
     {
-        var side = Model.Connections().Where(c => c.From == from && c.To.Data.MapX != from.Data.MapX && (c.To.Data.MapX > from.Data.MapX) == right
-            && Math.Abs(c.To.Data.MapX - from.Data.MapX) >= Math.Abs(c.To.Data.MapY - from.Data.MapY) * 1.2).OrderBy(c => c.To.Data.MapY).Select(c => c.To).ToList();
-        return side.Count < 2 ? 73 : 60 * (side.IndexOf(to) + 1);
+        var ends = new List<(MapScene Other, Side Side)>();
+        foreach (var (f, t, _, _, _, _) in Model.Connections())
+        {
+            var (sa, sb) = Sides(f, t);
+            if (f == scene) ends.Add((t, sa));
+            if (t == scene) ends.Add((f, sb));
+        }
+        var side = ends.First(e => e.Other == other).Side;
+        var vertical = side is Side.Left or Side.Right;
+        var same = ends.Where(e => e.Side == side).OrderBy(e => vertical ? Rect(e.Other).Center.Y : Rect(e.Other).Center.X)
+            .ThenBy(e => e.Other.Name, StringComparer.Ordinal).Select(e => e.Other).ToList();
+        var r = Rect(scene);
+        var i = same.IndexOf(other);
+        // keep clear of the rounded corners: 24 px from each end
+        const double inset = 24;
+        double Along(double length) => inset + (length - 2 * inset) * (i + 1) / (same.Count + 1);
+        return side switch
+        {
+            Side.Left => new Point(r.Left, r.Top + Along(r.Height)),
+            Side.Right => new Point(r.Right, r.Top + Along(r.Height)),
+            Side.Top => new Point(r.Left + Along(r.Width), r.Top),
+            _ => new Point(r.Left + Along(r.Width), r.Bottom),
+        };
+    }
+
+    /// <summary>Anchor points and control points of the curve between two cards; each end leaves its card straight out
+    /// of the side it is on.</summary>
+    internal (Point A, Point B, Point C1, Point C2) Curve(MapScene from, MapScene to)
+    {
+        var (sa, sb) = Sides(from, to);
+        var a = Port(from, to);
+        var b = Port(to, from);
+        var k = Math.Max(40, Math.Max(Math.Abs(b.X - a.X), Math.Abs(b.Y - a.Y)) * 0.5);
+        static Vector Out(Side s) => s switch { Side.Left => new(-1, 0), Side.Right => new(1, 0), Side.Top => new(0, -1), _ => new(0, 1) };
+        return (a, b, a + Out(sa) * k, b + Out(sb) * k);
     }
 
     static Point Bezier(Point a, Point c1, Point c2, Point b, double t)
@@ -610,6 +631,7 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
         if (props.IsRightButtonPressed)
         {
             if (SceneAt(w) is { } hit) { _page.SelectScene(hit.Name); _page.OpenSceneMenu(hit.Name); }
+            else _page.OpenMapMenu(w);
             e.Handled = true;
             return;
         }
@@ -628,8 +650,6 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
             else Begin(Drag.Card, p, e);
             return;
         }
-        var ph = PlaceholderPosition();
-        if (new Rect(ph.X, ph.Y, CardW, CardH).Contains(w)) { _ = _page.NewSceneAsync(ph); e.Handled = true; return; }
         Begin(Drag.Pan, p, e);
     }
 
@@ -791,9 +811,6 @@ public sealed class WorldMapCanvas : Panel, IEditTarget
             }
             if (c._drag == Drag.Link && c._dragScene is { } d)
                 ctx.DrawLine(new Pen(brush, 2, new DashStyle([2, 2], 0)), new Rect(d.Data.MapX, d.Data.MapY, CardW, CardH).Center, c._linkEnd);
-            // New scene placeholder frame
-            var ph = c.PlaceholderPosition();
-            ctx.DrawRectangle(null, new Pen(ThemeService.Token(this, "border/strong"), 1, new DashStyle([4, 3], 0)), new Rect(ph.X + 0.5, ph.Y + 0.5, CardW - 1, CardH - 1), 12, 12);
         }
     }
 }

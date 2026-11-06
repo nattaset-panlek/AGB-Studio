@@ -240,6 +240,13 @@ public sealed class GraphDocument
     {
         var rows = new List<NodeRow>();
         var execIn = def.Pins.FirstOrDefault(p => p.Kind == PinKind.Exec && !p.Output);
+        // Choice: each option on its own row, with the exec output it leads to
+        if (def.Type == "Choice")
+        {
+            for (var i = 1; i <= 4; i++)
+                rows.Add(new NodeRow(Label("option" + i), "option" + i, i == 1 ? execIn : null, def.Pin("option" + i)));
+            return rows;
+        }
         var execOuts = def.Pins.Where(p => p.Kind == PinKind.Exec && p.Output).ToList();
         var dataOuts = def.Pins.Where(p => p.Kind != PinKind.Exec && p.Output).ToList();
         var label = OutputLabel(def);
@@ -379,6 +386,12 @@ public sealed class GraphDocument
         "LoadGame" => "Reads the game state from a save slot.",
         "SaveExists" => "True when a save slot holds a save.",
         "SetTile" => "Changes one tile of a map layer while the game runs.",
+        "Wait" => "Waits a number of frames (60 a second); the rest of the chain runs after it.",
+        "Say" => "Shows a line of dialogue and waits until the player closes it.",
+        "Choice" => "Shows up to four options and waits; the chain goes on from the option picked.",
+        "Move" => "Moves this actor or the player along a path and waits until it arrives.",
+        "FadeIn" => "Fades the screen in from black over some seconds, and waits.",
+        "FadeOut" => "Fades the screen out to black over some seconds, and waits.",
         _ => "",
     };
 

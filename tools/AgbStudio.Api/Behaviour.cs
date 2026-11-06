@@ -239,6 +239,20 @@ public sealed class CutsceneAttribute : Attribute
 {
     /// <summary>Marks the method as a cutscene.</summary>
     public CutsceneAttribute() { }
+
+    /// <summary>
+    /// Runs beside the game instead of stopping it: input, the player and the pause menu keep working, and a save
+    /// does not keep it. For timed effects (Wait, FadeIn, FadeOut); a cutscene that talks or moves actors should not
+    /// set it.
+    /// </summary>
+    public bool Background { get; set; }
+
+    /// <summary>
+    /// Does not start again while it is still running for the same actor (the same scene script for a
+    /// <see cref="SceneScript"/>); the second call does nothing. For cutscenes started from <c>OnTouch</c>, which
+    /// runs every frame two actors overlap, or from a button that can be pressed again.
+    /// </summary>
+    public bool Once { get; set; }
 }
 
 /// <summary>

@@ -240,6 +240,56 @@ public sealed class WorldMapTests : IDisposable
         Assert.IsType<LinkSettingsPopover>(_h.Win.Overlays.Open.Single());
     }
 
+    // every link starts and ends on the edge of a card, links on one side of a card each get their own point, and
+    // there is no New scene placeholder card
+    [AvaloniaFact]
+    public void Links_StartAndEndOnTheirCards()
+    {
+        var page = Open();
+        Assert.Null(_h.TryFind<Panel>("NewScenePlaceholder"));
+        var ends = new List<(string Scene, Point P)>();
+        foreach (var (from, to, _, _, _, _) in page.Model.Connections())
+        {
+            var (a, b, _, _) = page.Canvas.Curve(from, to);
+            ends.Add((from.Name, a));
+            ends.Add((to.Name, b));
+        }
+        foreach (var (scene, p) in ends)
+        {
+            var s = page.Model.Find(scene)!;
+            var r = new Rect(s.Data.MapX, s.Data.MapY, WorldMapCanvas.CardW, WorldMapCanvas.CardH);
+            var onEdge = (Math.Abs(p.X - r.Left) < 0.01 || Math.Abs(p.X - r.Right) < 0.01) && p.Y > r.Top && p.Y < r.Bottom
+                || (Math.Abs(p.Y - r.Top) < 0.01 || Math.Abs(p.Y - r.Bottom) < 0.01) && p.X > r.Left && p.X < r.Right;
+            Assert.True(onEdge, $"{scene} {p} {r}");
+        }
+        Assert.Equal(ends.Count, ends.Select(e => (e.Scene, Math.Round(e.P.X), Math.Round(e.P.Y))).Distinct().Count());
+    }
+
+    // right-click on empty space: the map menu at the mouse; New Scene Here places the scene where it was clicked
+    [AvaloniaFact]
+    public void MapMenu_OnEmptySpace()
+    {
+        var page = Open();
+        // an empty spot in view, away from cards and chips (at 100 % with no pan, map and canvas points are the same)
+        var cards = page.Model.Scenes.Select(s => new Rect(s.Data.MapX, s.Data.MapY, WorldMapCanvas.CardW, WorldMapCanvas.CardH).Inflate(40)).ToList();
+        var world = Enumerable.Range(1, 20).SelectMany(y => Enumerable.Range(1, 20).Select(x => new Point(x * 30, y * 30)))
+            .First(q => q.X < page.Canvas.Bounds.Width - 20 && q.Y < page.Canvas.Bounds.Height - 20 && cards.All(c => !c.Contains(q)));
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        Assert.Equal(("T-M22", "WorldMapCanvas"), _h.S.Windows.Requests[^1]);
+        var menu = _h.OpenContextMenu()!;
+        Assert.Equal(["New Scene Here…", "Link Scenes", "Go to Start Scene", "Fit All Scenes", "Zoom to 100%"],
+            menu.Items.OfType<MenuItem>().Select(i => (string?)i.Header));
+        Assert.Equal(world, page.MenuAt);
+        _h.RunMenuItem("Link Scenes");
+        Assert.Equal(2, page.Canvas.Tool);
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        _h.RunMenuItem("Go to Start Scene");
+        Assert.Equal("Title", page.Selected);
+        _h.ClickAt(_h.At(page.Canvas, world), MouseButton.Right);
+        _h.RunMenuItem("New Scene Here…");
+        Assert.Equal(("T-D02", "WorldMapNewScene"), _h.S.Windows.Requests[^1]);
+    }
+
     [AvaloniaFact]
     public void SceneContextMenu_OpenRenameDuplicateSetStartDelete()
     {

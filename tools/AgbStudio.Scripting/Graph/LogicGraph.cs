@@ -224,6 +224,8 @@ public static class NodeCatalog
         new("Jump", "Physics", "Jump", NodeRole.Action, [ExecIn, ExecOut], []),
         // Flow
         new("Branch", "Flow", "Branch", NodeRole.Flow, [ExecIn, In("condition", PinKind.Bool), Out("true", PinKind.Exec), Out("false", PinKind.Exec)], []),
+        // Waiting nodes (P20): the chain from the first one runs as a [Cutscene] (docs/design/P20-graph-chains-that-wait.md).
+        new("Wait", "Flow", "Wait", NodeRole.Action, [ExecIn, ExecOut], [Int("frames", "60")]),
         // Math
         new("And", "Math", "AND", NodeRole.Value, [In("a", PinKind.Bool), In("b", PinKind.Bool), Out("value", PinKind.Bool)], []),
         new("Or", "Math", "OR", NodeRole.Value, [In("a", PinKind.Bool), In("b", PinKind.Bool), Out("value", PinKind.Bool)], []),
@@ -238,6 +240,8 @@ public static class NodeCatalog
         // Actor
         new("CompareTag", "Actor", "Compare Tag", NodeRole.Flow, [ExecIn, In("actor", PinKind.Actor), Out("match", PinKind.Exec)], [new("tag", PropKind.Tag, "Player")]),
         new("Destroy", "Actor", "Destroy", NodeRole.Action, [ExecIn, ExecOut, In("actor", PinKind.Actor)], []),
+        // Bytecode holds no other actor: Move moves the graph's actor or the player (P20.01, answer 4).
+        new("Move", "Actor", "Move", NodeRole.Action, [ExecIn, ExecOut], [new("actor", PropKind.Choice, "Self", ["Self", "Player"]), Txt("path", "")]),
         new("Self", "Actor", "Self", NodeRole.Value, [Out("value", PinKind.Actor)], []),
         // Sound
         new("PlaySound", "Sound", "Play Sound", NodeRole.Action, [ExecIn, ExecOut], [new("sound", PropKind.Sound, "jump"), Num("volume", "1")]),
@@ -253,6 +257,13 @@ public static class NodeCatalog
         new("SaveExists", "Data & Save", "Save Exists", NodeRole.Value, [Out("value", PinKind.Bool)], [Int("slot", "0")]),
         // Text & UI
         new("ShowText", "Text & UI", "Show Text", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
+        new("Say", "Text & UI", "Say", NodeRole.Action, [ExecIn, ExecOut], [new("key", PropKind.TextKey, "")]),
+        // One exec output per option; an empty option is hidden in the game.
+        new("Choice", "Text & UI", "Choice", NodeRole.Flow,
+            [ExecIn, Out("option1", PinKind.Exec), Out("option2", PinKind.Exec), Out("option3", PinKind.Exec), Out("option4", PinKind.Exec)],
+            [new("option1", PropKind.TextKey, ""), new("option2", PropKind.TextKey, ""), new("option3", PropKind.TextKey, ""), new("option4", PropKind.TextKey, "")]),
+        new("FadeIn", "Text & UI", "Fade In", NodeRole.Action, [ExecIn, ExecOut], [Num("seconds", "0.5")]),
+        new("FadeOut", "Text & UI", "Fade Out", NodeRole.Action, [ExecIn, ExecOut], [Num("seconds", "0.5")]),
         // Other
         new("DebugLog", "Other", "Debug Log", NodeRole.Action, [ExecIn, ExecOut], [Txt("text", "")]),
         new("LoadScene", "Other", "Load Scene", NodeRole.Action, [ExecIn, ExecOut], [new("scene", PropKind.Scene, "")]),
