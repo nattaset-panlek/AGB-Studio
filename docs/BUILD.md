@@ -2,8 +2,8 @@
 
 Requirements: Windows 10/11 x64, .NET SDK 10, and a compiler: run `tools\fetch-toolchain.ps1` once to put Arm GNU
 Toolchain in `toolchain\` (P24.06), or have devkitPro (`DEVKITPRO`, `C:\devkitPro` or `D:\devkitPro`). The start code,
-linker script, hardware header, maxmod and the ROM header writer are in the repository. A project with music still
-needs `mmutil.exe` from devkitPro's `tools\bin` until P24.05 is done. Ninja is optional: when `ninja.exe` is
+linker script, hardware header, maxmod, the soundbank writer and the ROM header writer are in the repository, so a
+project with music needs nothing else. Ninja is optional: when `ninja.exe` is
 on `PATH` the native build runs it, otherwise AGB Studio runs the same build graph itself. Versions used are in
 `TOOLCHAIN.md`.
 

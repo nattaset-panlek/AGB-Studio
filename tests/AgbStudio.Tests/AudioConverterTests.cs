@@ -26,7 +26,7 @@ public sealed class AudioConverterTests
             inputs.Add(Path.Combine(dir, file));
             File.WriteAllBytes(inputs[^1], data);
         }
-        var result = SoundbankBuilder.Build(new Toolchain(), inputs, Path.Combine(dir, "out"));
+        var result = SoundbankBuilder.Build(inputs, Path.Combine(dir, "out"));
         Assert.True(result.Success, result.Log);
         Assert.Equal(songs.Length, result.Music.Count);
         Assert.All(result.Music, m => Assert.True(m.Orders > 0));

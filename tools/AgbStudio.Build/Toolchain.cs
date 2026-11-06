@@ -7,7 +7,8 @@ public sealed record ToolStatus(string Name, string Path, bool Found, string? Ve
 /// Locates the compiler and host tools the build needs. P24.06: AGB Studio's own toolchain (Arm GNU Toolchain in
 /// <c>toolchain/</c> next to <c>bin</c>, or in the repository after <c>tools/fetch-toolchain.ps1</c>) comes first; a
 /// devkitPro folder still works, and a folder set in Preferences › Paths overrides both. The runtime's start code,
-/// hardware header, maxmod and the ROM header writer are AGB Studio's own, so only the compiler and mmutil come from here.
+/// hardware header, maxmod, the soundbank writer (P24.05) and the ROM header writer are AGB Studio's own, so only the
+/// compiler comes from here.
 /// </summary>
 public sealed class Toolchain
 {
@@ -23,18 +24,6 @@ public sealed class Toolchain
     public string Gcc => Path.Combine(GccBin, "arm-none-eabi-gcc.exe");
     public string Objcopy => Path.Combine(GccBin, "arm-none-eabi-objcopy.exe");
     public string Nm => Path.Combine(GccBin, "arm-none-eabi-nm.exe");
-    /// <summary>mmutil makes the soundbank: next to the compiler, else in devkitPro's tools (P24.05 is still open).</summary>
-    public string Mmutil
-    {
-        get
-        {
-            string[] places = [Path.Combine(GccBin, "mmutil.exe"), Path.Combine(DevkitPro, "tools", "bin", "mmutil.exe")];
-            var found = places.FirstOrDefault(File.Exists);
-            if (found != null) return found;
-            var devkit = DetectDevkitPro();
-            return devkit != null ? Path.Combine(devkit, "tools", "bin", "mmutil.exe") : places[1];
-        }
-    }
     public string Ninja { get; init; }  // when missing, NativeBuild runs the same graph in-process
 
     public Toolchain(string? devkitPro = null)
@@ -78,7 +67,6 @@ public sealed class Toolchain
             new("toolchain", DevkitPro, Directory.Exists(DevkitPro)),
             new("compiler", Gxx, File.Exists(Gxx), File.Exists(Gxx) ? GccVersion() : null),
             new("maxmod", maxmod, File.Exists(maxmod)),
-            new("mmutil", Mmutil, File.Exists(Mmutil)),
             new("ninja", Ninja, File.Exists(Ninja)),
         ];
     }

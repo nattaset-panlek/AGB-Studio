@@ -54,12 +54,12 @@ public sealed class BuildService(ProjectService project, Func<string?> devkitPro
     /// <summary>The tools the last build could not find (it did not start then); empty when it had them all.</summary>
     public IReadOnlyList<(string Tool, string Path)> MissingTools { get; private set; } = [];
 
-    /// <summary>The tools a build runs that are not at their path: the compiler (arm-none-eabi-g++), mmutil and maxmod's
+    /// <summary>The tools a build runs that are not at their path: the compiler (arm-none-eabi-g++) and maxmod's
     /// sources. Since P24.02-P24.04 the start code, hardware header and ROM header writer are AGB Studio's own.</summary>
     public static IReadOnlyList<(string Tool, string Path)> FindMissingTools(Toolchain tc) =>
         new[]
         {
-            ("arm-none-eabi-g++", tc.Gxx), ("mmutil", tc.Mmutil),
+            ("arm-none-eabi-g++", tc.Gxx),
             ("maxmod", Path.Combine(NativeBuild.MaxmodDir, "source_gba", "mm_main_gba.s")),
         }.Where(t => !File.Exists(t.Item2)).ToList();
 

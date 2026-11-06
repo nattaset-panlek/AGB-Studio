@@ -363,18 +363,17 @@ public sealed class PipelineTests(EmulatorFixture emu)
         Assert.False(tc.BuiltIn);
         Assert.Equal("devkitARM 16.1", status["compiler"].Version);
         Assert.True(status["maxmod"].Found);  // P24.03: maxmod's sources are in the repository
-        Assert.Equal(File.Exists(tc.Mmutil), status["mmutil"].Found);  // from devkitPro on a PC that has it
+        Assert.DoesNotContain("mmutil", status.Keys);  // P24.05: the soundbank is written by AGB Studio itself
         Assert.Equal(["arm-none-eabi-gcc.exe -dumpversion"], asked);
         Assert.False(new Toolchain(Path.Combine(root, "missing")).IsComplete);
 
         // P24.06: a folder laid out as Arm's toolchain (AGB Studio's own) has bin\ at its top
         var own = Directory.CreateTempSubdirectory("faketc").FullName;
         Directory.CreateDirectory(Path.Combine(own, "bin"));
-        foreach (var f in new[] { "arm-none-eabi-g++.exe", "arm-none-eabi-gcc.exe", "mmutil.exe" }) File.WriteAllText(Path.Combine(own, "bin", f), "");
+        foreach (var f in new[] { "arm-none-eabi-g++.exe", "arm-none-eabi-gcc.exe" }) File.WriteAllText(Path.Combine(own, "bin", f), "");
         var builtIn = new Toolchain(own) { RunTool = (_, _) => new ProcResult(0, "15.2.1\n") };
         Assert.True(builtIn.BuiltIn);
         Assert.Equal(Path.Combine(own, "bin", "arm-none-eabi-g++.exe"), builtIn.Gxx);
-        Assert.Equal(Path.Combine(own, "bin", "mmutil.exe"), builtIn.Mmutil);
         Assert.Equal("Arm GNU Toolchain 15.2", builtIn.Check().Single(t => t.Name == "compiler").Version);
     }
 

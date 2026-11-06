@@ -12,7 +12,7 @@ Studio folder, then `DEVKITPRO`, `C:\devkitPro` and `D:\devkitPro`.
 | Registers, BIOS calls, interrupts | AGB Studio's own | `runtime/include/agb/hw.hpp`, `runtime/src/core/irq*.cpp` | replaces libtonc (P24.03) |
 | maxmod | 1.0.15, GBA sources | `third_party/maxmod` | assembled with every ROM that links it (P24.03) |
 | ROM header | AGB Studio's own | `tools/AgbStudio.Build/GbaHeader.cs` | replaces gbafix (P24.04) |
-| mmutil | devkitPro's 1.10.1 | devkitPro `tools\bin` | soundbank; still needed for music (P24.05 open) |
+| Soundbank writer | AGB Studio's own, ported from mmutil 1.10.1 (BSD 3-clause) | `tools/AgbStudio.Build/Audio/Maxmod` | MOD / XM / S3M / IT / WAV to the maxmod soundbank, byte for byte as mmutil (P24.05) |
 
 What the trial measured is in `docs/evidence/p24-01-arm-toolchain.md`.
 
@@ -64,10 +64,12 @@ Run on 2026-10-31 from `D:\devkitPro\tools\bin` in an empty folder; first line o
 | `padbin` | 1 (no arguments; prints its usage) | `pads a binary file to an integer multiple of a given number of bytes` |
 | `bin2s --help` | 0 | `general-tools 1.4.4` |
 
-gbafix also runs whenever a game or runtime test ROM is linked (`NativeBuild.cs`). mmutil runs in a game build only
+gbafix also runs whenever a game or runtime test ROM is linked (`NativeBuild.cs`). mmutil ran in a game build only
 when the project has MOD / XM / WAV files and its soundbank cache is out of date (`GameBuilder` `ConvertAudio`,
 `SoundbankBuilder.cs`), and in the runtime test ROM builds only for tests with an `audio/` folder (`RuntimeTests.cs`).
-gbalzss and padbin have no version flag; their version is the package version above.
+gbalzss and padbin have no version flag; their version is the package version above. Since P24.05 (2026-11-07)
+neither gbafix nor mmutil runs: AGB Studio writes the ROM header and the soundbank itself, and `MaxmodSoundbankTests`
+checks the soundbank against devkitPro's mmutil.exe.
 
 ## Emulators
 

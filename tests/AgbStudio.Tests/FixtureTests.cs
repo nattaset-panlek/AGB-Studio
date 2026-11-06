@@ -104,7 +104,7 @@ public sealed class FixtureTests
     public void GeneratedMusicIsReadByMaxmod()
     {
         var p = s_project.Value;
-        var r = SoundbankBuilder.Build(new Toolchain(), p.MusicFiles().Concat(p.SoundFiles()).ToList(), Path.Combine(p.BuildDir, "sb-test"));
+        var r = SoundbankBuilder.Build(p.MusicFiles().Concat(p.SoundFiles()).ToList(), Path.Combine(p.BuildDir, "sb-test"));
         Assert.True(r.Success, r.Log);
         Assert.Contains("MOD_BGM_FOREST", r.Ids.Keys);
         Assert.Contains("MOD_BGM_CAVE", r.Ids.Keys);

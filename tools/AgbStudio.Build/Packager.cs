@@ -53,6 +53,8 @@ public static class Packager
         else log("No toolchain\\ in the repository: the package needs devkitPro to build games. Run tools\\fetch-toolchain.ps1 first.");
         foreach (var f in new[] { "THIRD_PARTY.md", "RELEASE-NOTES.md" })
             File.Copy(Path.Combine(root, "docs", f), Path.Combine(stage, "docs", f), true);
+        // the soundbank writer is ported from mmutil (BSD 3-clause): its notice goes with the program
+        File.Copy(Path.Combine(root, "tools", "AgbStudio.Build", "Audio", "Maxmod", "LICENSE-mmutil.txt"), Path.Combine(stage, "docs", "LICENSE-mmutil.txt"), true);
         File.WriteAllText(Path.Combine(stage, RootMarker), Version + "\n");
         var bin = Path.Combine(stage, "bin");
         Directory.CreateDirectory(bin);
@@ -64,7 +66,7 @@ public static class Packager
         File.WriteAllText(Path.Combine(stage, "README.txt"),
             $"AGB Studio {Version}\r\n\r\nRun bin\\AGBStudio.exe. Games are built with the compiler in toolchain\\ (Arm GNU Toolchain,\r\n" +
             "GPL; its source code is at https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads). A devkitPro folder\r\n" +
-            "set in Preferences > Paths is used instead when you choose one. Music still needs mmutil from devkitPro.\r\n" +
+            "set in Preferences > Paths is used instead when you choose one.\r\n" +
             "To uninstall, delete this folder; your projects are not inside it.\r\n" +
             "This build is not code-signed, so Windows may ask before the first start.\r\n");
         var zip = Path.Combine(outDir, name + ".zip");

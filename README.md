@@ -118,8 +118,9 @@ Templates, samples and the fixture project are not stored as files: they are gen
 
 - Windows 10 or 11, x64
 - .NET SDK 10
-- devkitPro with devkitARM, libtonc, libgba (maxmod) and the GBA tools (gbafix, mmutil), found through `DEVKITPRO`,
-  `C:\devkitPro` or `D:\devkitPro`
+- a compiler: Arm GNU Toolchain in `toolchain\` (run `tools\fetch-toolchain.ps1` once), or devkitPro's devkitARM,
+  found through `DEVKITPRO`, `C:\devkitPro` or `D:\devkitPro`. The rest (start code, maxmod, soundbank, ROM header)
+  is in the repository
 - Ninja is optional: without it the build runs the same steps itself
 
 The versions in use are in [docs/TOOLCHAIN.md](docs/TOOLCHAIN.md).

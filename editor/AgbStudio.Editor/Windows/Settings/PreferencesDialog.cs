@@ -325,10 +325,10 @@ public sealed class PreferencesDialog : SettingsDialog
         var tc = _s.Toolchain;
         if (tc.Tools.Count == 0) return "Checking the toolchain…";
         var arm = tc.Find("compiler") is { Found: true, Version: { } v } ? v : "compiler";
-        string[] names = ["maxmod", "mmutil"];
+        string[] names = ["maxmod"];
         var missing = names.Where(n => tc.Find(n) is { Found: false }).ToList();
         if (tc.Find("compiler") is { Found: false }) missing.Insert(0, "arm-none-eabi-g++");
-        return missing.Count == 0 ? $"{arm} · maxmod · mmutil found"
+        return missing.Count == 0 ? $"{arm} · maxmod found"
             : string.Join(" · ", missing) + " not found here · Browse to a toolchain folder (AGB Studio's toolchain or devkitPro)";
     }
 

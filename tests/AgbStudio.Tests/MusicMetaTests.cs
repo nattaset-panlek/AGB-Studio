@@ -29,7 +29,7 @@ public sealed class MusicMetaTests
     {
         var p = s_project.Value;
         var dir = Path.Combine(p.BuildDir, "sb-meta");
-        var r = SoundbankBuilder.Build(new Toolchain(), p.MusicFiles().Concat(p.SoundFiles()).ToList(), dir);
+        var r = SoundbankBuilder.Build(p.MusicFiles().Concat(p.SoundFiles()).ToList(), dir);
         Assert.True(r.Success, r.Log);
         var modules = r.Ids.Count(k => k.Key.StartsWith("MOD_", StringComparison.Ordinal));
         Assert.Equal(modules, r.Music.Count);
@@ -67,7 +67,7 @@ public sealed class MusicMetaTests
 
         GameProject.Save(GameProject.MetaPath(module), new MusicMeta { Volume = 0.25, LoopStart = 200, FadeOnSceneChange = false });
         var withMeta = GameBuilder.SoundbankKey([module]);
-        var r = SoundbankBuilder.Build(new Toolchain(), [module], Path.Combine(dir, "out"));
+        var r = SoundbankBuilder.Build([module], Path.Combine(dir, "out"));
         Assert.True(r.Success, r.Log);
         var (orders, restart) = ModuleHeader(File.ReadAllBytes(Path.Combine(dir, "out", "soundbank.bin")), 0);
         Assert.Equal(orders - 1, restart);  // 200 is past the end: the last order, as the Audio page plays it

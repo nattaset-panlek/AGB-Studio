@@ -514,14 +514,14 @@ public sealed partial class GameBuilder
         var hpp = Path.Combine(outDir, "soundbank.hpp");
         if (!_cache.IsCurrent("soundbank", hash, [cpp, hpp]))
         {
-            var r = SoundbankBuilder.Build(_tc, inputs, outDir);
+            var r = SoundbankBuilder.Build(inputs, outDir);
             if (!r.Success)
             {
-                // mmutil converts every track in one run: its whole output goes to the log, the error names the file
+                // the soundbank converts every track in one run: its whole output goes to the log, the error names the file
                 // it stopped on (the last one its output mentions) and its first error line.
                 _obs.Line(r.Log.Trim());
                 var lines = r.Log.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-                var reason = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase)) ?? lines.LastOrDefault() ?? "mmutil gave no reason";
+                var reason = lines.FirstOrDefault(l => l.Contains("error", StringComparison.OrdinalIgnoreCase)) ?? lines.LastOrDefault() ?? "no reason was given";
                 var failed = inputs.MaxBy(f => r.Log.LastIndexOf(Path.GetFileName(f), StringComparison.OrdinalIgnoreCase));
                 if (failed != null && !r.Log.Contains(Path.GetFileName(failed), StringComparison.OrdinalIgnoreCase)) failed = null;
                 Add(new Diagnostic(Severity.Error, failed ?? "", 0, 0, "", $"Audio conversion failed{(failed != null ? $" for {Path.GetFileName(failed)}" : "")}: {reason.TrimEnd('.')}. " +

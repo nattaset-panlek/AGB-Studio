@@ -80,8 +80,9 @@ and scale it with the BG2 / BG3 matrices; `render::affine::mode7` fills a per-sc
 
 ### Audio and DMG sound effects
 
-Music (MOD / XM) and sampled effects (WAV) go through maxmod on the two Direct Sound channels: the build runs mmutil
-over every music and sound file into one soundbank (`Audio/SoundbankBuilder.cs`), maxmod mixes at the rate and with
+Music (MOD / XM / S3M / IT) and sampled effects (WAV) go through maxmod on the two Direct Sound channels: the build
+writes every music and sound file into one soundbank with its C# port of mmutil 1.10.1 (`Audio/Maxmod`,
+`Audio/SoundbankBuilder.cs`, P24.05), maxmod mixes at the rate and with
 the channel count of Project Settings · Audio (21 kHz and 8 channels by default, D-14; the build sizes maxmod's buffers
 for them with `AGB_AUDIO_MIX_KHZ` and `AGB_AUDIO_CHANNELS`, the mixer CPU per rate is in D-26). SFX Designer effects (`audio/sfx/*.sfx` without "Bake to .wav") play on the four DMG
 channels with no sample data: `Audio/DmgRegisters.cs` encodes each effect into register values (sweep, envelope and
@@ -171,7 +172,7 @@ goes down during that overlap (holding Up does not fire it); Respawn fires on th
 `GameBuilder.Build` runs these steps (`IBuildObserver` reports each one to the Build ROM dialog, the Console and
 `agb build`):
 
-1. **Convert assets**: sprites, tilesets (LZ77 by default), image layers, the maxmod soundbank (mmutil), SFX Designer
+1. **Convert assets**: sprites, tilesets (LZ77 by default), image layers, the maxmod soundbank (`Audio/Maxmod`), SFX Designer
    DMG tables, fonts and per-language string tables (text laid out at build time), database tables. Each converted
    asset is keyed by a hash of its files, its meta and the converter version in `build/cache/manifest.json`, so an
    unchanged asset is not converted again.

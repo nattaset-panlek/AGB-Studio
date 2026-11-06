@@ -56,7 +56,7 @@ public sealed class PreferencesTests : IDisposable
     public void Paths_DevkitArmFoundWithItsVersion_OnFirstRun_AndTheImageEditorFoundOrNot()
     {
         var dkp = Path.GetFullPath(Path.Combine(_fx.Folder, "fake devkitPro"));
-        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe", @"tools\bin\mmutil.exe" })
+        foreach (var f in new[] { @"devkitARM\bin\arm-none-eabi-g++.exe", @"devkitARM\bin\arm-none-eabi-gcc.exe" })
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(dkp, f))!);
             File.WriteAllText(Path.Combine(dkp, f), "");
@@ -77,7 +77,7 @@ public sealed class PreferencesTests : IDisposable
             var arm = tools.Single(t => t.Name == "compiler");
             Assert.Equal((true, "devkitARM 14.2"), (arm.Found, arm.Version));
             Assert.Equal((Path.Combine(dkp, "devkitARM", "bin", "arm-none-eabi-gcc.exe"), "-dumpversion"), Assert.Single(ran));
-            Assert.All(new[] { "toolchain", "compiler", "maxmod", "mmutil" }, n => Assert.True(_fx.Services.Toolchain.Find(n)!.Found, n));
+            Assert.All(new[] { "toolchain", "compiler", "maxmod" }, n => Assert.True(_fx.Services.Toolchain.Find(n)!.Found, n));
             Assert.EndsWith(" · devkitARM 14.2 found", AgbStudio.Editor.Windows.Launcher.LauncherService.Of(_fx.Services).StatusLine());
 
             // Preferences · Paths
@@ -86,7 +86,7 @@ public sealed class PreferencesTests : IDisposable
             win.Click(d.Find<NavItem>("Nav_T-S08"));
             var devkit = d.Find<TextField>("DevkitPro");
             Assert.Equal(dkp, devkit.Text);
-            Assert.Equal("devkitARM 14.2 · maxmod · mmutil found", devkit.Help);
+            Assert.Equal("devkitARM 14.2 · maxmod found", devkit.Help);
             Assert.Equal("check", ((Icon)d.Find<ContentControl>("DevkitPro_Status").Content!).Glyph);
             // the image editor: found, then a program that is not there, then found again
             Assert.Equal(image, d.Find<TextField>("ImageEditorPath").Text);

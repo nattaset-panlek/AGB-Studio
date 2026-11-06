@@ -31,6 +31,10 @@ public static class Proc
         p.OutputDataReceived += (_, e) => Add(e.Data);
         p.ErrorDataReceived += (_, e) => Add(e.Data);
         p.Start();
+        // compilers below the editor: the UI keeps the CPU it needs while a build uses every core (G-PERF.04); on Windows
+        // the processes ninja starts inherit the class
+        try { p.PriorityClass = ProcessPriorityClass.BelowNormal; }
+        catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception or PlatformNotSupportedException) { }
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
         var deadline = DateTime.UtcNow + timeout;
